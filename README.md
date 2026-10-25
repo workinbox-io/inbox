@@ -83,6 +83,25 @@ pnpm deploy               # build, migrate remote D1, wrangler deploy
 pnpm template:update      # merge the latest template (TEMPLATE.md)
 ```
 
+## Updating from the template
+
+```sh
+git switch -c template-update
+pnpm template:update          # or a release: pnpm template:update v1.1.0
+pnpm install && pnpm db:generate && pnpm typecheck
+```
+
+- Set `TEMPLATE_REPO` (or the URL in `scripts/template-update.sh`) to your template repository once.
+- Product code goes in `src/db/schema/app.ts`, `src/jobs/app*.ts`, `src/config/*`, content and new
+  files; then template updates rarely conflict.
+- Improvements to shared parts (auth, billing, settings, `components/ui`) are made in the template
+  first, tagged, and merged into products.
+- Each product owns its migrations: the update skips the template's, and `pnpm db:generate`
+  creates one from the merged schema.
+
+The full workflow is in [TEMPLATE.md](TEMPLATE.md); what each release needs by hand is in
+[CHANGELOG.md](CHANGELOG.md).
+
 ## Going to production
 
 1. **Cloudflare**: `pnpm setup` with "create resources" (or `wrangler d1 create`, `r2 bucket create`,
