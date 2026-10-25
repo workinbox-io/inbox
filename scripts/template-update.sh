@@ -5,7 +5,7 @@
 # The first run adds the `template` remote (set TEMPLATE_REPO or edit URL below).
 set -e
 REF="${1:-main}"
-URL="${TEMPLATE_REPO:-git@github.com:OWNER/saas-template.git}"
+URL="${TEMPLATE_REPO:-https://github.com/jakub-kalamarz/saas-template.git}"
 
 git diff --quiet && git diff --cached --quiet || { echo "Commit or stash your changes first."; exit 1; }
 git remote get-url template >/dev/null 2>&1 || git remote add template "$URL"

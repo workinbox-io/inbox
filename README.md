@@ -23,7 +23,7 @@ Clone the template (don't use GitHub's "Use this template" button: it drops the 
 template updates can't be merged; see [TEMPLATE.md](TEMPLATE.md)):
 
 ```sh
-git clone git@github.com:OWNER/saas-template.git my-product && cd my-product
+git clone https://github.com/jakub-kalamarz/saas-template.git my-product && cd my-product
 git remote rename origin template
 gh repo create my-product --private --source=. --push
 
