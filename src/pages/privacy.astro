@@ -1,0 +1,59 @@
+---
+import LegalLayout from "@/layouts/LegalLayout.astro";
+import { siteConfig } from "@/config/site";
+import { PAYMENT_PROVIDER, SUBPROCESSORS } from "@/config/subprocessors";
+
+export const prerender = true;
+const l = siteConfig.legal;
+---
+
+<LegalLayout title="Privacy policy" description={`What personal data ${siteConfig.name} collects, why, how long we keep it, who processes it, and your rights under the GDPR.`} updated="2026-10-23">
+  <p>
+    This policy explains how {l.company} ("we") processes personal data when you use {siteConfig.name}. We process
+    data in line with the EU General Data Protection Regulation (GDPR).
+  </p>
+
+  <h2>Controller</h2>
+  <p>{l.company}, {l.address}. Contact: <a href={`mailto:${l.email}`}>{l.email}</a>.</p>
+
+  <h2>Data we process as controller</h2>
+  <ul>
+    <li><strong>Account data:</strong> name, email address and password hash, to provide your account (Art. 6(1)(b) GDPR).</li>
+    <li><strong>Billing data:</strong> company name, address, VAT ID and payment status, to bill you and meet tax obligations (Art. 6(1)(b) and (c)). Card details are handled by our payment provider and never reach our servers.</li>
+    <li><strong>Technical logs:</strong> IP addresses and connection metadata, kept for up to 30 days for security and troubleshooting (Art. 6(1)(f)).</li>
+    <li><strong>Website statistics:</strong> the pages you view on our website, the referring site and campaign tags, to understand which pages work (Art. 6(1)(f)). We count visits ourselves, with no cookies and no third-party analytics. To tell visits apart we store a hash of your IP address and browser that changes every day and can't be traced back to you. When you sign up, the source of that day's first visit is stored with your account.</li>
+  </ul>
+
+  <h2>Data we process on your behalf</h2>
+  <p>
+    Content you add to the service is processed only on your instructions, as a processor under Art. 28 GDPR, as set
+    out in the <a href="/terms">terms of service</a>.
+  </p>
+
+  <h2>Sub-processors</h2>
+  <ul>
+    {
+      [...SUBPROCESSORS, PAYMENT_PROVIDER].map((p) => (
+        <li>
+          {p.name}, {p.country}{p.safeguard ? ` (${p.safeguard})` : ""}: {p.purpose}
+        </li>
+      ))
+    }
+  </ul>
+
+  <h2>Retention</h2>
+  <p>
+    Account data is kept while your account is active and deleted within 30 days after closure, except where we must
+    keep invoices for tax purposes.
+  </p>
+
+  <h2>Your rights</h2>
+  <p>
+    You can request access, correction, deletion, restriction or a copy of your data, and object to processing, by
+    writing to <a href={`mailto:${l.email}`}>{l.email}</a>. You may also lodge a complaint with the Polish supervisory
+    authority, the President of the Personal Data Protection Office (UODO).
+  </p>
+
+  <h2>Cookies</h2>
+  <p>We use only strictly necessary cookies to keep you signed in. We don't use advertising, analytics or tracking cookies.</p>
+</LegalLayout>

@@ -1,0 +1,128 @@
+---
+import { cn } from "cn";
+import { ArrowRight, KeyRound, ScrollText, ShieldCheck, Users, Workflow, Zap } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import SectionHeading from "@/components/site/SectionHeading.astro";
+import StepCards from "@/components/site/StepCards.astro";
+import PricingCards from "@/components/site/PricingCards.astro";
+import Faq from "@/components/site/Faq.astro";
+import CtaBanner from "@/components/site/CtaBanner.astro";
+import { TRIAL_DAYS } from "@/config/plans";
+import { organizationJsonLd, siteConfig } from "@/config/site";
+
+export const prerender = true;
+
+// Placeholder copy: replace with your product's. The layout and sections are the reusable part.
+const steps = [
+  { title: "Sign up", text: "Create an account with email or Google. Your trial starts right away.", code: "→ trial started" },
+  { title: "Create a project", text: "Set it up in the dashboard, or from a script with the API.", code: "POST /api/v1/projects" },
+  { title: "Invite your team", text: "Owners, admins and members, each with the right access.", code: "→ invitation sent" },
+];
+
+const features = [
+  { icon: Zap, title: "Fast everywhere", text: "Runs on Cloudflare's network, close to every user." },
+  { icon: Users, title: "Teams built in", text: "Organizations, invitations and roles from day one." },
+  { icon: ShieldCheck, title: "Secure sign-in", text: "Email verification, Google sign-in and two-factor authentication." },
+  { icon: KeyRound, title: "REST API", text: "Organization API keys and an OpenAPI 3.1 spec." },
+  { icon: ScrollText, title: "Audit log", text: "Who changed what, and when, for every organization." },
+  { icon: Workflow, title: "Background jobs", text: "Queues and scheduled tasks that retry on their own." },
+];
+
+const faq = [
+  { question: "Is there a free trial?", answer: `Yes. Every account starts with a ${TRIAL_DAYS}-day trial of the Pro plan, no credit card needed.` },
+  { question: "Can I cancel any time?", answer: "Yes. Cancel from the Billing page; your plan stays active until the end of the paid period." },
+  { question: "Who handles payments?", answer: "Paddle, our merchant of record. They take care of VAT and send your invoices." },
+  { question: "Do you have an API?", answer: "Yes. Create a key in Settings and see the API docs for every endpoint." },
+];
+
+const url = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
+const jsonLd = [
+  organizationJsonLd(url),
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })),
+  },
+];
+---
+
+<MarketingLayout title={siteConfig.description} description={siteConfig.description} jsonLd={jsonLd}>
+  <div class="container-page flex flex-1 flex-col">
+    <!-- Hero -->
+    <div class="mx-auto mt-14 max-w-4xl pb-16 text-center sm:mt-20 sm:pb-24">
+      <div class="reveal" style="--reveal-delay: 80ms">
+        <h1 class="dark:text-foreground/85 text-3xl leading-[1.1] font-medium tracking-tight text-balance text-[#454545] sm:text-6xl sm:leading-[1.06]">
+          The headline of<br class="hidden sm:block" /> <span class="text-primary">your product.</span>
+        </h1>
+      </div>
+      <div class="reveal" style="--reveal-delay: 160ms">
+        <p class="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg leading-7 text-pretty sm:text-xl sm:leading-8">
+          {siteConfig.description}
+          <span class="bg-primary/10 text-primary rounded-2xl box-decoration-clone px-1 py-0.5">One sentence that sells it.</span>
+        </p>
+        <div class="mt-7 flex flex-row flex-wrap items-center justify-center gap-3">
+          <a href="/signup" class={cn(buttonVariants({ size: "lg" }), "group pr-1.5 pl-4")}>
+            Start {TRIAL_DAYS}-day free trial
+            <span class="relative ml-1 inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-2">
+              <ArrowRight className="text-primary size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </a>
+          <a href="#how-it-works" class={buttonVariants({ size: "lg", variant: "secondary" })}>See how it works</a>
+        </div>
+        <p class="text-muted-foreground mt-5 text-sm">No credit card required</p>
+      </div>
+    </div>
+
+    <section id="how-it-works" class="scroll-mt-16 py-12 sm:py-16">
+      <div class="reveal px-4 sm:px-6">
+        <SectionHeading muted="in three steps.">Get started</SectionHeading>
+      </div>
+      <div class="reveal mt-12 sm:mt-16" style="--reveal-delay: 120ms">
+        <StepCards steps={steps} />
+      </div>
+    </section>
+
+    <section id="features" class="scroll-mt-16 py-12 sm:py-16">
+      <div class="reveal px-4 sm:px-6">
+        <SectionHeading muted="so you can focus on the product.">Everything a SaaS needs,</SectionHeading>
+      </div>
+      <ul class="reveal mt-12 grid gap-4 sm:mt-16 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3" style="--reveal-delay: 120ms">
+        {
+          features.map((f) => (
+            <li class="bg-surface flex min-w-0 items-start gap-4 rounded-2xl p-5 sm:p-6">
+              <span class="bg-card flex size-10 shrink-0 items-center justify-center rounded-full">
+                <f.icon className="text-primary size-4.5" />
+              </span>
+              <div>
+                <p class="text-lg font-medium tracking-tight text-balance">{f.title}</p>
+                <p class="text-muted-foreground mt-1.5 text-base leading-6 tracking-tight text-pretty">{f.text}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section id="pricing" class="scroll-mt-16 py-12 sm:py-16">
+      <div class="reveal px-4 sm:px-6">
+        <SectionHeading muted="Pay yearly and get two months free.">Simple pricing.</SectionHeading>
+      </div>
+      <div class="reveal mt-12 sm:mt-16" style="--reveal-delay: 120ms">
+        <PricingCards />
+        <p class="text-muted-foreground mt-6 text-center text-sm">Prices exclude VAT.</p>
+      </div>
+    </section>
+
+    <section id="faq" class="scroll-mt-16 py-12 sm:py-16">
+      <div class="reveal px-4 sm:px-6">
+        <SectionHeading muted="before they sign up.">What people ask</SectionHeading>
+      </div>
+      <div class="reveal mx-auto mt-12 w-full max-w-2xl sm:mt-16" style="--reveal-delay: 120ms">
+        <Faq items={faq} />
+      </div>
+    </section>
+
+    <CtaBanner muted="Start in a minute.">Ready to try it?</CtaBanner>
+  </div>
+</MarketingLayout>

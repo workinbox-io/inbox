@@ -1,0 +1,23 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import { BillingPanel } from "@/components/app/billing-panel";
+import { getOrgUsage, getSubscription } from "@/lib/server/org";
+import { canManage } from "@/lib/server/roles";
+
+const orgId = Astro.locals.orgId!;
+const [usage, sub] = await Promise.all([getOrgUsage(orgId), getSubscription(orgId)]);
+---
+
+<AppLayout title="Billing">
+  <BillingPanel
+    client:load
+    usage={usage}
+    status={sub?.status ?? "trialing"}
+    trialEndsAt={sub?.trialEndsAt?.toISOString()}
+    currentPeriodEnd={sub?.currentPeriodEnd?.toISOString()}
+    hasCustomer={Boolean(sub?.paddleCustomerId)}
+    hasSubscription={Boolean(sub?.paddleSubscriptionId) && sub?.status !== "canceled"}
+    justCheckedOut={Astro.url.searchParams.get("checkout") === "success"}
+    canManage={canManage(Astro.locals.role)}
+  />
+</AppLayout>

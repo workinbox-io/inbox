@@ -1,0 +1,32 @@
+---
+/** Dark closing call to action: the title slot is white, `muted` is dimmed. */
+import { ArrowRight } from "lucide-react";
+
+interface Props {
+  muted?: string;
+}
+const { muted } = Astro.props;
+---
+
+<section class="bg-ink-dark mb-4 overflow-hidden rounded-2xl border border-[#8f8f8f]/25 p-2 sm:p-3">
+  <div class="flex flex-col items-center px-4 py-16 text-center sm:px-6 sm:py-14">
+    <div class="reveal">
+      <span aria-hidden="true" class="flex size-24 items-center justify-center rounded-full bg-white/8 ring-1 ring-white/10">
+        <img src="/logo.svg" alt="" class="size-10" />
+      </span>
+    </div>
+    <div class="reveal" style="--reveal-delay: 120ms">
+      <h2 class="mt-8 max-w-4xl text-3xl font-normal tracking-tight text-balance text-white select-none sm:text-4xl">
+        <slot />{muted ? <> <span class="text-white/55">{muted}</span></> : null}
+      </h2>
+    </div>
+    <div class="reveal" style="--reveal-delay: 200ms">
+      <a
+        href="/signup"
+        class="bg-ink-dark mt-8 inline-flex h-10 items-center gap-2 rounded-full border border-white/25 px-5 text-sm font-medium text-white transition-colors hover:bg-[#3a3a3f]"
+      >
+        Start your free trial <ArrowRight className="size-4" />
+      </a>
+    </div>
+  </div>
+</section>

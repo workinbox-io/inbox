@@ -1,0 +1,12 @@
+---
+/** Centered section title: the first half in ink, the second half muted. */
+interface Props {
+  muted?: string;
+  class?: string;
+}
+const { muted, class: className } = Astro.props;
+---
+
+<h2 class:list={["mx-auto max-w-2xl text-center text-3xl font-normal tracking-tight text-balance sm:text-4xl", className]}>
+  <slot />{muted ? <> <span class="text-muted-foreground">{muted}</span></> : null}
+</h2>

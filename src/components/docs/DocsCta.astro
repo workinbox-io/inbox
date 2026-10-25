@@ -1,0 +1,19 @@
+---
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "cn";
+import { TRIAL_DAYS } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+---
+
+<div class="bg-surface text-surface-foreground flex flex-col gap-2 rounded-md p-6 text-sm">
+  <div class="text-base leading-tight font-medium tracking-tight text-balance">Try {siteConfig.name} free.</div>
+  <div class="text-muted-foreground">Start a free {TRIAL_DAYS}-day trial. No credit card needed.</div>
+  <div class="flex flex-wrap gap-2">
+    <a href="/signup" class={cn(buttonVariants({ size: "sm" }), "mt-2")}>
+      Start free trial
+    </a>
+    <a href="/pricing" class={cn(buttonVariants({ size: "sm", variant: "outline" }), "mt-2")}>
+      Pricing
+    </a>
+  </div>
+</div>

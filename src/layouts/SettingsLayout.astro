@@ -1,0 +1,22 @@
+---
+import AppLayout from "./AppLayout.astro";
+import { PageHeader } from "@/components/app/page-header";
+import { SETTINGS_PAGES, SettingsNav } from "@/components/app/settings-nav";
+
+interface Props {
+  description: string;
+}
+
+const { description } = Astro.props;
+const page = SETTINGS_PAGES.find((p) => Astro.url.pathname.startsWith(p.href));
+---
+
+<AppLayout title={`${page?.label ?? ""} settings`} breadcrumbs={[{ label: "Settings", href: "/app/settings" }, { label: page?.label ?? "" }]}>
+  <div class="grid gap-6">
+    <PageHeader title="Settings" description={description} />
+    <SettingsNav pathname={Astro.url.pathname} />
+    <div class="mt-4 grid gap-12">
+      <slot />
+    </div>
+  </div>
+</AppLayout>

@@ -1,0 +1,246 @@
+---
+import { ArrowRight, Menu } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { siteConfig, type NavItem } from "@/config/site";
+import Logo from "./Logo.astro";
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => !href.includes("#") && (path === href || path.startsWith(`${href}/`));
+const nav: NavItem[] = siteConfig.navItems;
+const chevron = `<svg class="size-3.5 transition-transform in-aria-expanded:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>`;
+
+const menuButton =
+  "text-muted-foreground hover:text-foreground aria-expanded:text-foreground inline-flex items-center gap-1 text-sm font-medium whitespace-nowrap transition-colors";
+const panelOuter =
+  "invisible absolute top-full left-1/2 z-50 -translate-x-1/2 translate-y-1 pt-3 opacity-0 transition-[opacity,transform,visibility] duration-200 ease-out data-[open=true]:visible data-[open=true]:translate-y-0 data-[open=true]:opacity-100";
+const panelInner =
+  "border-border bg-popover rounded-2xl border p-2 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.28)] backdrop-blur-xl";
+const item =
+  "hover:bg-accent focus-visible:bg-accent flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap outline-none transition-colors";
+const footerLink = item + " text-primary border-border/60 mt-1 justify-between rounded-t-none border-t pt-3";
+const summary =
+  "flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium [&::-webkit-details-marker]:hidden";
+---
+
+<header
+  id="site-header"
+  data-scrolled="false"
+  class="group sticky top-0 z-50 h-14 w-full px-4 sm:h-16 sm:px-6"
+>
+  <div
+    class="relative mx-auto flex h-14 w-full max-w-full items-center justify-between rounded-full border border-transparent px-0 transition-[max-width,height,margin,padding,background-color,border-color,box-shadow] duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[scrolled=true]:mt-3 group-data-[scrolled=true]:h-11 group-data-[scrolled=true]:max-w-[calc(100%-1.5rem)] group-data-[scrolled=true]:border-[#8f8f8f]/30 group-data-[scrolled=true]:bg-[#d9d9d9]/50 group-data-[scrolled=true]:px-2 group-data-[scrolled=true]:shadow-[inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(255,255,255,0.12),0_1px_1px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.10)] group-data-[scrolled=true]:backdrop-blur-xl group-data-[scrolled=true]:backdrop-saturate-125 sm:h-16 sm:max-w-4xl sm:px-4 sm:group-data-[scrolled=true]:h-12 sm:group-data-[scrolled=true]:max-w-3xl lg:group-data-[scrolled=true]:max-w-5xl sm:group-data-[scrolled=true]:px-2.5 dark:group-data-[scrolled=true]:border-white/10 dark:group-data-[scrolled=true]:bg-[#2a2a2a]/60"
+  >
+    <span
+      aria-hidden="true"
+      class="glass-noise pointer-events-none absolute inset-0 rounded-full opacity-0 mix-blend-overlay transition-opacity duration-700 group-data-[scrolled=true]:opacity-100"
+    ></span>
+    <div class="relative z-10 flex items-center gap-7">
+      <a href="/" class="flex items-center gap-2 transition-transform active:scale-95">
+        <Logo />
+        <span class="text-base font-medium tracking-tight">{siteConfig.name}</span>
+      </a>
+      <nav aria-label="Main" class="hidden items-center gap-5 lg:flex">
+        {
+          nav.map((n, i) =>
+            "items" in n ? (
+              <div class="relative" data-menu>
+                <button type="button" class={menuButton} aria-expanded="false" aria-haspopup="true" aria-controls={`menu-${i}`}>
+                  {n.label} <Fragment set:html={chevron} />
+                </button>
+                <div id={`menu-${i}`} data-panel inert class={panelOuter}>
+                  <div class={panelInner + " w-[300px]"}>
+                    <ul>
+                      {n.items.map((it) => (
+                        <li>
+                          <a href={it.href} class={item}>
+                            {it.label}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    {n.footer ? (
+                      <a href={n.footer.href} class={footerLink}>
+                        {n.footer.label} <ArrowRight className="size-4" />
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <a
+                href={n.href}
+                data-active={isActive(n.href)}
+                class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-sm font-medium whitespace-nowrap transition-colors"
+              >
+                {n.label}
+              </a>
+            ),
+          )
+        }
+      </nav>
+    </div>
+    <div class="relative z-10 flex items-center gap-2">
+      <button
+        type="button"
+        data-theme-toggle
+        aria-label="Theme: system, light or dark"
+        title="Theme: system, light or dark"
+        class="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-8 items-center justify-center rounded-full transition-colors"
+      >
+        <svg class="hidden size-4 in-data-[theme-mode=system]:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+        <svg class="hidden size-4 in-data-[theme-mode=light]:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+        <svg class="hidden size-4 in-data-[theme-mode=dark]:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+      </button>
+      <a href="/login" data-auth-signin class="text-muted-foreground hover:text-foreground hidden px-2 text-sm font-medium whitespace-nowrap transition-colors lg:inline">
+        Sign in
+      </a>
+      <a
+        href="/signup"
+        data-auth-cta
+        class={buttonVariants() + " whitespace-nowrap"}
+      >
+        Start free trial
+      </a>
+      <button
+        type="button"
+        data-mobile-toggle
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="Menu"
+        class="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-8 items-center justify-center rounded-full transition-colors lg:hidden"
+      >
+        <Menu className="size-4.5" />
+      </button>
+    </div>
+
+    <div
+      id="mobile-menu"
+      data-mobile-panel
+      inert
+      class="border-border bg-popover invisible absolute top-full right-0 left-0 z-50 mt-2 max-h-[75vh] translate-y-1 overflow-y-auto rounded-3xl border p-3 opacity-0 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.3)] backdrop-blur-xl transition-[opacity,transform,visibility] duration-200 data-[open=true]:visible data-[open=true]:translate-y-0 data-[open=true]:opacity-100 lg:hidden"
+    >
+      {
+        nav.map((n) =>
+          "items" in n ? (
+            <details>
+              <summary class={summary}>
+                {n.label} <Fragment set:html={chevron} />
+              </summary>
+              <ul class="pb-2">
+                {n.items.map((it) => (
+                  <li>
+                    <a href={it.href} class={item}>
+                      {it.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : (
+            <a href={n.href} class={item}>
+              {n.label}
+            </a>
+          ),
+        )
+      }
+      <a href="/login" data-auth-signin class={item}>Sign in</a>
+    </div>
+  </div>
+</header>
+
+<script>
+  const header = document.getElementById("site-header")!;
+  const onScroll = () => header.setAttribute("data-scrolled", String(window.scrollY > 24));
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  // The marketing pages are prerendered, so swap the auth links once we know there's a session.
+  fetch("/api/auth/get-session", { credentials: "same-origin" })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (!data?.user) return;
+      document.querySelector("[data-auth-signin]")?.remove();
+      const cta = document.querySelector<HTMLAnchorElement>("[data-auth-cta]");
+      if (cta) {
+        cta.href = "/app";
+        cta.textContent = "Dashboard";
+      }
+    })
+    .catch(() => {});
+
+  // Dropdown menus: click or hover opens, Esc and outside clicks close, arrow keys move into the list.
+  const menus = [...document.querySelectorAll<HTMLElement>("[data-menu]")];
+  const setOpen = (menu: HTMLElement, open: boolean) => {
+    const panel = menu.querySelector<HTMLElement>("[data-panel]")!;
+    menu.querySelector("button")!.setAttribute("aria-expanded", String(open));
+    panel.dataset.open = String(open);
+    panel.inert = !open;
+  };
+  const closeAll = (except?: HTMLElement) => {
+    for (const m of menus) if (m !== except) setOpen(m, false);
+  };
+  for (const menu of menus) {
+    const button = menu.querySelector("button")!;
+    let timer: number | undefined;
+    button.addEventListener("click", () => {
+      const open = button.getAttribute("aria-expanded") !== "true";
+      closeAll(menu);
+      setOpen(menu, open);
+    });
+    button.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        closeAll(menu);
+        setOpen(menu, true);
+        menu.querySelector<HTMLElement>("[data-panel] a")?.focus();
+      }
+    });
+    menu.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        setOpen(menu, false);
+        button.focus();
+      }
+    });
+    menu.addEventListener("focusout", (e) => {
+      if (!menu.contains((e as FocusEvent).relatedTarget as Node | null)) setOpen(menu, false);
+    });
+    menu.addEventListener("pointerenter", (e) => {
+      if ((e as PointerEvent).pointerType !== "mouse") return;
+      window.clearTimeout(timer);
+      closeAll(menu);
+      setOpen(menu, true);
+    });
+    menu.addEventListener("pointerleave", (e) => {
+      if ((e as PointerEvent).pointerType !== "mouse") return;
+      timer = window.setTimeout(() => setOpen(menu, false), 160);
+    });
+  }
+  document.addEventListener("click", (e) => {
+    if (!(e.target as Element).closest("[data-menu]")) closeAll();
+  });
+
+  // Mobile menu.
+  const toggle = document.querySelector<HTMLButtonElement>("[data-mobile-toggle]")!;
+  const mobile = document.querySelector<HTMLElement>("[data-mobile-panel]")!;
+  const setMobile = (open: boolean) => {
+    toggle.setAttribute("aria-expanded", String(open));
+    mobile.dataset.open = String(open);
+    mobile.inert = !open;
+  };
+  toggle.addEventListener("click", () => setMobile(toggle.getAttribute("aria-expanded") !== "true"));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeAll();
+      setMobile(false);
+    }
+  });
+  document.addEventListener("click", (e) => {
+    const t = e.target as Element;
+    if (!t.closest("[data-mobile-panel]") && !t.closest("[data-mobile-toggle]")) setMobile(false);
+  });
+
+  for (const button of document.querySelectorAll("[data-theme-toggle]")) {
+    // System → light → dark → system (see BaseLayout).
+    button.addEventListener("click", () => window.setThemeMode(window.nextThemeMode()));
+  }
+</script>

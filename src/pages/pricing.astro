@@ -1,0 +1,51 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import SectionHeading from "@/components/site/SectionHeading.astro";
+import PricingCards from "@/components/site/PricingCards.astro";
+import Faq from "@/components/site/Faq.astro";
+import { CURRENCY, PLAN_LIST, TRIAL_DAYS, TRIAL_PLAN, PLANS } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+
+export const prerender = true;
+
+const faq = [
+  { question: "How does the trial work?", answer: `You get ${TRIAL_DAYS} days of ${PLANS[TRIAL_PLAN].name} without a card. Choose a plan any time from the Billing page.` },
+  { question: "Can I change plans later?", answer: "Yes, upgrade or downgrade from Billing → Invoices & payment. Paddle prorates the difference." },
+  { question: "Do you charge VAT?", answer: "Prices exclude VAT. Paddle, our merchant of record, adds it at checkout where it applies." },
+];
+
+const url = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: siteConfig.name,
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: url("/pricing"),
+  offers: PLAN_LIST.map((p) => ({ "@type": "Offer", name: p.name, price: p.priceMonthly / 100, priceCurrency: CURRENCY })),
+};
+---
+
+<MarketingLayout title="Pricing" description={`${siteConfig.name} plans and prices. Free ${TRIAL_DAYS}-day trial, no card needed.`} jsonLd={jsonLd}>
+  <div class="container-page flex flex-1 flex-col">
+    <div class="mx-auto mt-10 max-w-3xl text-center sm:mt-14">
+      <h1 class="reveal dark:text-foreground/85 text-3xl leading-[1.1] font-medium tracking-tight text-balance text-[#454545] sm:text-5xl">
+        Simple pricing, <span class="text-primary">no surprises</span>
+      </h1>
+      <p class="reveal text-muted-foreground mx-auto mt-5 max-w-xl text-lg leading-7 text-pretty" style="--reveal-delay: 100ms">
+        Start with a {TRIAL_DAYS}-day free trial, no card needed. Pay yearly and get two months free. Prices exclude VAT.
+      </p>
+    </div>
+    <div class="reveal mt-12 sm:mt-16" style="--reveal-delay: 180ms">
+      <PricingCards yearly />
+    </div>
+    <section class="py-16">
+      <div class="reveal px-4 sm:px-6">
+        <SectionHeading muted="about plans.">Questions</SectionHeading>
+      </div>
+      <div class="reveal mx-auto mt-10 w-full max-w-2xl" style="--reveal-delay: 120ms">
+        <Faq items={faq} />
+      </div>
+    </section>
+  </div>
+</MarketingLayout>

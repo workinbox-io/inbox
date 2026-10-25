@@ -1,0 +1,90 @@
+---
+import "@/styles/global.css";
+import { siteConfig } from "@/config/site";
+
+interface Props {
+  title: string;
+  description?: string;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Pages that must stay out of search engines and never leak their URL (share links). */
+  noindex?: boolean;
+}
+
+const { title, description = siteConfig.description, jsonLd, noindex = false } = Astro.props;
+const fullTitle = `${title} · ${siteConfig.name}`;
+// No trailing slash, to match the sitemap (prerendered pages see "/pricing/").
+const canonical = Astro.site ? new URL(Astro.url.pathname.replace(/(.)\/$/, "$1"), Astro.site).href : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="description" content={description} />
+    <title>{fullTitle}</title>
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {noindex && <meta name="referrer" content="no-referrer" />}
+    {canonical && !noindex && <link rel="canonical" href={canonical} />}
+    <meta property="og:site_name" content={siteConfig.name} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL("/og.png", Astro.site ?? Astro.url).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    {canonical && !noindex && <meta property="og:url" content={canonical} />}
+    <meta name="twitter:card" content="summary_large_image" />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    <script is:inline>
+      // Apply the theme before paint to avoid a flash. "system" (nothing stored) follows the OS,
+      // also when it changes while the page is open; "light" and "dark" are pinned.
+      (() => {
+        const root = document.documentElement;
+        const mq = matchMedia("(prefers-color-scheme: dark)");
+        const stored = () => {
+          try {
+            return localStorage.getItem("theme");
+          } catch {
+            return null;
+          }
+        };
+        const apply = () => {
+          const t = stored();
+          const mode = t === "light" || t === "dark" ? t : "system";
+          root.dataset.themeMode = mode;
+          root.classList.toggle("dark", mode === "dark" || (mode === "system" && mq.matches));
+        };
+        window.setThemeMode = (mode) => {
+          try {
+            if (mode === "system") localStorage.removeItem("theme");
+            else localStorage.setItem("theme", mode);
+          } catch {}
+          apply();
+        };
+        window.nextThemeMode = () => ({ system: "light", light: "dark", dark: "system" })[root.dataset.themeMode] ?? "system";
+        apply();
+        mq.addEventListener("change", apply);
+      })();
+    </script>
+    {
+      !noindex && (
+        <script is:inline>
+          // Our own cookieless page view count (lib/server/analytics.ts); nothing goes to third parties.
+          (() => {
+            if (navigator.webdriver || /^\/(app|api|invite)(\/|$)/.test(location.pathname)) return;
+            try {
+              navigator.sendBeacon("/api/collect", JSON.stringify({ u: location.href, r: document.referrer }));
+            } catch {}
+          })();
+        </script>
+      )
+    }
+  </head>
+  <body class="bg-background text-foreground min-h-svh antialiased">
+    <slot />
+  </body>
+</html>

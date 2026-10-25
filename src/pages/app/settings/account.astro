@@ -1,0 +1,17 @@
+---
+import SettingsLayout from "@/layouts/SettingsLayout.astro";
+import { AccountSettings } from "@/components/app/account-settings";
+import { loadAccount } from "@/lib/server/account";
+
+const me = Astro.locals.user!;
+const data = await loadAccount(me.id, Astro.locals.session?.id);
+---
+
+<SettingsLayout description="How you sign in, where you're signed in, and your account.">
+  <AccountSettings
+    client:load
+    {...data}
+    user={{ name: me.name, email: me.email, twoFactorEnabled: Boolean(me.twoFactorEnabled) }}
+    emailChanged={Astro.url.searchParams.get("email") === "changed"}
+  />
+</SettingsLayout>

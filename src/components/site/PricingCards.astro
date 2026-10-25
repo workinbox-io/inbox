@@ -1,0 +1,47 @@
+---
+/** Plan cards from config/plans.ts, used on the home page and /pricing. */
+import { cn } from "cn";
+import { buttonVariants } from "@/components/ui/button";
+import { CURRENCY, PLAN_LIST, POPULAR_PLAN, planFeatures, priceYearly } from "@/config/plans";
+
+interface Props {
+  /** Show the yearly price under the monthly one. */
+  yearly?: boolean;
+}
+const { yearly = false } = Astro.props;
+const money = (cents: number) =>
+  new Intl.NumberFormat("en", { style: "currency", currency: CURRENCY, maximumFractionDigits: 0 }).format(cents / 100);
+---
+
+<div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
+  {
+    PLAN_LIST.map((p) => (
+      <div class:list={["bg-surface flex flex-col rounded-2xl p-6 sm:p-8", p.id === POPULAR_PLAN && "ring-primary/70 ring-2"]}>
+        <div class="flex items-center justify-between">
+          <span class="eyebrow text-foreground/70">{p.name}</span>
+          {p.id === POPULAR_PLAN ? <span class="eyebrow text-primary">Most popular</span> : null}
+        </div>
+        <p class="mt-6 flex items-baseline gap-1">
+          <span class="text-5xl font-medium tracking-tight tabular-nums">{money(p.priceMonthly)}</span>
+          <span class="text-muted-foreground text-sm">/ month</span>
+        </p>
+        {yearly ? <p class="text-muted-foreground mt-1 text-sm">or {money(priceYearly(p))} billed yearly</p> : null}
+        <ul class="mt-6 flex-1 space-y-2.5 text-sm">
+          {planFeatures(p).map((f) => (
+            <li class="flex items-center gap-2.5">
+              <span class="bg-primary size-2 shrink-0 rounded-full" />
+              {f.label}
+              {f.soon ? <span class="eyebrow text-muted-foreground">Soon</span> : null}
+            </li>
+          ))}
+        </ul>
+        <a
+          href="/signup"
+          class={cn(buttonVariants({ size: "lg", variant: p.id === POPULAR_PLAN ? "default" : "secondary" }), "mt-8 w-full")}
+        >
+          Start free trial
+        </a>
+      </div>
+    ))
+  }
+</div>

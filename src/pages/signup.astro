@@ -1,0 +1,11 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { AuthForm } from "@/components/auth/auth-form";
+
+const next = Astro.url.searchParams.get("next") ?? "/app";
+const email = Astro.url.searchParams.get("email") ?? undefined;
+---
+
+<AuthLayout title="Sign up">
+  <AuthForm client:load mode="signup" next={/^\/(?!\/)/.test(next) ? next : "/app"} email={email} />
+</AuthLayout>

@@ -1,0 +1,14 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import { AdminPanel } from "@/components/app/admin-panel";
+import { isAdmin } from "@/lib/server/admin";
+import { adminOverview } from "@/lib/server/analytics";
+
+// Pretend the page doesn't exist for everyone but staff.
+if (!isAdmin(Astro.locals.user)) return new Response(null, { status: 404 });
+const data = await adminOverview();
+---
+
+<AppLayout title="Analytics">
+  <AdminPanel client:load data={data} />
+</AppLayout>

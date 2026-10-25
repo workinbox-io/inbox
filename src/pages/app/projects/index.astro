@@ -1,0 +1,15 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import { ProjectsPanel } from "@/components/app/projects-panel";
+import { listProjects } from "@/lib/server/projects";
+
+const projects = (await listProjects(Astro.locals.orgId!)).map((p) => ({
+  ...p,
+  createdAt: p.createdAt.toISOString(),
+  updatedAt: p.updatedAt.toISOString(),
+}));
+---
+
+<AppLayout title="Projects">
+  <ProjectsPanel client:load projects={projects} openNew={Astro.url.searchParams.has("new")} />
+</AppLayout>

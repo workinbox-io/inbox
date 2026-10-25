@@ -1,0 +1,10 @@
+# Local secrets for `astro dev` / `wrangler dev`. Copy to .dev.vars (git-ignored).
+# In production: wrangler secret put <NAME>
+BETTER_AUTH_SECRET=change-me-to-32-random-characters-or-more
+PADDLE_API_KEY=
+PADDLE_WEBHOOK_SECRET=
+PUBLIC_PADDLE_CLIENT_TOKEN=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+ALERT_EMAIL=
+NOTIFY_EMAIL=

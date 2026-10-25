@@ -1,0 +1,25 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import { AppShell } from "@/components/app/app-shell";
+import { isAdmin } from "@/lib/server/admin";
+
+interface Props {
+  title: string;
+  breadcrumbs?: { label: string; href?: string }[];
+}
+
+const { title, breadcrumbs = [{ label: title }] } = Astro.props;
+const { user } = Astro.locals;
+---
+
+<BaseLayout title={title}>
+  <AppShell
+    client:load
+    pathname={Astro.url.pathname}
+    breadcrumbs={breadcrumbs}
+    user={user ? { name: user.name, email: user.email } : null}
+    isAdmin={isAdmin(user)}
+  >
+    <slot />
+  </AppShell>
+</BaseLayout>
