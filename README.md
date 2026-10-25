@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner/banner-dark.png" />
+  <img src="docs/banner/banner.png" alt="SaaS template: ship a micro SaaS on Cloudflare" />
+</picture>
+
 # SaaS template for Cloudflare
 
 A starting point for a micro SaaS on Cloudflare Workers. It contains everything that isn't the product
@@ -16,6 +21,22 @@ an admin dashboard. The UI and backend patterns are extracted from CloudFile.
 | Files | **R2** binding `FILES`, ready to use |
 | API | `/api/v1` with org API keys, rate limited by the Workers Rate Limiting binding, OpenAPI 3.1 |
 | Extras | Audit log, error tracking with e-mail alerts, cookieless analytics, `/app/admin`, `llms.txt` |
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Dashboard, dark](docs/screenshots/dashboard-dark.png) |
+| Overview: plan usage, trial, recent activity | Every screen in light and dark |
+| ![Projects](docs/screenshots/projects.png) | ![Billing](docs/screenshots/billing.png) |
+| Example resource with plan limits | Billing with Paddle checkout and portal |
+| ![Settings](docs/screenshots/settings.png) | ![Admin analytics](docs/screenshots/admin.png) |
+| Organization, team, API keys, audit log | Staff analytics: MRR, sign-ups, traffic |
+| ![Home](docs/screenshots/home.png) | ![Pricing](docs/screenshots/pricing.png) |
+| Marketing home page | Pricing from `config/plans.ts` |
+
+Screenshots show demo data. Re-take them after UI changes with Playwright against `pnpm dev`;
+the header is `docs/banner/banner.html`, rendered by `docs/banner/render.mjs`.
 
 ## Starting a new product
 
