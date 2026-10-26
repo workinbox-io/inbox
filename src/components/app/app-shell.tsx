@@ -157,7 +157,7 @@ export function AppShell({ pathname, breadcrumbs, user, isAdmin, children }: App
           onOpenChange={setPaletteOpen}
           placeholder="Search pages and actions…"
         />
-        <Toaster richColors />
+        <Toaster />
       </SidebarProvider>
     </TooltipProvider>
   )
