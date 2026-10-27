@@ -70,8 +70,9 @@ interface Ctx {
   rows: Map<string, number>
 }
 
-const all = (root: ParentNode, sel: string) => gsap.utils.toArray<El>(root.querySelectorAll(sel))
-const first = (root: ParentNode, sel: string) => root.querySelector<El>(sel)
+// `Element`, not `ParentNode`: the Workers types merge HTMLRewriter's `append` into Element, which no longer fits ParentNode.
+const all = (root: Element, sel: string) => gsap.utils.toArray<El>(root.querySelectorAll(sel))
+const first = (root: Element, sel: string) => root.querySelector<El>(sel)
 const nodeEl = (c: Ctx, id: string) => first(c.svg, `[data-node="${id}"]`)
 const edgeLine = (c: Ctx, id: string) => first(c.svg, `path.line[data-edge="${id}"]`)
 const edgeParts = (c: Ctx, id: string) => all(c.svg, `path.line[data-edge="${id}"], .sb-pill[data-edge="${id}"], .flowline[data-edge="${id}"], .sb-handle[data-edge="${id}"]`)
@@ -112,7 +113,7 @@ function lightEdge(c: Ctx, id: string, from: number, to?: number) {
   const tl = c.tl
   once(c, `edge:${id}`, () => tl.set(parts, { clearProps: "stroke,fill" }, 0))
   // Edges can share a trunk, so the lit one goes on top of the others.
-  tl.call(() => all(c.svg, "path.line[data-edge]").pop()?.after(line as unknown as Node), undefined, from)
+  tl.call(() => all(c.svg, "path.line[data-edge]").pop()?.insertAdjacentElement("afterend", line), undefined, from)
   tl.to(line, { stroke: P, duration: 0.5, ease: "sine.inOut" }, from)
   if (bg) tl.to(bg, { stroke: P, duration: 0.5, ease: "sine.inOut" }, from)
   if (text) tl.to(text, { fill: P, duration: 0.18, ease: "none" }, from + 0.2)

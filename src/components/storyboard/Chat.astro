@@ -5,6 +5,7 @@
  * The markup is the final state (older message above, new message below it) and the runtime animates to it.
  */
 import type { ChatMessage } from "./steps"
+import { siteConfig } from "@/config/site"
 
 interface Props {
   id: string
@@ -21,7 +22,7 @@ const h = 240
 const s1 = y + 44 // first message slot
 const ny = y + 100 // slot of the new message
 const [old1, old2] = history.length > 1 ? [history[0], history[1]] : [undefined, history[0]]
-const from = msg?.from ?? "CloudFile"
+const from = msg?.from ?? siteConfig.name
 ---
 
 <g class="sb-tile sb-chat" data-node={id}>

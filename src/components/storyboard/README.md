@@ -11,11 +11,26 @@ with GSAP.
 scene.ts      defineScene(): validates a scene and computes node rectangles, edge paths, label spots
 steps.ts      step constructors (beam, pulse, addRow, ...), plain data, no GSAP
 Scene.astro   <Scene scene={...} />: the figure, both SVG layouts, reduced-motion captions
-Canvas.astro  one layout as SVG (Tile, Cylinder, Chat, Card, Note, Pill do the drawing)
+Canvas.astro  one layout as SVG (Tile, Chat, Card, Note, Pill do the drawing)
 runtime.tsx   the React island (client:visible) that runs the steps
 storyboard.css  the look, all colours are CSS variables so light and dark just work
-scenes/       the scenes we use: home.ts, provider.ts, use-cases.ts
+scenes/       your scenes; example.ts is one to copy from
 ```
+
+## Try the example
+
+`scenes/example.ts` is a complete scene (a customer uploads, your product stores the file and sends a
+signed webhook to your API, with both layouts). Show it on a marketing page:
+
+```astro
+---
+import Scene from "@/components/storyboard/Scene.astro"
+import { example } from "@/components/storyboard/scenes/example"
+---
+<div class="reveal mx-auto mt-12 w-full max-w-6xl"><Scene scene={example} /></div>
+```
+
+Copy it to a new file in `scenes/` and change the nodes, edges and steps for your product.
 
 ## Define a scene
 
@@ -25,31 +40,31 @@ import { addRow, beam, pulse, sending, wp } from "../steps"
 
 export const upload = defineScene({
   id: "upload", // unique on the page
-  label: "A partner uploads a file and it lands in your bucket", // aria-label
+  label: "A partner uploads a file and it lands in your storage", // aria-label
   grid: { cols: 3, rows: 1, cell: [200, 96], gap: [284, 0], pad: [24, 0, 24, 0] },
   nodes: {
     partner: { kind: "tile", icon: "building", label: "Partner", sub: "exports files" },
-    cf: { kind: "tile", logo: "/logo.svg", label: "CloudFile", sub: "managed SFTP" },
-    bucket: { kind: "bucket", mono: "r2", label: "Cloudflare R2", sub: "no egress fees" },
+    app: { kind: "tile", logo: "/logo.svg", label: "Your product", sub: "receives files" },
+    bucket: { kind: "bucket", icon: "database", label: "Storage", sub: "acme-files" },
   },
   edges: [
-    { from: "partner", to: "cf", label: "SFTP :22" }, // id defaults to "partner-cf"
-    { from: "cf", to: "bucket", label: "write" },
+    { from: "partner", to: "app", label: "upload" }, // id defaults to "partner-app"
+    { from: "app", to: "bucket", label: "write" },
   ],
   layouts: {
-    wide: { nodes: { partner: { at: [0, 0] }, cf: { at: [1, 0] }, bucket: { at: [2, 0], w: 240, align: "end" } } },
+    wide: { nodes: { partner: { at: [0, 0] }, app: { at: [1, 0] }, bucket: { at: [2, 0], w: 240, align: "end" } } },
     phone: {
       grid: { cols: 1, rows: 3, cell: [130, 96], gap: [0, 54], pad: [0, 0, 0, 6] },
       size: [342, 424],
-      nodes: { partner: { at: [0, 0] }, cf: { at: [0, 1] }, bucket: { at: [0, 2], w: 240, valign: "start" } },
-      edges: { "cf-bucket": { lane: 0 } },
+      nodes: { partner: { at: [0, 0] }, app: { at: [0, 1] }, bucket: { at: [0, 2], w: 240, valign: "start" } },
+      edges: { "app-bucket": { lane: 0 } },
     },
   },
   steps: [
     sending("partner", "listings.xml"),
-    beam("partner-cf", { caption: "A partner uploads over SFTP." }),
-    pulse("cf", wp("received · 2.4 MB", "received")),
-    beam("cf-bucket", { caption: "CloudFile writes the file into your bucket." }),
+    beam("partner-app", { caption: "A partner uploads a file." }),
+    pulse("app", wp("received · 2.4 MB", "received")),
+    beam("app-bucket", { caption: "Your product writes it to storage." }),
     addRow("bucket", { text: "listings.xml", meta: "2.4 MB" }),
   ],
 })
@@ -67,13 +82,13 @@ its cell: `align` and `valign` say where it sits, `x`/`y` place it absolutely, `
 
 | kind     | draws | content |
 | -------- | ----- | ------- |
-| `tile`   | a bordered card with a status light in the corner (hidden until something happens) | `icon` (see `icons.ts`), `logo` (image) or `mono` (provider glyph id), `label`, `sub`, `paper` |
-| `bucket` | a tile for files (`providers` glyph row, file rows from `addRow`) or, with `shape: "cylinder"`, a tall showcase card for `cycleLogos` with a strip of linked provider logos | `label`, `sub`, `providers` |
+| `tile`   | a bordered card with a status light in the corner (hidden until something happens) | `icon` (see `icons.ts`) or `logo` (an image in `public/`), `label`, `sub`, `paper` |
+| `bucket` | a tile for files (file rows from `addRow`) | `icon` or `logo`, `label`, `sub` |
 | `chat`   | a chat window (channel, older messages, the new message from `chatMessage`) | `channel`, `history` |
 | `card`   | a request card: method badge, path and status light in a header, content from `card`, `cardResult` and `cardLine` | `title` (`"POST /path"`), `attach` (a node id: a dashed line to it when they sit side by side or one above the other) |
 | `note`   | a caption pill | `text` |
 
-Everything in a node can be overridden per layout (`label`, `sub`, `providers`, `text`, `attach`, size), so
+Everything in a node can be overridden per layout (`label`, `sub`, `text`, `attach`, size), so
 the phone layout can say `sub: "listener"` where the wide one says `"event listener"`.
 
 ### Edges
@@ -89,7 +104,7 @@ and on a horizontal edge too short for it the label is left out, so a pill never
 - `route: "elbow"` with `fromSide` and `toSide` turns once (L shape) or twice (Z shape between
   parallel sides). Corners are rounded (`defaults.radius`, 12). `labelAt: "first" | "last"` picks the
   segment that carries the label, which keeps labels apart when several edges share a node.
-- A layout can override an edge by id (`edges: { "cf-app": { lane: 0, label: false } }`). `null` for a
+- A layout can override an edge by id (`edges: { "app-api": { lane: 0, label: false } }`). `null` for a
   side drops the side the edge definition gave.
 
 ## Steps
@@ -113,7 +128,6 @@ or `wp("wide text", "phone text")`.
 | `addRow(node, {text, meta})` | a file row slides into a bucket tile |
 | `chatMessage(node, msg)` | older messages move up, the new one slides in with an optional file attachment |
 | `card(node, {sig, scramble})`, `cardResult(node, {status, ms})`, `cardLine(node, text)` | the request card: slide in with a scrambling signature value, pending (amber light) turns into the status (green light) with a ms counter, a closing line with a check |
-| `cycleLogos(node)` | big provider logos one after another in a showcase bucket |
 | `moveNode(node, col or "center")`, `dim(node)`, `undim(node)` | scene changes: slide a node to a column or the middle, fade a node and its edges (handles included) |
 | `confirm(node)` | green tint and check badge |
 | `note(node)` | reveals a note node |

@@ -21,7 +21,7 @@ const CH = 7.2
 const [method, ...rest] = title.split(" ")
 const path = rest.join(" ")
 const methodW = Math.round(method.length * CH + 14)
-// "X-CloudFile-Signature: t=…,v1=…": the header name stays muted, the value is what scrambles in.
+// "X-Signature: t=…,v1=…": the header name stays muted, the value is what scrambles in.
 const sep = c?.sig?.indexOf(": ") ?? -1
 const sigKey = c?.sig && sep > 0 ? c.sig.slice(0, sep + 1) : ""
 const sigVal = c?.sig ? (sep > 0 ? c.sig.slice(sep + 2) : c.sig) : ""

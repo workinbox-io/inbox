@@ -3,6 +3,18 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.4.0 (2026-10-27)
+
+- Storyboards (`src/components/storyboard`): animated SVG diagrams for marketing pages, drawn like a
+  node editor. Bordered cards on a dotted canvas, thin edges between handles, a spark running along
+  an edge when something moves, and a request card with a method badge, a status light and a dashed
+  line to the node it belongs to. You describe a scene (grid, nodes, edges, steps) with
+  `defineScene()` and render it with `<Scene scene={...} />`. There is a wide and a phone layout,
+  reduced motion gets numbered captions, and light and dark themes come from CSS variables.
+  `scenes/example.ts` is a scene to copy from, and the README covers the rest. GSAP is a new
+  dependency. **Manual step:** `pnpm install`. v1.3.0 already contained an unfinished copy of these
+  files without GSAP, which doesn't typecheck; update to v1.4.0 rather than stopping at v1.3.0.
+
 ## v1.3.0 (2026-10-27)
 
 - MCP server at `/mcp` for Claude, ChatGPT, Claude Code and Cursor (`@modelcontextprotocol/server`
