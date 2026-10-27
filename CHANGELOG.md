@@ -3,6 +3,13 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.4.1 (2026-10-27)
+
+- Eyebrow labels (`eyebrow` utility in `global.css`): 12px semibold caps with 0.05em tracking in
+  `foreground/55`, instead of 11px with 0.2em tracking in muted grey. Plan names and "Order summary"
+  use full `text-foreground`; "Soon" and the error page label take the default colour. If a product
+  page sets its own colour on `eyebrow` (e.g. `text-muted-foreground`), drop it to match.
+
 ## v1.4.0 (2026-10-27)
 
 - Storyboards (`src/components/storyboard`): animated SVG diagrams for marketing pages, drawn like a

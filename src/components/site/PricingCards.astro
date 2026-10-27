@@ -18,7 +18,7 @@ const money = (cents: number) =>
     PLAN_LIST.map((p) => (
       <div class:list={["bg-surface flex flex-col rounded-2xl p-6 sm:p-8", p.id === POPULAR_PLAN && "ring-primary/70 ring-2"]}>
         <div class="flex items-center justify-between">
-          <span class="eyebrow text-foreground/70">{p.name}</span>
+          <span class="eyebrow text-foreground">{p.name}</span>
           {p.id === POPULAR_PLAN ? <span class="eyebrow text-primary">Most popular</span> : null}
         </div>
         <p class="mt-6 flex items-baseline gap-1">
@@ -31,7 +31,7 @@ const money = (cents: number) =>
             <li class="flex items-center gap-2.5">
               <span class="bg-primary size-2 shrink-0 rounded-full" />
               {f.label}
-              {f.soon ? <span class="eyebrow text-muted-foreground">Soon</span> : null}
+              {f.soon ? <span class="eyebrow">Soon</span> : null}
             </li>
           ))}
         </ul>

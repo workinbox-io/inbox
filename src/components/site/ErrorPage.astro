@@ -13,7 +13,7 @@ const { code, title, message } = Astro.props;
 
 <MarketingLayout title={title} description={message}>
   <section class="mx-auto flex w-full max-w-xl flex-1 flex-col items-center justify-center gap-5 px-4 py-24 text-center">
-    <span class="eyebrow text-muted-foreground">Error {code}</span>
+    <span class="eyebrow">Error {code}</span>
     <p class="text-primary text-7xl font-medium tracking-tight tabular-nums sm:text-8xl" aria-hidden="true">{code}</p>
     <h1 class="text-3xl font-medium tracking-tight text-balance sm:text-4xl">{title}</h1>
     <p class="text-muted-foreground text-pretty">{message}</p>
