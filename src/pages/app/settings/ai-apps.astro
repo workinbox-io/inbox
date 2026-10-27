@@ -1,0 +1,16 @@
+---
+import SettingsLayout from "@/layouts/SettingsLayout.astro";
+import { ConnectAiAppSection, ConnectedAppsPanel } from "@/components/app/ai-apps-panel";
+import { featureUpsell, hasFeature, planById } from "@/config/plans";
+import { listConnectedApps, mcpResource } from "@/lib/server/oauth";
+import { getSubscription } from "@/lib/server/org";
+
+const me = Astro.locals.user!;
+const [apps, sub] = await Promise.all([listConnectedApps(me.id), getSubscription(Astro.locals.orgId!)]);
+const upsell = hasFeature(planById(sub?.plan), "mcpAccess") ? null : featureUpsell("mcpAccess");
+---
+
+<SettingsLayout description="Use your data from Claude, ChatGPT and other AI apps.">
+  <ConnectAiAppSection client:load mcpUrl={mcpResource()} upsell={upsell} />
+  <ConnectedAppsPanel client:load apps={apps} />
+</SettingsLayout>

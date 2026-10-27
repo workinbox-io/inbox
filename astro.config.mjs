@@ -4,9 +4,11 @@ import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
+import { fileURLToPath } from "node:url";
+import { mcpWidgets } from "./scripts/mcp-widgets.ts";
 
 // Only prerendered routes end up in the sitemap; app and auth pages stay out of it.
-const NOT_INDEXED = /^\/(app|api|login|signup|forgot-password|reset-password|verified|pay|invite)(\/|$)/;
+const NOT_INDEXED = /^\/(app|api|login|signup|forgot-password|reset-password|verified|pay|invite|oauth|mcp)(\/|$)/;
 
 export default defineConfig({
   // Production URL; keep in sync with siteConfig.url (src/config/site.ts).
@@ -30,6 +32,7 @@ export default defineConfig({
     shikiConfig: { themes: { light: "github-light", dark: "github-dark" }, defaultColor: "light" },
   },
   vite: {
-    plugins: [tailwindcss()],
+    // mcpWidgets: `?widget` imports become MCP Apps HTML (src/mcp/widgets).
+    plugins: [tailwindcss(), mcpWidgets({ srcDir: fileURLToPath(new URL("./src", import.meta.url)) })],
   },
 });

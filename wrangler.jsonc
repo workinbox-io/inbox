@@ -6,7 +6,7 @@
   // Our entry wraps Astro's handler and adds the queue consumer and cron handler (src/worker.ts).
   "main": "./src/worker.ts",
   "compatibility_date": "2026-10-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "observability": { "enabled": true },
   "upload_source_maps": true,
 

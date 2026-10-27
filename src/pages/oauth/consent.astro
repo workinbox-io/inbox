@@ -1,0 +1,45 @@
+---
+// OAuth consent screen: an AI app asks to connect (see lib/server/oauth.ts).
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { OAuthConsent } from "@/components/auth/oauth-screens";
+import { OAuthExpired } from "@/components/auth/oauth-expired";
+import { getAuth } from "@/lib/server/auth";
+import { SCOPE_LABELS, getOAuthClient, oauthOrgFor } from "@/lib/server/oauth";
+import { getOrg } from "@/lib/server/org";
+import { verifyOAuthQueryParams } from "@better-auth/oauth-provider";
+
+const auth = getAuth();
+const query = Astro.url.searchParams;
+const valid = await verifyOAuthQueryParams(query.toString(), (await auth.$context).secret);
+const session = valid ? await auth.api.getSession({ headers: Astro.request.headers }) : null;
+if (valid && !session) return Astro.redirect(`/login?${query}`);
+
+const client = await getOAuthClient(query.get("client_id"));
+const orgId = session ? (await oauthOrgFor(session.user.id, session.session.activeOrganizationId)).orgId : null;
+const org = orgId ? await getOrg(orgId) : null;
+const scopes = (query.get("scope") ?? "")
+  .split(" ")
+  .filter((s) => SCOPE_LABELS[s])
+  .map((scope) => ({ scope, label: SCOPE_LABELS[scope]! }));
+let redirectHost: string | null = null;
+try {
+  redirectHost = new URL(query.get("redirect_uri") ?? "").host || null;
+} catch {}
+---
+
+<AuthLayout title="Connect an app">
+  {
+    session && client && org ? (
+      <OAuthConsent
+        client:load
+        app={{ name: client.name || "An app", uri: client.uri, icon: client.icon }}
+        orgName={org.name}
+        userEmail={session.user.email}
+        scopes={scopes}
+        redirectHost={redirectHost}
+      />
+    ) : (
+      <OAuthExpired />
+    )
+  }
+</AuthLayout>

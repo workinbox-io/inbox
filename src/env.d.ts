@@ -28,6 +28,12 @@ declare namespace Cloudflare {
   }
 }
 
+/** MCP Apps widgets bundled into one HTML document (scripts/mcp-widgets.ts). */
+declare module "*?widget" {
+  const html: string;
+  export default html;
+}
+
 type ThemeMode = "system" | "light" | "dark";
 
 /** Defined by the inline theme script in BaseLayout. */

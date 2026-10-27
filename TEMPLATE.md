@@ -20,7 +20,7 @@ template on GitHub; just create products with `git clone`.
 ## Rules that keep merges painless
 
 1. **Product code goes in product files.** The template doesn't edit these after the first commit:
-   - `src/db/schema/app.ts`, `src/jobs/app.ts`, `src/jobs/app-cron.ts`
+   - `src/db/schema/app.ts`, `src/jobs/app.ts`, `src/jobs/app-cron.ts`, `src/mcp/app.ts`, `src/mcp/widgets/*`
    - `src/config/*` (brand, plans, nav, audit actions): you change them, the template rarely does
    - `src/content/docs/*`, `src/pages/index.astro`, `public/*`
    - new files you add (pages, components, `lib/server/<feature>.ts`)

@@ -33,12 +33,19 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
 - D1 has no interactive transactions: use `db.batch([...])`. Times are integer ms (`timestamp_ms`).
 - Async work goes through `enqueue()` (`lib/server/queue.ts`); handlers must be idempotent.
   `sendEmail()` also goes through the queue; `deliverEmail()` does the actual send.
+- AI apps: `/mcp` (`lib/server/mcp.ts`) serves the tools in `src/mcp` (`core.ts` template, `app.ts`
+  product) to Claude, ChatGPT and CLIs. Tools are `defineTool()` wrappers over `lib/server` with a
+  zod `input`, `scope: "write"` for changes and `ctx.audit()`. Auth is an OAuth token from our own
+  server (Better Auth `mcp` plugin, `lib/server/oauth.ts`: org picked at `/oauth/organization`,
+  stored as the token's `org_id` claim, consent re-checked per request) or an org API key.
+  Widgets: `src/mcp/widgets/*.tsx` imported with `?widget` become one HTML file (MCP Apps).
+  Test with `npx @modelcontextprotocol/inspector` against `localhost:4321/mcp`.
 - Billing: `lib/server/paddle.ts` (plain fetch, no SDK). Paddle prices carry
   `custom_data: { plan, interval }` (set by `pnpm paddle:sync`); webhooks re-fetch the subscription
   and mirror it into `subscriptions`. Plans, limits and features: `src/config/plans.ts`.
 
 ## Template vs product files
 
-Product code goes in `src/db/schema/app.ts`, `src/jobs/app*.ts`, `src/config/*`, content, and new
-files. Changes to template files (auth, api, settings panels, `components/ui`) should be made in the
-template repo and merged, so products don't drift.
+Product code goes in `src/db/schema/app.ts`, `src/jobs/app*.ts`, `src/mcp/app.ts`, `src/config/*`,
+content, and new files. Changes to template files (auth, api, settings panels, `components/ui`)
+should be made in the template repo and merged, so products don't drift.

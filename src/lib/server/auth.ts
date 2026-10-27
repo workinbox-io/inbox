@@ -2,7 +2,9 @@ import { env } from "cloudflare:workers";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
-import { organization, twoFactor } from "better-auth/plugins";
+import { jwt, organization, twoFactor } from "better-auth/plugins";
+import { cimd } from "@better-auth/cimd";
+import { mcp } from "@better-auth/mcp";
 import { TRIAL_DAYS } from "@/config/plans";
 import { siteConfig } from "@/config/site";
 import { db } from "@/db";
@@ -12,6 +14,7 @@ import { attributeSignup } from "./analytics";
 import { clientIp } from "./api";
 import { auditTeamChange } from "./auth-audit";
 import { sendEmail } from "./email";
+import { MCP_SCOPES, ORG_CLAIM, fetchClientMetadataResource, mcpResource, oauthOrgSelection } from "./oauth";
 import { OrgError, createPersonalOrg, hasPendingInvitation, prepareAccountDeletion } from "./org";
 import { enqueue } from "./queue";
 
@@ -36,6 +39,8 @@ function createAuth() {
     // Cloudflare's resolved client IP, so sign-in rate limits can't be dodged with X-Forwarded-For.
     advanced: { ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] } },
     database: drizzleAdapter(db, { provider: "sqlite", schema }),
+    // The jwt plugin's session-to-JWT endpoint; we only use JWTs as OAuth access tokens.
+    disabledPaths: ["/token"],
     emailAndPassword: {
       enabled: true,
       minPasswordLength: 10,
@@ -101,6 +106,24 @@ function createAuth() {
           await sendEmail({ to: email, ...(await emails.invitation({ orgName: org.name, inviterName: inviter.user.name, url })) });
         },
       }),
+      // Signs OAuth access tokens (keys in the jwks table). No JWT header on every get-session.
+      jwt({ disableSettingJwtHeader: true }),
+      // OAuth 2.1 server for AI apps connecting to /mcp (lib/server/oauth.ts, lib/server/mcp.ts).
+      mcp({
+        resource: mcpResource(),
+        loginPage: "/login",
+        consentPage: "/oauth/consent",
+        postLogin: oauthOrgSelection,
+        scopes: ["openid", "profile", "email", "offline_access", ...(Object.keys(MCP_SCOPES) as (keyof typeof MCP_SCOPES)[])],
+        // Claude, ChatGPT and most MCP clients register themselves (RFC 7591); every new client still
+        // needs a user's consent before it gets a token.
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        clientRegistrationDefaultApplicationType: "infer",
+        customAccessTokenClaims: ({ referenceId }) => ({ [ORG_CLAIM]: referenceId }),
+      }),
+      // Apps that identify themselves with a metadata URL as client_id (MCP 2026-07-28).
+      cimd({ fetchClientMetadataResource, metadataProfile: "mcp-2026-07-28" }),
     ],
     hooks: { after: auditTeamChange },
     databaseHooks: {

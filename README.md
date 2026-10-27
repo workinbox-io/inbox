@@ -20,6 +20,7 @@ an admin dashboard. The UI and backend patterns are extracted from CloudFile.
 | Jobs | **Queues** (retries with backoff) + **Cron Triggers**, in the same Worker (`src/worker.ts`) |
 | Files | **R2** binding `FILES`, ready to use |
 | API | `/api/v1` with org API keys, rate limited by the Workers Rate Limiting binding, OpenAPI 3.1 |
+| AI apps | MCP server at `/mcp` with OAuth for Claude and ChatGPT, MCP Apps widgets, org API keys for CLIs |
 | Extras | Audit log, error tracking with e-mail alerts, cookieless analytics, `/app/admin`, `llms.txt` |
 
 ## Screenshots
@@ -66,8 +67,9 @@ src/
   config/        site.ts (brand, nav), plans.ts (prices, limits, features), nav.ts (dashboard), audit.ts
   db/schema/     core.ts (template tables) · app.ts (YOUR tables)
   jobs/          index.ts (template jobs) · app.ts, app-cron.ts (YOUR jobs and daily tasks)
-  lib/server/    domain logic: auth, org, billing, paddle, api-keys, audit, errors, analytics, projects (example)
-  pages/         marketing (prerendered), /app (dashboard), /api/app (session), /api/v1 (API keys)
+  mcp/           MCP tools: core.ts (template) · app.ts (YOUR tools and widgets) · widgets/*.tsx
+  lib/server/    domain logic: auth, org, billing, paddle, api-keys, audit, errors, analytics, oauth, mcp, projects (example)
+  pages/         marketing (prerendered), /app (dashboard), /api/app (session), /api/v1 (API keys), /mcp, /oauth
   components/    ui/ (shadcn + dashboardcn), app/ (dashboard), site/ (marketing), auth/, docs/
   emails/        React Email templates
   content/docs/  docs as Markdown
@@ -75,7 +77,7 @@ src/
 ```
 
 `projects` is a complete example resource: table, domain logic with a plan limit, routes for the
-dashboard and the API, a dashboard page, audit entries and a queue job. Copy it for your first real
+dashboard and the API, MCP tools with a widget, a dashboard page, audit entries and a queue job. Copy it for your first real
 resource, then delete it.
 
 ### Conventions

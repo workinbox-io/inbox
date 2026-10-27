@@ -1,0 +1,83 @@
+---
+/**
+ * A request card (an outgoing webhook, say): a header with the method and path and a status light, then
+ * the signature header, a status pill and a closing line. `link` is the dashed line to the node it belongs to.
+ */
+import { txt, type Content } from "./steps"
+
+interface Props {
+  id: string
+  x: number
+  y: number
+  w: number
+  h: number
+  title?: string
+  c?: Content["card"][string]
+  link?: string
+  layout: "wide" | "phone"
+}
+const { id, x, y, w, h, title = "", c, link, layout } = Astro.props
+const CH = 7.2
+const [method, ...rest] = title.split(" ")
+const path = rest.join(" ")
+const methodW = Math.round(method.length * CH + 14)
+// "X-CloudFile-Signature: t=…,v1=…": the header name stays muted, the value is what scrambles in.
+const sep = c?.sig?.indexOf(": ") ?? -1
+const sigKey = c?.sig && sep > 0 ? c.sig.slice(0, sep + 1) : ""
+const sigVal = c?.sig ? (sep > 0 ? c.sig.slice(sep + 2) : c.sig) : ""
+const pillTop = y + (c?.sig ? 78 : 52)
+const lineY = c?.status ? pillTop + 42 : y + (c?.sig ? 90 : 66)
+const msLen = c?.ms !== undefined ? 3 + String(c.ms).length + 3 : 0
+const okW = c?.status ? Math.round((c.status.length + msLen) * 7.4 + 20) : 0
+const line = c?.line !== undefined ? txt(c.line, layout) : ""
+---
+
+<g class="sb-card" data-node={id}>
+  {link && <path class="card-link" d={link}></path>}
+  <rect class="card" x={x} y={y} width={w} height={h} rx="14"></rect>
+  <path class="card-rule" d={`M${x} ${y + 40}h${w}`}></path>
+  <rect class="method" x={x + 14} y={y + 10} width={methodW} height="20" rx="6"></rect>
+  <text class="method-t" x={x + 14 + methodW / 2} y={y + 20.5} text-anchor="middle">{method}</text>
+  <text class="m" x={x + 14 + methodW + 10} y={y + 20.5} dominant-baseline="central" style="fill:var(--foreground)">{path}</text>
+  <circle class="cdot" cx={x + w - 20} cy={y + 20} r="4"></circle>
+  {
+    c?.sig && (
+      <text class="m" x={x + 16} y={y + 62} dominant-baseline="central">
+        {sigKey && <tspan>{sigKey} </tspan>}
+        <tspan class="sb-sig" style="fill:var(--foreground)">{sigVal}</tspan>
+      </text>
+    )
+  }
+  {
+    c?.status && (
+      <g class="trav sb-pending">
+        <rect class="pill-warn" x={x + 16} y={pillTop} width="89" height="24" rx="12" />
+        <text class="warn" x={x + 16 + 44.5} y={pillTop + 12.5} text-anchor="middle">pending…</text>
+      </g>
+    )
+  }
+  {
+    c?.status && (
+      <g class="sb-ok">
+        <rect class="pill-ok" x={x + 16} y={pillTop} width={okW} height="24" rx="12" />
+        <text class="ok" x={x + 16 + okW / 2} y={pillTop + 12.5} text-anchor="middle">
+          {c.status}
+          {c.ms !== undefined && (
+            <>
+              {" · "}
+              <tspan class="sb-ms">{c.ms}</tspan> ms
+            </>
+          )}
+        </text>
+      </g>
+    )
+  }
+  {
+    line && (
+      <g class="sb-get">
+        <text class="m" x={x + 16} y={lineY} dominant-baseline="central" style="fill:var(--foreground)">{line}</text>
+        <path class="ico-ok sb-checkmark" d={`M${x + 16 + line.length * CH + 10} ${lineY}l4 4 8-9`} fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      </g>
+    )
+  }
+</g>

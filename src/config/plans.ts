@@ -39,6 +39,8 @@ export type BillingInterval = "month" | "year";
 /** Paid features that only some plans include: the cheapest plan with each one. */
 const FEATURE_PLAN = {
   apiAccess: "pro",
+  /** The MCP server (/mcp) that Claude, ChatGPT and other AI apps connect to. */
+  mcpAccess: "pro",
   auditLog: "pro",
 } as const satisfies Record<string, PlanId>;
 
@@ -46,6 +48,7 @@ export type Feature = keyof typeof FEATURE_PLAN;
 
 export const FEATURE_LABELS: Record<Feature, string> = {
   apiAccess: "API access",
+  mcpAccess: "Connecting AI apps",
   auditLog: "The audit log",
 };
 
@@ -77,7 +80,7 @@ export interface PlanFeature {
 /** Feature lists for the pricing page: what each plan adds on top of the one below. */
 const EXTRAS: Record<PlanId, PlanFeature[]> = {
   starter: [{ label: "Email support" }, { label: "Two-factor authentication" }],
-  pro: [{ label: "Everything in Starter" }, { label: "REST API" }, { label: "Audit log" }],
+  pro: [{ label: "Everything in Starter" }, { label: "REST API" }, { label: "Claude & ChatGPT connector" }, { label: "Audit log" }],
   business: [{ label: "Everything in Pro" }, { label: "SSO", soon: true }, { label: "Priority support" }],
 };
 

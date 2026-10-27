@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import { authClient } from "@/lib/auth-client"
+import { authClient, oauthRedirect } from "@/lib/auth-client"
 import { siteConfig } from "@/config/site"
 import { TRIAL_DAYS } from "@/config/plans"
 import { Button } from "@/components/ui/button"
@@ -66,7 +66,7 @@ export function TwoFactorChallenge({ next }: { next: string }) {
     const trustDevice = form.get("trust") === "on"
     setPending(true)
     setError(null)
-    const { error } = backup
+    const { data, error } = backup
       ? await authClient.twoFactor.verifyBackupCode({ code, trustDevice })
       : await authClient.twoFactor.verifyTotp({ code, trustDevice })
     if (error) {
@@ -75,7 +75,8 @@ export function TwoFactorChallenge({ next }: { next: string }) {
       if (error.code === "INVALID_TWO_FACTOR_COOKIE") return window.location.reload()
       return setError(error.message ?? "That code didn't work")
     }
-    window.location.assign(next)
+    // Signing in to connect an AI app: Better Auth continues its authorization.
+    window.location.assign(oauthRedirect(data) ?? next)
   }
 
   return (
@@ -160,7 +161,7 @@ export function AuthForm({ mode, next = "/app", email: prefill }: AuthFormProps)
     // With verification on, sign-up returns no session: ask the user to check their inbox.
     if (signup && !data?.token) return setSignedUp(email)
     if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) return setTwoFactor(true)
-    window.location.assign(next)
+    window.location.assign(oauthRedirect(data) ?? next)
   }
 
   if (signedUp) return <CheckInbox email={signedUp} callbackURL={callbackURL} />
