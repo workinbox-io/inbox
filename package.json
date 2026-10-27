@@ -11,7 +11,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro build && wrangler dev",
-    "deploy": "astro build && wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "deploy": "astro build && wrangler d1 migrations apply DB --remote && wrangler deploy && node scripts/indexnow.ts",
     "typecheck": "wrangler types --strict-vars=false && astro sync && tsc --noEmit",
     "test": "vitest run",
     "cf-types": "wrangler types --strict-vars=false",
@@ -19,6 +19,7 @@
     "db:migrate": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "setup": "node scripts/setup.ts",
+    "indexnow": "node scripts/indexnow.ts",
     "paddle:sync": "node --env-file=.dev.vars scripts/paddle-sync.ts",
     "template:update": "sh scripts/template-update.sh"
   },

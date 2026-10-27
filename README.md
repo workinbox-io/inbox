@@ -138,3 +138,6 @@ The full workflow is in [TEMPLATE.md](TEMPLATE.md); what each release needs by h
    - Notification destination `https://<domain>/api/paddle/webhook` with `subscription.*` events →
      its secret in `PADDLE_WEBHOOK_SECRET`. Set `PADDLE_ENV=production` when going live.
 5. `pnpm deploy`, or the `Deploy` GitHub workflow (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
+   Both end with `pnpm indexnow`, which sends the sitemap URLs to IndexNow (Bing, and through it
+   ChatGPT search and Copilot) using the key file `public/<key>.txt` that `pnpm setup` created.
+   Also add the domain to Google Search Console and Bing Webmaster Tools and submit `/sitemap-index.xml`.

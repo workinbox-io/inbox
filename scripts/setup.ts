@@ -46,6 +46,8 @@ edit("astro.config.mjs", [[/site: "[^"]*"/, `site: "https://${domain}"`]]);
 edit("src/styles/global.css", [[/--primary: #[0-9a-fA-F]{6};/g, `--primary: ${accent};`]]);
 edit("src/lib/server/api-keys.ts", [[/API_KEY_PREFIX = "[^"]*"/, `API_KEY_PREFIX = "${slug.replace(/-/g, "").slice(0, 4)}_"`]]);
 for (const file of ["public/logo.svg", "public/favicon.svg"]) edit(file, [[/#2f5bff/g, accent]]);
+// IndexNow key file, so deploys can ping Bing and co. (scripts/indexnow.ts).
+execFileSync("node", ["scripts/indexnow.ts", "--init"], { stdio: "inherit" });
 
 if (createResources) {
   const wrangler = (...args: string[]) => execFileSync("npx", ["wrangler", ...args], { encoding: "utf8", stdio: ["inherit", "pipe", "inherit"] });
