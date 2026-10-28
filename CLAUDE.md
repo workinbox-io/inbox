@@ -54,6 +54,9 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
 - Uploads: `POST /api/app/attachments` stores a file in R2 as `attachments/<orgId>/<random>/<safe-name>`
   (`lib/server/uploads.ts`, rules in `lib/uploads.ts`), served by `/api/files`; the composer UI is
   `components/uploads/attachments.tsx`. E-mail helpers (threading, quoted text, body text): `lib/mail/*`.
+- UI: pickers use `components/ui/segmented-control.tsx` (`PeriodTabs` wraps it); custom toasts use
+  `toastCard` from `components/ui/sonner.tsx`; small caps labels use the `eyebrow` utility.
+  Animated marketing diagrams: `components/storyboard` (`defineScene()` + `<Scene />`, see its README).
 
 ## Template vs product files
 

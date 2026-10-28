@@ -66,6 +66,9 @@ Template releases. Note anything a product has to do by hand after `pnpm templat
   and the `Deploy` workflow, so Bing (and ChatGPT search, Copilot) recrawl changed pages sooner.
   A failed ping only warns. `pnpm setup` creates the key file. **Manual step:** in an existing
   product run `node scripts/indexnow.ts --init` once and commit the new `public/<key>.txt`.
+- Toasts (`components/ui/sonner.tsx`): one neutral card with a tinted status icon instead of
+  `richColors`. `toastCard` is exported so `toast.custom(...)` toasts match. No manual steps; drop
+  `richColors` from your own `<Toaster />` if you added one.
 
 ## v1.1.0 (2026-10-26)
 

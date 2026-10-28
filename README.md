@@ -7,21 +7,22 @@
 
 A starting point for a micro SaaS on Cloudflare Workers. It contains everything that isn't the product
 itself: marketing site, docs, sign-in, organizations and teams, billing, an API, an audit log and
-an admin dashboard. The UI and backend patterns are extracted from CloudFile.
+an admin dashboard with staff mailboxes. The UI and backend patterns are extracted from CloudFile.
 
 | | |
 |---|---|
 | App | Astro 7 (SSR) + React islands on **Workers** (`@astrojs/cloudflare`) |
-| UI | Tailwind 4, shadcn/ui, dashboardcn (KPI cards, charts, command palette, tables) |
+| UI | Tailwind 4, shadcn/ui, dashboardcn (KPI cards, charts, command palette, tables), animated storyboards for marketing pages |
 | Database | **D1** + Drizzle (`src/db/schema`, SQL migrations in `migrations/`) |
 | Auth | Better Auth: email + password with verification, Google, TOTP 2FA, organizations, invitations |
 | Billing | **Paddle** (merchant of record): checkout, customer portal, webhooks, trial |
 | E-mail | **Cloudflare Email Service** (`send_email` binding), React Email templates, sent through the queue |
 | Jobs | **Queues** (retries with backoff) + **Cron Triggers**, in the same Worker (`src/worker.ts`) |
-| Files | **R2** binding `FILES`, ready to use |
+| Files | **R2** binding `FILES`: uploads at `/api/app/attachments` (10 MB, 5 per message, no HTML/SVG), served by `/api/files` |
 | API | `/api/v1` with org API keys, rate limited by the Workers Rate Limiting binding, OpenAPI 3.1 |
 | AI apps | MCP server at `/mcp` with OAuth for Claude and ChatGPT, MCP Apps widgets, org API keys for CLIs |
-| Extras | Audit log, error tracking with e-mail alerts, cookieless analytics, `/app/admin`, `llms.txt` |
+| Staff mail | Your own addresses (support@, legal@) at `/app/admin-mail`, laid out like Gmail, via **Email Routing** → `email()` |
+| Extras | Audit log, error tracking with e-mail alerts, cookieless analytics, `/app/admin`, `llms.txt`, IndexNow on deploy |
 
 ## Screenshots
 
@@ -35,6 +36,8 @@ an admin dashboard. The UI and backend patterns are extracted from CloudFile.
 | Organization, team, API keys, audit log | Staff analytics: MRR, sign-ups, traffic |
 | ![Home](docs/screenshots/home.png) | ![Pricing](docs/screenshots/pricing.png) |
 | Marketing home page | Pricing from `config/plans.ts` |
+| ![Staff mailboxes](docs/screenshots/admin-mail.png) | ![Staff mailboxes, HTML mail](docs/screenshots/admin-mail-html.png) |
+| Staff mailboxes: threads, sender panel, reply | Incoming HTML in a sandboxed frame |
 
 Screenshots show demo data. Re-take them after UI changes with Playwright against `pnpm dev`;
 the header is `docs/banner/banner.html`, rendered by `docs/banner/render.mjs`.
@@ -65,20 +68,27 @@ server log (`astro dev logs`) instead of being sent. Run the cron with
 ```
 src/
   config/        site.ts (brand, nav), plans.ts (prices, limits, features), nav.ts (dashboard), audit.ts
-  db/schema/     core.ts (template tables) · app.ts (YOUR tables)
+  db/schema/     core.ts, admin-mail.ts (template tables) · app.ts (YOUR tables)
   jobs/          index.ts (template jobs) · app.ts, app-cron.ts (YOUR jobs and daily tasks)
   mcp/           MCP tools: core.ts (template) · app.ts (YOUR tools and widgets) · widgets/*.tsx
-  lib/server/    domain logic: auth, org, billing, paddle, api-keys, audit, errors, analytics, oauth, mcp, projects (example)
+  lib/server/    domain logic: auth, org, billing, paddle, api-keys, audit, errors, analytics, oauth, mcp,
+                 email, uploads, admin-mail, projects (example)
+  lib/           pure modules shared with tests: validation, uploads, mail/ (threading, quotes), admin-mail/ (rules)
   pages/         marketing (prerendered), /app (dashboard), /api/app (session), /api/v1 (API keys), /mcp, /oauth
-  components/    ui/ (shadcn + dashboardcn), app/ (dashboard), site/ (marketing), auth/, docs/
+  components/    ui/ (shadcn + dashboardcn), app/ (dashboard), site/ (marketing), auth/, docs/,
+                 admin-mail/ (staff mailboxes), uploads/ (attachment picker), storyboard/ (animated diagrams)
   emails/        React Email templates
   content/docs/  docs as Markdown
-  worker.ts      Worker entry: Astro + queue consumer + cron
+  worker.ts      Worker entry: Astro + queue consumer + cron + incoming e-mail
 ```
 
 `projects` is a complete example resource: table, domain logic with a plan limit, routes for the
 dashboard and the API, MCP tools with a widget, a dashboard page, audit entries and a queue job. Copy it for your first real
 resource, then delete it.
+
+Marketing pages can show an animated diagram of how the product works: describe a scene with
+`defineScene()` and render it with `<Scene />` (`src/components/storyboard`, start from
+`scenes/example.ts`; its README has the details).
 
 ### Conventions
 
@@ -115,8 +125,8 @@ pnpm install && pnpm db:generate && pnpm typecheck
 ```
 
 - Set `TEMPLATE_REPO` (or the URL in `scripts/template-update.sh`) to your template repository once.
-- Product code goes in `src/db/schema/app.ts`, `src/jobs/app*.ts`, `src/config/*`, content and new
-  files; then template updates rarely conflict.
+- Product code goes in `src/db/schema/app.ts`, `src/jobs/app*.ts`, `src/mcp/app.ts`, `src/config/*`,
+  content and new files; then template updates rarely conflict.
 - Improvements to shared parts (auth, billing, settings, `components/ui`) are made in the template
   first, tagged, and merged into products.
 - Each product owns its migrations: the update skips the template's, and `pnpm db:generate`
@@ -143,3 +153,7 @@ The full workflow is in [TEMPLATE.md](TEMPLATE.md); what each release needs by h
    Both end with `pnpm indexnow`, which sends the sitemap URLs to IndexNow (Bing, and through it
    ChatGPT search and Copilot) using the key file `public/<key>.txt` that `pnpm setup` created.
    Also add the domain to Google Search Console and Bing Webmaster Tools and submit `/sitemap-index.xml`.
+6. **Staff mailboxes** (optional): list the addresses in `ADMIN_MAILBOXES` and a verified Email
+   Routing destination in `ADMIN_MAIL_FORWARD` (`wrangler.jsonc` `vars`), add an Email Routing rule
+   "Send to Worker" for each address, and make sure the domain is onboarded in Email Service so
+   replies can go out from it. Staff from `ADMIN_EMAILS` then see **Mail** in the sidebar.
