@@ -44,6 +44,17 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
   `custom_data: { plan, interval }` (set by `pnpm paddle:sync`); webhooks re-fetch the subscription
   and mirror it into `subscriptions`. Plans, limits and features: `src/config/plans.ts`.
 
+- Staff mailboxes (`ADMIN_MAILBOXES`, e.g. support@ and legal@ on your domain; off while empty): Email Routing "Send
+  to Worker" → `email()` in `src/worker.ts` → `handleAdminMail` (`lib/server/admin-mail.ts`, pure rules in
+  `lib/admin-mail/rules.ts`, tables in `db/schema/admin-mail.ts`) stores and threads the mail and forwards a copy to
+  `ADMIN_MAIL_FORWARD`. Staff (`ADMIN_EMAILS`) work at `/app/admin-mail` (`components/admin-mail/*`), laid out like Gmail:
+  folders, search, bulk actions, shortcuts, reply / reply all / forward, a docked compose window, drafts and "Undo send"
+  in the browser, a signature per mailbox. Incoming HTML renders in a sandboxed iframe whose CSP blocks remote images until
+  "Show images". Mail goes out right away via `sendNow` (`lib/server/email.ts`) from the mailbox address.
+- Uploads: `POST /api/app/attachments` stores a file in R2 as `attachments/<orgId>/<random>/<safe-name>`
+  (`lib/server/uploads.ts`, rules in `lib/uploads.ts`), served by `/api/files`; the composer UI is
+  `components/uploads/attachments.tsx`. E-mail helpers (threading, quoted text, body text): `lib/mail/*`.
+
 ## Template vs product files
 
 Product code goes in `src/db/schema/app.ts`, `src/jobs/app*.ts`, `src/mcp/app.ts`, `src/config/*`,

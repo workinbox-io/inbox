@@ -1,0 +1,25 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import { AdminMail } from "@/components/admin-mail/admin-mail";
+import { adminMailboxes, isAdmin } from "@/lib/server/admin";
+import { adminUnreadCounts, getMailboxSettings, listAdminThreads } from "@/lib/server/admin-mail";
+
+// Pretend the page doesn't exist for everyone but staff.
+if (!isAdmin(Astro.locals.user)) return new Response(null, { status: 404 });
+const mailboxes = adminMailboxes();
+const [list, unread, signatures] = await Promise.all([listAdminThreads({ mailboxes, folder: "inbox" }), adminUnreadCounts(mailboxes), getMailboxSettings(mailboxes)]);
+// Dates as ISO strings, like the API.
+const threads = JSON.parse(JSON.stringify(list.threads));
+---
+
+<AppLayout title="Mail" fullBleed>
+  <AdminMail
+    client:load
+    mailboxes={mailboxes}
+    threads={threads}
+    hasMore={list.hasMore}
+    unread={unread}
+    signatures={signatures}
+    selectedId={Astro.url.searchParams.get("t")}
+  />
+</AppLayout>

@@ -3,6 +3,26 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.5.0 (2026-10-28)
+
+- Staff mailboxes at `/app/admin-mail`: read and answer your own addresses (support@, legal@, …)
+  from the dashboard, laid out like Gmail. Folders (inbox, snoozed, sent, archived, trash), search,
+  bulk actions, keyboard shortcuts, reply / reply all / forward at the end of a thread, a docked
+  compose window, drafts and "Undo send" kept in the browser, a signature per mailbox and a sender
+  panel. Incoming HTML is shown in a sandboxed frame that holds back remote images until you allow
+  them. Staff only (`ADMIN_EMAILS`); the sidebar shows "Mail" with an unread count when
+  `ADMIN_MAILBOXES` lists any address.
+- `sendNow()` in `lib/server/email.ts` sends right away and returns the Message-ID; `EmailMessage`
+  takes `cc`, `fromName`, `fromEmail`, `headers` and `files` (uploads attached from R2).
+- Uploads (`POST /api/app/attachments`, `/api/files`, `lib/uploads.ts`, `lib/server/uploads.ts`,
+  `components/uploads/attachments.tsx`), e-mail helpers in `lib/mail/*`, `components/ui/input-group.tsx`,
+  and `fullBleed` on `AppLayout` for full-width pages. `postal-mime` is a new dependency.
+- **Manual steps:** `pnpm install`, `pnpm db:generate` (three `admin_mail*` tables), `pnpm cf-types`.
+  To use it: set `ADMIN_MAILBOXES` (and `ADMIN_MAIL_FORWARD`, a verified Email Routing destination)
+  in `wrangler.jsonc`, add an Email Routing rule "Send to Worker" for each address, and onboard the
+  domain in Email Service so you can send from it. If your product already has an `email()` handler,
+  call `handleAdminMail(message, to)` from it for those addresses.
+
 ## v1.4.1 (2026-10-27)
 
 - Eyebrow labels (`eyebrow` utility in `global.css`): 12px semibold caps with 0.05em tracking in

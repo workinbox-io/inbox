@@ -14,7 +14,12 @@
     "PUBLIC_APP_URL": "http://localhost:4321",
     "EMAIL_FROM_ADDRESS": "noreply@example.com",
     "PADDLE_ENV": "sandbox",
-    "ADMIN_EMAILS": ""
+    "ADMIN_EMAILS": "",
+    // Staff mailboxes on your domain, read and answered at /app/admin-mail (lib/server/admin-mail.ts),
+    // comma-separated, e.g. "support@example.com,legal@example.com". Each needs an Email Routing rule
+    // "Send to Worker"; incoming mail is also forwarded to ADMIN_MAIL_FORWARD (a verified destination).
+    "ADMIN_MAILBOXES": "",
+    "ADMIN_MAIL_FORWARD": ""
   },
   // Secrets (wrangler secret put …, locally in .dev.vars): BETTER_AUTH_SECRET, PADDLE_API_KEY,
   // PADDLE_WEBHOOK_SECRET, PUBLIC_PADDLE_CLIENT_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.

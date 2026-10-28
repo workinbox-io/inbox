@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ChartLine, Search } from "lucide-react"
+import { ChartLine, Mail, Search } from "lucide-react"
 
 import {
   Sidebar,
@@ -10,6 +10,7 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
@@ -35,17 +36,22 @@ interface AppShellProps {
   user: { name: string; email: string } | null
   /** Staff (ADMIN_EMAILS) also get the Analytics page. */
   isAdmin?: boolean
+  /** Staff with mailboxes set up (ADMIN_MAILBOXES) get Mail; `unread` threads show as a badge. */
+  adminMail?: { unread: number } | null
+  /** Full-width, full-height content (the staff mailbox) instead of the centered column. */
+  fullBleed?: boolean
   children?: React.ReactNode
 }
 
 const ADMIN_NAV = { href: "/app/admin", label: "Analytics", icon: ChartLine }
+const ADMIN_MAIL_NAV = { href: "/app/admin-mail", label: "Mail", icon: Mail }
 
 function isActive(pathname: string, href: string) {
-  return href === "/app" ? pathname === href : pathname.startsWith(href)
+  return href === "/app" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function AppShell({ pathname, breadcrumbs, user, isAdmin, children }: AppShellProps) {
-  const nav = isAdmin ? [...APP_NAV, ADMIN_NAV] : APP_NAV
+export function AppShell({ pathname, breadcrumbs, user, isAdmin, adminMail, fullBleed, children }: AppShellProps) {
+  const nav = isAdmin ? [...APP_NAV, ADMIN_NAV, ...(adminMail ? [ADMIN_MAIL_NAV] : [])] : APP_NAV
   const [paletteOpen, setPaletteOpen] = React.useState(false)
   useCommandPaletteShortcut(setPaletteOpen)
   const go = (href: string) => () => window.location.assign(href)
@@ -99,6 +105,9 @@ export function AppShell({ pathname, breadcrumbs, user, isAdmin, children }: App
                           <span>{item.label}</span>
                         </a>
                       </SidebarMenuButton>
+                      {item.href === ADMIN_MAIL_NAV.href && adminMail?.unread ? (
+                        <SidebarMenuBadge className="text-primary-foreground bg-primary">{adminMail.unread > 99 ? "99+" : adminMail.unread}</SidebarMenuBadge>
+                      ) : null}
                     </SidebarMenuItem>
                   ))}
                 </SidebarMenu>
@@ -149,7 +158,7 @@ export function AppShell({ pathname, breadcrumbs, user, isAdmin, children }: App
               <ThemeToggle />
             </div>
           </header>
-          <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 md:p-8">{children}</main>
+          <main className={fullBleed ? "flex min-h-0 w-full flex-1 flex-col p-2 pt-0" : "mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 md:p-8"}>{children}</main>
         </SidebarInset>
         <CommandPalette
           groups={groups}

@@ -1,15 +1,30 @@
 /**
  * The Worker's entry point (main in wrangler.jsonc): Astro serves HTTP, and the same Worker
- * consumes the JOBS queue and runs the cron triggers.
+ * consumes the JOBS queue, runs the cron triggers and receives mail for the staff mailboxes
+ * (Email Routing "Send to Worker", lib/server/admin-mail.ts).
  */
 import { handle } from "@astrojs/cloudflare/handler";
 import { jobHandlers } from "@/jobs";
+import { adminMailboxes } from "@/lib/server/admin";
+import { handleAdminMail } from "@/lib/server/admin-mail";
 import { dailyTasks } from "@/jobs/cron";
 import { reportError } from "@/lib/server/errors";
 import type { JobMessage } from "@/lib/server/queue";
 
 export default {
   fetch: (request, env, ctx) => handle(request, env, ctx),
+
+  async email(message) {
+    const to = message.to.toLowerCase();
+    if (!adminMailboxes().includes(to)) return message.setReject("Unknown address");
+    try {
+      await handleAdminMail(message, to);
+    } catch (e) {
+      await reportError("web", e, { where: "email", to });
+      // Let the sender's server retry later instead of losing the mail.
+      throw e;
+    }
+  },
 
   async queue(batch: MessageBatch<JobMessage>) {
     for (const msg of batch.messages) {

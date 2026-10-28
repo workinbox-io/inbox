@@ -1,15 +1,22 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
 import { AppShell } from "@/components/app/app-shell";
-import { isAdmin } from "@/lib/server/admin";
+import { adminMailboxes, isAdmin } from "@/lib/server/admin";
+import { adminUnreadCount } from "@/lib/server/admin-mail";
 
 interface Props {
   title: string;
   breadcrumbs?: { label: string; href?: string }[];
+  /** Use the whole viewport instead of the centered content column (the staff mailbox). */
+  fullBleed?: boolean;
 }
 
-const { title, breadcrumbs = [{ label: title }] } = Astro.props;
+const { title, breadcrumbs = [{ label: title }], fullBleed = false } = Astro.props;
 const { user } = Astro.locals;
+const admin = isAdmin(user);
+// Staff mailboxes, when ADMIN_MAILBOXES lists any: the Mail item and its unread count.
+const boxes = admin ? adminMailboxes() : [];
+const adminMail = boxes.length ? { unread: await adminUnreadCount(boxes).catch(() => 0) } : null;
 ---
 
 <BaseLayout title={title}>
@@ -18,7 +25,9 @@ const { user } = Astro.locals;
     pathname={Astro.url.pathname}
     breadcrumbs={breadcrumbs}
     user={user ? { name: user.name, email: user.email } : null}
-    isAdmin={isAdmin(user)}
+    isAdmin={admin}
+    adminMail={adminMail}
+    fullBleed={fullBleed}
   >
     <slot />
   </AppShell>
