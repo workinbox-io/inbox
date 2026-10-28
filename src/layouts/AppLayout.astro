@@ -41,6 +41,17 @@ const adminMail = boxes.length ? { unread: await adminUnreadCount(boxes).catch((
         });
       })();
     </script>
+    <script is:inline>
+      // Libraries in the persisted island inject their CSS into <head> once (Sonner's toasts). The router drops
+      // head styles the next page doesn't have, so hand them to the next page: identical styles are kept.
+      document.addEventListener("astro:before-swap", (e) => {
+        for (const style of document.head.querySelectorAll("style")) {
+          if (!style.textContent.includes("[data-sonner-toaster]")) continue;
+          if ([...e.newDocument.head.querySelectorAll("style")].some((s) => s.textContent === style.textContent)) continue;
+          e.newDocument.head.append(style.cloneNode(true));
+        }
+      });
+    </script>
     {/* Pages swap in place: the sidebar island (transition:persist) keeps its state. */}
     <ClientRouter />
   </Fragment>

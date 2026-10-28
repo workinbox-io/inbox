@@ -3,6 +3,12 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.6.1 (2026-10-28)
+
+- Fix: toasts kept their styles only until the first page swap (the router dropped Sonner's injected CSS
+  from `<head>`), so later toasts showed unstyled next to the sidebar. `AppLayout` hands that style to the
+  next page. No manual steps.
+
 ## v1.6.0 (2026-10-28)
 
 - The dashboard swaps pages in place (Astro ClientRouter in `AppLayout`): the sidebar, command palette
