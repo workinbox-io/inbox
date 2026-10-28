@@ -1,5 +1,6 @@
 import * as React from "react"
-import { ChartLine, Mail, Search } from "lucide-react"
+import { ChartLine, Mail, PanelLeftIcon, Search } from "lucide-react"
+import { navigate } from "astro:transitions/client"
 
 import {
   Sidebar,
@@ -8,15 +9,13 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
-  SidebarInset,
   SidebarMenu,
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -28,20 +27,26 @@ import {
 import { APP_HELP, APP_NAV, APP_ACTIONS } from "@/config/nav"
 import { siteConfig } from "@/config/site"
 import { NavUser } from "./nav-user"
-import { ThemeToggle } from "./theme-toggle"
 
+/**
+ * The dashboard's sidebar, command palette and toasts: one island that AppLayout keeps across
+ * ClientRouter navigations (transition:persist), with each page's props. The page itself, header
+ * included, is rendered by AppLayout next to it.
+ */
 interface AppShellProps {
   pathname: string
-  breadcrumbs: { label: string; href?: string }[]
   user: { name: string; email: string } | null
   /** Staff (ADMIN_EMAILS) also get the Analytics page. */
   isAdmin?: boolean
   /** Staff with mailboxes set up (ADMIN_MAILBOXES) get Mail; `unread` threads show as a badge. */
   adminMail?: { unread: number } | null
-  /** Full-width, full-height content (the staff mailbox) instead of the centered column. */
-  fullBleed?: boolean
-  children?: React.ReactNode
+  /** Open or collapsed to icons, as the viewer left it (the `sidebar_state` cookie of components/ui/sidebar.tsx). */
+  sidebarOpen?: boolean
 }
+
+/** The header's toggle and search (AppLayout) live outside the island, so they ask it by event. */
+const TOGGLE_EVENT = "app:toggle-sidebar"
+const SEARCH_EVENT = "app:open-search"
 
 const ADMIN_NAV = { href: "/app/admin", label: "Analytics", icon: ChartLine }
 const ADMIN_MAIL_NAV = { href: "/app/admin-mail", label: "Mail", icon: Mail }
@@ -50,11 +55,82 @@ function isActive(pathname: string, href: string) {
   return href === "/app" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function AppShell({ pathname, breadcrumbs, user, isAdmin, adminMail, fullBleed, children }: AppShellProps) {
+/** The page on screen: the island stays across navigations, and pages may change the address themselves. */
+function usePathname(initial: string) {
+  const [pathname, setPathname] = React.useState(initial)
+  React.useEffect(() => {
+    const sync = () => setPathname(location.pathname)
+    window.addEventListener("popstate", sync)
+    document.addEventListener("astro:after-swap", sync)
+    return () => {
+      window.removeEventListener("popstate", sync)
+      document.removeEventListener("astro:after-swap", sync)
+    }
+  }, [])
+  return pathname
+}
+
+/** Opens or closes the sidebar from the header. */
+export function SidebarToggle() {
+  return (
+    <Button variant="ghost" size="icon" className="-ml-1 size-7" onClick={() => window.dispatchEvent(new Event(TOGGLE_EVENT))}>
+      <PanelLeftIcon />
+      <span className="sr-only">Toggle Sidebar</span>
+    </Button>
+  )
+}
+
+/** Opens the command palette from the header. */
+export function SearchButton() {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="text-muted-foreground w-9 justify-start gap-2 px-0 max-sm:justify-center sm:w-56 sm:px-3"
+      onClick={() => window.dispatchEvent(new Event(SEARCH_EVENT))}
+    >
+      <Search />
+      <span className="max-sm:sr-only">Search…</span>
+      <kbd className="bg-muted ml-auto rounded px-1.5 font-mono text-[10px] max-sm:hidden">⌘K</kbd>
+    </Button>
+  )
+}
+
+/** The sidebar's side of the persisted island: the header's toggle, and closing the phone sheet after each navigation. */
+function SidebarSync() {
+  const { setOpenMobile, toggleSidebar } = useSidebar()
+  React.useEffect(() => {
+    window.addEventListener(TOGGLE_EVENT, toggleSidebar)
+    return () => window.removeEventListener(TOGGLE_EVENT, toggleSidebar)
+  }, [toggleSidebar])
+  React.useEffect(() => {
+    const close = () => setOpenMobile(false)
+    document.addEventListener("astro:after-swap", close)
+    return () => document.removeEventListener("astro:after-swap", close)
+  }, [setOpenMobile])
+  return null
+}
+
+export function AppShell({ pathname: initialPathname, user, isAdmin, adminMail, sidebarOpen = true }: AppShellProps) {
+  const pathname = usePathname(initialPathname)
   const nav = isAdmin ? [...APP_NAV, ADMIN_NAV, ...(adminMail ? [ADMIN_MAIL_NAV] : [])] : APP_NAV
   const [paletteOpen, setPaletteOpen] = React.useState(false)
   useCommandPaletteShortcut(setPaletteOpen)
-  const go = (href: string) => () => window.location.assign(href)
+  React.useEffect(() => {
+    const open = () => setPaletteOpen(true)
+    // The palette lives in the persisted island: close it once the next page is in, however it was reached.
+    const close = () => setPaletteOpen(false)
+    window.addEventListener(SEARCH_EVENT, open)
+    document.addEventListener("astro:after-swap", close)
+    return () => {
+      window.removeEventListener(SEARCH_EVENT, open)
+      document.removeEventListener("astro:after-swap", close)
+    }
+  }, [])
+  const go = (href: string) => () => {
+    setPaletteOpen(false)
+    void navigate(href)
+  }
 
   const groups: CommandPaletteGroup[] = [
     {
@@ -69,8 +145,10 @@ export function AppShell({ pathname, breadcrumbs, user, isAdmin, adminMail, full
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <Sidebar variant="inset">
+      {/* No box of its own: the sidebar sits in AppLayout's wrapper, next to the page. */}
+      <SidebarProvider defaultOpen={sidebarOpen} className="contents">
+        <SidebarSync />
+        <Sidebar variant="inset" collapsible="icon">
           <SidebarHeader>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -82,16 +160,6 @@ export function AppShell({ pathname, breadcrumbs, user, isAdmin, adminMail, full
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-muted-foreground justify-start gap-2"
-              onClick={() => setPaletteOpen(true)}
-            >
-              <Search />
-              Search…
-              <kbd className="bg-muted ml-auto rounded px-1.5 font-mono text-[10px]">⌘K</kbd>
-            </Button>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
@@ -99,7 +167,7 @@ export function AppShell({ pathname, breadcrumbs, user, isAdmin, adminMail, full
                 <SidebarMenu>
                   {nav.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={isActive(pathname, item.href)}>
+                      <SidebarMenuButton asChild isActive={isActive(pathname, item.href)} tooltip={item.label}>
                         <a href={item.href}>
                           <item.icon />
                           <span>{item.label}</span>
@@ -118,7 +186,7 @@ export function AppShell({ pathname, breadcrumbs, user, isAdmin, adminMail, full
                 <SidebarMenu>
                   {APP_HELP.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild size="sm">
+                      <SidebarMenuButton asChild size="sm" tooltip={item.label}>
                         <a href={item.href}>
                           <item.icon />
                           <span>{item.label}</span>
@@ -136,30 +204,6 @@ export function AppShell({ pathname, breadcrumbs, user, isAdmin, adminMail, full
             </SidebarFooter>
           ) : null}
         </Sidebar>
-        <SidebarInset>
-          <header className="flex h-14 shrink-0 items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-            <nav className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
-              {breadcrumbs.map((b, i) => (
-                <React.Fragment key={i}>
-                  {i > 0 ? <span>/</span> : null}
-                  {b.href ? (
-                    <a href={b.href} className="hover:text-foreground truncate">
-                      {b.label}
-                    </a>
-                  ) : (
-                    <span className="text-foreground truncate font-medium">{b.label}</span>
-                  )}
-                </React.Fragment>
-              ))}
-            </nav>
-            <div className="ml-auto">
-              <ThemeToggle />
-            </div>
-          </header>
-          <main className={fullBleed ? "flex min-h-0 w-full flex-1 flex-col p-2 pt-0" : "mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 md:p-8"}>{children}</main>
-        </SidebarInset>
         <CommandPalette
           groups={groups}
           open={paletteOpen}

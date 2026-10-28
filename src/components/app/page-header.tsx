@@ -13,7 +13,7 @@ interface PageHeaderProps extends Omit<React.ComponentProps<"div">, "title"> {
 /** Title block at the top of every app page. */
 export function PageHeader({ title, description, meta, actions, className, ...props }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-wrap items-end justify-between gap-x-6 gap-y-3", className)} {...props}>
+    <div className={cn("flex flex-wrap items-start justify-between gap-x-6 gap-y-3", className)} {...props}>
       <div className="grid min-w-0 gap-2">
         <h1 className="truncate text-3xl leading-tight font-normal tracking-tight sm:text-4xl">{title}</h1>
         {description ? <p className="text-muted-foreground max-w-2xl text-base tracking-tight">{description}</p> : null}
@@ -21,7 +21,7 @@ export function PageHeader({ title, description, meta, actions, className, ...pr
           <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm tracking-tight">{meta}</div>
         ) : null}
       </div>
-      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:pt-1">{actions}</div> : null}
     </div>
   )
 }

@@ -96,13 +96,8 @@ function TickKpiCard({ metrics, segments = 40, className, ...props }: TickKpiCar
                     )}
                   </span>
                 </div>
-                <TickBar
-                  value={metric.max === null ? 0 : metric.value}
-                  max={metric.max ?? 1}
-                  segments={segments}
-                  color={color}
-                  className="h-5"
-                />
+                {/* Nothing to fill up to when there's no limit. */}
+                {metric.max === null ? null : <TickBar value={metric.value} max={metric.max} segments={segments} color={color} className="h-5" />}
               </div>
             )
           })}

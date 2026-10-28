@@ -6,6 +6,7 @@ import { api } from "@/lib/api-client"
 import { forwardSubject, replyRecipients, splitAddresses, withSignature } from "@/lib/admin-mail/rules"
 import { replySubject } from "@/lib/mail/threading"
 import { cn } from "@/lib/utils"
+import { guardLeaving } from "@/lib/panel-history"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -36,13 +37,7 @@ export function useUndoSend(onSent: (threadId: string) => void) {
   const pending = React.useRef(0)
   const sent = React.useRef(onSent)
   sent.current = onSent
-  React.useEffect(() => {
-    const guard = (e: BeforeUnloadEvent) => {
-      if (pending.current) e.preventDefault()
-    }
-    window.addEventListener("beforeunload", guard)
-    return () => window.removeEventListener("beforeunload", guard)
-  }, [])
+  React.useEffect(() => guardLeaving(() => pending.current > 0), [])
   return React.useCallback((job: SendJob) => {
     pending.current++
     const timer = setTimeout(async () => {

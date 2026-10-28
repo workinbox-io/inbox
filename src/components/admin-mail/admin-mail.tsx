@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { api } from "@/lib/api-client"
 import { ALL_MAILBOXES, type MailFolder } from "@/lib/admin-mail/rules"
+import { replaceUrl } from "@/lib/panel-history"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
@@ -140,7 +141,7 @@ export function AdminMail(props: AdminMailProps) {
     const url = new URL(location.href)
     if (selectedId) url.searchParams.set("t", selectedId)
     else url.searchParams.delete("t")
-    history.replaceState(null, "", url)
+    replaceUrl(url)
     setInfoOpen(false)
     if (!selectedId) return setDetail(null)
     setDetail((cur) => (cur?.thread.id === selectedId ? cur : null))

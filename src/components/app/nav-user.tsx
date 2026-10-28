@@ -161,7 +161,7 @@ export function NavUser({ user }: { user: { name: string; email: string } }) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <a href="/api/auth/sign-out-redirect">
+              <a data-astro-reload href="/api/auth/sign-out-redirect">
                 <LogOut />
                 Sign out
               </a>

@@ -80,7 +80,7 @@ export function AuditLogPanel(props: { initial: Page }) {
                       {r.target ? <span className="font-mono text-xs break-all"> {r.target}</span> : null}
                     </span>
                     <span className="text-muted-foreground truncate text-xs" title={extra ?? undefined}>
-                      <time dateTime={r.createdAt} title={new Date(r.createdAt).toLocaleString()}>
+                      <time dateTime={r.createdAt} title={new Date(r.createdAt).toLocaleString()} suppressHydrationWarning>
                         {timeAgo(r.createdAt)}
                       </time>
                       {r.actorType === "api_key" ? " · API key" : ""}

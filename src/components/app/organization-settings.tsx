@@ -47,7 +47,7 @@ export function OrgProfileSection({ id, name: initialName, canManage }: { id: st
 
   return (
     <SettingsSection id="organization" title="Organization" description="The workspace your projects, team and billing belong to.">
-      <div className="grid max-w-md gap-4">
+      <div className="grid max-w-xl gap-4">
         {canManage ? (
           <form onSubmit={save} className="grid gap-2">
             <Label htmlFor="org-name">Name</Label>
@@ -126,7 +126,7 @@ export function CompanyDetailsSection({ initial, canManage }: { initial: Billing
     return (
       <SettingsSection id="company-details" title="Company details" description={description}>
         {lines.length ? (
-          <address className="bg-surface max-w-md rounded-2xl px-5 py-4 text-sm not-italic">
+          <address className="bg-surface max-w-xl rounded-2xl px-5 py-4 text-sm not-italic">
             {lines.map((l) => (
               <div key={l as string}>{l}</div>
             ))}
@@ -206,7 +206,7 @@ export function OrgDangerZone({ orgId, orgName, role, others }: DangerZoneProps)
         </>
       }
     >
-      <ul className="bg-surface divide-border/60 max-w-2xl divide-y rounded-2xl">
+      <ul className="bg-surface divide-border/60 max-w-xl divide-y rounded-2xl">
         {owner ? (
           <>
             <Row

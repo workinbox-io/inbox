@@ -77,7 +77,7 @@ function ProfileSection({ user }: { user: { name: string; email: string } }) {
 
   return (
     <SettingsSection id="account" title="Profile" description="Your name is shown to your team and in the audit log.">
-      <div className="grid max-w-md gap-6">
+      <div className="grid max-w-md grid-cols-[minmax(0,1fr)] gap-6">
         <form onSubmit={save} className="grid gap-2">
           <Label htmlFor="account-name">Name</Label>
           <div className="flex gap-2">
@@ -87,7 +87,7 @@ function ProfileSection({ user }: { user: { name: string; email: string } }) {
             </Button>
           </div>
         </form>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
           <Label>Email</Label>
           <div className="flex items-center gap-2">
             <span className="bg-surface min-w-0 flex-1 truncate rounded-md px-3 py-2 text-sm">{user.email}</span>
@@ -233,9 +233,15 @@ function PasswordSection({ hasPassword }: { hasPassword: boolean }) {
 
 // ---------------------------------------------------------------------------
 
+const VISIBLE_SESSIONS = 4
+
 function SessionsSection({ initial }: { initial: SessionRow[] }) {
   const [sessions, setSessions] = React.useState(initial)
   const others = sessions.filter((s) => !s.current)
+  const [expanded, setExpanded] = React.useState(false)
+  // The current session first, then the most recently active others.
+  const ordered = [...sessions].sort((a, b) => Number(b.current) - Number(a.current) || b.lastActive.localeCompare(a.lastActive))
+  const visible = expanded ? ordered : ordered.slice(0, VISIBLE_SESSIONS)
 
   async function revoke(s: SessionRow) {
     try {
@@ -260,8 +266,25 @@ function SessionsSection({ initial }: { initial: SessionRow[] }) {
       description="Browsers and devices signed in to your account. Sign out any you don't recognise, then change your password."
     >
       <div className="grid gap-3">
+        {others.length ? (
+          <div className="flex max-w-2xl flex-wrap items-center justify-between gap-2">
+            <span className="text-muted-foreground text-sm">
+              {sessions.length} session{sessions.length === 1 ? "" : "s"}
+            </span>
+            <ConfirmButton
+              title="Sign out all other sessions?"
+              description={`${others.length} other session${others.length === 1 ? "" : "s"} will need to sign in again. You stay signed in here.`}
+              confirmLabel="Sign out others"
+              onConfirm={revokeOthers}
+            >
+              <Button variant="outline" size="sm">
+                Sign out other sessions
+              </Button>
+            </ConfirmButton>
+          </div>
+        ) : null}
         <ul className="bg-surface divide-border/60 max-w-2xl divide-y rounded-2xl">
-          {sessions.map((s) => {
+          {visible.map((s) => {
             const Icon = s.mobile ? Smartphone : Laptop
             return (
               <li key={s.id} className="flex items-center gap-3 px-5 py-3 text-sm">
@@ -271,7 +294,7 @@ function SessionsSection({ initial }: { initial: SessionRow[] }) {
                     {s.browser}
                     {s.os ? <span className="font-normal"> on {s.os}</span> : null}
                   </span>
-                  <span className="text-muted-foreground truncate text-xs">
+                  <span className="text-muted-foreground truncate text-xs" suppressHydrationWarning>
                     {[s.ip, s.current ? "Active now" : `Active ${timeAgo(s.lastActive)}`].filter(Boolean).join(" · ")}
                   </span>
                 </span>
@@ -286,20 +309,15 @@ function SessionsSection({ initial }: { initial: SessionRow[] }) {
             )
           })}
         </ul>
-        <div className="flex flex-wrap gap-2">
-          {others.length ? (
-            <ConfirmButton
-              title="Sign out all other sessions?"
-              description={`${others.length} other session${others.length === 1 ? "" : "s"} will need to sign in again. You stay signed in here.`}
-              confirmLabel="Sign out others"
-              onConfirm={revokeOthers}
-            >
-              <Button variant="outline" size="sm">
-                Sign out other sessions
-              </Button>
-            </ConfirmButton>
-          ) : null}
-          <a href="/api/auth/sign-out-redirect" className={buttonVariants({ size: "sm", variant: "ghost" })}>
+        {sessions.length > VISIBLE_SESSIONS ? (
+          <div>
+            <Button variant="ghost" size="sm" onClick={() => setExpanded((v) => !v)}>
+              {expanded ? "Show fewer" : `Show all (${sessions.length})`}
+            </Button>
+          </div>
+        ) : null}
+        <div className="md:hidden">
+          <a data-astro-reload href="/api/auth/sign-out-redirect" className={buttonVariants({ size: "sm", variant: "ghost" })}>
             Sign out
           </a>
         </div>

@@ -30,6 +30,11 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
   validate with `parseBody(request, schema)` (schemas in `lib/validation.ts`), call `audit()`.
 - `src/middleware.ts` guards `/app` and `/api/app` (session) and `/api/v1` (API keys, rate limit,
   plan feature), and sets `locals.orgId`/`locals.role`. Every query must be scoped to the org.
+- Dashboard navigation: `AppLayout` uses Astro's ClientRouter. The sidebar, command palette and toasts are one
+  persisted island (`app-shell.tsx`, `transition:persist`); the header and page render next to it. Pages that change
+  the address in place use `replaceUrl`/`pushUrl` (`lib/panel-history.ts`), never `history.*State(null, …)`;
+  unsaved-change guards use `guardLeaving`; GET links to `/api` need `data-astro-reload`. Islands' module code runs
+  once per tab: per-page work listens to `astro:after-swap`.
 - D1 has no interactive transactions: use `db.batch([...])`. Times are integer ms (`timestamp_ms`).
 - Async work goes through `enqueue()` (`lib/server/queue.ts`); handlers must be idempotent.
   `sendEmail()` also goes through the queue; `deliverEmail()` does the actual send.

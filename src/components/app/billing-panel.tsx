@@ -64,6 +64,8 @@ export function BillingPanel(props: BillingPanelProps) {
   const trialDays = props.trialEndsAt
     ? Math.ceil((new Date(props.trialEndsAt).getTime() - Date.now()) / 86_400_000)
     : null
+  /** The plan picker below only renders without a subscription. */
+  const canPick = !props.hasSubscription
   const s = STATUS[status] ?? { label: status, dot: "bg-muted-foreground" }
 
   return (
@@ -99,8 +101,8 @@ export function BillingPanel(props: BillingPanelProps) {
             <p className="text-muted-foreground text-sm tracking-tight">
               {status === "trialing" && trialDays !== null
                 ? trialDays > 0
-                  ? `Your free trial ends in ${trialDays} day${trialDays === 1 ? "" : "s"}. Pick a plan below to keep going.`
-                  : "Your trial has ended. Choose a plan to continue."
+                  ? `Your free trial ends in ${trialDays} day${trialDays === 1 ? "" : "s"}.${canPick ? " Pick a plan below to keep going." : ""}`
+                  : `Your trial has ended.${canPick ? " Choose a plan below to continue." : ""}`
                 : props.currentPeriodEnd
                   ? `Renews on ${new Date(props.currentPeriodEnd).toLocaleDateString(undefined, { dateStyle: "long" })}.`
                   : null}
@@ -109,7 +111,7 @@ export function BillingPanel(props: BillingPanelProps) {
           <div className="text-right">
             <div className="text-5xl font-medium tracking-tight tabular-nums">{money(usage.plan.priceMonthly)}</div>
             <div className="text-muted-foreground text-sm">
-              per month
+              {status === "trialing" && usage.plan.priceMonthly > 0 ? "per month after the trial" : "per month"}
             </div>
           </div>
         </div>

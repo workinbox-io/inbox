@@ -1,6 +1,9 @@
 ---
+import { ClientRouter } from "astro:transitions";
 import BaseLayout from "./BaseLayout.astro";
-import { AppShell } from "@/components/app/app-shell";
+import { AppShell, SearchButton, SidebarToggle } from "@/components/app/app-shell";
+import { ThemeToggle } from "@/components/app/theme-toggle";
+import { Separator } from "@/components/ui/separator";
 import { adminMailboxes, isAdmin } from "@/lib/server/admin";
 import { adminUnreadCount } from "@/lib/server/admin-mail";
 
@@ -20,15 +23,79 @@ const adminMail = boxes.length ? { unread: await adminUnreadCount(boxes).catch((
 ---
 
 <BaseLayout title={title}>
-  <AppShell
-    client:load
-    pathname={Astro.url.pathname}
-    breadcrumbs={breadcrumbs}
-    user={user ? { name: user.name, email: user.email } : null}
-    isAdmin={admin}
-    adminMail={adminMail}
-    fullBleed={fullBleed}
-  >
-    <slot />
-  </AppShell>
+  <Fragment slot="head">
+    <script is:inline>
+      // Each page stamps its history entry (lib/panel-history.ts keeps the stamp). Going back to an entry
+      // of the page on screen (e.g. the mailbox's open thread) is the page's to handle: the router, whose
+      // listener comes after this one, gets a stateless popstate, which it skips.
+      (() => {
+        let page = "";
+        document.addEventListener("astro:page-load", () => {
+          page = crypto.randomUUID();
+          history.replaceState({ ...history.state, panelPage: page }, "");
+        });
+        addEventListener("popstate", (e) => {
+          if (!page || e.state?.panelPage !== page) return;
+          e.stopImmediatePropagation();
+          dispatchEvent(new PopStateEvent("popstate", { state: null }));
+        });
+      })();
+    </script>
+    {/* Pages swap in place: the sidebar island (transition:persist) keeps its state. */}
+    <ClientRouter />
+  </Fragment>
+  <style is:global>
+    /* Pages swap without a crossfade: the old and new page showing through each other read as flicker. */
+    ::view-transition-old(root) {
+      display: none;
+    }
+    ::view-transition-new(root) {
+      animation: none;
+    }
+  </style>
+  {/* The sidebar wrapper of components/ui/sidebar.tsx, out here so the page isn't inside the persisted island. */}
+  <div data-slot="sidebar-wrapper" class="group/sidebar-wrapper bg-sidebar flex min-h-svh w-full">
+    <AppShell
+      client:load
+      transition:persist="app-shell"
+      pathname={Astro.url.pathname}
+      user={user ? { name: user.name, email: user.email } : null}
+      isAdmin={admin}
+      adminMail={adminMail}
+      sidebarOpen={Astro.cookies.get("sidebar_state")?.value !== "false"}
+    />
+    {/* SidebarInset, with the sidebar's state read through the wrapper (the island isn't its sibling). */}
+    <main
+      data-slot="sidebar-inset"
+      class="bg-background relative flex w-full flex-1 flex-col md:m-2 md:ml-0 md:rounded-2xl md:group-has-[[data-slot=sidebar][data-state=collapsed]]/sidebar-wrapper:ml-2"
+    >
+      <header class="flex h-14 shrink-0 items-center gap-2 px-4">
+        <SidebarToggle client:load />
+        <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+        <nav class="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
+          {
+            breadcrumbs.map((b, i) => (
+              <Fragment>
+                {i > 0 && <span>/</span>}
+                {b.href ? (
+                  <a href={b.href} class="hover:text-foreground truncate">
+                    {b.label}
+                  </a>
+                ) : (
+                  <span class="text-foreground truncate font-medium">{b.label}</span>
+                )}
+              </Fragment>
+            ))
+          }
+        </nav>
+        <div class="ml-auto flex items-center gap-2">
+          <SearchButton client:load />
+          <ThemeToggle client:load />
+        </div>
+      </header>
+      <main class={fullBleed ? "flex min-h-0 w-full flex-1 flex-col p-2 pt-0" : "mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 md:p-8"}>
+        <slot />
+      </main>
+    </main>
+  </div>
 </BaseLayout>

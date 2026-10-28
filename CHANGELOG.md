@@ -3,6 +3,29 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.6.0 (2026-10-28)
+
+- The dashboard swaps pages in place (Astro ClientRouter in `AppLayout`): the sidebar, command palette
+  and toasts are one persisted island and no longer reload, flicker or lose state between pages. The
+  header (sidebar toggle, breadcrumbs, a Search button that opens the palette, theme toggle) and the
+  page are rendered by `AppLayout`; pages swap without a crossfade. The palette closes after it opens
+  a page.
+- The sidebar stays as you leave it (cookie `sidebar_state`, read on the server) and collapses to an
+  icon rail with tooltips instead of hiding.
+- `lib/panel-history.ts`: `replaceUrl`/`pushUrl` for pages that change the address themselves (back and
+  forward keep working with the router) and `guardLeaving` for unsaved changes (dashboard links ask too).
+  The staff mailbox uses both.
+- The theme is applied to the next page before the swap (no light frame in dark mode); favicons persist.
+- `prefetch: { prefetchAll: false }` in `astro.config.mjs` (hover prefetch would hit GET links like sign-out);
+  `/api` links get `data-astro-reload`.
+- UI: `PageHeader` actions align with the title and wrap on phones; muted placeholders; no bar for
+  unlimited limits in `TickKpiCard`; Account shows 4 sessions with "Show all"; billing copy matches what's
+  on the page; one width on the organization settings; the settings tab strip fades at its scrollable edge;
+  no hydration warning in the audit log.
+- **Manual steps:** none, unless your product changed `AppLayout`, `app-shell.tsx` or `BaseLayout`: merge by
+  hand, keeping the layout split (page outside the persisted island). Pages that call `history.pushState` or
+  `replaceState` should switch to `pushUrl`/`replaceUrl`, and `beforeunload` guards to `guardLeaving`.
+
 ## v1.5.1 (2026-10-28)
 
 - Docs only: the README covers staff mailboxes, uploads and storyboards (feature table, file layout,

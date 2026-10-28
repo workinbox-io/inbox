@@ -20,6 +20,9 @@ export default defineConfig({
   }),
   // Better Auth keeps sessions in D1; Astro sessions (KV) aren't used.
   session: false,
+  // The dashboard's ClientRouter would prefetch every link on hover: GET links like sign-out, and
+  // pages that aren't cacheable anyway. Only links marked data-astro-prefetch are.
+  prefetch: { prefetchAll: false },
   integrations: [
     react(),
     sitemap({
