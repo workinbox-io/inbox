@@ -208,8 +208,14 @@ export function AuthForm({ mode, next = "/app", email: prefill }: AuthFormProps)
               type="password"
               minLength={10}
               autoComplete={signup ? "new-password" : "current-password"}
+              aria-describedby={signup ? "password-hint" : undefined}
               required
             />
+            {signup ? (
+              <p id="password-hint" className="text-muted-foreground text-xs">
+                At least 10 characters.
+              </p>
+            ) : null}
           </div>
           {error ? <p className="text-destructive text-sm">{error}</p> : null}
           {unverified ? (
@@ -223,6 +229,19 @@ export function AuthForm({ mode, next = "/app", email: prefill }: AuthFormProps)
           <Button loading={pending} type="submit" className="w-full" disabled={pending}>
             {pending ? "Please wait…" : signup ? "Create account" : "Sign in"}
           </Button>
+          {signup ? (
+            <p className="text-muted-foreground text-center text-xs">
+              By creating an account you agree to the{" "}
+              <a className="text-foreground underline" href="/terms" target="_blank">
+                Terms
+              </a>{" "}
+              and{" "}
+              <a className="text-foreground underline" href="/privacy" target="_blank">
+                Privacy policy
+              </a>
+              .
+            </p>
+          ) : null}
           <p className="text-muted-foreground text-sm">
             {signup ? "Already have an account? " : "New here? "}
             <a
