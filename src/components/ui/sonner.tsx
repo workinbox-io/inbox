@@ -38,7 +38,7 @@ const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
           title: "text-sm leading-5 font-medium",
           description: "text-muted-foreground text-[13px] leading-[1.45]",
           actionButton:
-            "bg-foreground text-background hover:bg-foreground/85 h-7 shrink-0 self-center rounded-md px-2.5 text-xs font-medium transition-colors",
+            "text-primary hover:bg-primary/10 focus-visible:ring-ring/50 -my-0.5 -mr-1.5 h-8 shrink-0 cursor-pointer self-start rounded-lg px-2.5 text-[13px] font-semibold transition-colors outline-none focus-visible:ring-2",
           cancelButton:
             "text-muted-foreground hover:text-foreground hover:bg-accent h-7 shrink-0 self-center rounded-md px-2 text-xs font-medium transition-colors",
           // The icon sits in a tinted circle; the toast's type picks the tint.
