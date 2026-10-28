@@ -3,6 +3,12 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.5.1 (2026-10-28)
+
+- Docs only: the README covers staff mailboxes, uploads and storyboards (feature table, file layout,
+  a production step for Email Routing) and has two staff mailbox screenshots; the docs index links
+  the AI apps page. No manual steps.
+
 ## v1.5.0 (2026-10-28)
 
 - Staff mailboxes at `/app/admin-mail`: read and answer your own addresses (support@, legal@, …)
