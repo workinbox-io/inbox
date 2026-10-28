@@ -5,6 +5,8 @@ import DocsSidebar from "@/components/docs/DocsSidebar.astro";
 import DocsToc from "@/components/docs/DocsToc.astro";
 import DocsCta from "@/components/docs/DocsCta.astro";
 import { siteConfig } from "@/config/site";
+import { DOCS_AGENT_PROMPTS } from "@/config/agent-prompts";
+import { AgentButtons } from "@/components/app/agent-buttons";
 import { SECTIONS, docHref, getDocs, neighbours, type DocEntry } from "@/lib/docs";
 
 interface Props {
@@ -16,6 +18,15 @@ const docs = await getDocs();
 const { previous, next } = neighbours(docs, doc);
 const updated = doc.data.updated.toISOString().slice(0, 10);
 const url = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
+// "Ask about this page" in a web chat: the prompt points at the page's Markdown copy.
+const askPrompt = encodeURIComponent(`I'm reading the ${siteConfig.name} docs: ${url(`${docHref(doc)}.md`)}\nRead it and help me use it. Explain, give examples or help me debug.`);
+const askLinks = [
+  { label: "Ask Claude", href: `https://claude.ai/new?q=${askPrompt}` },
+  { label: "Ask ChatGPT", href: `https://chatgpt.com/?q=${askPrompt}` },
+];
+const promptFor = doc.data.agentPrompt ? DOCS_AGENT_PROMPTS[doc.data.agentPrompt] : undefined;
+if (doc.data.agentPrompt && !promptFor) throw new Error(`Unknown agentPrompt "${doc.data.agentPrompt}" in docs/${doc.id} (config/agent-prompts.ts)`);
+const agentPrompt = promptFor?.(siteConfig.url);
 const jsonLd = [
   {
     "@context": "https://schema.org",
@@ -88,7 +99,19 @@ const navBtn =
             <p class="text-muted-foreground text-[1.05rem] sm:text-base sm:text-balance md:max-w-[80%]">{doc.data.description}</p>
             <p class="text-muted-foreground text-xs">
               Updated <time datetime={updated}>{updated}</time> · <a href={`${docHref(doc)}.md`} class="hover:text-foreground underline underline-offset-4">Markdown</a>
+              {askLinks.map((l) => (
+                <>
+                  {" · "}
+                  <a href={l.href} target="_blank" rel="noopener noreferrer" class="hover:text-foreground underline underline-offset-4">{l.label}</a>
+                </>
+              ))}
             </p>
+            {agentPrompt && (
+              <div class="bg-muted/50 mt-3 grid gap-2 rounded-xl border p-4">
+                <p class="text-sm font-medium">Set it up with your coding agent</p>
+                <AgentButtons client:visible prompt={agentPrompt} />
+              </div>
+            )}
           </div>
 
           <article class="typeset w-full flex-1">

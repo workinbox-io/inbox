@@ -3,6 +3,16 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.7.0 (2026-10-28)
+
+- "Open in Claude Code / Codex / Cursor": `components/app/agent-buttons.tsx` opens a coding agent with a prompt typed in
+  (nothing runs until Enter), plus "Copy prompt". Each agent tries its apps first (`claude-cli:`, then Claude Desktop's
+  `claude:`, `codex:`), then a web page that takes the prompt (Claude.ai, ChatGPT, Cursor's hand-off page).
+  `fallback="note"` stays on the page instead (dashboard). Links in `lib/agent-links.ts`, detection in `lib/open-deep-link.ts`.
+- Docs: `agentPrompt: <name>` in a doc's frontmatter shows the buttons under the title, with prompts from the new
+  `src/config/agent-prompts.ts` (product file). Every doc page links "Ask Claude" and "Ask ChatGPT" next to Markdown.
+- **Manual steps:** none. Write your product's prompts in `config/agent-prompts.ts`.
+
 ## v1.6.1 (2026-10-28)
 
 - Fix: toasts kept their styles only until the first page swap (the router dropped Sonner's injected CSS

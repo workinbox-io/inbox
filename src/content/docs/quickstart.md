@@ -4,6 +4,7 @@ description: From sign-up to your first project in two minutes.
 section: Getting started
 order: 2
 updated: 2026-10-25
+agentPrompt: quickstart
 ---
 
 ## 1. Create an account

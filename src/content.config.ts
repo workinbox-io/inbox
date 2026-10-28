@@ -11,6 +11,8 @@ const docs = defineCollection({
     order: z.number(),
     /** Last real content change, shown on the page and as dateModified. Bump it when you edit the page. */
     updated: z.coerce.date(),
+    /** A prompt from `config/agent-prompts.ts`: "Open in Claude Code / Codex / Cursor" under the title. */
+    agentPrompt: z.string().optional(),
   }),
 });
 
