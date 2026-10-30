@@ -1,6 +1,10 @@
+import { BookOpen, Code, HelpCircle, LayoutGrid, Plug, Users, type LucideIcon } from "lucide-react";
+
+/** Header links: optional descriptions, Lucide components or local logo paths. */
+export type NavLink = { href: string; label: string; description?: string; icon?: LucideIcon; logo?: string };
 export type NavItem =
   | { href: string; label: string }
-  | { label: string; items: { href: string; label: string }[]; footer?: { href: string; label: string } };
+  | { label: string; items: NavLink[]; footer?: { href: string; label: string }; secondaryFooter?: { href: string; label: string; prefix?: string } };
 
 /**
  * Product identity used by the website, the dashboard and e-mails. `pnpm setup` fills this in;
@@ -15,14 +19,22 @@ export const siteConfig = {
   accent: "#2f5bff",
   /** Top navigation on marketing pages: links, or dropdowns with `items`. */
   navItems: [
-    { href: "/#features", label: "Features" },
+    {
+      label: "Product",
+      items: [
+        { href: "/#features", label: "All features", description: "Explore what you can do with the product.", icon: LayoutGrid },
+        { href: "/docs/team", label: "Your team", description: "Invite teammates and manage your workspace.", icon: Users },
+        { href: "/docs/mcp", label: "AI apps", description: "Connect your AI assistant to your workspace.", icon: Plug },
+      ],
+      footer: { href: "/docs/quickstart", label: "Get started" },
+    },
     { href: "/pricing", label: "Pricing" },
     {
       label: "Resources",
       items: [
-        { href: "/docs", label: "Documentation" },
-        { href: "/docs/api", label: "API reference" },
-        { href: "/#faq", label: "FAQ" },
+        { href: "/docs", label: "Documentation", description: "Get set up and find your way around.", icon: BookOpen },
+        { href: "/docs/api", label: "API reference", description: "Connect your tools and build integrations.", icon: Code },
+        { href: "/#faq", label: "FAQ", description: "Answers to common questions about the product.", icon: HelpCircle },
       ],
     },
   ] as NavItem[],

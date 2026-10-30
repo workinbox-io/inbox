@@ -3,6 +3,13 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.8.0 (2026-10-30)
+
+- Marketing header: compact two-column dropdowns in a shared animated surface, mobile descriptions, keyboard navigation, reduced-motion support and a shrinking translucent header. Optional `description`, Lucide `icon` and local `logo` fields live on `NavLink`; dropdowns accept optional `footer` and `secondaryFooter` links. Example Product and Resources menus use template features only.
+- Browser chrome follows the rendered page/dashboard background and the selected light/dark theme, including ClientRouter swaps. Use `data-browser-theme-surface` on a custom surface when its background differs from the body.
+- Loading buttons hide their other direct SVG icons while the spinner is visible.
+- **Manual steps:** none.
+
 ## v1.7.0 (2026-10-28)
 
 - "Open in Claude Code / Codex / Cursor": `components/app/agent-buttons.tsx` opens a coding agent with a prompt typed in

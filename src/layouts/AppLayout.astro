@@ -65,7 +65,7 @@ const adminMail = boxes.length ? { unread: await adminUnreadCount(boxes).catch((
     }
   </style>
   {/* The sidebar wrapper of components/ui/sidebar.tsx, out here so the page isn't inside the persisted island. */}
-  <div data-slot="sidebar-wrapper" class="group/sidebar-wrapper bg-sidebar flex min-h-svh w-full">
+  <div data-slot="sidebar-wrapper" data-browser-theme-surface class="group/sidebar-wrapper bg-sidebar flex min-h-svh w-full">
     <AppShell
       client:load
       transition:persist="app-shell"
