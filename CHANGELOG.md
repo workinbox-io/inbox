@@ -3,6 +3,16 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.9.0 (2026-11-01)
+
+- Homepage hero demo: the Projects screen under the headline, creating a project (New project, a name typed, the row
+  and toast arrive). Plays once in view; reduced motion and thumbnails show the finished state. `components/marketing/hero-demo.tsx`.
+- Features section is a bento grid (`components/marketing/features-bento.tsx`): Teams, a stat, sign-in, REST API,
+  background jobs and audit log, each tile playing one small beat as the grid scrolls in. Replaces the `features` array in `index.astro`.
+- Built on the Stageshow kit in `components/stageshow` (MIT). Stage colours read the site's variables (`marketing/look.css`),
+  so palette changes and dark mode carry over.
+- **Manual steps:** none. Replace the demo strings (project names, people, the stat) with your product's.
+
 ## v1.8.0 (2026-10-30)
 
 - Marketing header: compact two-column dropdowns in a shared animated surface, mobile descriptions, keyboard navigation, reduced-motion support and a shrinking translucent header. Optional `description`, Lucide `icon` and local `logo` fields live on `NavLink`; dropdowns accept optional `footer` and `secondaryFooter` links. Example Product and Resources menus use template features only.
