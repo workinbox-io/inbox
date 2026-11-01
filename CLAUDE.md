@@ -62,6 +62,8 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
 - UI: pickers use `components/ui/segmented-control.tsx` (`PeriodTabs` wraps it); custom toasts use
   `toastCard` from `components/ui/sonner.tsx`; small caps labels use the `eyebrow` utility.
   Animated marketing diagrams: `components/storyboard` (`defineScene()` + `<Scene />`, see its README).
+  Faux product UI on marketing pages (homepage hero demo, features bento): `components/marketing/*` on the
+  Stageshow kit in `components/stageshow` (see its README); stage colours read the site's variables (`look.css`).
 
 ## Template vs product files
 
