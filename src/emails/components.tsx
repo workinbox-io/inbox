@@ -26,10 +26,16 @@ const responsiveStyles = `
     .email-link { color: ${dark.accent} !important; }
     .email-button-secondary { background-color: ${dark.inset} !important; color: ${dark.foreground} !important; }
   }
+  /* Phones. react-email puts a Container's or Section's padding on its inner td, so these target that td. */
   @media only screen and (max-width: 520px) {
-    .email-container { padding: 24px 12px !important; }
-    .email-card { padding: 26px 20px !important; }
-    .email-heading { font-size: 23px !important; }
+    .email-container > tbody > tr > td { padding: 16px 12px 28px !important; }
+    .email-card > tbody > tr > td { padding: 24px 20px !important; }
+    .email-header { margin-bottom: 14px !important; }
+    h1.email-heading { font-size: 22px !important; margin-bottom: 18px !important; }
+    .email-button, .email-button-secondary { display: block !important; margin: 0 0 8px !important; text-align: center !important; }
+    .email-detail-label, .email-detail-value { display: block !important; width: auto !important; text-align: start !important; }
+    .email-detail-label { border-bottom: 0 !important; padding: 11px 0 2px !important; }
+    .email-detail-value { border-top: 0 !important; padding: 0 0 11px !important; }
   }
 `;
 
@@ -56,7 +62,7 @@ export function EmailLayout({ preview, children, footer }: { preview: string; ch
           className="email-container"
           style={{ boxSizing: "border-box", margin: "0 auto", maxWidth: "576px", padding: "36px 16px", width: "100%" }}
         >
-          <Row style={{ margin: "0 4px 20px" }}>
+          <Row className="email-header" style={{ margin: "0 0 20px", padding: "0 4px" }}>
             <Column style={{ width: "35px", verticalAlign: "middle" }}>
               {/* Absolute PNG: many clients don't load SVG or relative URLs. */}
               <Img src={appUrl("/email/logo.png")} width="26" height="26" alt="" style={{ display: "block" }} />
@@ -129,7 +135,8 @@ export function EmailButton({ href, children, variant = "primary" }: { href: str
         fontSize: "15px",
         fontWeight: 500,
         lineHeight: "1.2",
-        marginRight: "6px",
+        // Inline-block: when two buttons wrap, the second needs space above it.
+        margin: "0 6px 8px 0",
         padding: "12px 22px",
         textDecoration: "none",
       }}
@@ -141,7 +148,7 @@ export function EmailButton({ href, children, variant = "primary" }: { href: str
 
 export type DetailItem = { label: string; value: ReactNode };
 
-/** Receipt-style rows: label left, value right, hairlines between. */
+/** Receipt-style rows: label left, value right, hairlines between. On phones the value goes under its label. */
 export function DetailRows({ items }: { items: (DetailItem | null | false | undefined)[] }) {
   const rows = items.filter((item): item is DetailItem => Boolean(item));
   if (!rows.length) return null;
@@ -157,12 +164,12 @@ export function DetailRows({ items }: { items: (DetailItem | null | false | unde
       <tbody>
         {rows.map((row, index) => (
           <tr key={row.label} className="email-divider">
-            <td className="email-muted email-divider" style={{ ...cell(index), color: light.mutedForeground, padding: "11px 16px 11px 0", whiteSpace: "nowrap" }}>
+            <td className="email-muted email-divider email-detail-label" style={{ ...cell(index), color: light.mutedForeground, padding: "11px 16px 11px 0", width: "38%" }}>
               {row.label}
               {/* Hidden in HTML; separates label and value in the plain-text version. */}
               <span style={{ display: "none", msoHide: "all" } as CSSProperties}>: </span>
             </td>
-            <td className="email-text email-divider" style={{ ...cell(index), color: light.foreground, padding: "11px 0", textAlign: "right", wordBreak: "break-all" }}>
+            <td className="email-text email-divider email-detail-value" style={{ ...cell(index), color: light.foreground, padding: "11px 0", textAlign: "right", overflowWrap: "anywhere", wordBreak: "break-word" }}>
               {row.value}
               <span style={{ display: "none", msoHide: "all" } as CSSProperties}>
                 <br />
