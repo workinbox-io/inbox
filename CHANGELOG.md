@@ -3,6 +3,13 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.9.1 (2026-11-02)
+
+- E-mails on phones: the mobile styles now reach the padding react-email puts on the inner cell, so the card gets wider
+  instead of narrower. Detail rows put the value under its label (no more words split mid-word), buttons go full width
+  with a gap between them, the heading is 22px. Desktop is unchanged. `src/emails/components.tsx`.
+- **Manual steps:** none. If you added your own `.email-container`/`.email-card` mobile rules, target `> tbody > tr > td`.
+
 ## v1.9.0 (2026-11-01)
 
 - Homepage hero demo: the Projects screen under the headline, creating a project (New project, a name typed, the row
