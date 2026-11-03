@@ -13,6 +13,10 @@ Template releases. Note anything a product has to do by hand after `pnpm templat
   `TabsList variant="underline"` with `tabsTriggerVariants` and `underlineTab(active)` for link rows,
   `CommandDialog shouldFilter` (server-ranked results), and `CommandKbd`, `CommandShortcutKeys`, `CommandFooter` in
   `command.tsx` (`CommandPaletteKbd`/`CommandPaletteShortcutKeys` stay as aliases).
+- Fixes found while a product used these components as they are: `TabsList variant="underline"` and `underlineTab`
+  colour only the bottom edge (the trigger's 1px border made a box); `DialogContent` caps its height at the viewport,
+  lays out as a column and scrolls, so a tall dialog no longer runs off the top; `SidebarMenuSkeleton` has a fixed width
+  (no `Math.random` during render); `useIsMobile` uses `useSyncExternalStore`.
 - Also in this release: staff mailboxes share the compose window's parts (`7300700`).
 - **Manual steps:** none. If a product edited a `components/ui` file to change an icon, move that to `src/config/icons.tsx`.
 
