@@ -63,7 +63,7 @@ const tabsTriggerVariants = cn(
   "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:border-transparent dark:group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent",
   "data-[state=active]:bg-background data-[state=active]:text-foreground dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-background dark:data-[state=active]:text-foreground",
   "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100",
-  "group-data-[variant=underline]/tabs-list:-mb-px group-data-[variant=underline]/tabs-list:h-9 group-data-[variant=underline]/tabs-list:rounded-none group-data-[variant=underline]/tabs-list:border-b group-data-[variant=underline]/tabs-list:border-transparent group-data-[variant=underline]/tabs-list:bg-transparent group-data-[variant=underline]/tabs-list:data-[state=active]:border-primary group-data-[variant=underline]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=underline]/tabs-list:data-[state=active]:bg-transparent"
+  "group-data-[variant=underline]/tabs-list:-mb-px group-data-[variant=underline]/tabs-list:h-9 group-data-[variant=underline]/tabs-list:rounded-none group-data-[variant=underline]/tabs-list:border-x-0 group-data-[variant=underline]/tabs-list:border-t-0 group-data-[variant=underline]/tabs-list:border-b group-data-[variant=underline]/tabs-list:border-transparent group-data-[variant=underline]/tabs-list:bg-transparent group-data-[variant=underline]/tabs-list:data-[state=active]:border-primary group-data-[variant=underline]/tabs-list:data-[state=active]:bg-transparent dark:group-data-[variant=underline]/tabs-list:data-[state=active]:bg-transparent"
 )
 
 function TabsTrigger({
@@ -99,7 +99,7 @@ function TabsContent({
 function underlineTab(active: boolean) {
   return cn(
     tabsTriggerVariants,
-    "-mb-px h-9 rounded-none border-b border-transparent bg-transparent after:hidden",
+    "-mb-px h-9 rounded-none border-x-0 border-t-0 border-b border-transparent bg-transparent after:hidden",
     active && "border-b-primary text-foreground"
   )
 }
