@@ -32,18 +32,7 @@ import {
   type RowSelectionState,
   type SortingState,
 } from "@tanstack/react-table"
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  GripVertical,
-  Settings2,
-  X,
-} from "lucide-react"
+import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon, GripVerticalIcon, Settings2Icon, XIcon } from "@/config/icons"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -449,7 +438,7 @@ function DataTableViewOptions<TData extends RowData>({
           className={cn("h-8", className)}
           {...props}
         >
-          <Settings2 />
+          <Settings2Icon />
           View
         </Button>
       </DropdownMenuTrigger>
@@ -507,7 +496,7 @@ function DataTableColumnHeader<TData extends RowData, TValue>({
 
   const sorted = column.getIsSorted()
   const Icon =
-    sorted === "asc" ? ArrowUp : sorted === "desc" ? ArrowDown : ArrowUpDown
+    sorted === "asc" ? ArrowUpIcon : sorted === "desc" ? ArrowDownIcon : ArrowUpDownIcon
 
   return (
     <div
@@ -610,7 +599,7 @@ function DataTableSelectionBar<TData extends RowData>({
           className="h-8"
           onClick={() => table.resetRowSelection()}
         >
-          <X />
+          <XIcon />
           Clear
         </Button>
       </div>
@@ -707,7 +696,7 @@ function DataTableDragHandle<TData extends RowData>({
         shiftColumn(table, column.id, event.key === "ArrowLeft" ? -1 : 1)
       }}
     >
-      <GripVertical className="size-3.5" />
+      <GripVerticalIcon className="size-3.5" />
     </button>
   )
 }
@@ -1123,7 +1112,7 @@ function DataTablePagination<TData extends RowData>({
           disabled={!table.getCanPreviousPage()}
           aria-label="First page"
         >
-          <ChevronsLeft />
+          <ChevronsLeftIcon />
         </Button>
         <Button
           variant="outline"
@@ -1133,7 +1122,7 @@ function DataTablePagination<TData extends RowData>({
           disabled={!table.getCanPreviousPage()}
           aria-label="Previous page"
         >
-          <ChevronLeft />
+          <ChevronLeftIcon />
         </Button>
         <span className="text-muted-foreground px-2 text-sm tabular-nums">
           Page {pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
@@ -1146,7 +1135,7 @@ function DataTablePagination<TData extends RowData>({
           disabled={!table.getCanNextPage()}
           aria-label="Next page"
         >
-          <ChevronRight />
+          <ChevronRightIcon />
         </Button>
         <Button
           variant="outline"
@@ -1156,7 +1145,7 @@ function DataTablePagination<TData extends RowData>({
           disabled={!table.getCanNextPage()}
           aria-label="Last page"
         >
-          <ChevronsRight />
+          <ChevronsRightIcon />
         </Button>
       </div>
     </div>

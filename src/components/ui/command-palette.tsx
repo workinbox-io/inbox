@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CornerDownLeft } from "lucide-react"
+import { CornerDownLeftIcon } from "@/config/icons"
 
 import { cn } from "@/lib/utils"
 import {
@@ -14,6 +14,9 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
+  CommandFooter,
+  CommandKbd,
+  CommandShortcutKeys,
 } from "@/components/ui/command"
 
 export interface CommandPaletteItem {
@@ -160,9 +163,7 @@ function CommandPaletteContent({
         ))}
       </CommandList>
       {footer !== null ? (
-        <div className="text-muted-foreground flex min-h-10 items-center justify-between gap-3 border-t bg-muted/30 px-3 text-xs">
-          {footer}
-        </div>
+        <CommandFooter>{footer}</CommandFooter>
       ) : null}
     </>
   )
@@ -183,7 +184,7 @@ function CommandPalette({
   description = "Search for a command to run.",
   footer = (
     <span className="flex items-center gap-2">
-      <CommandPaletteKbd><CornerDownLeft /></CommandPaletteKbd>
+      <CommandPaletteKbd><CornerDownLeftIcon /></CommandPaletteKbd>
       Select
     </span>
   ),
@@ -231,38 +232,9 @@ function CommandPalette({
   )
 }
 
-function CommandPaletteKbd({ className, ...props }: React.ComponentProps<"kbd">) {
-  return (
-    <kbd
-      className={cn(
-        "bg-background text-muted-foreground inline-flex h-5 min-w-5 items-center justify-center rounded border px-1 font-sans text-[10px] font-medium shadow-xs [&_svg]:size-3",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function CommandPaletteShortcutKeys({
-  keys,
-  label,
-  className,
-}: {
-  keys: string[]
-  label?: string
-  className?: string
-}) {
-  return (
-    <span
-      aria-label={label ?? keys.join(" then ")}
-      className={cn("flex items-center gap-1", className)}
-    >
-      {keys.map((key) => (
-        <CommandPaletteKbd key={key}>{key}</CommandPaletteKbd>
-      ))}
-    </span>
-  )
-}
+/** Kept for products that import the palette's names; the caps live in `command.tsx` now. */
+const CommandPaletteKbd = CommandKbd
+const CommandPaletteShortcutKeys = CommandShortcutKeys
 
 export {
   CommandPalette,

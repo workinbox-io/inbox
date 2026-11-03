@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "cn"
-import { XIcon } from "lucide-react"
+import { XIcon } from "@/config/icons"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
@@ -61,7 +61,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl bg-background p-7 shadow-xl dark:border duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",
+          "fixed top-[50%] left-[50%] z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-[calc(100%-2rem)] flex-col overflow-y-auto translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl bg-background p-7 shadow-xl dark:border duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 sm:max-w-lg",
           className
         )}
         {...props}
@@ -78,6 +78,21 @@ function DialogContent({
         )}
       </DialogPrimitive.Content>
     </DialogPortal>
+  )
+}
+
+/**
+ * The scrolling middle of a dialog: header and footer stay put, and whatever can grow (lists,
+ * results, long forms) goes here. The negative margin matches `DialogContent`'s padding, so the
+ * scrollbar hugs the panel edge instead of sitting inside the content column.
+ */
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn("-mx-7 min-h-0 flex-1 overflow-y-auto px-7 py-0.5", className)}
+      {...props}
+    />
   )
 }
 
@@ -146,6 +161,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

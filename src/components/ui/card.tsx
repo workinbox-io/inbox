@@ -1,14 +1,26 @@
 import * as React from "react"
 import { cn } from "cn"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+/**
+ * `default` is the flat surface card. `inset` is a tile inside a card (a stat, a suggestion, a list
+ * row): the page background, a smaller radius and its own padding. `elevated` floats above the page.
+ */
+const CARD_VARIANT = {
+  default: "gap-6 rounded-2xl bg-surface py-7 text-surface-foreground",
+  inset: "gap-0 rounded-xl bg-background p-3 text-foreground",
+  elevated: "gap-6 rounded-2xl bg-popover py-7 text-popover-foreground shadow-lg",
+} as const
+
+function Card({
+  className,
+  variant = "default",
+  ...props
+}: React.ComponentProps<"div"> & { variant?: keyof typeof CARD_VARIANT }) {
   return (
     <div
       data-slot="card"
-      className={cn(
-        "flex flex-col gap-6 rounded-2xl bg-surface py-7 text-surface-foreground",
-        className
-      )}
+      data-variant={variant}
+      className={cn("flex flex-col", CARD_VARIANT[variant], className)}
       {...props}
     />
   )

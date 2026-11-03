@@ -1,23 +1,34 @@
-import {
-  CheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  TriangleAlertIcon,
-  XIcon,
-} from "lucide-react"
-import { useTheme } from "next-themes"
+import { CheckIcon, InfoIcon, Loader2Icon, TriangleAlertIcon, XIcon } from "@/config/icons"
+import * as React from "react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
 /** The card every toast sits in. Also used by custom toasts (`toast.custom`) so they match. */
 export const toastCard =
   "bg-popover text-popover-foreground flex w-(--width) items-start gap-3 rounded-xl border p-3 pr-4 font-sans shadow-[0_10px_30px_-12px_rgb(0_0_0/0.25),0_2px_6px_-2px_rgb(0_0_0/0.08)]"
 
+/**
+ * The theme is the `.dark` class on <html>, the same switch every other component reads
+ * (`@custom-variant dark`), watched so a toggle repaints open toasts. No theme provider needed.
+ */
+function useDocumentTheme(): "light" | "dark" {
+  const [theme, setTheme] = React.useState<"light" | "dark">("light")
+  React.useEffect(() => {
+    const root = document.documentElement
+    const read = () => setTheme(root.classList.contains("dark") ? "dark" : "light")
+    read()
+    const observer = new MutationObserver(read)
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] })
+    return () => observer.disconnect()
+  }, [])
+  return theme
+}
+
 const Toaster = ({ toastOptions, ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const theme = useDocumentTheme()
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
       gap={10}
       icons={{

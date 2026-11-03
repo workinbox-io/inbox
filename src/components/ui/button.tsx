@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2Icon } from "@/config/icons"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 import { Slot } from "radix-ui"
@@ -71,7 +71,7 @@ function Button({
         children
       ) : (
         <>
-          {loading ? <Loader2 className="animate-spin" aria-hidden /> : null}
+          {loading ? <Loader2Icon className="animate-spin" aria-hidden /> : null}
           {children}
         </>
       )}
