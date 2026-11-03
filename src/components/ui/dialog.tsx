@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "cn"
-import { XIcon } from "lucide-react"
+import { XIcon } from "@/config/icons"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
@@ -81,6 +81,21 @@ function DialogContent({
   )
 }
 
+/**
+ * The scrolling middle of a dialog: header and footer stay put, and whatever can grow (lists,
+ * results, long forms) goes here. The negative margin matches `DialogContent`'s padding, so the
+ * scrollbar hugs the panel edge instead of sitting inside the content column.
+ */
+function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-body"
+      className={cn("-mx-7 min-h-0 flex-1 overflow-y-auto px-7 py-0.5", className)}
+      {...props}
+    />
+  )
+}
+
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -146,6 +161,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

@@ -3,6 +3,19 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.10.0 (2026-11-03)
+
+- `components/ui` no longer imports `lucide-react`: every glyph a component draws (checks, chevrons, close, search,
+  spinner, toast icons, data-table arrows) comes from `src/config/icons.tsx`. That file is a product file like the rest
+  of `src/config` and ships lucide, so nothing changes until a product swaps it for its own icon set.
+- `sonner.tsx` reads the theme from the `.dark` class on `<html>` (watched), not from `next-themes`.
+- New in `components/ui`: `DialogBody` (the scrolling middle of a dialog), `Card variant="inset" | "elevated"`,
+  `TabsList variant="underline"` with `tabsTriggerVariants` and `underlineTab(active)` for link rows,
+  `CommandDialog shouldFilter` (server-ranked results), and `CommandKbd`, `CommandShortcutKeys`, `CommandFooter` in
+  `command.tsx` (`CommandPaletteKbd`/`CommandPaletteShortcutKeys` stay as aliases).
+- Also in this release: staff mailboxes share the compose window's parts (`7300700`).
+- **Manual steps:** none. If a product edited a `components/ui` file to change an icon, move that to `src/config/icons.tsx`.
+
 ## v1.9.1 (2026-11-02)
 
 - E-mails on phones: the mobile styles now reach the padding react-email puts on the inner cell, so the card gets wider

@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 import { cn } from "cn"
-import { SearchIcon } from "lucide-react"
+import { SearchIcon } from "@/config/icons"
 
 import {
   Dialog,
@@ -35,12 +35,15 @@ function CommandDialog({
   children,
   className,
   showCloseButton = true,
+  shouldFilter,
   ...props
 }: React.ComponentProps<typeof Dialog> & {
   title?: string
   description?: string
   className?: string
   showCloseButton?: boolean
+  /** `false` when the results come from a server: cmdk would otherwise re-rank and hide them. */
+  shouldFilter?: boolean
 }) {
   return (
     <Dialog {...props}>
@@ -52,7 +55,10 @@ function CommandDialog({
         className={cn("overflow-hidden p-0", className)}
         showCloseButton={showCloseButton}
       >
-        <Command className="**:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+        <Command
+          {...(shouldFilter === undefined ? {} : { shouldFilter })}
+          className="**:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+        >
           {children}
         </Command>
       </DialogContent>
@@ -171,8 +177,63 @@ function CommandShortcut({
   )
 }
 
+/** One key cap (`⌘`, `↵`, `esc`). Decorative: name the shortcut on the control it triggers. */
+function CommandKbd({ className, ...props }: React.ComponentProps<"kbd">) {
+  return (
+    <kbd
+      data-slot="command-kbd"
+      aria-hidden
+      className={cn(
+        "inline-flex h-5 min-w-5 items-center justify-center rounded border bg-background px-1 font-sans text-[10px] font-medium text-muted-foreground shadow-xs [&_svg]:size-3",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+/** A chord or sequence as separate caps (`⌘` `K`), read out once as `label`. */
+function CommandShortcutKeys({
+  keys,
+  label,
+  className,
+}: {
+  keys: string[]
+  label?: string
+  className?: string
+}) {
+  return (
+    <span
+      role="img"
+      aria-label={label ?? keys.join(" then ")}
+      className={cn("flex items-center gap-1", className)}
+    >
+      {keys.map((key) => (
+        <CommandKbd key={key}>{key}</CommandKbd>
+      ))}
+    </span>
+  )
+}
+
+/** The strip under the list that names the keys the palette answers to. */
+function CommandFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="command-footer"
+      className={cn(
+        "flex min-h-10 shrink-0 items-center justify-between gap-3 border-t bg-muted/30 px-3 text-xs text-muted-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
 export {
   Command,
+  CommandFooter,
+  CommandKbd,
+  CommandShortcutKeys,
   CommandDialog,
   CommandInput,
   CommandList,

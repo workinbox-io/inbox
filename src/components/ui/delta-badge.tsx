@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Minus, TrendingDown, TrendingUp } from "lucide-react"
+import { MinusIcon, TrendingDownIcon, TrendingUpIcon } from "@/config/icons"
 
 import { cn } from "@/lib/utils"
 import { formatDelta } from "@/lib/format"
@@ -12,9 +12,9 @@ export function getDeltaDirection(delta: number | undefined): DeltaDirection {
 }
 
 const directionIcon: Record<DeltaDirection, React.ElementType> = {
-  up: TrendingUp,
-  down: TrendingDown,
-  flat: Minus,
+  up: TrendingUpIcon,
+  down: TrendingDownIcon,
+  flat: MinusIcon,
 }
 
 export interface DeltaBadgeProps extends React.ComponentProps<"span"> {
