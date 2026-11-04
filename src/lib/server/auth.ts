@@ -15,7 +15,7 @@ import { clientIp } from "./api";
 import { auditTeamChange } from "./auth-audit";
 import { sendEmail } from "./email";
 import { MCP_SCOPES, ORG_CLAIM, fetchClientMetadataResource, mcpResource, oauthOrgSelection } from "./oauth";
-import { OrgError, createPersonalOrg, hasPendingInvitation, prepareAccountDeletion } from "./org";
+import { OrgError, createPersonalOrg, hasPendingInvitation, memberLimit, prepareAccountDeletion, seatUpsell, seatsLeft } from "./org";
 import { enqueue } from "./queue";
 
 /**
@@ -103,6 +103,16 @@ function createAuth() {
       organization({
         invitationExpiresIn: 7 * 86_400,
         cancelPendingInvitationsOnReInvite: true,
+        // Plan member limits (config/plans.ts `members`): checked when an invitation is created —
+        // members and pending invitations both hold a seat — and again when one is accepted, in case
+        // the plan went down in between. A resend reuses its seat and never reaches the hook.
+        membershipLimit: async (_user, org) => memberLimit(org.id),
+        organizationHooks: {
+          beforeCreateInvitation: async ({ invitation }) => {
+            const { plan, left } = await seatsLeft(invitation.organizationId, invitation.email);
+            if (left !== null && left < 1) throw new APIError("FORBIDDEN", { message: seatUpsell(plan) });
+          },
+        },
         sendInvitationEmail: async ({ id, email, organization: org, inviter }) => {
           const url = `${env.PUBLIC_APP_URL}/invite/${id}`;
           await sendEmail({ to: email, ...(await emails.invitation({ orgName: org.name, inviterName: inviter.user.name, url })) });

@@ -49,6 +49,10 @@ interface TeamPanelProps {
   invitations: PendingInvitation[]
   /** Owners and admins manage the team; Better Auth enforces the same rule server-side. */
   canManage: boolean
+  /** Only an owner changes roles. Ownership moves through Transfer (Organization), never a role pick. */
+  canChangeRoles: boolean
+  /** The plan's member limit; `null` = unlimited. Pending invitations hold a seat too. */
+  seats: { plan: string; limit: number | null }
   orgs: OrgChoice[]
 }
 
@@ -73,8 +77,10 @@ const ROLE_HINT: Record<Role, string> = {
 }
 
 export function TeamPanel(props: TeamPanelProps) {
-  const [{ members, invitations, canManage, orgs }, refresh] = useLiveData("/api/app/team", props)
+  const [{ members, invitations, canManage, canChangeRoles, seats, orgs }, refresh] = useLiveData("/api/app/team", props)
   const [inviting, setInviting] = React.useState(false)
+  const taken = members.length + invitations.length
+  const full = seats.limit !== null && taken >= seats.limit
 
   return (
     <>
@@ -82,7 +88,10 @@ export function TeamPanel(props: TeamPanelProps) {
         title="Team"
         description={
           <>
-            {members.length} member{members.length === 1 ? "" : "s"} with access to this organization. Members are free on every plan.{" "}
+            {members.length} member{members.length === 1 ? "" : "s"} with access to this organization.{" "}
+            {seats.limit === null
+              ? `The ${seats.plan} plan has no member limit.`
+              : `${taken} of ${seats.limit} seats on the ${seats.plan} plan, pending invitations included.`}{" "}
             <DocsLink href="/docs/team#roles">Roles</DocsLink>
           </>
         }
@@ -99,7 +108,31 @@ export function TeamPanel(props: TeamPanelProps) {
                   </span>
                   <span className="text-muted-foreground truncate text-xs">{m.email}</span>
                 </span>
-                <span className="text-muted-foreground bg-background rounded-full px-2.5 py-0.5 text-xs capitalize">{m.role}</span>
+                {canChangeRoles && !m.isMe && m.role !== "owner" ? (
+                  <Select
+                    value={m.role}
+                    onValueChange={(role) =>
+                      void run(
+                        authClient.organization.updateMemberRole({ memberId: m.id, role: role as Role }),
+                        `${m.name} is now ${role === "admin" ? "an admin" : "a member"}`,
+                        refresh,
+                      )
+                    }
+                  >
+                    <SelectTrigger size="sm" className="w-28" aria-label={`Role of ${m.name}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(ROLE_HINT) as Role[]).map((r) => (
+                        <SelectItem key={r} value={r}>
+                          <span className="capitalize">{r}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="text-muted-foreground bg-background rounded-full px-2.5 py-0.5 text-xs capitalize">{m.role}</span>
+                )}
                 {canManage && !m.isMe && m.role !== "owner" ? (
                   <ConfirmButton
                     title={`Remove ${m.name}?`}
@@ -133,6 +166,23 @@ export function TeamPanel(props: TeamPanelProps) {
                     </span>
                     <span className="text-muted-foreground bg-background rounded-full px-2.5 py-0.5 text-xs capitalize">{i.role}</span>
                     {canManage ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground"
+                        onClick={() =>
+                          void run(
+                            // Same invitation and link, a fresh 7 days, and the email again. Holds its seat.
+                            authClient.organization.inviteMember({ email: i.email, role: i.role as Role, resend: true }),
+                            `Invitation sent again to ${i.email}`,
+                            refresh,
+                          )
+                        }
+                      >
+                        Resend
+                      </Button>
+                    ) : null}
+                    {canManage ? (
                       <ConfirmButton
                         title={`Revoke the invitation for ${i.email}?`}
                         description="The link in their email stops working."
@@ -153,10 +203,15 @@ export function TeamPanel(props: TeamPanelProps) {
           ) : null}
 
           {canManage ? (
-            <div>
-              <Button size="sm" onClick={() => setInviting(true)}>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button size="sm" onClick={() => setInviting(true)} disabled={full}>
                 <Plus /> Invite member
               </Button>
+              {full ? (
+                <span className="text-muted-foreground text-xs">
+                  Every seat is taken. Upgrade the plan or revoke an invitation to invite someone else.
+                </span>
+              ) : null}
             </div>
           ) : null}
         </div>

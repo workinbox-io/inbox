@@ -93,6 +93,37 @@ export async function getOrgUsage(orgId: string) {
 
 export type OrgUsage = Awaited<ReturnType<typeof getOrgUsage>>;
 
+/**
+ * Seats the plan still has for a new invitation: members plus pending, unexpired invitations both
+ * hold one, so an org cannot invite past its limit and accept them all later. An invitation to the
+ * same address doesn't count — re-inviting replaces it. `null` = the plan has no member limit.
+ */
+export async function seatsLeft(orgId: string, email?: string) {
+  const sub = await getSubscription(orgId);
+  const plan = planById(sub?.plan);
+  if (plan.members === null) return { plan, left: null };
+  const pending = and(
+    eq(invitation.organizationId, orgId),
+    eq(invitation.status, "pending"),
+    gte(invitation.expiresAt, new Date()),
+    ...(email ? [ne(invitation.email, email.toLowerCase())] : []),
+  );
+  const [[m], [i]] = await Promise.all([
+    db.select({ n: count() }).from(member).where(eq(member.organizationId, orgId)),
+    db.select({ n: count() }).from(invitation).where(pending),
+  ]);
+  return { plan, left: plan.members - (m?.n ?? 0) - (i?.n ?? 0) };
+}
+
+/** Better Auth's `membershipLimit`: checked when an invitation is accepted. */
+export async function memberLimit(orgId: string) {
+  const plan = planById((await getSubscription(orgId))?.plan);
+  return plan.members ?? Number.MAX_SAFE_INTEGER;
+}
+
+export const seatUpsell = (plan: { name: string; members: number | null }) =>
+  `The ${plan.name} plan includes ${plan.members} team members. Upgrade to invite more.`;
+
 // ---------------------------------------------------------------------------
 // Settings → Organization
 // ---------------------------------------------------------------------------
@@ -124,7 +155,7 @@ export async function saveBillingDetails(orgId: string, details: BillingDetails)
 
 /** Settings → Team: members, pending invitations and the orgs the viewer can switch to. */
 export async function loadTeam(orgId: string, userId: string) {
-  const [members, invitations, orgs] = await Promise.all([
+  const [members, invitations, orgs, sub] = await Promise.all([
     db
       .select({ id: member.id, userId: member.userId, name: user.name, email: user.email, role: member.role })
       .from(member)
@@ -142,12 +173,18 @@ export async function loadTeam(orgId: string, userId: string) {
       .innerJoin(organization, eq(member.organizationId, organization.id))
       .where(eq(member.userId, userId))
       .orderBy(asc(member.createdAt)),
+    getSubscription(orgId),
   ]);
+  const plan = planById(sub?.plan);
   const myRole = members.find((m) => m.userId === userId)?.role ?? "member";
   return {
     members: members.map((m) => ({ id: m.id, name: m.name, email: m.email, role: m.role, isMe: m.userId === userId })),
     invitations: invitations.map((i) => ({ id: i.id, email: i.email, role: i.role ?? "member", expiresAt: i.expiresAt.toISOString() })),
     canManage: myRole === "owner" || myRole === "admin",
+    /** Only an owner changes roles; ownership itself moves through Transfer, never a role pick. */
+    canChangeRoles: myRole === "owner",
+    /** The plan's member limit (`null` = unlimited); pending invitations hold a seat too. */
+    seats: { plan: plan.name, limit: plan.members },
     orgs: orgs.map((o) => ({ ...o, active: o.id === orgId })),
   };
 }

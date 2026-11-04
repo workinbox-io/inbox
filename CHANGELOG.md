@@ -3,6 +3,19 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.13.0 (unreleased)
+
+- Team: the plan's `members` limit (`config/plans.ts`) is enforced. Members **and** pending invitations hold a
+  seat, checked when an invitation is created (`organizationHooks.beforeCreateInvitation`, upsell message from
+  `seatUpsell`) and again when one is accepted (`membershipLimit`, in case the plan went down in between). A
+  product whose plans should be unlimited sets `members: null`. `seatsLeft` and `memberLimit` live in
+  `lib/server/org.ts`.
+- Team panel: an owner changes a member's role (admin ↔ member) in place; ownership still moves only through
+  Transfer. Pending invitations get **Resend** (`inviteMember({ resend: true })`: same link, a fresh 7 days, the
+  email again, the same seat). "Members are free on every plan" is replaced by the seat count of the org's plan.
+- `loadTeam` returns `canChangeRoles` and `seats: { plan, limit }`. Products rendering their own team UI can read
+  them; no schema change, no manual steps.
+
 ## v1.12.2 (2026-11-04)
 
 - `BarList`, `Sparkline` and `HeatmapChart` follow the shared-`components/ui` rule (v1.10.0): `cn` from the `cn`
