@@ -49,7 +49,7 @@ export function AdminPanel({ data }: { data: AdminOverview }) {
             <CardTitle>Top pages</CardTitle>
           </CardHeader>
           <CardContent>
-            <BarList data={data.topPages} variant="track" showPercentage />
+            <BarList data={data.topPages} variant="meter" showPercentage />
           </CardContent>
         </Card>
         <Card>
@@ -57,7 +57,7 @@ export function AdminPanel({ data }: { data: AdminOverview }) {
             <CardTitle>Top referrers</CardTitle>
           </CardHeader>
           <CardContent>
-            <BarList data={data.topReferrers} variant="track" showPercentage />
+            <BarList data={data.topReferrers} variant="meter" showPercentage />
           </CardContent>
         </Card>
       </div>
