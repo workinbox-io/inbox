@@ -26,8 +26,13 @@ export interface KpiCardProps extends Omit<
   delta?: number
   /** Context for the delta, e.g. "vs. last 30 days". */
   deltaLabel?: string
-  /** Series for the sparkline. Rendered when it has two or more points. */
-  trend?: number[]
+  /** Series for the sparkline, oldest first. Rendered when it has two or more points; `null` is a gap. */
+  trend?: (number | null)[]
+  /**
+   * One label per `trend` point ("Oct 26"). With it, pointing at the sparkline shows that point's
+   * value and label in place of `value` and `deltaLabel`.
+   */
+  trendLabels?: string[]
   format?: NumberFormat
   /** ISO 4217 code, used when `format` is "currency". */
   currency?: string
@@ -44,6 +49,7 @@ function KpiCard({
   delta,
   deltaLabel,
   trend,
+  trendLabels,
   format = "number",
   currency,
   invertDelta = false,
@@ -52,6 +58,9 @@ function KpiCard({
   children,
   ...props
 }: KpiCardProps) {
+  const [hovered, setHovered] = React.useState<number | null>(null)
+  const point = hovered !== null && trendLabels ? hovered : null
+  const shown = point !== null ? (trend?.[point] ?? null) : value
   const direction = getDeltaDirection(delta)
   const isPositive =
     direction === "flat" ? null : (direction === "up") !== invertDelta
@@ -75,7 +84,11 @@ function KpiCard({
           {label}
         </CardDescription>
         <CardTitle className="text-3xl font-normal tabular-nums tracking-tight">
-          <MetricValue value={value} format={format} currency={currency} />
+          {shown === null ? (
+            <span className="text-muted-foreground">—</span>
+          ) : (
+            <MetricValue value={shown} format={format} currency={currency} />
+          )}
         </CardTitle>
         {delta !== undefined ? (
           <CardAction>
@@ -85,12 +98,20 @@ function KpiCard({
       </CardHeader>
       {trend && trend.length > 1 ? (
         <CardContent className="px-6">
-          <Sparkline data={trend} color={trendColor} />
+          <Sparkline
+            data={trend}
+            color={trendColor}
+            {...(trendLabels ? { onHoverIndex: setHovered } : {})}
+          />
         </CardContent>
       ) : null}
-      {deltaLabel || children ? (
+      {deltaLabel || children || point !== null ? (
         <CardContent className="text-muted-foreground flex items-center gap-2 px-6 text-xs">
-          {deltaLabel ? <span>{deltaLabel}</span> : null}
+          {point !== null ? (
+            <span>{trendLabels?.[point]}</span>
+          ) : deltaLabel ? (
+            <span>{deltaLabel}</span>
+          ) : null}
           {children}
         </CardContent>
       ) : null}

@@ -3,6 +3,22 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.12.0 (2026-11-04)
+
+- `BarList` (`components/ui/bar-list.tsx`) draws a row's share three ways: `variant="fill"` (the bar behind the name, as
+  before and still the default), `"track"` (a thin rounded track under the name, like `breakdown-card`) and `"meter"`
+  (a short meter beside the value, nothing behind the name). `pattern="hatched"` stripes the track or meter;
+  `track` and `meter` default to the muted foreground, `hoverColor` tints the row under the pointer.
+- `BarList` can be a small table: `columns` adds a header, each item's `extra` adds cells after the value
+  (`hideBelow: "sm"` hides a column on phones), `sort` + `onSort` make the headers sort buttons (the caller sorts).
+  Items can be `muted` (a "not set" row) or `active` (the row the page is filtered by).
+- `Sparkline` takes `null` points as gaps (a day not reported is not a zero) and `onHoverIndex` for scrubbing, with a
+  cursor line. `KpiCard` uses it when given `trendLabels`: pointing at the trend shows that day's value and label.
+- New `HeatmapChart` (`components/ui/heatmap-chart.tsx`): two-axis density such as weekday × hour, square cells at any
+  width, tooltips, an optional Quiet → Busy legend. Its scale is `lib/heatmap.ts`.
+- The admin panel's top pages and referrers use `BarList variant="track" showPercentage`.
+- No manual steps.
+
 ## v1.11.0 (2026-11-04)
 
 - Dashboard languages. `t("English text")` / `tp(n, forms)` / `appLocale()` from `lib/i18n/panel.ts` work in Astro
