@@ -10,6 +10,9 @@ import { subscriptionUsable } from "@/lib/server/billing";
 import { createPersonalOrg, getSubscription } from "@/lib/server/org";
 import { featureUpsell, hasFeature, planById } from "@/config/plans";
 import { toRole } from "@/lib/server/roles";
+import { resolveLocale, withLocale } from "@/lib/server/i18n";
+import { LOCALE_COOKIE, isSiteLocale } from "@/lib/i18n/locales";
+import { t } from "@/lib/i18n/panel";
 
 const PROTECTED = ["/app", "/api/app"];
 /** /api/v1 paths that don't need a key. */
@@ -52,15 +55,16 @@ async function route(ctx: APIContext, next: MiddlewareNext) {
   ctx.locals.orgId = null;
   ctx.locals.role = null;
   ctx.locals.apiKeyId = null;
+  ctx.locals.locale = "en";
 
   const path = ctx.url.pathname;
   if (ctx.isPrerendered) return next();
   if (path.startsWith("/api/v1/") && !PUBLIC_V1.includes(path)) return apiKeyAuth(ctx, next);
   if (ctx.request.method === "POST" && AUTH_LIMITED.test(path)) {
     const { success } = await env.AUTH_RATE_LIMIT.limit({ key: clientIp(ctx.request) || "unknown" });
-    if (!success) return apiError(429, "Too many attempts. Wait a minute and try again.", { "Retry-After": "60" });
+    if (!success) return withLocale(resolveLocale(ctx.request), () => apiError(429, t("Too many attempts. Wait a minute and try again."), { "Retry-After": "60" }));
   }
-  if (!PROTECTED.some((p) => path === p || path.startsWith(`${p}/`))) return next();
+  if (!PROTECTED.some((p) => path === p || path.startsWith(`${p}/`))) return publicPage(ctx, next);
 
   const result = await getAuth().api.getSession({ headers: ctx.request.headers });
   // The active org (and the role in it) is re-checked against membership on every request,
@@ -79,7 +83,29 @@ async function route(ctx: APIContext, next: MiddlewareNext) {
   ctx.locals.session = result.session;
   ctx.locals.orgId = orgId;
   ctx.locals.role = toRole(membership.role);
-  return next();
+  // The dashboard's language (lib/server/i18n.ts): the user's setting, else the website's or the browser's.
+  ctx.locals.locale = resolveLocale(ctx.request, (result.user as { locale?: string | null }).locale);
+  return withLocale(ctx.locals.locale, next);
+}
+
+/**
+ * Pages without a session (sign-in, sign-up, invitations…) speak the website's language. `?lang=pl` on a link
+ * from a translated page picks it and remembers it (the switcher's cookie), so the account starts in it.
+ */
+async function publicPage(ctx: APIContext, next: MiddlewareNext) {
+  const asked = ctx.url.searchParams.get("lang");
+  const pick = isSiteLocale(asked) ? asked : null;
+  const locale = pick ?? resolveLocale(ctx.request);
+  ctx.locals.locale = locale;
+  const response = await withLocale(locale, next);
+  if (pick && !ctx.url.pathname.startsWith("/api/")) {
+    try {
+      response.headers.append("Set-Cookie", `${LOCALE_COOKIE}=${pick}; Path=/; Max-Age=31536000; SameSite=Lax`);
+    } catch {
+      // Immutable headers (a fetched response passed through): the cookie just isn't set.
+    }
+  }
+  return response;
 }
 
 async function findMembership(userId: string, orgId: string) {

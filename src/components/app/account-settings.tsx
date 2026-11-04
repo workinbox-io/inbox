@@ -22,6 +22,9 @@ import { Label } from "@/components/ui/label"
 import { ConfirmButton } from "@/components/app/confirm-button"
 import { SettingsSection } from "@/components/app/settings-section"
 import { TwoFactorPanel } from "@/components/app/two-factor-panel"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SITE_LOCALES, localeName, type SiteLocale } from "@/lib/i18n/locales"
+import { t } from "@/lib/i18n/panel"
 
 type AuthError = { code?: string; message?: string } | null
 
@@ -33,7 +36,9 @@ function errorText(error: NonNullable<AuthError>) {
 }
 
 interface AccountSettingsProps extends AccountData {
-  user: { name: string; email: string; twoFactorEnabled: boolean }
+  user: { name: string; email: string; twoFactorEnabled: boolean; locale?: string | null }
+  /** The language the dashboard shows now (the user's setting, or the cookie's or browser's). */
+  locale?: SiteLocale
   /** Set after following the link in the change-email message. */
   emailChanged?: boolean
 }
@@ -45,7 +50,7 @@ export function AccountSettings(props: AccountSettingsProps) {
 
   return (
     <>
-      <ProfileSection user={props.user} />
+      <ProfileSection user={props.user} locale={props.locale ?? "en"} />
       <PasswordSection hasPassword={props.hasPassword} />
       <SessionsSection initial={props.sessions} />
       {props.googleEnabled ? (
@@ -59,7 +64,44 @@ export function AccountSettings(props: AccountSettingsProps) {
 
 // ---------------------------------------------------------------------------
 
-function ProfileSection({ user }: { user: { name: string; email: string } }) {
+/**
+ * Dashboard language (config/languages.ts): saved on the user (lib/server/i18n.ts), then the page reloads in it.
+ * "auto" follows the cookie or the browser. Hidden while the product has one language.
+ */
+function LanguageField({ saved, shown }: { saved: string | null; shown: SiteLocale }) {
+  const [pending, setPending] = React.useState(false)
+  if (SITE_LOCALES.length < 2) return null
+  async function pick(value: string) {
+    setPending(true)
+    const { error } = await authClient.updateUser({ locale: value === "auto" ? null : value } as never)
+    if (error) {
+      setPending(false)
+      return void toast.error(errorText(error))
+    }
+    location.reload()
+  }
+  return (
+    <div className="grid gap-2">
+      <Label htmlFor="account-language">{t("Language")}</Label>
+      <Select value={saved && SITE_LOCALES.includes(saved as SiteLocale) ? saved : "auto"} onValueChange={pick} disabled={pending}>
+        <SelectTrigger id="account-language" className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="auto">{t("Automatic ({language})", { language: localeName(shown) })}</SelectItem>
+          {SITE_LOCALES.map((l) => (
+            <SelectItem key={l} value={l} lang={l}>
+              {localeName(l)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-muted-foreground text-xs">{t("The dashboard and the e-mails we send you.")}</p>
+    </div>
+  )
+}
+
+function ProfileSection({ user, locale }: { user: { name: string; email: string; locale?: string | null }; locale: SiteLocale }) {
   const [name, setName] = React.useState(user.name)
   const [saved, setSaved] = React.useState(user.name)
   const [pending, setPending] = React.useState(false)
@@ -87,6 +129,7 @@ function ProfileSection({ user }: { user: { name: string; email: string } }) {
             </Button>
           </div>
         </form>
+        <LanguageField saved={user.locale ?? null} shown={locale} />
         <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
           <Label>Email</Label>
           <div className="flex items-center gap-2">
