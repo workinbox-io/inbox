@@ -3,6 +3,13 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.12.2 (2026-11-04)
+
+- `BarList`, `Sparkline` and `HeatmapChart` follow the shared-`components/ui` rule (v1.10.0): `cn` from the `cn`
+  package, glyphs from `config/icons.tsx`, nothing from `lib/format`, so a product can copy them as they are
+  (`HeatmapChart` also needs the pure `lib/heatmap.ts`). The default number formats are `Intl` in a new `locale`
+  prop (default "en"); pass `appLocale()` for the user's language. No manual steps.
+
 ## v1.12.1 (2026-11-04)
 
 - The admin panel's top pages and referrers use `BarList variant="meter"` (a short meter beside the value), the

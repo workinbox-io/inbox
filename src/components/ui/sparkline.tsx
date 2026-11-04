@@ -12,7 +12,7 @@ import {
   type AreaRevealShapeProps,
 } from "recharts"
 
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 
 export interface SparklineProps extends React.ComponentProps<"div"> {
   /** Series to plot, oldest first. `null` is a gap (a day not reported), never a zero. */
