@@ -1,7 +1,6 @@
 import * as React from "react"
 
-import { cn } from "@/lib/utils"
-import { formatNumber } from "@/lib/format"
+import { cn } from "cn"
 import { heatmapMax, heatmapOpacity } from "@/lib/heatmap"
 import {
   Tooltip,
@@ -19,7 +18,10 @@ export interface HeatmapChartProps extends React.ComponentProps<"div"> {
   values: (number | null)[][]
   /** Any CSS color. Defaults to the theme primary. */
   color?: string
+  /** Defaults to a compact number in `locale`. */
   valueFormatter?: (value: number) => string
+  /** Locale of the default value format. Pass the app's locale (`appLocale()`). */
+  locale?: string
   /** Shown above the value in a cell's tooltip. Defaults to "row column". */
   cellLabel?: (row: string, column: string) => string
   /** Label every n-th column only (e.g. 6 for hours). Defaults to every column. */
@@ -39,7 +41,9 @@ function HeatmapChart({
   columns,
   values,
   color = "var(--primary)",
-  valueFormatter = (value) => formatNumber(value, { format: "compact" }),
+  locale = "en",
+  valueFormatter = (value) =>
+    new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(value),
   cellLabel = (row, column) => `${row} ${column}`,
   columnLabelEvery = 1,
   legend,

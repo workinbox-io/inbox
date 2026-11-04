@@ -1,7 +1,6 @@
 import * as React from "react"
 
-import { cn } from "@/lib/utils"
-import { formatNumber } from "@/lib/format"
+import { cn } from "cn"
 import { ArrowDownIcon, ArrowUpIcon } from "@/config/icons"
 
 export interface BarListItem {
@@ -30,9 +29,20 @@ export interface BarListColumn {
 
 export type BarListVariant = "fill" | "track" | "meter"
 
+const compactFormatters = new Map<string, Intl.NumberFormat>()
+function formatter(locale: string, options: Intl.NumberFormatOptions) {
+  const key = locale + JSON.stringify(options)
+  let f = compactFormatters.get(key)
+  if (!f) compactFormatters.set(key, (f = new Intl.NumberFormat(locale, options)))
+  return f
+}
+
 export interface BarListProps extends React.ComponentProps<"div"> {
   data: BarListItem[]
+  /** Defaults to a compact number in `locale` ("8.4K"). */
   valueFormatter?: (value: number) => string
+  /** Locale of the default value and percentage formats. Pass the app's locale (`appLocale()`). */
+  locale?: string
   sortOrder?: "descending" | "ascending" | "none"
   /**
    * How a row's share is drawn:
@@ -77,7 +87,9 @@ function fillStyle(variant: BarListVariant, pattern: "solid" | "hatched"): React
 
 function BarList({
   data,
-  valueFormatter = (value) => formatNumber(value, { format: "compact" }),
+  locale = "en",
+  valueFormatter = (value) =>
+    formatter(locale, { notation: "compact", maximumFractionDigits: 1 }).format(value),
   sortOrder = "descending",
   variant = "fill",
   pattern = "solid",
@@ -245,7 +257,7 @@ function BarList({
                   {fill}
                 </span>,
                 <span className="text-muted-foreground text-xs">
-                  {formatNumber(share, { format: "percent" })}
+                  {formatter(locale, { style: "percent", maximumFractionDigits: 0 }).format(share)}
                 </span>
               )}
               {item.extra?.map((cell, i) => {
