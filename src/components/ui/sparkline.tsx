@@ -8,14 +8,15 @@ import {
   Line,
   LineChart,
   ResponsiveContainer,
+  Tooltip,
   type AreaRevealShapeProps,
 } from "recharts"
 
 import { cn } from "@/lib/utils"
 
 export interface SparklineProps extends React.ComponentProps<"div"> {
-  /** Series to plot, oldest first. */
-  data: number[]
+  /** Series to plot, oldest first. `null` is a gap (a day not reported), never a zero. */
+  data: (number | null)[]
   variant?: "area" | "line"
   /** Area fill: a plain gradient, or a dot grid that fades out toward the line. */
   fill?: "gradient" | "dots"
@@ -26,6 +27,11 @@ export interface SparklineProps extends React.ComponentProps<"div"> {
   /** Animate after hydration and when data changes. Respects reduced motion. */
   animate?: boolean
   animationDuration?: number
+  /**
+   * Called with the index under the pointer, and `null` when it leaves. Turns on a thin cursor line,
+   * so a card can show the hovered point's value in place of its total.
+   */
+  onHoverIndex?: (index: number | null) => void
 }
 
 const reducedMotionQuery = "(prefers-reduced-motion: reduce)"
@@ -68,6 +74,7 @@ function Sparkline({
   strokeWidth = 1.5,
   animate = true,
   animationDuration = 500,
+  onHoverIndex,
   className,
   ...props
 }: SparklineProps) {
@@ -81,17 +88,34 @@ function Sparkline({
   const dots = variant === "area" && fill === "dots"
   const points = React.useMemo(() => data.map((y, i) => ({ i, y })), [data])
   const margin = { top: 2, right: 0, bottom: 0, left: 0 }
+  const hover = onHoverIndex
+    ? {
+        onMouseMove: (state: { activeTooltipIndex?: number | string | null }) => {
+          const index = Number(state.activeTooltipIndex)
+          onHoverIndex(Number.isInteger(index) ? index : null)
+        },
+        onMouseLeave: () => onHoverIndex(null),
+      }
+    : {}
+  const cursor = onHoverIndex ? (
+    <Tooltip
+      content={() => null}
+      cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1 }}
+      isAnimationActive={false}
+    />
+  ) : null
 
   return (
     <div
       data-slot="sparkline"
       aria-hidden="true"
-      className={cn("h-10 w-full", className)}
+      className={cn("h-10 w-full", onHoverIndex && "cursor-crosshair", className)}
       {...props}
     >
       <ResponsiveContainer width="100%" height="100%">
         {variant === "line" ? (
-          <LineChart data={points} margin={margin}>
+          <LineChart data={points} margin={margin} {...hover}>
+            {cursor}
             <Line
               type={curve}
               dataKey="y"
@@ -104,7 +128,8 @@ function Sparkline({
             />
           </LineChart>
         ) : (
-          <AreaChart data={points} margin={margin}>
+          <AreaChart data={points} margin={margin} {...hover}>
+            {cursor}
             <defs>
               <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={color} stopOpacity={dots ? 0.08 : 0.3} />
