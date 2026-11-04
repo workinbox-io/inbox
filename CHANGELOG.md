@@ -3,7 +3,7 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
-## v1.13.0 (unreleased)
+## v1.13.0 (2026-11-04)
 
 - Team: the plan's `members` limit (`config/plans.ts`) is enforced. Members **and** pending invitations hold a
   seat, checked when an invitation is created (`organizationHooks.beforeCreateInvitation`, upsell message from
