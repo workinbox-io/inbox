@@ -3,6 +3,11 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.12.1 (2026-11-04)
+
+- The admin panel's top pages and referrers use `BarList variant="meter"` (a short meter beside the value), the
+  style products standardise on for ranked lists. No API change, no manual steps.
+
 ## v1.12.0 (2026-11-04)
 
 - `BarList` (`components/ui/bar-list.tsx`) draws a row's share three ways: `variant="fill"` (the bar behind the name, as
