@@ -11,7 +11,8 @@ const data = await loadAccount(me.id, Astro.locals.session?.id);
   <AccountSettings
     client:load
     {...data}
-    user={{ name: me.name, email: me.email, twoFactorEnabled: Boolean(me.twoFactorEnabled) }}
+    user={{ name: me.name, email: me.email, twoFactorEnabled: Boolean(me.twoFactorEnabled), locale: (me as { locale?: string | null }).locale ?? null }}
+    locale={Astro.locals.locale}
     emailChanged={Astro.url.searchParams.get("email") === "changed"}
   />
 </SettingsLayout>

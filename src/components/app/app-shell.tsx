@@ -27,6 +27,7 @@ import {
 import { APP_HELP, APP_NAV, APP_ACTIONS } from "@/config/nav"
 import { siteConfig } from "@/config/site"
 import { NavUser } from "./nav-user"
+import { t } from "@/lib/i18n/panel"
 
 /**
  * The dashboard's sidebar, command palette and toasts: one island that AppLayout keeps across
@@ -135,11 +136,11 @@ export function AppShell({ pathname: initialPathname, user, isAdmin, adminMail, 
   const groups: CommandPaletteGroup[] = [
     {
       heading: "Navigate",
-      items: [...nav, ...APP_HELP].map((n) => ({ id: n.href, label: n.label, icon: <n.icon />, onSelect: go(n.href) })),
+      items: [...nav, ...APP_HELP].map((n) => ({ id: n.href, label: t(n.label), icon: <n.icon />, onSelect: go(n.href) })),
     },
     {
       heading: "Actions",
-      items: APP_ACTIONS.map((a) => ({ id: a.href, label: a.label, icon: <a.icon />, onSelect: go(a.href) })),
+      items: APP_ACTIONS.map((a) => ({ id: a.href, label: t(a.label), icon: <a.icon />, onSelect: go(a.href) })),
     },
   ]
 
@@ -167,10 +168,10 @@ export function AppShell({ pathname: initialPathname, user, isAdmin, adminMail, 
                 <SidebarMenu>
                   {nav.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild isActive={isActive(pathname, item.href)} tooltip={item.label}>
+                      <SidebarMenuButton asChild isActive={isActive(pathname, item.href)} tooltip={t(item.label)}>
                         <a href={item.href}>
                           <item.icon />
-                          <span>{item.label}</span>
+                          <span>{t(item.label)}</span>
                         </a>
                       </SidebarMenuButton>
                       {item.href === ADMIN_MAIL_NAV.href && adminMail?.unread ? (
@@ -186,10 +187,10 @@ export function AppShell({ pathname: initialPathname, user, isAdmin, adminMail, 
                 <SidebarMenu>
                   {APP_HELP.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton asChild size="sm" tooltip={item.label}>
+                      <SidebarMenuButton asChild size="sm" tooltip={t(item.label)}>
                         <a href={item.href}>
                           <item.icon />
-                          <span>{item.label}</span>
+                          <span>{t(item.label)}</span>
                         </a>
                       </SidebarMenuButton>
                     </SidebarMenuItem>

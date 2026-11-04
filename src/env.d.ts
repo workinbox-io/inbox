@@ -9,6 +9,8 @@ declare namespace App {
     role: import("@/lib/server/roles").OrgRole | null;
     /** Set when the request was authenticated with an API key (/api/v1) instead of a session. */
     apiKeyId: string | null;
+    /** The language the page renders in (lib/server/i18n.ts): the user's setting, the website's or the browser's. */
+    locale: import("@/lib/i18n/locales").SiteLocale;
   }
 }
 

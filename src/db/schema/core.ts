@@ -28,6 +28,8 @@ export const user = sqliteTable("user", {
   emailVerified: bool("email_verified").notNull().default(false),
   image: text("image"),
   twoFactorEnabled: bool("two_factor_enabled").default(false),
+  /** Dashboard and e-mail language (lib/server/i18n.ts); null = the website's or the browser's. */
+  locale: text("locale"),
   /** Where the sign-up came from (see lib/server/analytics.ts). Not Better Auth fields. */
   signupReferrer: text("signup_referrer"),
   signupUtmSource: text("signup_utm_source"),

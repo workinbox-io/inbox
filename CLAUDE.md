@@ -30,6 +30,10 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
   validate with `parseBody(request, schema)` (schemas in `lib/validation.ts`), call `audit()`.
 - `src/middleware.ts` guards `/app` and `/api/app` (session) and `/api/v1` (API keys, rate limit,
   plan feature), and sets `locals.orgId`/`locals.role`. Every query must be scoped to the org.
+- Languages (v1.11.0): `config/languages.ts` lists them (template: English only). UI text goes through `t("English
+  text")` / `tp()` / `appLocale()` from `lib/i18n/panel.ts`, which works in Astro, islands and `/api/app` (the middleware
+  runs each request in `withLocale()`, `lib/server/i18n.ts`; the browser loads `/i18n/<code>.js`). Dictionaries:
+  `src/i18n/app/<area>/<code>.ts`, keyed by the English text. `user.locale` is the user's pick (Settings → Account).
 - Dashboard navigation: `AppLayout` uses Astro's ClientRouter. The sidebar, command palette and toasts are one
   persisted island (`app-shell.tsx`, `transition:persist`); the header and page render next to it. Pages that change
   the address in place use `replaceUrl`/`pushUrl` (`lib/panel-history.ts`), never `history.*State(null, …)`;

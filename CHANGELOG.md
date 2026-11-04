@@ -3,6 +3,23 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.11.0 (2026-11-04)
+
+- Dashboard languages. `t("English text")` / `tp(n, forms)` / `appLocale()` from `lib/i18n/panel.ts` work in Astro
+  components, React islands and `/api/app` handlers without passing anything around: the middleware resolves the
+  language (the user's `locale`, else the `LOCALE_COOKIE` or `?lang=` on public pages, else Accept-Language, else the
+  first code) and renders the request inside `withLocale()` (`lib/server/i18n.ts`, AsyncLocalStorage); the browser
+  gets the words from `/i18n/<code>.js`, which `BaseLayout lang` loads before the islands. Dictionaries:
+  `src/i18n/app/<area>/<code>.ts`, keyed by the English text, so anything untranslated stays English.
+- `src/config/languages.ts` (a product file) lists the languages; the template ships `["en"]`, so nothing changes and
+  the Settings → Account language picker stays hidden until a product adds a code. `user.locale` is a new column
+  (Better Auth `additionalFields`), `locals.locale` is set on every request.
+- Wrapped in `t()` so far: the sidebar and ⌘K labels, API error messages (`handler()`), `timeAgo`, the auth rate-limit
+  message. Products wrap the rest of their UI as they translate it (Luxivo did all of the dashboard).
+- `lib/format.ts` `formatNumber`/`formatDelta` default to `appLocale()` (still "en" unless a product adds languages).
+- **Manual steps:** `pnpm db:generate` (adds `user.locale`). Products that already translated pages with their own
+  `lib/i18n` files: keep yours where they conflict, the module names and exports match Luxivo's.
+
 ## v1.10.0 (2026-11-03)
 
 - `components/ui` no longer imports `lucide-react`: every glyph a component draws (checks, chevrons, close, search,

@@ -1,6 +1,8 @@
 ---
 import "@/styles/global.css";
 import { siteConfig } from "@/config/site";
+import { localeDir, type SiteLocale } from "@/lib/i18n/locales";
+import { dictionaryVersion } from "@/lib/server/i18n";
 
 interface Props {
   title: string;
@@ -8,18 +10,23 @@ interface Props {
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   /** Pages that must stay out of search engines and never leak their URL (share links). */
   noindex?: boolean;
+  /** The dashboard and auth pages: the user's language (Astro.locals.locale), which also loads its words for the islands. */
+  lang?: SiteLocale;
 }
 
-const { title, description = siteConfig.description, jsonLd, noindex = false } = Astro.props;
+const { title, description = siteConfig.description, jsonLd, noindex = false, lang = "en" } = Astro.props;
+// The dashboard's words in the user's language (lib/i18n/panel.ts), before any island runs.
+const panelWords = lang !== "en" ? `/i18n/${lang}.js?v=${dictionaryVersion(lang)}` : null;
 const fullTitle = `${title} · ${siteConfig.name}`;
 // No trailing slash, to match the sitemap (prerendered pages see "/pricing/").
 const canonical = Astro.site ? new URL(Astro.url.pathname.replace(/(.)\/$/, "$1"), Astro.site).href : undefined;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang} dir={localeDir(lang)}>
   <head>
     <meta charset="utf-8" />
+    {panelWords && <script is:inline src={panelWords}></script>}
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#ffffff" />
     <script>

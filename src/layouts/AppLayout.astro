@@ -22,7 +22,7 @@ const boxes = admin ? adminMailboxes() : [];
 const adminMail = boxes.length ? { unread: await adminUnreadCount(boxes).catch(() => 0) } : null;
 ---
 
-<BaseLayout title={title}>
+<BaseLayout title={title} lang={Astro.locals.locale}>
   <Fragment slot="head">
     <script is:inline>
       // Each page stamps its history entry (lib/panel-history.ts keeps the stamp). Going back to an entry

@@ -1,3 +1,5 @@
+import { appLocale, t } from "@/lib/i18n/panel"
+
 export type NumberFormat = "number" | "compact" | "currency" | "percent"
 
 export interface FormatNumberOptions {
@@ -36,7 +38,7 @@ export function formatNumber(
   {
     format = "number",
     currency = "USD",
-    locale = "en-US",
+    locale = appLocale(),
     maximumFractionDigits,
     compact = false,
   }: FormatNumberOptions = {}
@@ -82,7 +84,7 @@ export function formatNumber(
  * formatDelta(-0.03)  -> "-3.0%"
  * formatDelta(0)      -> "0.0%"
  */
-export function formatDelta(delta: number, locale = "en-US"): string {
+export function formatDelta(delta: number, locale = appLocale()): string {
   if (!Number.isFinite(delta)) return "—"
   return getFormatter(locale, {
     style: "percent",
@@ -100,12 +102,12 @@ export function computeDelta(current: number, previous: number): number {
   return (current - previous) / Math.abs(previous)
 }
 
-/** "5m ago", "3d ago", then a short date. */
+/** "5m ago", "3d ago", then a short date, in the dashboard's language (lib/i18n/panel.ts). */
 export function timeAgo(iso: string) {
   const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000))
-  if (s < 60) return `${s}s ago`
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`
-  if (s < 86_400) return `${Math.floor(s / 3600)}h ago`
-  if (s < 7 * 86_400) return `${Math.floor(s / 86_400)}d ago`
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+  if (s < 60) return t("{n}s ago", { n: s })
+  if (s < 3600) return t("{n}m ago", { n: Math.floor(s / 60) })
+  if (s < 86_400) return t("{n}h ago", { n: Math.floor(s / 3600) })
+  if (s < 7 * 86_400) return t("{n}d ago", { n: Math.floor(s / 86_400) })
+  return new Date(iso).toLocaleDateString(appLocale(), { month: "short", day: "numeric" })
 }

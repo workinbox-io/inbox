@@ -5,6 +5,7 @@ import { apiKeys, db, eq } from "@/db";
 import { recordAudit, type AuditActor } from "./audit";
 import { reportError } from "./errors";
 import { MANAGE_ONLY, canManage, type OrgRole } from "./roles";
+import { t } from "@/lib/i18n/panel";
 
 export class HttpError extends Error {
   constructor(
@@ -54,8 +55,8 @@ export function handler(fn: (ctx: HandlerContext) => Promise<Response>, opts: { 
   return async (ctx: APIContext) => {
     const orgId = ctx.locals.orgId;
     const role = ctx.locals.role ?? "member";
-    if (!orgId) return json({ error: "Unauthorized" }, 401);
-    if (opts.manage && !canManage(role)) return json({ error: MANAGE_ONLY }, 403);
+    if (!orgId) return json({ error: t("Unauthorized") }, 401);
+    if (opts.manage && !canManage(role)) return json({ error: t(MANAGE_ONLY) }, 403);
     const notes: (AuditNote & { action: AuditAction })[] = [];
     const audit = (action: AuditAction, note: AuditNote = {}) => void notes.push({ action, ...note });
     try {
@@ -67,9 +68,10 @@ export function handler(fn: (ctx: HandlerContext) => Promise<Response>, opts: { 
       }
       return res;
     } catch (e) {
-      if (e instanceof HttpError) return json({ error: e.message, details: e.details }, e.status);
+      // Messages in the user's language where the dictionaries have them (/api/app runs in the request's locale).
+      if (e instanceof HttpError) return json({ error: t(e.message), details: e.details }, e.status);
       await reportError("web", e, { route: `${ctx.request.method} ${ctx.url.pathname}`, orgId });
-      return json({ error: "Internal error" }, 500);
+      return json({ error: t("Internal error") }, 500);
     }
   };
 }

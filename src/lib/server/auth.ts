@@ -79,6 +79,8 @@ function createAuth() {
     user: {
       // No confirmation step on the old address: the link goes to the new one, the old one gets a heads-up.
       changeEmail: { enabled: true },
+      // The dashboard's language, set in Settings → Account (lib/server/i18n.ts reads only known codes).
+      additionalFields: { locale: { type: "string", required: false, input: true } },
       deleteUser: {
         enabled: true,
         // Refuses while the user is the only owner of an org others use; otherwise deletes the orgs only they had.
