@@ -1,5 +1,6 @@
 import { manageHandler, json, parseBody } from "@/lib/server/api";
 import * as admin from "@/lib/server/mail/admin";
+import { addPerson, resetPersonPassword } from "@/lib/server/mail/people";
 import { addSenderRule } from "@/lib/server/mail/store";
 import { mailSetupSchema } from "@/lib/validation-mail";
 
@@ -30,6 +31,17 @@ export const POST = manageHandler(async ({ orgId, request, audit }) => {
       const mb = await admin.createMailbox(orgId, body);
       audit("mailbox.create", { target: mb.address, details: { kind: mb.kind } });
       return json(mb, 201);
+    }
+    case "person.add": {
+      const p = await addPerson(orgId, body);
+      audit("mail_person.add", { target: p.address, details: { shared: p.shared } });
+      // The temporary password is shown once, to the admin who hands it over; it's never stored in clear.
+      return json(p, 201);
+    }
+    case "person.resetPassword": {
+      const p = await resetPersonPassword(orgId, body.mailboxId);
+      audit("mail_person.reset_password", { target: p.address });
+      return json(p);
     }
     case "mailbox.update": {
       const mb = await admin.updateMailbox(orgId, body.mailboxId, body);

@@ -18,6 +18,12 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search
   operators `from: to: subject: has:attachment is:unread is:starred`). Settings → Mail (`/app/settings/mail`,
   `components/mailbox/mail-settings.tsx`) manages domains (DNS records + DoH check), mailboxes, aliases, catch-all.
+- Two experiences: owners/admins get the dashboard (AppLayout) with mail inside; members get mail only
+  (`layouts/MailLayout.astro`, `MailboxApp` with `account`: full screen, account menu in the rail with signature,
+  password, theme, sign out). `pages/app/index.astro` sends members to `/app/mail` (product change to a template page).
+- People on the org's domain (Settings → Mail → Add person, `lib/server/mail/people.ts`): user + credential account +
+  member + personal mailbox + shared access in one `db.batch`, written directly (no verification mail, no personal
+  org from the sign-up hook); the admin gets a temporary password once and can reset it (`mailOnly` mailboxes).
 - API: `/api/app/mail/threads` (list/send/patch/delete), `/threads/[id]`, `/threads/[id]/reply`,
   `/messages/[id]/raw`, `/mailboxes` (own signature), `/settings` (owners/admins, one `action` per POST).
 - Test incoming mail locally: `curl -X POST "localhost:4321/cdn-cgi/handler/email?from=a@b.com&to=anna@acme.test" --data-binary @mail.eml`.

@@ -17,6 +17,7 @@ export function FolderRail({
   unread,
   onCompose,
   onSettings,
+  footer,
 }: {
   mailboxes: string[]
   mailbox: string
@@ -26,6 +27,8 @@ export function FolderRail({
   unread: Record<string, number>
   onCompose: () => void
   onSettings: () => void
+  /** The mail-only view's account menu; the dashboard has its own in the sidebar. */
+  footer?: React.ReactNode
 }) {
   const all = mailbox === ALL_MAILBOXES
   const inboxUnread = all ? Object.values(unread).reduce((a, b) => a + b, 0) : (unread[mailbox] ?? 0)
@@ -95,9 +98,12 @@ export function FolderRail({
         </div>
       ) : null}
 
-      <p className="text-muted-foreground mt-auto flex items-center gap-1.5 px-2 text-xs">
-        <Kbd>?</Kbd> Keyboard shortcuts
-      </p>
+      <div className="mt-auto grid gap-2">
+        <p className="text-muted-foreground flex items-center gap-1.5 px-2 text-xs">
+          <Kbd>?</Kbd> Keyboard shortcuts
+        </p>
+        {footer ? <div className="-mx-1 border-t pt-2">{footer}</div> : null}
+      </div>
     </nav>
   )
 }

@@ -33,7 +33,15 @@ export async function listMailSetup(orgId: string) {
   ]);
   return {
     domains: domains.map((d) => ({ ...d, records: requiredDnsRecords(d.domain) })),
-    mailboxes: boxes.map((b) => ({ ...b, access: access.filter((a) => a.mailboxId === b.id).map((a) => a.userId) })),
+    mailboxes: boxes.map((b) => {
+      const owner = b.userId ? members.find((m) => m.userId === b.userId) : undefined;
+      return {
+        ...b,
+        access: access.filter((a) => a.mailboxId === b.id).map((a) => a.userId),
+        // Signs in with the mailbox's own address (added through "Add person"): the admin can reset the password.
+        mailOnly: !!owner && owner.email === b.address && owner.role === "member",
+      };
+    }),
     aliases,
     members,
   };
@@ -90,7 +98,7 @@ async function ownMailbox(orgId: string, id: string) {
 }
 
 /** An address on one of the org's domains that no mailbox or alias uses yet. */
-async function freeAddress(orgId: string, domainId: string, local: string) {
+export async function freeAddress(orgId: string, domainId: string, local: string) {
   const d = await ownDomain(orgId, domainId);
   const l = local.trim().toLowerCase();
   if (!isValidLocalPart(l)) throw new HttpError(422, "Use letters, digits, dots, dashes or underscores");

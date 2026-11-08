@@ -34,16 +34,16 @@ Done:
 Next:
 
 - ⬜ End-to-end check on `notelio.pl`: Gmail → mailbox, reply back in the same Gmail thread, SPF/DKIM/DMARC pass
-- ⬜ **Two experiences: admin console vs. plain mail** (like Google Workspace admin vs. Gmail). What exists today is
+- ✅ **Two experiences: admin console vs. plain mail** (like Google Workspace admin vs. Gmail). What exists today is
   the admin view. Regular members get mail only:
   - Members land on `/app/mail` in a mail-only layout: no app sidebar, no Overview/Billing/Settings; the folder rail
     holds their mailboxes (e.g. `diana@` plus shared `hello@`) and a small account menu (signature, password, sign out).
-    Owners/admins keep the full app and can switch between "Admin" and "Mail".
+    Owners/admins keep the full app. ⬜ A switch for admins to the mail-only view.
   - "Add person" in Settings → Mail creates the user, their mailbox and shared access in one step: name, address
     (`diana@notelio.pl`), mailboxes to share. The new address can't receive an invitation before it exists, so the
     admin gets a temporary password or a one-time sign-in link to hand over; the user signs in with
     `diana@notelio.pl` (already verified, the domain belongs to the org) and sets their own password.
-  - Optional: a private address for password recovery.
+  - ⬜ Optional: a private address for password recovery; forcing a new password on first sign-in.
 - ⬜ A member joining gets a personal mailbox; removing one hands the mailbox over or turns it shared
 - ⬜ Full-text search on D1 FTS5 instead of `LIKE`
 - ⬜ Labels and filters (condition → label / archive / forward)

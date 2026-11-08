@@ -59,6 +59,7 @@ export function ThreadList({
   onCompose,
   onSettings,
   rail = false,
+  account,
 }: {
   mailboxes: string[]
   mailbox: string
@@ -84,6 +85,8 @@ export function ThreadList({
   onSettings: () => void
   /** Folders and mailboxes live in the rail (desktop): the list shows only the folder's name and search. */
   rail?: boolean
+  /** The account menu (mail-only view on a phone), next to Compose. */
+  account?: React.ReactNode
 }) {
   // Dates in the viewer's time zone: the server renders none, so nothing jumps after loading.
   const mounted = React.useSyncExternalStore(
@@ -142,6 +145,7 @@ export function ThreadList({
           <Button size="sm" className="rounded-full" onClick={onCompose} title="New e-mail (c)">
             <PenSquare /> Compose
           </Button>
+          {account}
         </div>
         <InputGroup className={cn("h-8", rail && "bg-foreground/[0.04] border-transparent shadow-none dark:bg-foreground/[0.06]")}>
           <InputGroupAddon>

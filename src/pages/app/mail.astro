@@ -1,5 +1,6 @@
 ---
 import AppLayout from "@/layouts/AppLayout.astro";
+import MailLayout from "@/layouts/MailLayout.astro";
 import { MailboxApp } from "@/components/mailbox/mailbox-app";
 import { viewerMailboxes } from "@/lib/server/mail/access";
 import { listThreads, unreadCounts } from "@/lib/server/mail/store";
@@ -11,9 +12,13 @@ const [list, unread] = await Promise.all([listThreads({ boxes, folder: "inbox" }
 const signatures = Object.fromEntries(boxes.map((b) => [b.address, { signature: b.signature }]));
 // Dates as ISO strings, like the API.
 const threads = JSON.parse(JSON.stringify(list.threads));
+// Members get mail only (MailLayout); owners and admins get it inside the dashboard.
+const manager = canManage(role);
+const Layout = manager ? AppLayout : MailLayout;
+const user = Astro.locals.user!;
 ---
 
-<AppLayout title="Mail" fullBleed>
+<Layout title="Mail" fullBleed>
   <MailboxApp
     client:load
     mailboxes={boxes.map((b) => b.address)}
@@ -22,6 +27,7 @@ const threads = JSON.parse(JSON.stringify(list.threads));
     unread={unread}
     signatures={signatures}
     selectedId={Astro.url.searchParams.get("t")}
-    canManage={canManage(role)}
+    canManage={manager}
+    account={manager ? undefined : { name: user.name, email: user.email }}
   />
-</AppLayout>
+</Layout>

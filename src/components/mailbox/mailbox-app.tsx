@@ -19,7 +19,9 @@ import { useDraftKeys } from "./drafts"
 import { SenderPanel } from "./sender-panel"
 import { ThreadList } from "./thread-list"
 import { FolderRail } from "./folder-rail"
-import { FOLDER_KEYS, Kbd } from "./mail-ui"
+import { AccountMenu, type MailUser } from "./account-menu"
+import { Toaster } from "@/components/ui/sonner"
+import { FOLDER_KEYS, Kbd, assignMailboxColors } from "./mail-ui"
 import { ThreadView, type ThreadViewHandle } from "./thread-view"
 import type { MailThread, ThreadDetail, ThreadPatch } from "./types"
 
@@ -64,10 +66,14 @@ export interface MailboxAppProps {
   selectedId: string | null
   /** Owners and admins: the empty state links to Settings → Mail. */
   canManage?: boolean
+  /** The mail-only view (MailLayout, members): full screen, with the account menu instead of the dashboard sidebar. */
+  account?: MailUser
 }
 
 /** The member's mailboxes, laid out like a mail app: folders and threads, the open thread, and who it's with. */
 export function MailboxApp(props: MailboxAppProps) {
+  // Before the first render: every child reads the colours.
+  React.useMemo(() => assignMailboxColors(props.mailboxes), [props.mailboxes])
   const desktop = useMediaQuery("(min-width: 768px)")
   const wide = useMediaQuery("(min-width: 1280px)")
   const multiple = props.mailboxes.length > 1
@@ -331,13 +337,23 @@ export function MailboxApp(props: MailboxAppProps) {
   })
 
   if (!props.mailboxes.length) {
-    return (
+    const empty = (
       <EmptyState
         icon={<Mail />}
         title="No mailbox yet"
         description={props.canManage ? "Add your domain and create mailboxes in Settings → Mail." : "Ask an owner or admin of your organization to create your mailbox."}
         action={props.canManage ? <Button asChild><a href="/app/settings/mail">Set up mail</a></Button> : undefined}
       />
+    )
+    if (!props.account) return empty
+    return (
+      <div className="relative grid h-full place-items-center p-6">
+        <div className="absolute top-3 right-3">
+          <AccountMenu user={props.account} compact />
+        </div>
+        {empty}
+        <Toaster />
+      </div>
     )
   }
 
@@ -372,6 +388,7 @@ export function MailboxApp(props: MailboxAppProps) {
       onCompose={() => openCompose()}
       onSettings={() => setSettingsOpen(true)}
       rail={desktop}
+      account={props.account && !desktop ? <AccountMenu user={props.account} onSignature={() => setSettingsOpen(true)} compact /> : null}
     />
   )
 
@@ -410,7 +427,7 @@ export function MailboxApp(props: MailboxAppProps) {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="bg-background -mx-2 -mb-2 flex h-[calc(100svh-4.5rem)] min-h-[520px] overflow-hidden rounded-b-xl border-t">
+      <div className={props.account ? "bg-background flex h-svh min-h-[480px] overflow-hidden" : "bg-background -mx-2 -mb-2 flex h-[calc(100svh-4.5rem)] min-h-[520px] overflow-hidden rounded-b-xl border-t"}>
         {desktop ? (
           <FolderRail
             mailboxes={props.mailboxes}
@@ -428,6 +445,7 @@ export function MailboxApp(props: MailboxAppProps) {
             unread={unread}
             onCompose={() => openCompose()}
             onSettings={() => setSettingsOpen(true)}
+            footer={props.account ? <AccountMenu user={props.account} onSignature={() => setSettingsOpen(true)} /> : undefined}
           />
         ) : null}
         <div className="min-w-0 flex-1">
@@ -495,6 +513,8 @@ export function MailboxApp(props: MailboxAppProps) {
           </dl>
         </DialogContent>
       </Dialog>
+      {/* The dashboard's toasts live in its sidebar island, which the mail-only view doesn't have. */}
+      {props.account ? <Toaster /> : null}
     </TooltipProvider>
   )
 }

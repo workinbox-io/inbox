@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AtSign, CheckCircle2, Globe, Inbox, Plus, RefreshCw, Users, XCircle } from "lucide-react"
+import { AtSign, CheckCircle2, Globe, Inbox, KeyRound, Plus, RefreshCw, UserPlus, Users, XCircle } from "lucide-react"
 import { toast } from "sonner"
 
 import type { DnsRecord } from "@/lib/mail/rules"
@@ -26,7 +26,7 @@ export interface MailSetup {
     catchAllMailboxId: string | null
     records: DnsRecord[]
   }[]
-  mailboxes: { id: string; domainId: string; address: string; kind: "personal" | "shared"; userId: string | null; displayName: string; access: string[] }[]
+  mailboxes: { id: string; domainId: string; address: string; kind: "personal" | "shared"; userId: string | null; displayName: string; access: string[]; mailOnly?: boolean }[]
   aliases: { id: string; address: string; mailboxId: string }[]
   members: { userId: string; name: string; email: string; role: string }[]
 }
@@ -54,7 +54,7 @@ export function MailSettings(props: { initial: MailSetup }) {
   return (
     <div className="grid gap-12">
       <DomainsSection setup={setup} act={act} />
-      <MailboxesSection setup={setup} act={act} />
+      <MailboxesSection setup={setup} act={act} refresh={refresh} />
       <AliasesSection setup={setup} act={act} />
     </div>
   )
@@ -169,8 +169,10 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
   )
 }
 
-function MailboxesSection({ setup, act }: { setup: MailSetup; act: Act }) {
+function MailboxesSection({ setup, act, refresh }: { setup: MailSetup; act: Act; refresh: () => Promise<unknown> }) {
   const [creating, setCreating] = React.useState(false)
+  const [adding, setAdding] = React.useState(false)
+  const [credentials, setCredentials] = React.useState<Credentials | null>(null)
   const [accessFor, setAccessFor] = React.useState<string | null>(null)
   const name = (userId: string | null) => setup.members.find((m) => m.userId === userId)?.name ?? "Former member"
   return (
@@ -190,6 +192,21 @@ function MailboxesSection({ setup, act }: { setup: MailSetup; act: Act }) {
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
+                  {m.mailOnly ? (
+                    <ConfirmButton
+                      title={`New password for ${m.address}?`}
+                      description="They're signed out everywhere and sign in again with the temporary password you get next."
+                      confirmLabel="Reset password"
+                      onConfirm={async () => {
+                        const res = (await run({ action: "person.resetPassword", mailboxId: m.id }).catch(() => null)) as Credentials | null
+                        if (res) setCredentials({ ...res, reset: true })
+                      }}
+                    >
+                      <Button variant="ghost" size="sm">
+                        <KeyRound /> Reset password
+                      </Button>
+                    </ConfirmButton>
+                  ) : null}
                   {m.kind === "shared" ? (
                     <Button variant="ghost" size="sm" onClick={() => setAccessFor(m.id)}>
                       Members
@@ -221,14 +238,28 @@ function MailboxesSection({ setup, act }: { setup: MailSetup; act: Act }) {
             ))}
           </ul>
         ) : null}
-        <div>
+        <div className="flex flex-wrap gap-2">
+          <Button disabled={!setup.domains.length} onClick={() => setAdding(true)}>
+            <UserPlus /> Add person
+          </Button>
           <Button variant="outline" disabled={!setup.domains.length} onClick={() => setCreating(true)}>
             <Plus /> New mailbox
           </Button>
-          {!setup.domains.length ? <p className="text-muted-foreground mt-2 text-xs">Add a domain first.</p> : null}
         </div>
+        {!setup.domains.length ? <p className="text-muted-foreground text-xs">Add a domain first.</p> : null}
       </div>
       <NewMailboxDialog open={creating} onOpenChange={setCreating} setup={setup} act={act} />
+      <AddPersonDialog
+        open={adding}
+        onOpenChange={setAdding}
+        setup={setup}
+        onAdded={async (c) => {
+          setAdding(false)
+          setCredentials(c)
+          await refresh()
+        }}
+      />
+      <CredentialsDialog credentials={credentials} onClose={() => setCredentials(null)} />
       <AccessDialog mailbox={setup.mailboxes.find((m) => m.id === accessFor) ?? null} members={setup.members} onClose={() => setAccessFor(null)} act={act} />
     </SettingsSection>
   )
@@ -351,6 +382,155 @@ function NewMailboxDialog({ open, onOpenChange, setup, act }: { open: boolean; o
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+interface Credentials {
+  address: string
+  password: string
+  reset?: boolean
+}
+
+function AddPersonDialog({ open, onOpenChange, setup, onAdded }: { open: boolean; onOpenChange: (o: boolean) => void; setup: MailSetup; onAdded: (c: Credentials) => void }) {
+  const shared = setup.mailboxes.filter((m) => m.kind === "shared")
+  const [name, setName] = React.useState("")
+  const [local, setLocal] = React.useState("")
+  const [touched, setTouched] = React.useState(false)
+  const [domainId, setDomainId] = React.useState("")
+  const [picked, setPicked] = React.useState<Set<string>>(new Set())
+  const [pending, setPending] = React.useState(false)
+  React.useEffect(() => {
+    if (!open) return
+    setName("")
+    setLocal("")
+    setTouched(false)
+    setPicked(new Set())
+    setDomainId(setup.domains.find((d) => d.status === "active")?.id ?? setup.domains[0]?.id ?? "")
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+  const domain = setup.domains.find((d) => d.id === domainId)?.domain ?? ""
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add person</DialogTitle>
+          <DialogDescription>They get an address on your domain and see only their mail. You'll get a temporary password to hand over.</DialogDescription>
+        </DialogHeader>
+        <form
+          className="grid gap-4"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            setPending(true)
+            const res = (await run({ action: "person.add", name, domainId, local, sharedMailboxIds: [...picked] }).catch(() => null)) as Credentials | null
+            setPending(false)
+            if (res) onAdded(res)
+          }}
+        >
+          <div className="grid gap-1.5">
+            <Label htmlFor="person-name">Name</Label>
+            <Input
+              id="person-name"
+              autoFocus
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value)
+                // The address follows the name ("Diana Nowak" → diana) until it's edited by hand.
+                if (!touched) setLocal(suggest(e.target.value.split(/\s+/)[0] ?? ""))
+              }}
+              placeholder="Diana Nowak"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="person-local">Address</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="person-local"
+                value={local}
+                onChange={(e) => {
+                  setLocal(e.target.value)
+                  setTouched(true)
+                }}
+                placeholder="diana"
+              />
+              <AtSign className="text-muted-foreground size-4 shrink-0" />
+              {setup.domains.length > 1 ? (
+                <Select value={domainId} onValueChange={setDomainId}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {setup.domains.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.domain}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <span className="text-sm">{domain}</span>
+              )}
+            </div>
+          </div>
+          {shared.length ? (
+            <div className="grid gap-1.5">
+              <Label>Also answers</Label>
+              <ul className="grid gap-1">
+                {shared.map((m) => (
+                  <li key={m.id}>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={picked.has(m.id)}
+                        onCheckedChange={(v) => {
+                          const next = new Set(picked)
+                          if (v === true) next.add(m.id)
+                          else next.delete(m.id)
+                          setPicked(next)
+                        }}
+                      />
+                      {m.address}
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button type="submit" loading={pending} disabled={pending || !name.trim() || !local || !domainId}>
+              Add person
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/** Shown once: the sign-in details to hand over. The password is never shown again. */
+function CredentialsDialog({ credentials, onClose }: { credentials: Credentials | null; onClose: () => void }) {
+  const url = typeof location === "undefined" ? "" : `${location.origin}/login`
+  const text = credentials ? `Sign in at ${url}\nE-mail: ${credentials.address}\nTemporary password: ${credentials.password}\nChange the password after you sign in.` : ""
+  return (
+    <Dialog open={!!credentials} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{credentials?.reset ? "New temporary password" : `${credentials?.address} is ready`}</DialogTitle>
+          <DialogDescription>Hand these over in person or through a channel you trust. The password won't be shown again.</DialogDescription>
+        </DialogHeader>
+        {credentials ? (
+          <div className="grid gap-3">
+            <CopyField label="Sign-in page" value={url} />
+            <CopyField label="E-mail" value={credentials.address} />
+            <CopyField label="Temporary password" value={credentials.password} />
+          </div>
+        ) : null}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => navigator.clipboard.writeText(text).then(() => toast.success("Copied"))}>
+            Copy all
+          </Button>
+          <Button onClick={onClose}>Done</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

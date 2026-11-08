@@ -5,6 +5,8 @@ import { listAudit } from "@/lib/server/audit";
 import { getOrgUsage, getSubscription } from "@/lib/server/org";
 import { canManage } from "@/lib/server/roles";
 
+// Product: members use mail only (pages/app/mail.astro); the overview is for owners and admins.
+if (!canManage(Astro.locals.role)) return Astro.redirect("/app/mail");
 const orgId = Astro.locals.orgId!;
 const [usage, sub, audit] = await Promise.all([
   getOrgUsage(orgId),

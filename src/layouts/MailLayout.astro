@@ -1,0 +1,20 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+
+/**
+ * The mail-only view for members (people added through Settings → Mail → Add person, or invited members):
+ * the inbox on the whole screen, no dashboard sidebar. Owners and admins get the mail inside AppLayout.
+ */
+interface Props {
+  title: string;
+  /** Accepted for parity with AppLayout; the mail-only view is always full screen. */
+  fullBleed?: boolean;
+}
+const { title } = Astro.props;
+---
+
+<BaseLayout title={title} lang={Astro.locals.locale} noindex>
+  <div data-browser-theme-surface class="bg-background h-svh overflow-hidden">
+    <slot />
+  </div>
+</BaseLayout>
