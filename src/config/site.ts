@@ -8,7 +8,7 @@ export type NavItem =
 
 /**
  * Product identity used by the website, the dashboard and e-mails. `pnpm setup` fills this in;
- * keep `accent` in sync with --primary in styles/global.css.
+ * keep `accent` in sync with --primary in styles/brand.css.
  */
 export const siteConfig = {
   name: "WorkInbox",
@@ -16,7 +16,7 @@ export const siteConfig = {
   /** Production URL, used for canonical links and the sitemap (astro.config.mjs reads it too). */
   url: "https://workinbox.io",
   supportEmail: "support@workinbox.io",
-  accent: "#2f5bff",
+  accent: "#f2550f",
   /** Top navigation on marketing pages: links, or dropdowns with `items`. */
   navItems: [
     {

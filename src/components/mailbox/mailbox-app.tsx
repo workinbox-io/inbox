@@ -62,7 +62,7 @@ export interface MailboxAppProps {
   threads: MailThread[]
   hasMore: boolean
   unread: Record<string, number>
-  signatures: Record<string, { signature: string }>
+  signatures: Record<string, { signature: string; name?: string }>
   selectedId: string | null
   /** Owners and admins: the empty state links to Settings → Mail. */
   canManage?: boolean
@@ -427,7 +427,7 @@ export function MailboxApp(props: MailboxAppProps) {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className={props.account ? "bg-background flex h-svh min-h-[480px] overflow-hidden" : "bg-background -mx-2 -mb-2 flex h-[calc(100svh-4.5rem)] min-h-[520px] overflow-hidden rounded-b-xl border-t"}>
+      <div className={props.account ? "bg-background flex h-svh min-h-[480px] overflow-hidden" : "bg-background -mx-2 -mb-2 flex h-[calc(100svh-3.5rem)] min-h-[520px] overflow-hidden border-t"}>
         {desktop ? (
           <FolderRail
             mailboxes={props.mailboxes}
@@ -532,8 +532,8 @@ function SignatureDialog({
   onOpenChange: (open: boolean) => void
   mailboxes: string[]
   initial: string
-  signatures: Record<string, { signature: string }>
-  onSaved: (s: Record<string, { signature: string }>) => void
+  signatures: Record<string, { signature: string; name?: string }>
+  onSaved: (s: Record<string, { signature: string; name?: string }>) => void
 }) {
   const [mailbox, setMailbox] = React.useState(initial)
   const [text, setText] = React.useState("")
@@ -549,7 +549,7 @@ function SignatureDialog({
     setSaving(true)
     try {
       await api("PUT", "/api/app/mail/mailboxes", { mailbox, signature: text })
-      onSaved({ ...signatures, [mailbox]: { signature: text } })
+      onSaved({ ...signatures, [mailbox]: { ...signatures[mailbox], signature: text } })
       toast.success("Signature saved")
       onOpenChange(false)
     } catch (e) {

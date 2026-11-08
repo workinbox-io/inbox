@@ -28,7 +28,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `/messages/[id]/raw`, `/mailboxes` (own signature), `/settings` (owners/admins, one `action` per POST).
 - Test incoming mail locally: `curl -X POST "localhost:4321/cdn-cgi/handler/email?from=a@b.com&to=anna@acme.test" --data-binary @mail.eml`.
 - Template files changed here (upstream them to the template): `src/worker.ts` (org mail hook),
-  `components/app/settings-nav.tsx` (Mail tab).
+  `components/app/settings-nav.tsx` (Mail tab). Template bug to fix there: `components/admin-mail/composer.tsx` shows
+  a hardcoded "Luxivo" sender name and `admin-mail/drafts.ts` uses `luxivo:` storage keys (fixed in `components/mailbox`).
 
 ## Template
 

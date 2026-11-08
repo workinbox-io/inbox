@@ -33,7 +33,7 @@ export function FolderRail({
   const all = mailbox === ALL_MAILBOXES
   const inboxUnread = all ? Object.values(unread).reduce((a, b) => a + b, 0) : (unread[mailbox] ?? 0)
   return (
-    <nav aria-label="Mail" className="flex h-full w-56 shrink-0 flex-col gap-6 border-r px-3 py-3">
+    <nav aria-label="Mail" className="bg-sidebar flex h-full w-56 shrink-0 flex-col gap-6 border-r px-3 py-3">
       <button
         type="button"
         onClick={onCompose}

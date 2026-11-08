@@ -2,29 +2,29 @@ import { siteConfig } from "@/config/site";
 
 /**
  * Hex values for e-mail clients (no CSS variables). Same "ink" palette as the
- * website: white page, flat #f6f6f6 tile, brand blue only on buttons and links.
+ * website (styles/brand.css): white page, flat #f7f7f7 tile, orange (Cron) buttons and links.
  */
 export const EMAIL_COLORS = {
   light: {
     background: "#ffffff",
-    surface: "#f6f6f6",
+    surface: "#f7f7f7",
     inset: "#ffffff",
-    foreground: "#292929",
-    mutedForeground: "#6d6d6d",
+    foreground: "#1f1f1f",
+    mutedForeground: "#808080",
     border: "#e2e2e2",
     primary: siteConfig.accent,
     primaryForeground: "#ffffff",
     accent: siteConfig.accent,
   },
   dark: {
-    background: "#191919",
-    surface: "#212121",
-    inset: "#191919",
-    foreground: "#ededed",
+    background: "#262626",
+    surface: "#1a1a1a",
+    inset: "#262626",
+    foreground: "#f5f5f5",
     mutedForeground: "#a1a1a1",
-    border: "#333333",
-    primary: siteConfig.accent,
+    border: "#383838",
+    primary: "#ff5c13",
     primaryForeground: "#ffffff",
-    accent: "#7d98ff",
+    accent: "#ff7d44",
   },
 } as const;

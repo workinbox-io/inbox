@@ -4,10 +4,10 @@ import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
 import { cn } from "@/lib/utils"
 
 /**
- * Colours mailboxes wear, like calendars in a calendar app: the dot in the rail and the bar on each
+ * Colours mailboxes wear, like calendars in Cron (its palette): the dot in the rail and the bar on each
  * thread in "All mailboxes". Picked from the address, so a mailbox keeps its colour everywhere.
  */
-const MAILBOX_COLORS = ["#5b5bd6", "#0e9f6e", "#e5484d", "#d97706", "#0091ff", "#a144af", "#12a594", "#e93d82"]
+const MAILBOX_COLORS = ["#51a9e0", "#9b60f7", "#3fbf72", "#ff7d44", "#e8619c", "#f2b53a", "#2fc4b2", "#ef5350"]
 
 /** A calendar-event tint of a mailbox colour, for selected rows and chips. */
 export const tint = (color: string, pct = 12) => `color-mix(in oklab, ${color} ${pct}%, transparent)`

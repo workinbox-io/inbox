@@ -83,6 +83,7 @@ function MailForm({
   mailboxes,
   attachments,
   showFrom,
+  senderNames = {},
   showSubject,
   note,
   bodyClassName,
@@ -98,6 +99,8 @@ function MailForm({
   mailboxes: string[]
   attachments: Attachments
   showFrom?: boolean
+  /** The name each mailbox sends under (its sender name, or yours). */
+  senderNames?: Record<string, string>
   showSubject?: boolean
   note?: string
   bodyClassName?: string
@@ -132,14 +135,21 @@ function MailForm({
               <SelectContent>
                 {mailboxes.map((m) => (
                   <SelectItem key={m} value={m}>
-                    {m}
+                    {senderNames[m] ? (
+                      <span>
+                        {senderNames[m]} <span className="text-muted-foreground">&lt;{m}&gt;</span>
+                      </span>
+                    ) : (
+                      m
+                    )}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           ) : (
             <span className="text-sm">
-              Luxivo <span className="text-muted-foreground">&lt;{draft.from}&gt;</span>
+              {senderNames[draft.from] ? <>{senderNames[draft.from]} </> : null}
+              <span className={senderNames[draft.from] ? "text-muted-foreground" : undefined}>&lt;{draft.from}&gt;</span>
             </span>
           )}
         </FieldRow>
@@ -314,7 +324,7 @@ export function ComposeWindow({
   mailboxes: string[]
   mailbox: string
   contacts: string[]
-  signatures: Record<string, { signature: string }>
+  signatures: Record<string, { signature: string; name?: string }>
   schedule: (job: SendJob) => void
   onClose: () => void
 }) {
@@ -392,6 +402,7 @@ export function ComposeWindow({
         mailboxes={mailboxes}
         attachments={attachments}
         showFrom
+        senderNames={Object.fromEntries(Object.entries(signatures).map(([m, s]) => [m, s.name ?? ""]))}
         showSubject
         autoFocusTo={!draft.to.length}
         onSend={send}

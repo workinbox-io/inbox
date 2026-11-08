@@ -240,7 +240,11 @@ function MailboxesSection({ setup, act, refresh }: { setup: MailSetup; act: Act;
                       title={`Make ${m.address} shared?`}
                       description="Its mail stays. Owners and admins, and the members you pick, can open it. Use this when someone leaves."
                       confirmLabel="Make shared"
-                      onConfirm={() => act({ action: "mailbox.update", mailboxId: m.id, kind: "shared" }, "Now a shared mailbox")}
+                      onConfirm={async () => {
+                        await act({ action: "mailbox.update", mailboxId: m.id, kind: "shared" }, "Now a shared mailbox")
+                        // Next: who answers it (nobody but owners and admins until picked).
+                        setAccessFor(m.id)
+                      }}
                     >
                       <Button variant="ghost" size="sm">
                         Make shared

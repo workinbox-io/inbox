@@ -9,7 +9,8 @@ import { canManage } from "@/lib/server/roles";
 const role = Astro.locals.role ?? "member";
 const boxes = await viewerMailboxes({ orgId: Astro.locals.orgId!, userId: Astro.locals.user!.id, role });
 const [list, unread] = await Promise.all([listThreads({ boxes, folder: "inbox" }), unreadCounts(boxes)]);
-const signatures = Object.fromEntries(boxes.map((b) => [b.address, { signature: b.signature }]));
+// The name each mailbox sends under: its sender name, else the viewer's (as sendMail does).
+const signatures = Object.fromEntries(boxes.map((b) => [b.address, { signature: b.signature, name: b.displayName || Astro.locals.user!.name }]));
 // Dates as ISO strings, like the API.
 const threads = JSON.parse(JSON.stringify(list.threads));
 // Members get mail only (MailLayout); owners and admins get it inside the dashboard.
