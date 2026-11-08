@@ -1,93 +1,73 @@
-/* WorkInbox look, taken from Cron Calendar: Inter, a darker sidebar beside a flat main area split by
-   hairlines (no floating card), gray dark mode (not black), one orange accent for the main action,
-   today and the current selection, and colour that otherwise belongs to the data (mailboxes, events).
-   Product file: overrides the template's tokens in global.css (loaded right after it by BaseLayout), so
-   template updates to global.css merge cleanly. It is unlayered, so its rules also beat Tailwind
-   utilities. Keep siteConfig.accent and emails/colors.ts in step. */
-@import "@fontsource-variable/inter";
+/* WorkInbox look: black and white. Ink buttons on white, white buttons on near-black, a gray frame,
+   hairline borders and no brand colour at all; colour belongs to the data only (mailboxes, charts).
+   Product file: overrides the template's tokens in global.css (loaded right after it by BaseLayout),
+   so template updates to global.css merge cleanly. Keep siteConfig.accent and emails/colors.ts in step. */
 
 :root {
-  --radius: 0.375rem;
-  --ink: #1f1f1f;
+  --radius: 0.5rem;
+  --ink: #1a1a1a;
   --background: #ffffff;
   --card: #ffffff;
   --popover: #ffffff;
-  --primary: #f2550f;
+  --primary: #1a1a1a;
   --primary-foreground: #ffffff;
-  --secondary: #f0f0f0;
+  --secondary: #efefef;
   --muted: color-mix(in srgb, var(--ink) 4%, transparent);
-  --muted-foreground: #808080;
+  --muted-foreground: #7c7c7c;
   --accent: color-mix(in srgb, var(--ink) 5%, transparent);
   --border: color-mix(in srgb, var(--ink) 9%, transparent);
   --input: color-mix(in srgb, var(--ink) 13%, transparent);
-  --ring: #ff7d44;
+  --ring: color-mix(in srgb, var(--ink) 35%, transparent);
   --surface: #f7f7f7;
   --sidebar: var(--surface);
   --sidebar-primary: var(--ink);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: color-mix(in srgb, var(--ink) 7%, transparent);
+  --sidebar-accent: color-mix(in srgb, var(--ink) 6%, transparent);
   --sidebar-border: color-mix(in srgb, var(--ink) 8%, transparent);
   --sidebar-ring: var(--ring);
-  --code-number: #808080;
-  --selection: color-mix(in srgb, #ff5c13 22%, transparent);
-  /* Cron's calendar colours. */
-  --chart-1: #ff5c13;
-  --chart-2: #51a9e0;
-  --chart-3: #9b60f7;
-  --chart-4: #3fbf72;
-  --chart-5: #f2b53a;
-  --chart-upload: #51a9e0;
-  --chart-download: #3fbf72;
+  --code-number: #7c7c7c;
+  --selection: color-mix(in srgb, var(--ink) 14%, transparent);
+  /* Charts keep colour, since ink would read as "no data". */
+  --chart-1: #1a1a1a;
+  --chart-2: #2bb3a3;
+  --chart-3: #8b7cf6;
+  --chart-4: #e6a23c;
+  --chart-5: #e66aa8;
+  --chart-upload: #1a1a1a;
+  --chart-download: #2bb3a3;
 }
 
-/* Sampled from Cron's dark mode: sidebar #1a1a1a, main #262626, menus #333, buttons #3b3b3b,
-   dividers #303030, selection #333 in the sidebar and #4d4d4d in menus, accent #ff5c13. */
 .dark {
-  --ink: #f5f5f5;
-  --background: #262626;
-  --card: #262626;
-  --popover: #333333;
-  --primary: #ff5c13;
-  --primary-foreground: #ffffff;
-  --secondary: #3b3b3b;
-  --muted: color-mix(in srgb, var(--ink) 5%, transparent);
-  --muted-foreground: #9a9a9a;
-  --accent: color-mix(in srgb, var(--ink) 8%, transparent);
-  --border: color-mix(in srgb, var(--ink) 7%, transparent);
-  --input: color-mix(in srgb, var(--ink) 11%, transparent);
-  --ring: #ff7d44;
+  --ink: #ececec;
+  /* Near-black page, a step lighter frame, raised layers lighter again; borders do the work, not shadows. */
+  --background: #141414;
+  --card: #1b1b1b;
+  --popover: #1f1f1f;
+  --primary: #ececec;
+  --primary-foreground: #141414;
+  --secondary: #262626;
+  --muted: color-mix(in srgb, var(--ink) 4%, transparent);
+  --muted-foreground: #8c8c8c;
+  --accent: color-mix(in srgb, var(--ink) 6%, transparent);
+  --border: color-mix(in srgb, var(--ink) 10%, transparent);
+  --input: color-mix(in srgb, var(--ink) 14%, transparent);
+  --ring: color-mix(in srgb, var(--ink) 40%, transparent);
   --surface: #1a1a1a;
   --sidebar: var(--surface);
-  --sidebar-foreground: color-mix(in srgb, var(--ink) 72%, var(--sidebar));
+  --sidebar-foreground: color-mix(in srgb, var(--ink) 62%, var(--sidebar));
   --sidebar-primary: var(--ink);
-  --sidebar-primary-foreground: #1a1a1a;
-  --sidebar-accent: color-mix(in srgb, var(--ink) 10%, transparent);
-  --sidebar-border: color-mix(in srgb, var(--ink) 7%, transparent);
+  --sidebar-primary-foreground: #141414;
+  --sidebar-accent: color-mix(in srgb, var(--ink) 6%, transparent);
+  --sidebar-border: color-mix(in srgb, var(--ink) 8%, transparent);
   --sidebar-ring: var(--ring);
   --code: #1a1a1a;
-  --code-number: #9a9a9a;
-  --selection: color-mix(in srgb, #ff5c13 32%, transparent);
-  --chart-1: #ff7d44;
-  --chart-2: #51a9e0;
-  --chart-3: #9b60f7;
-  --chart-4: #62d28c;
-  --chart-5: #f5c04a;
-  --chart-upload: #51a9e0;
-  --chart-download: #62d28c;
-}
-
-body,
-.font-sans,
-.font-heading {
-  font-family: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  font-feature-settings: "cv11", "ss01";
-}
-
-/* Cron's layout: the main area sits flush against the sidebar with a hairline, not as a floating card. */
-@media (min-width: 768px) {
-  [data-slot="sidebar-inset"] {
-    margin: 0;
-    border-radius: 0;
-    border-left: 1px solid var(--sidebar-border);
-  }
+  --code-number: #8c8c8c;
+  --selection: color-mix(in srgb, var(--ink) 22%, transparent);
+  --chart-1: #ececec;
+  --chart-2: #34c2b1;
+  --chart-3: #9d90f8;
+  --chart-4: #ecb04f;
+  --chart-5: #ec7cb5;
+  --chart-upload: #ececec;
+  --chart-download: #34c2b1;
 }

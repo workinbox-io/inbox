@@ -2,8 +2,8 @@ import Avatar from "boring-avatars"
 
 import { cn } from "@/lib/utils"
 
-/** The calendar palette (charts in styles/brand.css): orange, blue, violet, green, yellow. */
-const COLORS = ["#ff7d44", "#51a9e0", "#9b60f7", "#3fbf72", "#f2b53a"]
+/** The chart palette (styles/brand.css): ink, teal, violet, amber, pink. */
+const COLORS = ["#1a1a1a", "#2bb3a3", "#8b7cf6", "#e6a23c", "#e66aa8"]
 
 /** A generated avatar; `seed` (the email) keeps it the same everywhere and across name changes. */
 export function UserAvatar({ seed, size = 32, className }: { seed: string; size?: number; className?: string }) {
