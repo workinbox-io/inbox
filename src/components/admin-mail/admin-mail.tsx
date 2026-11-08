@@ -2,6 +2,7 @@ import * as React from "react"
 import { Mail } from "lucide-react"
 import { toast } from "sonner"
 
+import { siteConfig } from "@/config/site"
 import { api } from "@/lib/api-client"
 import { ALL_MAILBOXES, type MailFolder } from "@/lib/admin-mail/rules"
 import { replaceUrl } from "@/lib/panel-history"
@@ -464,7 +465,7 @@ function SignatureDialog({
             </SelectContent>
           </Select>
         ) : null}
-        <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} placeholder={"Kuba\nLuxivo · luxivo.app"} />
+        <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} placeholder={`Anna\n${siteConfig.name} · ${new URL(siteConfig.url).host}`} />
         <DialogFooter>
           <Button onClick={save} disabled={saving}>
             {saving ? "Saving…" : "Save"}

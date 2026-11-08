@@ -1,5 +1,5 @@
 /**
- * Staff mailboxes (ADMIN_MAILBOXES, e.g. plugins@luxivo.app), read and answered at /app/admin-mail.
+ * Staff mailboxes (ADMIN_MAILBOXES, e.g. support@example.com), read and answered at /app/admin-mail.
  * Email Routing sends their mail to the Worker's email() handler: it is forwarded to
  * ADMIN_MAIL_FORWARD, stored, and threaded like the e-mail channel does (Message-IDs, then subject).
  * Threads move between folders (inbox, snoozed, sent, archived, trash; rules in lib/admin-mail/rules.ts).

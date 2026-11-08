@@ -3,6 +3,14 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.13.1 (2026-11-08)
+
+- Staff mailbox (`/app/admin-mail`): the composer's From line showed a hardcoded "Luxivo"; it now shows
+  `siteConfig.name`, the name staff mail goes out under. The signature placeholder uses the product's name and host.
+- Drafts and the "show images" choice are kept under product-neutral keys (`admin-mail:draft:*`,
+  `admin-mail:images` instead of `luxivo:…`). Drafts saved in the browser before the update aren't picked up; send
+  or copy open drafts before updating. No other manual steps.
+
 ## v1.13.0 (2026-11-04)
 
 - Team: the plan's `members` limit (`config/plans.ts`) is enforced. Members **and** pending invitations hold a
