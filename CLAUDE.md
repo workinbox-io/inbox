@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Inbox (working name): open-source mail, contacts, calendar and drive for teams, a Google Workspace alternative.
+WorkInbox (workinbox.io): open-source mail, contacts, calendar and drive for teams, a Google Workspace alternative.
 Runs self-hosted (`DEPLOY_MODE=self`, one company on its own Cloudflare account) or hosted (`cloud`, plans on).
 Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in place.
 

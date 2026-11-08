@@ -11,7 +11,7 @@ export type NavItem =
  * keep `accent` in sync with --primary in styles/global.css.
  */
 export const siteConfig = {
-  name: "Inbox",
+  name: "WorkInbox",
   description: "Open-source mail, calendar, contacts and drive for your team, on Cloudflare.",
   /** Production URL, used for canonical links and the sitemap (astro.config.mjs reads it too). */
   url: "https://workinbox.io",

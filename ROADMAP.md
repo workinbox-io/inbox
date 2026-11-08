@@ -1,6 +1,6 @@
 # Roadmap
 
-Inbox (working name) is open-source mail, contacts, calendar and drive for teams, running entirely on Cloudflare
+WorkInbox (workinbox.io) is open-source mail, contacts, calendar and drive for teams, running entirely on Cloudflare
 (Workers, D1, R2, Queues, Email Routing, Email Service). Two ways to run it: self-hosted on your own Cloudflare account
 (`DEPLOY_MODE=self`) or hosted multi-tenant (`DEPLOY_MODE=cloud`, Paddle plans).
 
@@ -16,7 +16,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 - ⬜ Upstream to the template: the product mail hook in `src/worker.ts` and the Mail tab in `settings-nav.tsx`
 - ⬜ Remove the template's `projects` example
 - ✅ App on its own domain: https://workinbox.io, system mail from `noreply@workinbox.io`
-- ⬜ Brand name to match the domain (WorkInbox?)
+- ✅ Brand: WorkInbox, icon: a robot peeking into a mailbox
 
 ## Phase 1: domains, mailboxes and mail
 
