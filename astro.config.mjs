@@ -12,7 +12,7 @@ const NOT_INDEXED = /^\/(app|api|login|signup|forgot-password|reset-password|ver
 
 export default defineConfig({
   // Production URL; keep in sync with siteConfig.url (src/config/site.ts).
-  site: "https://inbox.app",
+  site: "https://workinbox.io",
   output: "server",
   adapter: cloudflare({
     // Images are served as-is; turn on the Images binding when you need resizing.

@@ -10,12 +10,13 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 
 - ✅ Project from the template (v1.13.0), `inbox` name and site config
 - ✅ Production deploy: Worker `inbox`, D1 `inbox`, R2 `inbox-files`, queue `inbox-jobs`, daily cron
-- ✅ System mail from `noreply@inbox.swiftapps.us` (Email Service, DKIM/SPF/DMARC)
+- ✅ System mail through Email Service (DKIM/SPF/DMARC)
 - ✅ First customer domain wired up: `notelio.pl` (Email Routing catch-all → Worker, Email Sending on)
 - ⬜ `LICENSE` (AGPL-3.0) and a self-hosting guide in the README
 - ⬜ Upstream to the template: the product mail hook in `src/worker.ts` and the Mail tab in `settings-nav.tsx`
 - ⬜ Remove the template's `projects` example
-- ⬜ Brand name and domain (candidates: InOffice, LetMail); app on its own domain instead of workers.dev
+- ✅ App on its own domain: https://workinbox.io, system mail from `noreply@workinbox.io`
+- ⬜ Brand name to match the domain (WorkInbox?)
 
 ## Phase 1: domains, mailboxes and mail
 

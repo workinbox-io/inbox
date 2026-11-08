@@ -9,10 +9,12 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "observability": { "enabled": true },
   "upload_source_maps": true,
+  // The app and the website live on workinbox.io (Cloudflare creates the DNS record and certificate).
+  "routes": [{ "pattern": "workinbox.io", "custom_domain": true }],
 
   "vars": {
-    "PUBLIC_APP_URL": "https://inbox.office-927.workers.dev",
-    "EMAIL_FROM_ADDRESS": "noreply@inbox.swiftapps.us",
+    "PUBLIC_APP_URL": "https://workinbox.io",
+    "EMAIL_FROM_ADDRESS": "noreply@workinbox.io",
     "PADDLE_ENV": "sandbox",
     "ADMIN_EMAILS": "",
     // Staff mailboxes on your domain, read and answered at /app/admin-mail (lib/server/admin-mail.ts),
