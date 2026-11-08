@@ -112,6 +112,29 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
                 Add these records at your DNS provider. On Cloudflare, turning on Email Routing for the domain adds them for you (any MX priority works).
               </p>
             ) : null}
+            {d.status === "active" ? (
+              // Working domains keep their records out of the way; they're only needed when something breaks.
+              <details className="group/dns">
+                <summary className="text-muted-foreground hover:text-foreground w-fit cursor-pointer text-xs select-none">DNS records</summary>
+                <div className="pt-3">
+                  <ul className="grid gap-2 text-sm">
+              {d.records.map((r, i) => {
+                const ok = d.checks[r.purpose]
+                return (
+                  <li key={i} className="grid gap-1 md:grid-cols-[6rem_1fr] md:items-center">
+                    <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                      {ok ? <CheckCircle2 className="size-3.5 text-emerald-600" /> : <XCircle className="text-muted-foreground size-3.5" />}
+                      {r.type}
+                      {r.priority ? ` ${r.priority}` : ""}
+                    </span>
+                    <CopyField label={r.name === d.domain ? `${r.type} record` : r.name} value={r.value} />
+                  </li>
+                )
+              })}
+                  </ul>
+                </div>
+              </details>
+            ) : (
             <ul className="grid gap-2 text-sm">
               {d.records.map((r, i) => {
                 const ok = d.checks[r.purpose]
@@ -127,6 +150,7 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
                 )
               })}
             </ul>
+            )}
             <div className="grid gap-1.5">
               <Label className="text-xs">Mail to unknown addresses</Label>
               <Select
