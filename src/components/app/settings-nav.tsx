@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 export const SETTINGS_PAGES = [
   { href: "/app/settings/account", label: "Account" },
   { href: "/app/settings/organization", label: "Organization" },
+  { href: "/app/settings/mail", label: "Mail" },
   { href: "/app/settings/ai-apps", label: "AI apps" },
 ] as const
 

@@ -2,7 +2,7 @@
 // After changing bindings run `pnpm cf-types` to regenerate worker-configuration.d.ts.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "saas-template",
+  "name": "inbox",
   // Our entry wraps Astro's handler and adds the queue consumer and cron handler (src/worker.ts).
   "main": "./src/worker.ts",
   "compatibility_date": "2026-10-01",
@@ -11,15 +11,19 @@
   "upload_source_maps": true,
 
   "vars": {
-    "PUBLIC_APP_URL": "http://localhost:4321",
-    "EMAIL_FROM_ADDRESS": "noreply@example.com",
+    "PUBLIC_APP_URL": "https://inbox.office-927.workers.dev",
+    "EMAIL_FROM_ADDRESS": "noreply@inbox.swiftapps.us",
     "PADDLE_ENV": "sandbox",
     "ADMIN_EMAILS": "",
     // Staff mailboxes on your domain, read and answered at /app/admin-mail (lib/server/admin-mail.ts),
     // comma-separated, e.g. "support@example.com,legal@example.com". Each needs an Email Routing rule
     // "Send to Worker"; incoming mail is also forwarded to ADMIN_MAIL_FORWARD (a verified destination).
     "ADMIN_MAILBOXES": "",
-    "ADMIN_MAIL_FORWARD": ""
+    "ADMIN_MAIL_FORWARD": "",
+    // "self": one company on its own Cloudflare account, billing off. "cloud": hosted, plans and limits on.
+    "DEPLOY_MODE": "self",
+    // cloud: orgs get <slug>.<MAIL_BASE_DOMAIN> at once (needs a wildcard Email Routing rule). Empty: custom domains only.
+    "MAIL_BASE_DOMAIN": ""
   },
   // Secrets (wrangler secret put …, locally in .dev.vars): BETTER_AUTH_SECRET, PADDLE_API_KEY,
   // PADDLE_WEBHOOK_SECRET, PUBLIC_PADDLE_CLIENT_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
@@ -27,16 +31,16 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "saas-template",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_name": "inbox",
+      "database_id": "e997abaa-8673-49c2-a779-61d89b6e9366",
       "migrations_dir": "migrations"
     }
   ],
-  "r2_buckets": [{ "binding": "FILES", "bucket_name": "saas-template-files" }],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "inbox-files" }],
   "send_email": [{ "name": "EMAIL" }],
   "queues": {
-    "producers": [{ "binding": "JOBS", "queue": "saas-template-jobs" }],
-    "consumers": [{ "queue": "saas-template-jobs", "max_retries": 5, "max_batch_size": 10 }]
+    "producers": [{ "binding": "JOBS", "queue": "inbox-jobs" }],
+    "consumers": [{ "queue": "inbox-jobs", "max_retries": 5, "max_batch_size": 10 }]
   },
   "ratelimits": [
     // Public API: requests per API key per minute.

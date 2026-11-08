@@ -27,6 +27,10 @@ declare namespace Cloudflare {
     ALERT_EMAIL?: string;
     /** Gets an e-mail about each sign-up (lib/server/notify.ts). */
     NOTIFY_EMAIL?: string;
+    /** "self" (one company on its own Cloudflare account, no billing) or "cloud" (hosted, plans and domain automation). */
+    DEPLOY_MODE?: "self" | "cloud";
+    /** cloud: the domain whose subdomains orgs get at once (acme.<MAIL_BASE_DOMAIN>). */
+    MAIL_BASE_DOMAIN?: string;
   }
 }
 

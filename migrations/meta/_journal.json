@@ -29,6 +29,13 @@
       "when": 1793805102238,
       "tag": "0003_ordinary_rogue",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794163632211,
+      "tag": "0004_org_mail",
+      "breakpoints": true
     }
   ]
 }

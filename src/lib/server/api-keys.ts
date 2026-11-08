@@ -4,7 +4,7 @@ import { randomBase64Url, sha256Hex } from "./crypto";
 import { toRole } from "./roles";
 
 /** Keys look like `sk_…`; change the prefix per product so leaked keys are easy to attribute. */
-export const API_KEY_PREFIX = "sk_";
+export const API_KEY_PREFIX = "inbo_";
 
 export const hashApiKey = sha256Hex;
 

@@ -1,0 +1,27 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import { MailboxApp } from "@/components/mailbox/mailbox-app";
+import { viewerMailboxes } from "@/lib/server/mail/access";
+import { listThreads, unreadCounts } from "@/lib/server/mail/store";
+import { canManage } from "@/lib/server/roles";
+
+const role = Astro.locals.role ?? "member";
+const boxes = await viewerMailboxes({ orgId: Astro.locals.orgId!, userId: Astro.locals.user!.id, role });
+const [list, unread] = await Promise.all([listThreads({ boxes, folder: "inbox" }), unreadCounts(boxes)]);
+const signatures = Object.fromEntries(boxes.map((b) => [b.address, { signature: b.signature }]));
+// Dates as ISO strings, like the API.
+const threads = JSON.parse(JSON.stringify(list.threads));
+---
+
+<AppLayout title="Mail" fullBleed>
+  <MailboxApp
+    client:load
+    mailboxes={boxes.map((b) => b.address)}
+    threads={threads}
+    hasMore={list.hasMore}
+    unread={unread}
+    signatures={signatures}
+    selectedId={Astro.url.searchParams.get("t")}
+    canManage={canManage(role)}
+  />
+</AppLayout>

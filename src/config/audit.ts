@@ -15,6 +15,15 @@ export const AUDIT_ACTIONS = {
   "org.billing_details": "Changed company details",
   "org.transfer": "Transferred ownership",
   "org.delete": "Deleted organization",
+  "mail_domain.add": "Added mail domain",
+  "mail_domain.remove": "Removed mail domain",
+  "mail_domain.catch_all": "Changed catch-all mailbox",
+  "mailbox.create": "Created mailbox",
+  "mailbox.update": "Changed mailbox",
+  "mailbox.delete": "Deleted mailbox",
+  "mailbox.access": "Changed mailbox access",
+  "mail_alias.add": "Added alias",
+  "mail_alias.remove": "Removed alias",
 } as const;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -7,6 +7,7 @@ import { handle } from "@astrojs/cloudflare/handler";
 import { jobHandlers } from "@/jobs";
 import { adminMailboxes } from "@/lib/server/admin";
 import { handleAdminMail } from "@/lib/server/admin-mail";
+import { handleOrgMail } from "@/lib/server/mail/store";
 import { dailyTasks } from "@/jobs/cron";
 import { reportError } from "@/lib/server/errors";
 import type { JobMessage } from "@/lib/server/queue";
@@ -16,8 +17,10 @@ export default {
 
   async email(message) {
     const to = message.to.toLowerCase();
-    if (!adminMailboxes().includes(to)) return message.setReject("Unknown address");
     try {
+      // Organizations' mailboxes first (lib/server/mail/store.ts), then the staff mailboxes.
+      if (await handleOrgMail(message)) return;
+      if (!adminMailboxes().includes(to)) return message.setReject("Unknown address");
       await handleAdminMail(message, to);
     } catch (e) {
       await reportError("web", e, { where: "email", to });

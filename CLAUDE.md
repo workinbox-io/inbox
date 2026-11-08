@@ -1,5 +1,31 @@
 # CLAUDE.md
 
+Inbox (working name): open-source mail, contacts, calendar and drive for teams, a Google Workspace alternative.
+Runs self-hosted (`DEPLOY_MODE=self`, one company on its own Cloudflare account) or hosted (`cloud`, plans on).
+Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in place.
+
+## Organizations' mail (product)
+
+- Tables: `src/db/schema/mail.ts` (re-exported from `app.ts`): `mail_domains`, `mailboxes` (personal per member or
+  shared), `mailbox_access`, `mail_aliases`, `mail_threads`, `mail_messages`, `mail_sender_rules`. Mailboxes hand out
+  IMAP-style UIDs (`uid_next`, `uid_validity`) and bump `modseq` on every change, for a future IMAP gateway / sync API.
+- Incoming: `email()` in `src/worker.ts` calls `handleOrgMail` (`lib/server/mail/store.ts`) first: address → mailbox,
+  alias or the domain's catch-all (plus addressing stripped), spam score and sender rules (`lib/mail/rules.ts`), raw .eml
+  in R2 under `mail-raw/<org>/<mailbox>/`, files under the org's `attachments/`. Unknown addresses fall through to the
+  staff mailboxes, then are rejected.
+- Access: `lib/server/mail/access.ts` (`viewerMailboxes`): own personal mailbox, shared ones granted in
+  `mailbox_access`, all shared ones for owners/admins. Every mail query is scoped to that list.
+- UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search
+  operators `from: to: subject: has:attachment is:unread is:starred`). Settings → Mail (`/app/settings/mail`,
+  `components/mailbox/mail-settings.tsx`) manages domains (DNS records + DoH check), mailboxes, aliases, catch-all.
+- API: `/api/app/mail/threads` (list/send/patch/delete), `/threads/[id]`, `/threads/[id]/reply`,
+  `/messages/[id]/raw`, `/mailboxes` (own signature), `/settings` (owners/admins, one `action` per POST).
+- Test incoming mail locally: `curl -X POST "localhost:4321/cdn-cgi/handler/email?from=a@b.com&to=anna@acme.test" --data-binary @mail.eml`.
+- Template files changed here (upstream them to the template): `src/worker.ts` (org mail hook),
+  `components/app/settings-nav.tsx` (Mail tab).
+
+## Template
+
 Micro SaaS on Cloudflare Workers, built from the shared template (see TEMPLATE.md for how template
 updates are merged). Astro 7 SSR + React islands, D1 + Drizzle, Better Auth with organizations,
 Paddle billing, Queues + Cron, Cloudflare Email Service. pnpm, Node 22.18+.

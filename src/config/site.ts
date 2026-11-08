@@ -11,11 +11,11 @@ export type NavItem =
  * keep `accent` in sync with --primary in styles/global.css.
  */
 export const siteConfig = {
-  name: "Acme",
-  description: "The one-line pitch of your product.",
+  name: "Inbox",
+  description: "Open-source mail, calendar, contacts and drive for your team, on Cloudflare.",
   /** Production URL, used for canonical links and the sitemap (astro.config.mjs reads it too). */
-  url: "https://example.com",
-  supportEmail: "support@example.com",
+  url: "https://inbox.app",
+  supportEmail: "support@inbox.app",
   accent: "#2f5bff",
   /** Top navigation on marketing pages: links, or dropdowns with `items`. */
   navItems: [
@@ -46,7 +46,7 @@ export const siteConfig = {
     address: "Street 1, 00-000 City, Country",
     registry: "",
     taxId: "",
-    email: "legal@example.com",
+    email: "legal@inbox.app",
     /** Country of the company, ISO 3166-1 alpha-2. */
     country: "PL",
     updated: "2026-10-25",
