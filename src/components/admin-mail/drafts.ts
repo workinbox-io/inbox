@@ -2,8 +2,8 @@ import * as React from "react"
 import type { Draft } from "./types"
 
 /** Drafts live in this browser only (per viewer convenience); the key is the thread id or NEW_DRAFT. */
-const PREFIX = "luxivo:admin-mail:draft:"
-const EVENT = "luxivo:admin-mail-drafts"
+const PREFIX = "admin-mail:draft:"
+const EVENT = "admin-mail-drafts"
 export const NEW_DRAFT = "new"
 
 export function readDraft(key: string): Draft | null {
@@ -56,7 +56,7 @@ export function useDraftKeys() {
 }
 
 /** Remote images the viewer chose to always show, by sender. */
-const IMAGES_KEY = "luxivo:admin-mail:images"
+const IMAGES_KEY = "admin-mail:images"
 
 export function trustedSenders(): string[] {
   try {

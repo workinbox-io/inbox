@@ -1,5 +1,5 @@
 /**
- * Staff mailboxes on our own domain (ADMIN_MAILBOXES, e.g. plugins@luxivo.app): mail that Email Routing
+ * Staff mailboxes on our own domain (ADMIN_MAILBOXES, e.g. support@example.com): mail that Email Routing
  * sends to the Worker, and what staff send from /app/admin/mail (lib/server/admin-mail.ts). Platform
  * data, not an org's: no orgId, only isAdmin users reach it.
  */

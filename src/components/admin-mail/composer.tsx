@@ -2,6 +2,7 @@ import * as React from "react"
 import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users } from "lucide-react"
 import { toast } from "sonner"
 
+import { siteConfig } from "@/config/site"
 import { api } from "@/lib/api-client"
 import { forwardSubject, replyRecipients, withSignature } from "@/lib/admin-mail/rules"
 import { replySubject } from "@/lib/mail/threading"
@@ -139,7 +140,8 @@ function MailForm({
             </Select>
           ) : (
             <span className="text-sm">
-              Luxivo <span className="text-muted-foreground">&lt;{draft.from}&gt;</span>
+              {/* Staff mail goes out under the product's name (sendAdminMail in lib/server/admin-mail.ts). */}
+              {siteConfig.name} <span className="text-muted-foreground">&lt;{draft.from}&gt;</span>
             </span>
           )}
         </FieldRow>

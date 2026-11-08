@@ -12,10 +12,10 @@ import {
   withSignature,
 } from "../src/lib/admin-mail/rules";
 
-const ours = ["plugins@luxivo.app", "support@luxivo.app"];
+const ours = ["support@example.com", "legal@example.com"];
 
 describe("replyRecipients", () => {
-  const incoming = { direction: "in" as const, fromEmail: "noreply@wordpress.org", to: "plugins@luxivo.app, team@wp.org", cc: "Anna@wp.org, support@luxivo.app" };
+  const incoming = { direction: "in" as const, fromEmail: "noreply@wordpress.org", to: "support@example.com, team@wp.org", cc: "Anna@wp.org, legal@example.com" };
 
   it("replies to the contact (Reply-To), not the noreply sender", () => {
     expect(replyRecipients(incoming, "review@wordpress.org", ours, false)).toEqual({ to: ["review@wordpress.org"], cc: [] });
@@ -26,7 +26,7 @@ describe("replyRecipients", () => {
   });
 
   it("replying to our own message goes to its first recipient", () => {
-    const sent = { direction: "out" as const, fromEmail: "plugins@luxivo.app", to: "a@x.com", cc: "b@x.com" };
+    const sent = { direction: "out" as const, fromEmail: "support@example.com", to: "a@x.com", cc: "b@x.com" };
     expect(replyRecipients(sent, "a@x.com", ours, true)).toEqual({ to: ["a@x.com"], cc: ["b@x.com"] });
   });
 });
@@ -40,16 +40,16 @@ describe("forwarding", () => {
 
   it("writes the forwarded header block", () => {
     const text = forwardText(
-      { fromEmail: "a@x.com", fromName: "Ann", to: "plugins@luxivo.app", cc: "", subject: "Hi", text: "Body\n", createdAt: new Date(0) },
+      { fromEmail: "a@x.com", fromName: "Ann", to: "support@example.com", cc: "", subject: "Hi", text: "Body\n", createdAt: new Date(0) },
       () => "DATE",
     );
-    expect(text).toBe("---------- Forwarded message ----------\nFrom: Ann <a@x.com>\nDate: DATE\nSubject: Hi\nTo: plugins@luxivo.app\n\nBody");
+    expect(text).toBe("---------- Forwarded message ----------\nFrom: Ann <a@x.com>\nDate: DATE\nSubject: Hi\nTo: support@example.com\n\nBody");
   });
 });
 
 describe("withSignature", () => {
   it("adds the standard separator, and nothing for an empty signature", () => {
-    expect(withSignature("", "Kuba\nLuxivo")).toBe("\n\n-- \nKuba\nLuxivo");
+    expect(withSignature("", "Anna\nAcme")).toBe("\n\n-- \nAnna\nAcme");
     expect(withSignature("Hi", "  ")).toBe("Hi");
   });
 });
@@ -91,9 +91,9 @@ describe("incoming HTML", () => {
   });
 
   it("blocks scripts and, until allowed, remote images", () => {
-    const doc = mailSrcDoc("<p>x</p>", { origin: "https://luxivo.app", remoteImages: false, showQuoted: false });
+    const doc = mailSrcDoc("<p>x</p>", { origin: "https://example.com", remoteImages: false, showQuoted: false });
     expect(doc).toContain("default-src 'none'");
-    expect(doc).toContain("img-src data: cid: https://luxivo.app;");
+    expect(doc).toContain("img-src data: cid: https://example.com;");
     expect(doc).toContain(".gmail_quote");
     expect(mailSrcDoc("", { origin: "o", remoteImages: true, showQuoted: true })).toContain("img-src data: cid: o https: http:");
   });
