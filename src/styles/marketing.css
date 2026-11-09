@@ -1,111 +1,106 @@
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
-
 /*
- * Marketing look, ported from Luxivo's (support-chat, styles/marketing.css) and made WorkInbox's: paper and ink, no
- * brand colour (styles/brand.css), Instrument Serif headlines over Inter Tight. Emphasis in a headline is the serif
- * italic in a lighter ink. Everything is scoped to .mk (MarketingLayout's wrapper), so /app keeps the app tokens.
- * Dark mode (html.dark) turns the paper into ink; `.mk-light` inside it (screens of the app, a mail client) keeps the
- * light tokens. Colour only shows up in the product's own data (mailbox dots), as in the app.
+ * Marketing look: dark, with soft colour glows, glass cards and film grain (in the spirit of Raycast's site), built
+ * on the system ported from Luxivo (support-chat, styles/marketing.css). The glow colours are WorkInbox's mailbox
+ * colours (violet #8b7cf6, teal #2bb3a3, the app's WORKSPACE_COLORS), so the colour still comes from the product.
+ * Everything is scoped to .mk (MarketingLayout look="paper"): always dark, whatever the theme toggle says; docs, legal
+ * and error pages keep the app's light/dark tokens. `.mk-light` restores light tokens for anything that needs them.
  */
 
 .font-display {
-  font-family: "Instrument Serif", ui-serif, Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.035em;
 }
 
 body:has(.mk) {
-  background: #f6f6f3;
-}
-.dark body:has(.mk) {
-  background: #111111;
+  background: #07070a;
 }
 
-.mk,
-.dark .mk .light {
-  --mk-bg: #f6f6f3;
-  --mk-paper-2: #ededea;
-  --mk-ink: #1a1a1a;
-  --mk-accent: #1a1a1a;
-  --mk-accent-2: #333333;
-  --mk-on-accent: #ffffff;
-  /* The accent as text and lines: here the ink itself. */
-  --mk-accent-ink: #1a1a1a;
-  /* Headline emphasis and the muted half of section headings. */
-  --mk-soft-ink: #8a8a86;
+.mk {
+  --mk-bg: #07070a;
+  --mk-paper-2: #0e0e13;
+  --mk-ink: #f4f4f6;
+  --mk-violet: #8b7cf6;
+  --mk-teal: #2bb3a3;
+  --mk-pink: #e66aa8;
+  --mk-accent: #f4f4f6;
+  --mk-accent-2: #ffffff;
+  --mk-on-accent: #07070a;
+  --mk-accent-ink: #b9b0ff;
+  --mk-soft-ink: #8b8b98;
+  --mk-glass: rgb(255 255 255 / 0.035);
+  --mk-glass-2: rgb(255 255 255 / 0.06);
+  --mk-line: rgb(255 255 255 / 0.08);
+  --mk-line-2: rgb(255 255 255 / 0.14);
   --background: var(--mk-bg);
   --foreground: var(--mk-ink);
   --ink: var(--mk-ink);
-  --card: #ffffff;
+  --card: #0f0f14;
   --card-foreground: var(--mk-ink);
-  --popover: #ffffff;
+  --popover: #121218;
   --popover-foreground: var(--mk-ink);
-  --secondary: var(--mk-paper-2);
-  --muted-foreground: #62625f;
-  --surface: #ffffff;
-  --border: rgb(26 26 26 / 0.1);
-  --accent: rgb(26 26 26 / 0.05);
-  --code: #141414;
+  --secondary: #16161d;
+  --muted-foreground: #9a9aa6;
+  --surface: #0f0f14;
+  --border: var(--mk-line);
+  --accent: rgb(255 255 255 / 0.05);
+  --code: #0b0b0f;
   --primary: var(--mk-accent);
   --primary-foreground: var(--mk-on-accent);
-  --mk-shadow: rgb(26 26 26 / 0.32);
-  --mk-dot: rgb(26 26 26 / 0.13);
-  color-scheme: light;
+  --mk-shadow: rgb(0 0 0 / 0.7);
+  --mk-dot: rgb(255 255 255 / 0.07);
+  color-scheme: dark;
   color: var(--foreground);
-}
-.mk {
   background: var(--mk-bg);
   overflow-x: clip;
+  position: relative;
 }
 
-.dark .mk {
-  --mk-bg: #111111;
-  --mk-paper-2: #1a1a1a;
-  --mk-ink: #ececea;
-  --mk-accent: #f2f2f0;
-  --mk-accent-2: #ffffff;
-  --mk-on-accent: #111111;
-  --mk-accent-ink: #f2f2f0;
-  --mk-soft-ink: #8d8d89;
-  --background: var(--mk-bg);
-  --foreground: var(--mk-ink);
-  --ink: var(--mk-ink);
-  --card: #181818;
-  --card-foreground: var(--mk-ink);
-  --popover: #1c1c1c;
-  --popover-foreground: var(--mk-ink);
-  --secondary: var(--mk-paper-2);
-  --muted-foreground: #a5a5a1;
-  --surface: #181818;
-  --border: rgb(236 236 234 / 0.12);
-  --accent: rgb(236 236 234 / 0.06);
-  --code: #0c0c0c;
-  --mk-shadow: rgb(0 0 0 / 0.6);
-  --mk-dot: rgb(236 236 234 / 0.11);
-  color-scheme: dark;
+/* The page's light: a violet glow behind the hero, a teal one further down, both fixed to the top of the page. */
+.mk::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1600px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 50% 38% at 50% -6%, rgb(139 124 246 / 0.42), transparent 70%),
+    radial-gradient(ellipse 34% 30% at 18% 38%, rgb(43 179 163 / 0.16), transparent 70%),
+    radial-gradient(ellipse 30% 26% at 85% 30%, rgb(230 106 168 / 0.12), transparent 70%);
 }
 
 @layer base {
   .mk :is(h1, h2, h3) {
-    font-family: "Instrument Serif", ui-serif, Georgia, serif;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    line-height: 1.08;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.04;
   }
+  /* Headlines fade from white to grey, like light falling on them. */
+  .mk :is(h1, h2) {
+    background: linear-gradient(180deg, #ffffff 30%, rgb(255 255 255 / 0.62));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Emphasis: the product's colours, not italic. */
   .mk :is(h1, h2, h3) em {
-    font-style: italic;
-    color: var(--mk-soft-ink);
+    font-style: normal;
+    background: linear-gradient(92deg, #c4b8ff, var(--mk-violet) 40%, var(--mk-teal));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
-  /* Product UI on the page keeps the app's font for headings. */
   .mk .mk-light :is(h1, h2, h3) {
     font-family: var(--font-heading);
     letter-spacing: normal;
     line-height: inherit;
+    background: none;
+    color: inherit;
   }
 }
 
-/* Screens of the app keep their real (light) look inside the page. */
 .mk-light {
   color-scheme: light;
   --background: #ffffff;
@@ -129,20 +124,16 @@ body:has(.mk) {
   color: #1a1a1a;
 }
 
-/* A little paper grain on the page background (under the content, so screenshots stay crisp). */
+/* Film grain over the whole page (on top, very faint, so it also sits on the glows; screenshots stay readable). */
 .mk-grain::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 60;
   pointer-events: none;
-  opacity: 0.045;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.dark .mk-grain::after {
-  opacity: 0.06;
-  mix-blend-mode: screen;
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ---------- Hero ---------- */
@@ -1056,3 +1047,174 @@ a.ledger-item:hover {
   }
 }
 
+
+
+/* =====================================================================================================================
+ * Glow and glass (the dark look): overrides for the ported parts above.
+ * ================================================================================================================== */
+
+.hero-title {
+  font-size: clamp(2.7rem, 6vw, 5.4rem);
+  line-height: 1;
+}
+
+/* Buttons: a white pill with a soft glow, and a glass one. */
+.mk-btn {
+  color: var(--mk-on-accent);
+  background: linear-gradient(180deg, #ffffff, #e6e6ec);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.2),
+    0 8px 30px -6px rgb(139 124 246 / 0.55),
+    inset 0 -1px 0 rgb(0 0 0 / 0.12);
+}
+.mk-btn:hover {
+  background: #ffffff;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.3),
+    0 10px 40px -6px rgb(139 124 246 / 0.75);
+}
+.mk-btn-ghost {
+  color: var(--foreground);
+  background: var(--mk-glass);
+  box-shadow: inset 0 0 0 1px var(--mk-line-2);
+  backdrop-filter: blur(12px);
+}
+.mk-btn-ghost:hover {
+  background: var(--mk-glass-2);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.22);
+}
+
+/* Glass surfaces: a faint fill, a hairline and a brighter top edge. */
+.mk :is(.price-card, .tour-tabs, .code-card) {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.02));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 0 0 1px var(--mk-line),
+    0 30px 60px -30px rgb(0 0 0 / 0.8);
+  backdrop-filter: blur(16px);
+}
+.mk .price-card[data-popular="true"] {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgb(139 124 246 / 0.22), transparent 70%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.02));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 0 0 1px rgb(139 124 246 / 0.55),
+    0 30px 80px -30px rgb(139 124 246 / 0.5);
+}
+.mk .tour-tabs::before {
+  background: #ffffff;
+}
+
+/* Dots behind the hero, fading out. */
+.dot-grid {
+  background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1px);
+  mask-image: radial-gradient(ellipse 50% 55% at 50% 30%, #000 10%, transparent 70%);
+}
+
+/* A product scene: dark glass with a coloured glow rising behind the window. */
+.stage {
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 115%, rgb(139 124 246 / 0.38), transparent 70%),
+    radial-gradient(ellipse 40% 40% at 90% 100%, rgb(43 179 163 / 0.22), transparent 70%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.04), rgb(255 255 255 / 0.01));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    inset 0 0 0 1px var(--mk-line);
+}
+
+/* The hero window floats in its own light. */
+.hero-glow {
+  position: relative;
+  isolation: isolate;
+}
+.hero-glow::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 6% 4% -8%;
+  border-radius: 40%;
+  background: conic-gradient(from 200deg at 50% 50%, var(--mk-violet), var(--mk-teal), var(--mk-pink), var(--mk-violet));
+  filter: blur(90px);
+  opacity: 0.6;
+}
+
+/* Ledger rows: glass cells on the dark page. */
+.ledger {
+  border-color: var(--mk-line);
+  background: var(--mk-line);
+}
+.ledger-item {
+  background: var(--mk-bg);
+}
+.ledger-item:hover {
+  background: rgb(255 255 255 / 0.03);
+}
+.ledger-item::before {
+  background: linear-gradient(90deg, var(--mk-violet), var(--mk-teal));
+}
+
+/* Numbered pins and timeline nodes pick up the glow. */
+.mk .pin,
+.mk .timeline-node {
+  color: #fff;
+  background: linear-gradient(135deg, var(--mk-violet), var(--mk-teal));
+  box-shadow:
+    0 0 0 3px rgb(7 7 10 / 0.9),
+    0 6px 20px -4px rgb(139 124 246 / 0.7);
+}
+
+/* The faint rule between sections. */
+.mk-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.12), transparent);
+}
+
+/* A section lit from behind: violet by default, teal with .glow-teal. */
+.glow-section {
+  position: relative;
+  isolation: isolate;
+}
+.glow-section::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -12% -25%;
+  pointer-events: none;
+  background: radial-gradient(ellipse 38% 45% at 50% 55%, rgb(139 124 246 / 0.2), transparent 70%);
+}
+.glow-teal::before {
+  background: radial-gradient(ellipse 34% 45% at 70% 50%, rgb(43 179 163 / 0.18), transparent 70%);
+}
+
+/* The closing call to action: a glass panel with the product's colours rising from below. */
+.cta-panel {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 1.75rem;
+  padding: clamp(3rem, 7vw, 6rem) 1.5rem;
+  text-align: center;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.05), rgb(255 255 255 / 0.01));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    inset 0 0 0 1px var(--mk-line);
+}
+.cta-panel::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 35% -10% -60%;
+  background: conic-gradient(from 180deg at 50% 0%, var(--mk-teal), var(--mk-violet), var(--mk-pink), var(--mk-violet), var(--mk-teal));
+  filter: blur(80px);
+  opacity: 0.55;
+}
+.cta-panel::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-image: radial-gradient(rgb(255 255 255 / 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 40%, #000, transparent 75%);
+}

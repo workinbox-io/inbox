@@ -83,10 +83,13 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Modelled on Luxivo (`../support-chat`): the same look system (`styles/marketing.css`, scoped to `.mk` by
   `MarketingLayout look="paper"`; docs, legal and error pages use `look="plain"`), GSAP motion
   (`scripts/marketing-motion.ts`: `data-split`, `data-reveal`, `data-magnetic`) and craft components
-  (`components/site/craft/*`, `BrowserFrame`, `ComparisonTable`). WorkInbox colours: paper and ink, no brand colour,
-  Instrument Serif headlines, emphasis = serif italic in `--mk-soft-ink`.
+  (`components/site/craft/*`, `BrowserFrame`, `ComparisonTable`). The look is dark in the spirit of Raycast's site:
+  near-black page, violet/teal/pink glows (the mailbox colours), glass cards, film grain (`.mk-grain`), Inter Tight
+  headlines fading white→grey, `<em>` = the violet→teal gradient; `.hero-glow`, `.glow-section`, `.cta-panel`.
+  Marketing pages are always dark and use the `*-dark.webp` shots.
 - Screens on the site are the real app: `pnpm shots [--seed] [name]` (`scripts/marketing-shots.ts`, needs `pnpm dev`)
-  seeds the demo org (acme.test) through the local email handler and the notes API, then saves `public/marketing/*.webp`.
+  seeds the demo org (acme.test) through the local email handler and the notes API, then saves `public/marketing/*.webp`
+  and `*-dark.webp`.
 - Pages: home (`pages/index.astro`), `/pricing`, `/shared-mailbox`, `/google-workspace-alternative`, `/vs` and
   `/vs/<slug>` from `config/compare.ts` (competitor facts from their own pages with `checked` and `sources`; re-check
   before editing, keep "pick them if" and our gaps honest). `/llms.txt` is generated from `config/plans.ts` and

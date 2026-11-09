@@ -8,7 +8,8 @@
  * Needs `pnpm dev` (localhost:4321) and the demo org in the local D1: SHOTS_ORG, by default Anna Kowalska's team with
  * the domain acme.test (anna@, support@ shared, diana@, tomasz@). Mail goes in through the local email handler, the same
  * path as real mail; notes through the app's API. --seed also archives the org's old test threads so they don't show.
- * It signs in by writing a Better Auth session row (removed at the end). Light theme, 1440x900 at 2x, saved as webp.
+ * It signs in by writing a Better Auth session row (removed at the end). 1440x900 at 2x, saved as webp, each shot in the
+ * light theme and as <name>-dark.webp in the dark one (the marketing pages are dark).
  */
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync } from "node:fs";
@@ -190,9 +191,10 @@ async function main() {
   try {
     const api = apiAs(`better-auth.session_token=${signed}`);
     if (args.includes("--seed")) await seed(db, api);
-    for (const shot of shots) {
+    // Each shot in both themes: <name>.webp (light, docs and comparisons) and <name>-dark.webp (the dark marketing pages).
+    for (const [shot, scheme] of shots.flatMap((s) => (["light", "dark"] as const).map((c) => [s, c] as const))) {
       const viewport = shot.viewport ?? { width: 1440, height: 900 };
-      const context = await browser.newContext({ viewport, deviceScaleFactor: 2, colorScheme: "light", reducedMotion: "reduce" });
+      const context = await browser.newContext({ viewport, deviceScaleFactor: 2, colorScheme: scheme, reducedMotion: "reduce" });
       await context.addCookies([
         { name: "better-auth.session_token", value: signed, url: BASE },
         { name: `app-view-${owner.user_id}`, value: shot.view ?? "user", url: BASE },
@@ -207,8 +209,9 @@ async function main() {
         await shot.prepare?.(page);
         for (const frame of page.frames()) await frame.evaluate(() => document.querySelector("astro-dev-toolbar")?.remove()).catch(() => {});
         const png = await page.screenshot({ type: "png" });
-        await sharp(png).resize(viewport.width * 2).webp({ quality: 86 }).toFile(join(OUT, shot.file));
-        console.log(`${shot.file}  ${path}`);
+        const file = scheme === "dark" ? shot.file.replace(/\.webp$/, "-dark.webp") : shot.file;
+        await sharp(png).resize(viewport.width * 2).webp({ quality: 86 }).toFile(join(OUT, file));
+        console.log(`${file}  ${path}`);
       } finally {
         await context.close();
       }
