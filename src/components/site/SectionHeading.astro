@@ -13,5 +13,5 @@ const { muted, class: className, left = false } = Astro.props;
   data-split
   class:list={["max-w-5xl text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.08] text-balance", left ? "text-left" : "mx-auto text-center", className]}
 >
-  <slot />{muted ? <> <span class="text-(--mk-soft-ink)">{muted}</span></> : null}
+  <slot />{muted ? <> <span class="italic text-(--mk-soft-ink)">{muted}</span></> : null}
 </h2>

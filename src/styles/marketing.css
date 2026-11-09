@@ -1,15 +1,19 @@
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
+
 /*
  * Marketing look: dark, with soft colour glows, glass cards and film grain (in the spirit of Raycast's site), built
  * on the system ported from Luxivo (support-chat, styles/marketing.css). The glow colours are WorkInbox's mailbox
  * colours (violet #8b7cf6, teal #2bb3a3, the app's WORKSPACE_COLORS), so the colour still comes from the product.
+ * Headlines are Instrument Serif (the earlier paper look), with italic emphasis in the glow's gradient.
  * Everything is scoped to .mk (MarketingLayout look="paper"): always dark, whatever the theme toggle says; docs, legal
  * and error pages keep the app's light/dark tokens. `.mk-light` restores light tokens for anything that needs them.
  */
 
 .font-display {
-  font-family: var(--font-heading);
-  font-weight: 600;
-  letter-spacing: -0.035em;
+  font-family: "Instrument Serif", ui-serif, Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 body:has(.mk) {
@@ -72,10 +76,10 @@ body:has(.mk) {
 
 @layer base {
   .mk :is(h1, h2, h3) {
-    font-family: var(--font-heading);
-    font-weight: 600;
-    letter-spacing: -0.035em;
-    line-height: 1.04;
+    font-family: "Instrument Serif", ui-serif, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.06;
   }
   /* Headlines fade from white to grey, like light falling on them. */
   .mk :is(h1, h2) {
@@ -84,9 +88,10 @@ body:has(.mk) {
     background-clip: text;
     color: transparent;
   }
-  /* Emphasis: the product's colours, not italic. */
+  /* Emphasis: the serif italic, in the product's colours. */
   .mk :is(h1, h2, h3) em {
-    font-style: normal;
+    font-style: italic;
+    padding-right: 0.06em;
     background: linear-gradient(92deg, #c4b8ff, var(--mk-violet) 40%, var(--mk-teal));
     -webkit-background-clip: text;
     background-clip: text;
@@ -1054,7 +1059,7 @@ a.ledger-item:hover {
  * ================================================================================================================== */
 
 .hero-title {
-  font-size: clamp(2.7rem, 6vw, 5.4rem);
+  font-size: clamp(2.9rem, 6.4vw, 5.8rem);
   line-height: 1;
 }
 

@@ -84,8 +84,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `MarketingLayout look="paper"`; docs, legal and error pages use `look="plain"`), GSAP motion
   (`scripts/marketing-motion.ts`: `data-split`, `data-reveal`, `data-magnetic`) and craft components
   (`components/site/craft/*`, `BrowserFrame`, `ComparisonTable`). The look is dark in the spirit of Raycast's site:
-  near-black page, violet/teal/pink glows (the mailbox colours), glass cards, film grain (`.mk-grain`), Inter Tight
-  headlines fading white→grey, `<em>` = the violet→teal gradient; `.hero-glow`, `.glow-section`, `.cta-panel`.
+  near-black page, violet/teal/pink glows (the mailbox colours), glass cards, film grain (`.mk-grain`), Instrument Serif
+  headlines fading white→grey, `<em>` = serif italic in the violet→teal gradient; `.hero-glow`, `.glow-section`, `.cta-panel`.
   Marketing pages are always dark and use the `*-dark.webp` shots.
 - Screens on the site are the real app: `pnpm shots [--seed] [name]` (`scripts/marketing-shots.ts`, needs `pnpm dev`)
   seeds the demo org (acme.test) through the local email handler and the notes API, then saves `public/marketing/*.webp`
