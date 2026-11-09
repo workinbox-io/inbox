@@ -7,7 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Plus, X } from "lucide-react"
+import { Filter, Plus, Tag, X } from "lucide-react"
+import { EmptyState } from "@/components/app/empty-state"
 import type { FilterCondition, FilterActions } from "@/db/schema/mail-storage"
 
 type Label = { id: string; mailboxId: string; name: string }
@@ -95,7 +96,7 @@ export function LabelsSection({ rules: { box, labels, busy, run } }: { rules: Ma
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground text-sm">No labels yet.</p>
+        <EmptyState variant="plain" density="compact" className="rounded-lg border border-dashed" icon={<Tag />} title="No labels yet" description="Add one below, then apply it from the thread list or a filter." />
       )}
       <form
         onSubmit={(e) => {
@@ -228,7 +229,7 @@ export function FiltersSection({ rules: { box, labels, rules, targets, busy, run
           ))}
         </div>
       ) : (
-        <p className="text-muted-foreground text-sm">No filters yet.</p>
+        <EmptyState variant="plain" density="compact" className="rounded-lg border border-dashed" icon={<Filter />} title="No filters yet" description="Label, archive or forward new mail automatically." />
       )}
       <Button variant="outline" size="sm" className="self-start" onClick={() => { setDraft(emptyRule()); setEditing(true) }}>
         <Plus /> Add filter

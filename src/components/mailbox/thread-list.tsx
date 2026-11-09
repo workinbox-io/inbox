@@ -6,6 +6,7 @@ import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/app/empty-state"
 import { Checkbox } from "@/components/ui/checkbox"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { SegmentedControl } from "@/components/ui/segmented-control"
@@ -27,13 +28,13 @@ export const FOLDERS: { id: MailFolder; label: string; icon: LucideIcon }[] = [
 ]
 
 const EMPTY: Record<MailFolder, { icon: LucideIcon; text: string }> = {
-  inbox: { icon: CheckCheck, text: "Inbox zero. Nothing waiting." },
-  starred: { icon: Star, text: "No starred threads." },
-  spam: { icon: ShieldAlert, text: "No spam. Nice." },
-  snoozed: { icon: AlarmClock, text: "Nothing snoozed." },
-  sent: { icon: Send, text: "Nothing sent yet." },
-  archived: { icon: Archive, text: "Nothing archived." },
-  trash: { icon: Trash2, text: "The trash is empty." },
+  inbox: { icon: CheckCheck, text: "Inbox zero. Nothing waiting" },
+  starred: { icon: Star, text: "No starred threads" },
+  spam: { icon: ShieldAlert, text: "No spam. Nice" },
+  snoozed: { icon: AlarmClock, text: "Nothing snoozed" },
+  sent: { icon: Send, text: "Nothing sent yet" },
+  archived: { icon: Archive, text: "Nothing archived" },
+  trash: { icon: Trash2, text: "The trash is empty" },
 }
 
 export function ThreadList({
@@ -306,16 +307,11 @@ export function ThreadList({
           )
         })}
         {threads.length ? null : (
-          <li className="text-muted-foreground grid justify-items-center gap-3 p-10 text-center text-sm">
+          <li className={loading ? "text-muted-foreground grid justify-items-center p-10" : undefined}>
             {loading ? (
               <Loader2 className="size-5 animate-spin" />
             ) : (
-              <>
-                <span className="bg-muted grid size-11 place-items-center rounded-full">
-                  {React.createElement(query ? SearchX : EMPTY[folder].icon, { className: "size-5" })}
-                </span>
-                {query ? "Nothing matches that search." : EMPTY[folder].text}
-              </>
+              <EmptyState variant="plain" density="compact" className="py-10 md:py-14" icon={React.createElement(query ? SearchX : EMPTY[folder].icon)} title={query ? "Nothing matches that search" : EMPTY[folder].text} />
             )}
           </li>
         )}
