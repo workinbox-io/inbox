@@ -34,7 +34,7 @@ export async function llmsTxt(site: URL) {
     "- Not available yet: IMAP/SMTP access for Outlook, Apple Mail or Thunderbird, and native mobile apps (the web app can be installed on phones and computers); importing old mail from Gmail or Outlook.",
     `- Self-hosting: open source (${siteConfig.repoUrl}), runs on the company's own Cloudflare account (Workers, D1, R2, Queues, Email Routing and Email Service), every feature, no fee to Work Inbox. Messages are stored in D1, each original .eml and attachments in R2.`,
     ...plans,
-    `- Shared mailboxes and aliases are free on every plan. Prices exclude VAT. Yearly billing gives two months free. ${TRIAL_DAYS}-day free trial, no card needed.`,
+    `- The first person is free on every plan: one person uses Work Inbox for free (personal mailbox, shared mailboxes, aliases and notes), and a team of five pays for four. A plan is needed from the second person and for the API, MCP and audit log. Shared mailboxes and aliases are free on every plan. Prices exclude VAT. Yearly billing gives two months free. ${TRIAL_DAYS}-day free trial, no card needed.`,
     "- REST API with an OpenAPI 3.1 spec (Pro and Business). MCP server at /mcp for Claude, ChatGPT, Claude Code and Cursor (Pro and Business): search, read and answer mail, search, read, create and update notes. OAuth sign-in, changes audited.",
     "",
     "## Product",

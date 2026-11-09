@@ -1,7 +1,7 @@
 ---
 /** Plan cards from config/plans.ts, used on the home page and /pricing, plus the self-hosted line under them. */
 import { ArrowRight, Check, Server } from "lucide-react";
-import { CURRENCY, PLAN_LIST, POPULAR_PLAN, PRICE_UNIT, planFeatures, priceYearly } from "@/config/plans";
+import { CURRENCY, FREE_NOTE, PLAN_LIST, POPULAR_PLAN, PRICE_UNIT, planFeatures, priceYearly } from "@/config/plans";
 
 interface Props {
   /** Show the yearly price under the monthly one. */
@@ -24,7 +24,7 @@ const money = (cents: number) =>
           <span class="font-display text-6xl tabular-nums">{money(p.priceMonthly)}</span>
           <span class="text-sm text-foreground/60">{PRICE_UNIT}</span>
         </p>
-        {yearly ? <p class="mt-1 text-sm text-foreground/60">or {money(priceYearly(p))} a year, two months free</p> : null}
+        <p class="mt-1 text-sm text-foreground/60">{FREE_NOTE}{yearly ? `, or ${money(priceYearly(p))} a year with two months free` : ""}</p>
         <ul class="mt-6 flex-1 space-y-2.5 text-sm">
           {planFeatures(p).map((f) => (
             <li class="flex items-start gap-2.5">

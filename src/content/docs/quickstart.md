@@ -8,7 +8,7 @@ updated: 2026-11-09
 
 ## 1. Create an account
 
-[Sign up](/signup) with your email or Google. Every hosted account starts with a free trial, no card needed.
+[Sign up](/signup) with your email or Google. Every hosted account starts with a free trial, no card needed, and one person stays free after it.
 
 ## 2. Add your domain
 

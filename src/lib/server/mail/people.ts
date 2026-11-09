@@ -6,7 +6,7 @@
 import { account, and, db, eq, inArray, mailboxAccess, mailboxes, mailAccountSecurity, member, session, user } from "@/db";
 import { HttpError } from "@/lib/server/api";
 import { getAuth } from "@/lib/server/auth";
-import { requireActivePlan, seatUpsell, seatsLeft } from "@/lib/server/org";
+import { requireMailPlan, seatUpsell, seatsLeft } from "@/lib/server/org";
 import { seatsChanged } from "@/lib/server/seats";
 import { freeAddress } from "./admin";
 
@@ -29,7 +29,7 @@ export interface NewPerson {
 }
 
 export async function addPerson(orgId: string, input: NewPerson) {
-  await requireActivePlan(orgId);
+  await requireMailPlan(orgId, 1);
   const { plan, left } = await seatsLeft(orgId);
   if (left !== null && left < 1) throw new HttpError(403, seatUpsell(plan));
   const { address, domain } = await freeAddress(orgId, input.domainId, input.local);

@@ -30,6 +30,9 @@ export const CURRENCY = "EUR";
  *  products (Luxivo uses the same plan ids) never mixes their prices or subscriptions up. */
 export const PADDLE_PRODUCT = "workinbox";
 export const TRIAL_DAYS = 14;
+/** Free tier: an org with this many people (personal mailboxes) or fewer uses mail without a plan, after the trial
+ *  too. Shared mailboxes and aliases don't count; paid features (API, MCP, audit log) still need a plan. */
+export const FREE_PEOPLE = 1;
 /** New organizations start a trial of this plan, without a card. */
 export const TRIAL_PLAN: PlanId = "pro";
 export const POPULAR_PLAN: PlanId = "pro";
@@ -102,3 +105,5 @@ export function planFeatures(plan: Plan): PlanFeature[] {
 
 /** "€3 per person a month": the unit shown next to every price. */
 export const PRICE_UNIT = "per person / month";
+/** Shown with every price: the free first person (FREE_PEOPLE). */
+export const FREE_NOTE = "First person free";

@@ -23,7 +23,7 @@ const checked = new Date(google.checked).toLocaleDateString("en-GB", { day: "num
 
 /** Five people and one shared support@ mailbox, cheapest plan with custom-domain mail, annual billing, list prices before tax. */
 const team = [
-  { name: "Work Inbox Starter", each: `€${PLANS.starter.priceMonthly / 100}`, total: `€${(PLANS.starter.priceMonthly * 5) / 100}`, shared: "Included, free" },
+  { name: "Work Inbox Starter", each: `€${PLANS.starter.priceMonthly / 100}`, total: `€${(PLANS.starter.priceMonthly * 4) / 100} (first person free)`, shared: "Included, free" },
   { name: "Work Inbox self-hosted", each: "€0", total: "€0 + your Cloudflare usage", shared: "Included, free" },
   { name: "Google Workspace Business Starter", each: "$7", total: "$35", shared: "Google Groups' collaborative inbox" },
   { name: "Microsoft 365 Business Basic", each: "$7", total: "$35", shared: "Free up to 50 GB and 25 users" },
@@ -54,7 +54,7 @@ const steps = [
 
 const faq = [
   ...google.faq,
-  { question: "Is there a free Google Workspace alternative?", answer: `Work Inbox is free when you run it on your own Cloudflare account; you pay Cloudflare for what you use. Hosted, it starts at €${PLANS.starter.priceMonthly / 100} a person a month after a ${TRIAL_DAYS}-day trial. Zoho Mail also has a free plan for up to five people.` },
+  { question: "Is there a free Google Workspace alternative?", answer: `Work Inbox is free when you run it on your own Cloudflare account; you pay Cloudflare for what you use. Hosted, one person is free; a team pays from €${PLANS.starter.priceMonthly / 100} a person a month, the first person still free, after a ${TRIAL_DAYS}-day trial. Zoho Mail also has a free plan for up to five people.` },
   { question: "Is there an open-source Google Workspace alternative?", answer: "Work Inbox is open source and runs on Cloudflare. Nextcloud is open source too and covers files, calendar and office documents, but it has no mail server of its own." },
 ];
 

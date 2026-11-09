@@ -33,8 +33,8 @@ export const ROW_LABELS: Record<RowKey, string> = {
 
 /** Our side of every table. */
 export const OURS: Record<RowKey, Cell> = {
-  price: info("€3 / €6 / €10 a month (Starter, Pro, Business); self-hosted free"),
-  trial: yes("14-day trial, no card. Self-hosting free for good"),
+  price: info("€3 / €6 / €10 a month (Starter, Pro, Business), first person free; self-hosted free"),
+  trial: yes("Free for one person; 14-day trial for teams, no card. Self-hosting free for good"),
   shared: yes("Unlimited on every plan, no licence per mailbox"),
   aliases: yes("Unlimited aliases, catch-all per domain, plus addressing"),
   notes: yes("Shared notes with live editing, checklists, tables, @mentions"),
@@ -92,7 +92,7 @@ export const COMPETITORS: Competitor[] = [
     },
     whyUs: [
       "Shared mailboxes are real mailboxes, free on every plan, not Groups set up as an inbox.",
-      "From €3 a person, or free on your own Cloudflare account.",
+      "Free for one person, then from €3 a person, or free on your own Cloudflare account.",
       "Open source: you can read the code that handles your mail.",
     ],
     pickThemIf: [

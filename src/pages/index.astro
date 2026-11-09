@@ -76,7 +76,7 @@ const faq = [
   },
   {
     question: "What does a shared mailbox cost?",
-    answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}. Shared mailboxes, aliases and the catch-all are free on every plan.`,
+    answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}, and the first person is free. Shared mailboxes, aliases and the catch-all are free on every plan.`,
   },
   {
     question: "Can I bring my old mail from Gmail or Outlook?",
@@ -92,7 +92,7 @@ const faq = [
   },
   {
     question: "Is there a free trial?",
-    answer: `Yes. Every hosted account starts with a ${TRIAL_DAYS}-day trial, no card needed. Self-hosting is free for good.`,
+    answer: `Yes. Every hosted account starts with a ${TRIAL_DAYS}-day trial, no card needed, and one person stays free after it. Self-hosting is free for good.`,
   },
 ];
 
@@ -129,13 +129,13 @@ const jsonLd = [
       </h1>
       <p class="hero-fade relative mx-auto mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65" style="--d: 300ms">
         Personal and shared mailboxes, aliases and a catch-all, plus notes your team writes together. Run it free on your own
-        Cloudflare account, or let us host it from €{lowest} per person a month.
+        Cloudflare account, or let us host it: free for one person, then from €{lowest} per person a month.
       </p>
       <div class="hero-fade relative mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-4" style="--d: 500ms">
         <a href="/signup" data-magnetic class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
         <a href="/docs/self-host" class="text-foreground/70 underline decoration-foreground/30 underline-offset-4 transition-colors hover:text-foreground">Self-host on Cloudflare</a>
       </div>
-      <p class="hero-fade relative mt-5 text-sm text-foreground/60" style="--d: 560ms">{TRIAL_DAYS}-day trial, no card needed. Shared mailboxes are free.</p>
+      <p class="hero-fade relative mt-5 text-sm text-foreground/60" style="--d: 560ms">{TRIAL_DAYS}-day trial, no card needed. Free for one person.</p>
 
       <div id="tour" class="hero-fade relative mt-14 scroll-mt-24" style="--d: 650ms" data-tabs>
         <div role="tablist" aria-label="Work Inbox screens" class="tour-tabs mx-auto">
@@ -280,8 +280,8 @@ const jsonLd = [
     </section>
 
     <section id="pricing" class="scroll-mt-16 pt-24 sm:pt-32">
-      <SectionHeading muted="Shared mailboxes are free.">Pay per person.</SectionHeading>
-      <p class="mx-auto mt-5 max-w-xl text-center text-lg text-foreground/65">Every plan has unlimited shared mailboxes and aliases. Yearly billing gives two months free. Prices exclude VAT.</p>
+      <SectionHeading muted="The first one is free.">Pay per person.</SectionHeading>
+      <p class="mx-auto mt-5 max-w-xl text-center text-lg text-foreground/65">Every plan has unlimited shared mailboxes and aliases, and a team of five pays for four. Yearly billing gives two months free. Prices exclude VAT.</p>
       <div data-reveal="items" class="mt-14"><PricingCards /></div>
     </section>
 
@@ -316,7 +316,7 @@ const jsonLd = [
         <div class="relative z-10 px-7 py-12 sm:px-12 sm:py-16 lg:py-20 lg:pr-4 lg:pl-14">
           <span aria-hidden="true" class="flex size-12 items-center justify-center rounded-2xl bg-white/8 ring-1 ring-white/12"><img src="/logo.svg" alt="" class="size-6" /></span>
           <h2 class="mt-8 max-w-xl text-[clamp(2.2rem,4.4vw,3.6rem)] leading-[1.04]">Your domain's mail, <em>set up this afternoon.</em></h2>
-          <p class="mt-5 max-w-md text-lg leading-7 text-white/65">Add the domain, add your people, share support@. Hosted from €{lowest} per person, or free on your own Cloudflare account.</p>
+          <p class="mt-5 max-w-md text-lg leading-7 text-white/65">Add the domain, add your people, share support@. Hosted free for one person, then from €{lowest} per person, or free on your own Cloudflare account.</p>
           <div class="mt-9 flex flex-wrap items-center gap-3">
             <a href="/signup" data-magnetic class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
             <a href={siteConfig.repoUrl} target="_blank" rel="noopener" class="mk-btn mk-btn-ghost">View on GitHub</a>

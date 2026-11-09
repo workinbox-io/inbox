@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { TRIAL_DAYS, TRIAL_PLAN, featureUpsell, hasFeature, planById, type Feature } from "@/config/plans";
+import { FREE_PEOPLE, TRIAL_DAYS, TRIAL_PLAN, featureUpsell, hasFeature, planById, type Feature } from "@/config/plans";
 import type { BillingDetails } from "@/lib/validation";
 import {
   and,
@@ -11,6 +11,7 @@ import {
   gte,
   inArray,
   invitation,
+  mailboxes,
   member,
   ne,
   orgBillingDetails,
@@ -23,7 +24,7 @@ import {
 import { HttpError } from "./api";
 import { subscriptionUsable } from "./billing";
 import { cancelSubscription } from "./paddle";
-import { billableSeats } from "./seats";
+import { peopleCount, seatsFor } from "./seats";
 
 export class OrgError extends Error {
   constructor(message: string) {
@@ -77,6 +78,24 @@ export async function requireActivePlan(orgId: string) {
   return planById(sub.plan);
 }
 
+/**
+ * Mail actions (sending, domains, mailboxes, people): free while the org stays within FREE_PEOPLE personal
+ * mailboxes, counting the `addingPeople` the action creates; beyond that it needs an active trial or plan.
+ */
+export async function requireMailPlan(orgId: string, addingPeople = 0) {
+  if (env.DEPLOY_MODE === "self") return;
+  const sub = await getSubscription(orgId);
+  if (sub && subscriptionUsable(sub)) return;
+  const [row] = await db.select({ n: count() }).from(mailboxes).where(and(eq(mailboxes.orgId, orgId), eq(mailboxes.kind, "personal")));
+  if ((row?.n ?? 0) + addingPeople <= FREE_PEOPLE) return;
+  throw new HttpError(
+    402,
+    sub?.status === "trialing" || !sub
+      ? "Your trial has ended. One person is free; choose a plan to add more people or keep mailing as a team."
+      : "Your subscription is inactive. One person is free; choose a plan to add more people or keep mailing as a team.",
+  );
+}
+
 /** Throws 402 unless the org's plan includes `feature`. */
 export async function requireFeature(orgId: string, feature: Feature) {
   const plan = await requireActivePlan(orgId);
@@ -86,14 +105,15 @@ export async function requireFeature(orgId: string, feature: Feature) {
 
 /** What the org uses of its plan limits (Billing page). Add your product's counts here. */
 export async function getOrgUsage(orgId: string) {
-  const [sub, [p], [m], seats] = await Promise.all([
+  const [sub, [p], [m], people] = await Promise.all([
     getSubscription(orgId),
     db.select({ n: count() }).from(projects).where(eq(projects.orgId, orgId)),
     db.select({ n: count() }).from(member).where(eq(member.organizationId, orgId)),
-    billableSeats(orgId),
+    peopleCount(orgId),
   ]);
-  /** `seats`: people billed for (personal mailboxes, at least one), the subscription's quantity. */
-  return { plan: planById(sub?.plan), projects: p?.n ?? 0, members: m?.n ?? 0, seats };
+  /** `people`: personal mailboxes. `seats`: people billed for (the first is free, at least one), the subscription's
+   *  quantity. */
+  return { plan: planById(sub?.plan), projects: p?.n ?? 0, members: m?.n ?? 0, people, seats: seatsFor(people) };
 }
 
 export type OrgUsage = Awaited<ReturnType<typeof getOrgUsage>>;

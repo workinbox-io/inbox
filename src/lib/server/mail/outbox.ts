@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { and, db, desc, eq, inArray, mailOutbox, mailboxes, mailSendLimits, mailSuppressions, mailDeliveryEvents, member } from "@/db";
 import { ATTACHMENT_URL_PREFIX, attachmentUrl, safeFilename } from "@/lib/uploads";
 import { HttpError } from "@/lib/server/api";
-import { requireActivePlan } from "@/lib/server/org";
+import { requireMailPlan } from "@/lib/server/org";
 import { enqueue } from "@/lib/server/queue";
 import { sendNow } from "@/lib/server/email";
 import { scheduledTime, quotaDay, uniqueRecipients, validateIdempotencyKey, quotaArgs, quotaPredicates, deliverySummary } from "@/lib/mail/outbox-policy";
@@ -55,8 +55,9 @@ async function copyQueuedFiles(payload: typeof mailOutbox.$inferSelect.payload, 
 
 export async function queueMailSend(input: SendInput, boxes: Mailbox[], fallbackName: string, options: SendOptions = {}) {
   const { mailbox, payload } = await prepareMailSend(input, boxes, fallbackName);
-  // Hosted: sending needs a trial or a plan; forwarding rules keep running so incoming mail still reaches people.
-  if (!input.automatedForward) await requireActivePlan(mailbox.orgId);
+  // Hosted: sending is free for one person, a team needs a trial or a plan; forwarding rules keep running so incoming
+  // mail still reaches people.
+  if (!input.automatedForward) await requireMailPlan(mailbox.orgId);
   if (!options.actorUserId && !options.apiKeyId && !input.automatedForward) options.actorUserId = mailbox.userId ?? undefined;
   if (!options.actorUserId && !options.apiKeyId && !input.automatedForward) throw new HttpError(403, "A sending identity is required");
   let sendAt: number, key: string;

@@ -100,8 +100,9 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Billing (workinbox.io runs `DEPLOY_MODE=cloud`, PADDLE_ENV production; self-hosters set `self`): per person = personal
   mailboxes (`lib/server/seats.ts`). Checkout sells that quantity; adding/removing/converting a personal mailbox calls
   `seatsChanged` → job `billing.seats` → PATCH the Paddle subscription (prorated next period); a daily task reconciles.
-  Sending mail, adding people, mailboxes and domains need an active trial or plan (`requireActivePlan`); receiving and
-  forwarding rules keep working.
+  The first person is free (`FREE_PEOPLE`, `seatsFor`: quantity = people − 1, at least 1 on a paid plan). Sending mail, adding people, mailboxes and domains need an active trial or plan
+  only once the org has (or would have) more than one personal mailbox (`requireMailPlan`); shared mailboxes and
+  aliases don't count. Receiving and forwarding rules always keep working; API, MCP and audit log stay paid.
 - Open source under AGPL-3.0 (LICENSE), public at github.com/jakub-kalamarz/inbox.
 - OpenSEO project "WorkInbox" (US/en) holds the keyword research and context.
 

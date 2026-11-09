@@ -7,7 +7,7 @@ import { and, count, db, eq, inArray, invitation, gt, mailboxAccess, mailAliases
 import { ATTACHMENT_URL_PREFIX } from "@/lib/uploads";
 import { evaluateDns, isValidDomain, isValidLocalPart, normalizeDomain, requiredDnsRecords } from "@/lib/mail/rules";
 import { HttpError } from "@/lib/server/api";
-import { requireActivePlan } from "@/lib/server/org";
+import { requireMailPlan } from "@/lib/server/org";
 import { seatsChanged } from "@/lib/server/seats";
 
 const dohAnswers = async (name: string, type: "MX" | "TXT") => {
@@ -56,7 +56,7 @@ async function ownDomain(orgId: string, domainId: string) {
 }
 
 export async function addDomain(orgId: string, raw: string) {
-  await requireActivePlan(orgId);
+  await requireMailPlan(orgId);
   const domain = normalizeDomain(raw);
   if (!isValidDomain(domain)) throw new HttpError(422, "Enter a domain like acme.com");
   const [taken] = await db.select({ id: mailDomains.id }).from(mailDomains).where(eq(mailDomains.domain, domain));
@@ -125,7 +125,7 @@ export interface NewMailbox {
 }
 
 export async function createMailbox(orgId: string, input: NewMailbox) {
-  await requireActivePlan(orgId);
+  await requireMailPlan(orgId, input.kind === "personal" ? 1 : 0);
   const { address, domain } = await freeAddress(orgId, input.domainId, input.local);
   if (input.kind === "personal") {
     if (!input.userId) throw new HttpError(422, "Pick the member this mailbox belongs to");
@@ -170,6 +170,7 @@ export async function updateMailbox(orgId: string, id: string, patch: MailboxPat
     if (!userId) throw new HttpError(422, "Pick the member this mailbox belongs to");
     const [m] = await db.select({ id: member.id }).from(member).where(and(eq(member.organizationId, orgId), eq(member.userId, userId)));
     if (!m) throw new HttpError(422, "This person isn't a member of the organization");
+    if (mb.kind !== "personal") await requireMailPlan(orgId, 1);
     set.kind = "personal";
     set.userId = userId;
   }
