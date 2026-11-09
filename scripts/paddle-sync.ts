@@ -1,7 +1,7 @@
-// Creates one Paddle Product per plan with monthly + yearly Prices tagged `custom_data: { plan, interval }`.
+// Creates one Paddle Product per plan with monthly + yearly Prices tagged `custom_data: { product, plan, interval }`.
 // A Price whose amount changed is archived and replaced, so existing subscribers keep their price.
 // Usage: pnpm paddle:sync   (reads PADDLE_API_KEY and PADDLE_ENV from .dev.vars)
-import { CURRENCY, PLAN_LIST, priceYearly } from "../src/config/plans.ts";
+import { CURRENCY, PADDLE_PRODUCT, PLAN_LIST, priceYearly } from "../src/config/plans.ts";
 import { siteConfig } from "../src/config/site.ts";
 
 const base = process.env.PADDLE_ENV === "production" ? "https://api.paddle.com" : "https://sandbox-api.paddle.com";
@@ -26,15 +26,15 @@ const prices = await paddle<Price[]>("GET", "/prices?status=active&per_page=200"
 
 for (const plan of PLAN_LIST) {
   const product =
-    products.find((p) => p.custom_data?.plan === plan.id) ??
-    (await paddle<Product>("POST", "/products", { name: `${siteConfig.name} ${plan.name}`, tax_category: "saas", custom_data: { plan: plan.id } }));
+    products.find((p) => p.custom_data?.product === PADDLE_PRODUCT && p.custom_data?.plan === plan.id) ??
+    (await paddle<Product>("POST", "/products", { name: `${siteConfig.name} ${plan.name}`, tax_category: "saas", custom_data: { product: PADDLE_PRODUCT, plan: plan.id } }));
 
   for (const [interval, amount] of [
     ["month", plan.priceMonthly],
     ["year", priceYearly(plan)],
   ] as const) {
     const label = `${plan.id}_${interval}ly`;
-    const existing = prices.find((p) => p.product_id === product.id && p.custom_data?.plan === plan.id && p.custom_data?.interval === interval);
+    const existing = prices.find((p) => p.product_id === product.id && p.custom_data?.product === PADDLE_PRODUCT && p.custom_data?.plan === plan.id && p.custom_data?.interval === interval);
     if (existing?.unit_price.amount === String(amount) && existing.unit_price.currency_code === CURRENCY) {
       console.log(`ok      ${label}`);
       continue;
@@ -48,7 +48,7 @@ for (const plan of PLAN_LIST) {
       tax_mode: "external",
       // Per person: the quantity is the org's personal mailboxes (lib/server/seats.ts sets it).
       quantity: { minimum: 1, maximum: 10000 },
-      custom_data: { plan: plan.id, interval },
+      custom_data: { product: PADDLE_PRODUCT, plan: plan.id, interval },
     });
     if (existing) await paddle("PATCH", `/prices/${existing.id}`, { status: "archived" });
     console.log(`created ${label} (${amount / 100} ${CURRENCY}/${interval})`);

@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { PLANS, type BillingInterval, type PlanId } from "@/config/plans";
+import { PADDLE_PRODUCT, PLANS, type BillingInterval, type PlanId } from "@/config/plans";
 import { db, eq, organization, subscriptions } from "@/db";
 import { HttpError } from "./api";
 import { billableSeats } from "./seats";
@@ -57,17 +57,17 @@ export async function paddleFetch<T>(method: string, path: string, body?: unknow
   return data.data as T;
 }
 
-/** Prices carry `customData: { plan, interval }`, set by scripts/paddle-sync.ts. */
+/** Prices carry `customData: { product, plan, interval }`, set by scripts/paddle-sync.ts. */
 async function findPrice(plan: PlanId, interval: BillingInterval) {
   const prices = await paddleFetch<PaddlePrice[]>("GET", "/prices?status=active&recurring=true&per_page=200");
-  return prices.find((p) => p.custom_data?.plan === plan && p.custom_data?.interval === interval) ?? null;
+  return prices.find((p) => p.custom_data?.product === PADDLE_PRODUCT && p.custom_data?.plan === plan && p.custom_data?.interval === interval) ?? null;
 }
 
 /** The plan item of a subscription; null when it isn't one of ours (a shared Paddle account). */
 export function planItem<T extends Pick<PaddleSubscription, "items">>(subscription: T): T["items"][number] | null {
   return subscription.items.find((item) => {
     const plan = item.price.custom_data?.plan;
-    return typeof plan === "string" && plan in PLANS;
+    return item.price.custom_data?.product === PADDLE_PRODUCT && typeof plan === "string" && plan in PLANS;
   }) ?? null;
 }
 

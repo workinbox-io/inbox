@@ -26,6 +26,9 @@ export const PLAN_LIST = Object.values(PLANS);
 const PLAN_ORDER: PlanId[] = ["starter", "pro", "business"];
 
 export const CURRENCY = "EUR";
+/** Tags this product's Paddle products and prices (`custom_data.product`), so a Paddle account shared with other
+ *  products (Luxivo uses the same plan ids) never mixes their prices or subscriptions up. */
+export const PADDLE_PRODUCT = "workinbox";
 export const TRIAL_DAYS = 14;
 /** New organizations start a trial of this plan, without a card. */
 export const TRIAL_PLAN: PlanId = "pro";
