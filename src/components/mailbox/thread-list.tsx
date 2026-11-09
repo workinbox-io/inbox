@@ -15,6 +15,7 @@ import { ConfirmButton } from "@/components/app/confirm-button"
 import { shortDate } from "./message-view"
 import { SnoozeMenu } from "./thread-view"
 import { Kbd, mailboxColor, tint } from "./mail-ui"
+import { ActionMenu, ActionMenuButton, type MenuAction } from "@/components/workspace/action-menu"
 import type { MailThread, ThreadPatch } from "./types"
 
 export const FOLDERS: { id: MailFolder; label: string; icon: LucideIcon }[] = [
@@ -64,6 +65,7 @@ export function ThreadList({
   outboxCount = 0,
   rail = false,
   account,
+  actionsFor,
 }: {
   mailboxes: string[]
   mailbox: string
@@ -94,6 +96,8 @@ export function ThreadList({
   rail?: boolean
   /** The account menu (mail-only view on a phone), next to Compose. */
   account?: React.ReactNode
+  /** A thread's right-click menu and "…" (mailbox-app.tsx `threadActions`). */
+  actionsFor?: (thread: MailThread) => MenuAction[]
 }) {
   // Dates in the viewer's time zone: the server renders none, so nothing jumps after loading.
   const mounted = React.useSyncExternalStore(
@@ -267,10 +271,10 @@ export function ThreadList({
           const draft = drafts.has(t.id)
           const color = mailboxColor(t.mailbox)
           return (
-            <li key={t.id} className="group relative mx-2 my-0.5">
+            <ThreadRowMenu key={t.id} actions={actionsFor ? () => actionsFor(t) : undefined}>
               {/* Styled like a calendar event: the mailbox's colour as a bar, its tint when open. */}
               <div
-                className={cn("relative flex gap-2.5 rounded-md py-2 pr-2.5 pl-3.5 transition-colors", t.id !== selectedId && !checked && "hover:bg-foreground/[0.035]")}
+                className={cn("relative flex gap-2.5 rounded-md py-2 pr-2.5 pl-3.5 transition-colors", t.id !== selectedId && !checked && "hover:bg-foreground/[0.035] group-data-[menu-open]:bg-foreground/[0.035]")}
                 style={t.id === selectedId || checked ? { background: tint(color, t.id === selectedId ? 13 : 8) } : undefined}
               >
                 <span className="absolute top-1.5 bottom-1.5 left-1 w-[3px] rounded-full" style={{ background: color, opacity: t.unread || t.id === selectedId ? 1 : 0.3 }} aria-hidden />
@@ -282,7 +286,7 @@ export function ThreadList({
                   <span className="flex items-center gap-2">
                     <span className={cn("min-w-0 truncate text-[13px]", t.unread ? "text-foreground font-semibold" : "text-foreground/80 font-medium")}>{t.contactName ?? t.contactEmail}</span>
                     {t.messageCount && t.messageCount > 1 ? <span className="text-muted-foreground text-[11px] tabular-nums">{t.messageCount}</span> : null}
-                    <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                    <span className={cn("ml-auto flex shrink-0 items-center gap-1.5", actionsFor && "group-hover:invisible group-data-[menu-open]:invisible")}>
                       {t.starred ? <Star className="size-3 fill-amber-400 text-amber-500" aria-label="Starred" /> : null}
                       {t.hasFiles ? <Paperclip className="text-muted-foreground size-3" aria-label="Has attachments" /> : null}
                       {folder === "snoozed" && t.snoozedUntil ? <AlarmClock className="size-3 text-amber-600 dark:text-amber-400" aria-label="Snoozed until" /> : null}
@@ -312,7 +316,7 @@ export function ThreadList({
                   </span>
                 </button>
               </div>
-            </li>
+            </ThreadRowMenu>
           )
         })}
         {threads.length ? null : (
@@ -333,5 +337,22 @@ export function ThreadList({
         ) : null}
       </ul>
     </aside>
+  )
+}
+
+/** A thread row with its right-click menu and the "…" that replaces the date on hover. */
+function ThreadRowMenu({ actions, children }: { actions?: () => MenuAction[]; children: React.ReactNode }) {
+  const [open, setOpen] = React.useState(false)
+  return (
+    <ActionMenu actions={actions} onOpenChange={setOpen}>
+      <li className="group relative mx-2 my-0.5" data-menu-open={open || undefined}>
+        {children}
+        {actions ? (
+          <span className="absolute top-1.5 right-1.5 hidden group-hover:flex group-data-[menu-open]:flex">
+            <ActionMenuButton actions={actions} label="Thread actions" onOpenChange={setOpen} />
+          </span>
+        ) : null}
+      </li>
+    </ActionMenu>
   )
 }

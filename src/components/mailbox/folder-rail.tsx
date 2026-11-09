@@ -1,5 +1,7 @@
 import * as React from "react"
-import { CalendarClock, Check, Plus, Settings2 } from "lucide-react"
+import { CalendarClock, Check, Copy, Eye, Layers, Plus, Settings2 } from "lucide-react"
+import { toast } from "sonner"
+import { ActionMenu, ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
 import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
@@ -113,6 +115,22 @@ export function FolderRail({
                 active={all || mailbox === m}
                 onClick={() => onMailbox(mailbox === m && mailboxes.length > 1 ? ALL_MAILBOXES : m)}
                 count={unread[m] ?? 0}
+                actions={() =>
+                  cleanActions([
+                    mailbox !== m && { label: "Show only this mailbox", icon: Eye, onSelect: () => onMailbox(m) },
+                    mailboxes.length > 1 && !all && { label: "Show all mailboxes", icon: Layers, onSelect: () => onMailbox(ALL_MAILBOXES) },
+                    { separator: true },
+                    {
+                      label: "Copy address",
+                      icon: Copy,
+                      onSelect: async () => {
+                        await navigator.clipboard.writeText(m)
+                        toast.success("Address copied")
+                      },
+                    },
+                    { label: "Mailbox settings", icon: Settings2, onSelect: onSettings },
+                  ])
+                }
               />
             ))}
           </ul>
@@ -129,27 +147,49 @@ export function FolderRail({
   )
 }
 
-function MailboxRow({ label, color, active, onClick, count }: { label: string; color: string; active: boolean; onClick: () => void; count: number }) {
+function MailboxRow({
+  label,
+  color,
+  active,
+  onClick,
+  count,
+  actions,
+}: {
+  label: string
+  color: string
+  active: boolean
+  onClick: () => void
+  count: number
+  actions?: () => MenuAction[]
+}) {
+  const [open, setOpen] = React.useState(false)
   return (
-    <li>
-      <button
-        type="button"
-        onClick={onClick}
-        aria-pressed={active}
-        className="hover:bg-foreground/[0.035] focus-visible:ring-ring/50 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-[13px] outline-none focus-visible:ring-[3px]"
-      >
-        <span
-          className="grid size-3.5 shrink-0 place-items-center rounded-[4px] border-[1.5px]"
-          style={{ background: active ? color : "transparent", borderColor: color }}
+    <ActionMenu actions={actions} onOpenChange={setOpen}>
+      <li className="group/mb relative" data-menu-open={open || undefined}>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-pressed={active}
+          className="hover:bg-foreground/[0.035] group-data-[menu-open]/mb:bg-foreground/[0.035] focus-visible:ring-ring/50 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-[13px] outline-none focus-visible:ring-[3px]"
         >
-          {active ? <Check className="size-2.5 text-white" strokeWidth={3} /> : null}
-        </span>
-        <span className={cn("min-w-0 flex-1 truncate text-left", active ? "text-foreground" : "text-foreground/60")} title={label}>
-          {label.split("@")[0]}
-          <span className="text-muted-foreground">@{label.split("@")[1]}</span>
-        </span>
-        {count ? <span className="text-muted-foreground text-xs tabular-nums">{count}</span> : null}
-      </button>
-    </li>
+          <span
+            className="grid size-3.5 shrink-0 place-items-center rounded-[4px] border-[1.5px]"
+            style={{ background: active ? color : "transparent", borderColor: color }}
+          >
+            {active ? <Check className="size-2.5 text-white" strokeWidth={3} /> : null}
+          </span>
+          <span className={cn("min-w-0 flex-1 truncate text-left", active ? "text-foreground" : "text-foreground/60")} title={label}>
+            {label.split("@")[0]}
+            <span className="text-muted-foreground">@{label.split("@")[1]}</span>
+          </span>
+          {count ? <span className="text-muted-foreground text-xs tabular-nums group-hover/mb:invisible group-data-[menu-open]/mb:invisible">{count}</span> : null}
+        </button>
+        {actions ? (
+          <span className="absolute top-1/2 right-1 hidden -translate-y-1/2 group-hover/mb:flex group-data-[menu-open]/mb:flex">
+            <ActionMenuButton actions={actions} label={`${label}: more`} onOpenChange={setOpen} className="size-5" />
+          </span>
+        ) : null}
+      </li>
+    </ActionMenu>
   )
 }

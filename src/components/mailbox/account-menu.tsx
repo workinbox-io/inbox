@@ -11,8 +11,13 @@ export interface MailUser {
   email: string
 }
 
+/** Owners and admins: switch between the user view and the admin dashboard, staying in the same app. */
+export function switchView(to: "user" | "admin") {
+  location.assign(`/app/view?to=${to}&next=${encodeURIComponent(location.pathname)}`)
+}
+
 /**
- * The account corner of the mail-only view (members): settings, theme, sign out.
+ * The account corner of the user view (mail and notes) (members): settings, theme, sign out.
  * `compact` is the avatar alone, for the phone layout's list header.
  */
 export function AccountMenu({ user, onSettings, compact = false, canManage = false }: { user: MailUser; onSettings?: (section?: PreferenceSection) => void; compact?: boolean; canManage?: boolean }) {
@@ -43,7 +48,14 @@ export function AccountMenu({ user, onSettings, compact = false, canManage = fal
             <span className="text-muted-foreground truncate text-xs">{user.email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {canManage && <DropdownMenuItem asChild><a href="/app/mail?view=console"><LayoutDashboard /> Admin console</a></DropdownMenuItem>}
+          {canManage && (
+            <>
+              <DropdownMenuItem onSelect={() => switchView("admin")}>
+                <LayoutDashboard /> Switch to admin view
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           {onSettings ? (
             <>
               <DropdownMenuItem onSelect={() => onSettings()}>

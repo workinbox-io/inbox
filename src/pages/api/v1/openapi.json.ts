@@ -70,6 +70,29 @@ const spec = {
       get: { summary: "Get a send job", responses: { 200: { description: "Send job" }, ...errors } },
       delete: { summary: "Cancel before sending starts", responses: { 200: { description: "Cancelled job" }, 409: { description: "Sending has already started" }, ...errors } },
     },
+    "/notes": {
+      get: { summary: "List or search team notes (API keys see notes shared with the whole organization)", parameters: [
+        { name: "q", in: "query", schema: { type: "string", maxLength: 200 }, description: "Searches titles and text" },
+        { name: "view", in: "query", schema: { type: "string", enum: ["all", "pinned", "archived"] } },
+        { name: "folderId", in: "query", schema: { type: "string", format: "uuid" } },
+        { name: "before", in: "query", schema: { type: "integer" }, description: "Pagination: updatedAt of the last note, in milliseconds" },
+        { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 100 } },
+      ], responses: { 200: { description: "Notes (id, title, preview, sharing, role, updatedAt) and hasMore" }, ...errors } },
+      post: { summary: "Create a team note from markdown", requestBody: json({ type: "object", properties: {
+        title: { type: "string", maxLength: 200 }, markdown: { type: "string", maxLength: 500000 }, folderId: { type: "string", format: "uuid" },
+        teamRole: { type: "string", enum: ["view", "edit"], description: "What members may do with it" },
+      } }), responses: { 201: { description: "The note with its content as markdown" }, ...errors } },
+    },
+    "/notes/{id}": {
+      parameters: idParam,
+      get: { summary: "Read a note (content as markdown)", responses: { 200: { description: "Note" }, ...errors } },
+      patch: { summary: "Change a note; people editing it see the change at once", requestBody: json({ type: "object", properties: {
+        markdown: { type: "string", maxLength: 500000 }, mode: { type: "string", enum: ["replace", "append"], default: "replace" },
+        title: { type: "string", maxLength: 200 }, pinned: { type: "boolean" }, archived: { type: "boolean" },
+        folderId: { type: ["string", "null"], format: "uuid" },
+      } }), responses: { 200: { description: "Updated note" }, 409: { description: "Archived: restore it first" }, ...errors } },
+      delete: { summary: "Delete an archived note for good", responses: { 200: { description: "Deleted" }, 409: { description: "Archive the note first" }, ...errors } },
+    },
     "/projects": {
       get: { summary: "List projects", responses: { 200: { description: "Projects", ...json({ type: "object", properties: { projects: { type: "array", items: project } } }) }, ...errors } },
       post: { summary: "Create a project", requestBody: json(projectInput), responses: { 201: { description: "Created", ...json(project) }, ...errors } },

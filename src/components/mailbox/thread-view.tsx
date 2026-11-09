@@ -10,6 +10,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { DateTimePanel } from "@/components/ui/date-time-picker"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ConfirmButton } from "@/components/app/confirm-button"
+import { IconAction } from "@/components/workspace/detail-header"
+import type { MenuAction } from "@/components/workspace/action-menu"
 import { InlineComposer, replyDraft, type SendJob } from "./composer"
 import { readDraft, writeDraft } from "./drafts"
 import { MessageItem } from "./message-view"
@@ -36,44 +38,45 @@ export function SnoozeMenu({ onSnooze, children }: { onSnooze: (at: number) => v
           <DropdownMenuItem onSelect={() => setCustom(true)}>Pick a date and time…</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog open={custom} onOpenChange={setCustom}>
-        <DialogContent className="w-auto gap-0 p-0 sm:max-w-fit">
-          <DialogHeader className="border-b px-5 pt-5 pb-4">
-            <DialogTitle>Snooze until</DialogTitle>
-            <DialogDescription>It comes back to the inbox as unread.</DialogDescription>
-          </DialogHeader>
-          {custom ? (
-            <DateTimePanel
-              presets={presets}
-              confirmLabel="Snooze"
-              onConfirm={(at) => {
-                onSnooze(at)
-                setCustom(false)
-              }}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <SnoozeDialog open={custom} onOpenChange={setCustom} onSnooze={onSnooze} />
     </>
   )
 }
 
-function IconAction({ label, onClick, children }: { label: string; onClick?: () => void; children: React.ReactNode }) {
+/** The custom date and time for snoozing, opened from SnoozeMenu or a row's menu. */
+export function SnoozeDialog({ open, onOpenChange, onSnooze }: { open: boolean; onOpenChange: (open: boolean) => void; onSnooze: (at: number) => void }) {
+  const presets = React.useMemo(() => snoozePresets(new Date()), [open])
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" onClick={onClick} aria-label={label}>
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent className="flex items-center gap-2">
-        {/* "Archive (e)" shows as "Archive" with an E key chip. */}
-        {label.replace(/\s*\(([^)]+)\)$/, "")}
-        {/\(([^)]+)\)$/.exec(label) ? <Kbd className="border-white/20 bg-white/10 text-current shadow-none">{/\(([^)]+)\)$/.exec(label)![1]!.toUpperCase()}</Kbd> : null}
-      </TooltipContent>
-    </Tooltip>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-auto gap-0 p-0 sm:max-w-fit">
+        <DialogHeader className="border-b px-5 pt-5 pb-4">
+          <DialogTitle>Snooze until</DialogTitle>
+          <DialogDescription>It comes back to the inbox as unread.</DialogDescription>
+        </DialogHeader>
+        {open ? (
+          <DateTimePanel
+            presets={presets}
+            confirmLabel="Snooze"
+            onConfirm={(at) => {
+              onSnooze(at)
+              onOpenChange(false)
+            }}
+          />
+        ) : null}
+      </DialogContent>
+    </Dialog>
   )
 }
+
+/** The snooze presets as menu actions (a row's right-click menu), plus "Pick a date and time…". */
+export function snoozeActions(onSnooze: (at: number) => void, onCustom: () => void): MenuAction[] {
+  return [
+    ...snoozePresets(new Date()).map((p) => ({ label: `${p.label} · ${presetTime(p.at)}`, onSelect: () => onSnooze(p.at.getTime()) })),
+    { separator: true as const },
+    { label: "Pick a date and time…", onSelect: onCustom },
+  ]
+}
+
 
 export interface ThreadViewHandle {
   reply: (mode: ReplyMode, messageId?: string) => void

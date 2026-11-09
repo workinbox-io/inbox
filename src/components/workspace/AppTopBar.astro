@@ -1,0 +1,17 @@
+---
+/**
+ * The user view's top bar (MailLayout): the app's name and the notifications. In the dashboard the same controls
+ * sit in AppLayout's header (slot "actions").
+ */
+import { NotificationCenter } from "@/components/mailbox/notification-center";
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<div class="bg-background flex shrink-0 items-center justify-end gap-2 border-b px-3 py-1">
+  <span class="mr-auto text-sm font-medium">{title}</span>
+  <NotificationCenter client:load />
+</div>

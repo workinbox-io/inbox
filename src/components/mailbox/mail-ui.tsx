@@ -1,16 +1,16 @@
 import * as React from "react"
 
 import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
-import { cn } from "@/lib/utils"
+import { WORKSPACE_COLORS } from "@/components/workspace/ui"
 
 /**
  * Colours mailboxes wear, like calendars in a calendar app: the dot in the rail and the bar on each
  * thread in "All mailboxes". Picked from the address, so a mailbox keeps its colour everywhere.
  */
-const MAILBOX_COLORS = ["#2bb3a3", "#8b7cf6", "#f0793a", "#4caf6e", "#e66aa8", "#e6a23c", "#4f8ff7", "#ef5a5a"]
+const MAILBOX_COLORS = WORKSPACE_COLORS
 
-/** A calendar-event tint of a mailbox colour, for selected rows and chips. */
-export const tint = (color: string, pct = 12) => `color-mix(in oklab, ${color} ${pct}%, transparent)`
+// Shared with the other workspace apps (components/workspace).
+export { Kbd, tint } from "@/components/workspace/ui"
 
 const assigned = new Map<string, string>()
 
@@ -34,16 +34,4 @@ export function mailboxColor(address: string) {
 /** Two-key folder shortcuts, Gmail style: g then the letter. */
 export const FOLDER_KEYS: Partial<Record<MailFolder, string>> = { inbox: "i", starred: "s", snoozed: "b", sent: "t", archived: "e", spam: "!", trash: "#" }
 
-export function Kbd({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <kbd
-      className={cn(
-        "border-border/80 text-muted-foreground bg-background inline-grid h-[18px] min-w-[18px] place-items-center rounded-[5px] border px-1 font-mono text-[10px] leading-none font-medium shadow-[0_1px_0_var(--border)]",
-        className,
-      )}
-    >
-      {children}
-    </kbd>
-  )
-}
 
