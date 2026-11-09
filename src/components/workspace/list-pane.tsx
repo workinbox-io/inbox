@@ -7,6 +7,7 @@ import { Loader2, Search, X } from "lucide-react"
 import { EmptyState } from "@/components/app/empty-state"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { cn } from "@/lib/utils"
+import { ActionMenu, ActionMenuButton, type MenuAction } from "./action-menu"
 import { Kbd, tint } from "./ui"
 
 export function ListPane({ children, label }: { children: React.ReactNode; label: string }) {
@@ -83,6 +84,8 @@ export function ListRow({
   time,
   snippet,
   onClick,
+  actions,
+  menuLabel = "More",
 }: {
   /** The bar on the left and the tint when open. */
   color: string
@@ -95,27 +98,41 @@ export function ListRow({
   time?: React.ReactNode
   snippet?: React.ReactNode
   onClick: () => void
+  /** Right-click menu and the "…" shown on hover instead of the time. */
+  actions?: MenuAction[] | (() => MenuAction[])
+  menuLabel?: string
 }) {
+  const [menuOpen, setMenuOpen] = React.useState(false)
   return (
-    <li className="group relative mx-2 my-0.5">
-      <button
-        type="button"
-        onClick={onClick}
-        aria-current={selected ? "true" : undefined}
-        className={cn("relative grid w-full min-w-0 grid-cols-1 gap-0.5 rounded-md py-2 pr-2.5 pl-3.5 text-left transition-colors", !selected && "hover:bg-foreground/[0.035]")}
-        style={selected ? { background: tint(color, 13) } : undefined}
-      >
-        <span className="absolute top-1.5 bottom-1.5 left-1 w-[3px] rounded-full" style={{ background: color, opacity: strong || selected ? 1 : 0.3 }} aria-hidden />
-        <span className="flex items-center gap-2">
-          <span className={cn("min-w-0 truncate text-[13px]", strong ? "text-foreground font-semibold" : "text-foreground/80 font-medium")}>{title}</span>
-          <span className="ml-auto flex shrink-0 items-center gap-1.5">
-            {meta}
-            {time !== undefined ? <span className="text-muted-foreground text-[11px] tabular-nums" suppressHydrationWarning>{time}</span> : null}
+    <ActionMenu actions={actions} onOpenChange={setMenuOpen}>
+      <li className="group relative mx-2 my-0.5" data-menu-open={menuOpen || undefined}>
+        <button
+          type="button"
+          onClick={onClick}
+          aria-current={selected ? "true" : undefined}
+          className={cn(
+            "relative grid w-full min-w-0 grid-cols-1 gap-0.5 rounded-md py-2 pr-2.5 pl-3.5 text-left transition-colors",
+            !selected && "hover:bg-foreground/[0.035] group-data-[menu-open]:bg-foreground/[0.035]",
+          )}
+          style={selected ? { background: tint(color, 13) } : undefined}
+        >
+          <span className="absolute top-1.5 bottom-1.5 left-1 w-[3px] rounded-full" style={{ background: color, opacity: strong || selected ? 1 : 0.3 }} aria-hidden />
+          <span className="flex items-center gap-2">
+            <span className={cn("min-w-0 truncate text-[13px]", strong ? "text-foreground font-semibold" : "text-foreground/80 font-medium")}>{title}</span>
+            <span className={cn("ml-auto flex shrink-0 items-center gap-1.5", actions && "group-focus-within:invisible group-hover:invisible group-data-[menu-open]:invisible")}>
+              {meta}
+              {time !== undefined ? <span className="text-muted-foreground text-[11px] tabular-nums" suppressHydrationWarning>{time}</span> : null}
+            </span>
           </span>
-        </span>
-        {snippet !== undefined ? <span className="text-muted-foreground line-clamp-2 text-xs">{snippet}</span> : null}
-      </button>
-    </li>
+          {snippet !== undefined ? <span className="text-muted-foreground line-clamp-2 text-xs">{snippet}</span> : null}
+        </button>
+        {actions ? (
+          <span className="absolute top-1.5 right-1.5 hidden group-focus-within:flex group-hover:flex group-data-[menu-open]:flex">
+            <ActionMenuButton actions={actions} label={menuLabel} onOpenChange={setMenuOpen} />
+          </span>
+        ) : null}
+      </li>
+    </ActionMenu>
   )
 }
 

@@ -50,3 +50,14 @@ export function useMounted() {
     () => false,
   )
 }
+
+/**
+ * Single-key shortcuts pause while a dialog or menu is open: Escape then closes the menu, not the item behind it.
+ */
+export const shortcutsPaused = (e: KeyboardEvent) =>
+  e.defaultPrevented ||
+  e.metaKey ||
+  e.ctrlKey ||
+  e.altKey ||
+  isTyping(e.target) ||
+  !!document.querySelector("[role=dialog][data-state=open], [role=alertdialog], [role=menu]")

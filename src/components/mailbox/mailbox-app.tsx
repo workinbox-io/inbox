@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Mail } from "lucide-react"
+import { Archive, Clock, ExternalLink, Forward, Inbox, Mail, MailOpen, Reply, ReplyAll, ShieldAlert, ShieldCheck, SquareCheck, Star, StarOff, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { api } from "@/lib/api-client"
@@ -23,10 +23,11 @@ import { AccountMenu, type MailUser } from "./account-menu"
 import { OutboxPanel, scheduledCount, type OutboxRow } from "./outbox-panel"
 import { Toaster } from "@/components/ui/sonner"
 import { AppFrame } from "@/components/workspace/app-frame"
-import { isTyping, useMediaQuery } from "@/components/workspace/ui"
+import { shortcutsPaused, useMediaQuery } from "@/components/workspace/ui"
+import { cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { FOLDER_KEYS, Kbd, assignMailboxColors } from "./mail-ui"
-import { ThreadView, type ThreadViewHandle } from "./thread-view"
-import type { MailThread, ThreadDetail, ThreadPatch } from "./types"
+import { SnoozeDialog, ThreadView, snoozeActions, type ThreadViewHandle } from "./thread-view"
+import type { MailThread, ReplyMode, ThreadDetail, ThreadPatch } from "./types"
 
 const SHORTCUTS: [string, string][] = [
   ["j / k", "Next / previous thread"],
@@ -46,7 +47,6 @@ const SHORTCUTS: [string, string][] = [
 ]
 
 
-const typing = isTyping
 
 export interface MailboxAppProps {
   mailboxes: string[]
@@ -265,6 +265,81 @@ export function MailboxApp(props: MailboxAppProps) {
 
   const openCompose = (to?: string) => setCompose({ open: true, prefill: { to, nonce: Date.now() } })
 
+  // Reply / reply all / forward from a row's menu: open the thread, then start the reply once it has loaded.
+  const pendingReply = React.useRef<{ id: string; mode: ReplyMode } | null>(null)
+  React.useEffect(() => {
+    const pending = pendingReply.current
+    if (!pending || detail?.thread.id !== pending.id) return
+    pendingReply.current = null
+    setTimeout(() => threadRef.current?.reply(pending.mode))
+  }, [detail])
+  const [snoozeIds, setSnoozeIds] = React.useState<string[] | null>(null)
+
+  /**
+   * A thread's right-click menu and "…". On a row inside a selection of several, it acts on the selection (like the
+   * keyboard shortcuts); otherwise on that thread alone, without touching the selection.
+   */
+  const threadActions = (t: MailThread): MenuAction[] => {
+    const ids = selection.size > 1 && selection.has(t.id) ? [...selection] : [t.id]
+    const many = ids.length > 1
+    const trash = folder === "trash"
+    const back = folder === "archived" || folder === "snoozed"
+    const reply = (mode: ReplyMode) => {
+      if (selectedId === t.id && detail?.thread.id === t.id) threadRef.current?.reply(mode)
+      else {
+        pendingReply.current = { id: t.id, mode }
+        setSelectedId(t.id)
+      }
+    }
+    return cleanActions([
+      many && { heading: `${ids.length} conversations` },
+      !many && { label: "Open", icon: MailOpen, onSelect: () => setSelectedId(t.id) },
+      !many && { label: "Open in new tab", icon: ExternalLink, onSelect: () => void window.open(`/app/mail?t=${t.id}`, "_blank") },
+      !many && !trash && { separator: true },
+      !many && !trash && { label: "Reply", icon: Reply, shortcut: "r", onSelect: () => reply("reply") },
+      !many && !trash && { label: "Reply all", icon: ReplyAll, shortcut: "a", onSelect: () => reply("replyAll") },
+      !many && !trash && { label: "Forward", icon: Forward, shortcut: "f", onSelect: () => reply("forward") },
+      { separator: true },
+      trash
+        ? { label: "Move to inbox", icon: Inbox, onSelect: () => patch(ids, { trashed: false, archived: false }) }
+        : back
+          ? { label: "Move to inbox", icon: Inbox, shortcut: "e", onSelect: () => patch(ids, { archived: false, snoozedUntil: null }) }
+          : { label: "Archive", icon: Archive, shortcut: "e", onSelect: () => patch(ids, { archived: true }) },
+      !trash && (t.unread
+        ? { label: "Mark as read", icon: MailOpen, onSelect: () => patch(ids, { unread: false }) }
+        : { label: "Mark as unread", icon: Mail, shortcut: "u", onSelect: () => patch(ids, { unread: true }) }),
+      !trash && (t.starred
+        ? { label: "Unstar", icon: StarOff, shortcut: "s", onSelect: () => patch(ids, { starred: false }) }
+        : { label: "Star", icon: Star, shortcut: "s", onSelect: () => patch(ids, { starred: true }) }),
+      !trash && { label: "Snooze", icon: Clock, items: snoozeActions((at) => patch(ids, { snoozedUntil: at }), () => setSnoozeIds(ids)) },
+      { separator: true },
+      !trash && (folder === "spam"
+        ? { label: "Not spam", icon: ShieldCheck, shortcut: "!", onSelect: () => patch(ids, { spam: false }) }
+        : { label: "Report spam", icon: ShieldAlert, shortcut: "!", onSelect: () => patch(ids, { spam: true }) }),
+      trash
+        ? {
+            label: "Delete forever",
+            icon: Trash2,
+            destructive: true,
+            confirm: { title: many ? `Delete ${ids.length} forever?` : "Delete forever?", description: "The threads and their files are removed. This can't be undone.", confirmLabel: "Delete forever" },
+            onSelect: () => remove(ids),
+          }
+        : { label: "Move to trash", icon: Trash2, shortcut: "#", destructive: true, onSelect: () => patch(ids, { trashed: true }) },
+      { separator: true },
+      {
+        label: selection.has(t.id) ? "Deselect" : "Select",
+        icon: SquareCheck,
+        shortcut: "x",
+        onSelect: () => {
+          const next = new Set(selection)
+          if (next.has(t.id)) next.delete(t.id)
+          else next.add(t.id)
+          setSelection(next)
+        },
+      },
+    ])
+  }
+
   // "New e-mail" from the command palette: /app/mail?compose=1 (optionally &to=).
   React.useEffect(() => {
     const p = new URLSearchParams(window.location.search)
@@ -275,7 +350,7 @@ export function MailboxApp(props: MailboxAppProps) {
   // Keyboard shortcuts, like Gmail's; they pause while typing or with a dialog open.
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || typing(e.target) || document.querySelector("[role=dialog][data-state=open], [role=alertdialog]")) return
+      if (shortcutsPaused(e)) return
       const i = threads.findIndex((t) => t.id === selectedId)
       const go = (id: string | undefined) => {
         if (id) setSelectedId(id)
@@ -405,6 +480,7 @@ export function MailboxApp(props: MailboxAppProps) {
       onOutbox={() => setOutbox(true)}
       outboxCount={outboxCount}
       rail={desktop}
+      actionsFor={threadActions}
       account={props.account && !desktop ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} compact /> : null}
     />
     </div></div>
@@ -507,6 +583,7 @@ export function MailboxApp(props: MailboxAppProps) {
         )}
         </div>
       </AppFrame>
+      <SnoozeDialog open={!!snoozeIds} onOpenChange={(o) => !o && setSnoozeIds(null)} onSnooze={(at) => snoozeIds && patch(snoozeIds, { snoozedUntil: at })} />
       <Sheet open={infoOpen && !wide} onOpenChange={setInfoOpen}>
         <SheetContent className="w-[22rem] max-w-full overflow-y-auto">
           <SheetHeader>

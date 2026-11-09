@@ -1,5 +1,6 @@
 import * as React from "react"
-import { CheckCheck, Download, Forward, ImageOff, MoreHorizontal, Paperclip, Reply } from "lucide-react"
+import { CheckCheck, Copy, Download, FileCode, Forward, ImageOff, MoreHorizontal, Paperclip, Reply, ReplyAll } from "lucide-react"
+import { toast } from "sonner"
 
 import { hasQuotedHtml, hasRemoteImages, linkSegments, mailSrcDoc } from "@/lib/admin-mail/rules"
 import { formatBytes, isImageType } from "@/lib/uploads"
@@ -7,6 +8,7 @@ import { splitQuotedReply } from "@/lib/mail/quotes"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { UserAvatar } from "@/components/app/user-avatar"
+import { ActionMenu, ActionMenuButton, type MenuAction } from "@/components/workspace/action-menu"
 import { trustedSenders, trustSender } from "./drafts"
 import type { MailFile, MailMessage, ReplyMode } from "./types"
 
@@ -133,9 +135,26 @@ export function MessageItem({
   }, [remote, m.fromEmail])
   const quoted = m.html ? hasQuotedHtml(m.html) : !!splitQuotedReply(m.text).quoted
   const out = m.direction === "out"
+  // The message's right-click menu (and "…" in its header).
+  const actions = (): MenuAction[] => [
+    { label: "Reply", icon: Reply, shortcut: "r", onSelect: () => onReply("reply", m.id) },
+    { label: "Reply all", icon: ReplyAll, shortcut: "a", onSelect: () => onReply("replyAll", m.id) },
+    { label: "Forward", icon: Forward, shortcut: "f", onSelect: () => onReply("forward", m.id) },
+    { separator: true },
+    {
+      label: "Copy sender's address",
+      icon: Copy,
+      onSelect: async () => {
+        await navigator.clipboard.writeText(m.fromEmail)
+        toast.success("Address copied")
+      },
+    },
+    { label: "Show original", icon: FileCode, onSelect: () => void window.open(`/api/app/mail/messages/${m.id}/raw`, "_blank") },
+  ]
 
   if (!expanded) {
     return (
+      <ActionMenu actions={actions}>
       <li>
         <button type="button" onClick={onToggle} className="hover:bg-foreground/[0.03] flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors">
           <UserAvatar seed={m.fromEmail} size={28} />
@@ -147,12 +166,14 @@ export function MessageItem({
           </time>
         </button>
       </li>
+      </ActionMenu>
     )
   }
 
   return (
     <li className={cn("bg-background rounded-lg border border-border/70", out && "bg-foreground/[0.015]")}>
       {out && (m.deliveryError || ["bounced", "failed", "rejected", "complained"].includes(m.deliveryStatus ?? "")) ? <p className="text-destructive px-4 pt-3 text-sm">{m.deliveryError ?? `Delivery status: ${m.deliveryStatus}`}</p> : null}
+      <ActionMenu actions={actions}>
       <div className="flex items-start gap-3 p-4 pb-0">
         <button type="button" onClick={onToggle} className="shrink-0" aria-label="Collapse">
           <UserAvatar seed={m.fromEmail} size={36} />
@@ -188,8 +209,10 @@ export function MessageItem({
           <Button variant="ghost" size="icon-xs" onClick={() => onReply("forward", m.id)} aria-label="Forward" title="Forward">
             <Forward />
           </Button>
+          <ActionMenuButton actions={actions} label="Message actions" />
         </span>
       </div>
+      </ActionMenu>
       <div className="p-4">
         {remote && !images ? (
           <div className="bg-muted/60 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-3 py-2 text-xs">

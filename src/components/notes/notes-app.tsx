@@ -8,7 +8,10 @@ import {
   Archive,
   ArchiveRestore,
   Copy,
+  ExternalLink,
   FileText,
+  FolderOpen,
+  Pencil,
   Folder,
   FolderPlus,
   Globe,
@@ -26,21 +29,12 @@ import {
   Users,
 } from "lucide-react"
 import { toast } from "sonner"
-import { ConfirmButton } from "@/components/app/confirm-button"
+import { ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { EmptyState } from "@/components/app/empty-state"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
 import { shortDate } from "@/components/mailbox/message-view"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AppFrame } from "@/components/workspace/app-frame"
@@ -48,11 +42,10 @@ import { DetailHeader, IconAction } from "@/components/workspace/detail-header"
 import { ListBody, ListEmpty, ListHeader, ListPane, ListRow, ListSearch } from "@/components/workspace/list-pane"
 import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
 import { SplitView } from "@/components/workspace/split-view"
-import { isTyping, Kbd, useMediaQuery, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
+import { Kbd, shortcutsPaused, useMediaQuery, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
 import { t } from "@/lib/i18n/panel"
 import { pushUrl, replaceUrl } from "@/lib/panel-history"
-import { cn } from "@/lib/utils"
 import type { Presence } from "./editor/note-editor"
 import { ShareDialog } from "./share-dialog"
 import type { NoteDetail, NoteFolder, NoteSummary, NoteView, Sharing } from "./types"
@@ -95,7 +88,11 @@ export function NotesApp(props: NotesAppProps) {
   const [query, setQuery] = React.useState("")
   const [selectedId, setSelectedId] = React.useState(props.selectedId)
   const [loading, setLoading] = React.useState(false)
-  const [folderDialog, setFolderDialog] = React.useState(false)
+  /** Open for a new folder (true) or to rename one. */
+  const [folderDialog, setFolderDialog] = React.useState<boolean | NoteFolder>(false)
+  const [sharing, setSharing] = React.useState<NoteDetail | null>(null)
+  /** Bumped after a change made from a menu, so the open note reloads its details. */
+  const [detailVersion, setDetailVersion] = React.useState(0)
   const searchRef = React.useRef<HTMLInputElement>(null)
   const mounted = useMounted()
   const desktop = useMediaQuery("(min-width: 768px)")
@@ -161,9 +158,9 @@ export function NotesApp(props: NotesAppProps) {
     return () => window.removeEventListener("popstate", onPop)
   }, [])
 
-  const createNote = React.useCallback(async () => {
+  const createNote = React.useCallback(async (inFolder?: string) => {
     try {
-      const note = await api<NoteDetail>("POST", "/api/app/notes", { folderId })
+      const note = await api<NoteDetail>("POST", "/api/app/notes", { folderId: inFolder ?? folderId })
       if (view === "archived" || view === "shared" || view === "pinned") setView("all")
       setNotes((list) => [note, ...list])
       open(note.id)
@@ -185,7 +182,7 @@ export function NotesApp(props: NotesAppProps) {
   // Shortcuts, as in Mail: c new note, / search, Esc closes the note.
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target) || document.querySelector("[role=dialog]")) return
+      if (shortcutsPaused(e)) return
       if (e.key === "c") {
         e.preventDefault()
         void createNote()
@@ -203,10 +200,15 @@ export function NotesApp(props: NotesAppProps) {
     setFolderId(null)
   }
 
-  async function addFolder(name: string) {
+  async function saveFolder(name: string) {
     try {
-      const folder = await api<NoteFolder>("POST", "/api/app/notes/folders", { name })
-      setFolders((list) => [...list, folder].sort((a, b) => a.name.localeCompare(b.name)))
+      if (typeof folderDialog === "object") {
+        const folder = await api<NoteFolder>("PATCH", `/api/app/notes/folders/${folderDialog.id}`, { name })
+        setFolders((list) => list.map((f) => (f.id === folder.id ? folder : f)).sort((a, b) => a.name.localeCompare(b.name)))
+      } else {
+        const folder = await api<NoteFolder>("POST", "/api/app/notes/folders", { name })
+        setFolders((list) => [...list, folder].sort((a, b) => a.name.localeCompare(b.name)))
+      }
       setFolderDialog(false)
     } catch (e) {
       toast.error((e as Error).message)
@@ -228,6 +230,100 @@ export function NotesApp(props: NotesAppProps) {
     else setNotes((list) => list.map((n) => (n.id === note.id ? { ...n, ...note } : n)))
   }, [])
 
+  async function patchNote(id: string, body: Record<string, unknown>, done?: string) {
+    try {
+      const saved = await api<NoteDetail>("PATCH", `/api/app/notes/${id}`, body)
+      onChanged(saved, id)
+      setDetailVersion((v) => v + 1)
+      if (done) toast.success(done)
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }
+
+  async function deleteNote(id: string) {
+    try {
+      await api("DELETE", `/api/app/notes/${id}`)
+      onChanged(null, id)
+      if (selectedId === id) open(null)
+      toast.success(t("Note deleted"))
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }
+
+  async function copy(text: string | Promise<string>, done: string) {
+    try {
+      await navigator.clipboard.writeText(await text)
+      toast.success(done)
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }
+
+  async function openShare(id: string) {
+    try {
+      setSharing(await api<NoteDetail>("GET", `/api/app/notes/${id}`))
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }
+
+  /** A note's actions: the row's right-click menu and "…", and the "…" in the open note's header. */
+  const noteActions = (n: NoteSummary, where: "list" | "detail"): MenuAction[] => {
+    const editable = n.role !== "view" && !n.archived
+    // Owners of the note, and owners/admins for team notes (the server checks again).
+    const manage = n.role === "owner" || (n.sharing === "team" && props.canManage)
+    return cleanActions([
+      where === "list" && { label: t("Open"), icon: FileText, onSelect: () => open(n.id) },
+      { label: t("Open in new tab"), icon: ExternalLink, onSelect: () => void window.open(`/app/notes/${n.id}`, "_blank") },
+      { separator: true },
+      editable && { label: n.pinned ? t("Unpin") : t("Pin"), icon: n.pinned ? PinOff : Pin, onSelect: () => patchNote(n.id, { pinned: !n.pinned }) },
+      editable && {
+        label: t("Move to folder"),
+        icon: Folder,
+        items: [
+          { label: n.folderId ? t("No folder") : `✓ ${t("No folder")}`, onSelect: () => patchNote(n.id, { folderId: null }) },
+          ...folders.map((f) => ({ label: n.folderId === f.id ? `✓ ${f.name}` : f.name, icon: Folder, onSelect: () => patchNote(n.id, { folderId: f.id }) })),
+        ],
+      },
+      manage && !n.archived && { label: t("Share…"), icon: Share2, onSelect: () => openShare(n.id) },
+      { separator: true },
+      { label: t("Copy link"), icon: Link2, onSelect: () => copy(`${location.origin}/app/notes/${n.id}`, t("Link copied")) },
+      {
+        label: t("Copy as Markdown"),
+        icon: Copy,
+        onSelect: () => copy(api<NoteDetail>("GET", `/api/app/notes/${n.id}`).then((d) => d.markdown), t("Copied as Markdown")),
+      },
+      { separator: true },
+      manage && !n.archived && { label: t("Archive"), icon: Archive, onSelect: () => patchNote(n.id, { archived: true }, t("Note archived")) },
+      manage && n.archived && { label: t("Restore"), icon: ArchiveRestore, onSelect: () => patchNote(n.id, { archived: false }, t("Note restored")) },
+      manage &&
+        n.archived && {
+          label: t("Delete for good"),
+          icon: Trash2,
+          destructive: true,
+          confirm: { title: t("Delete this note for good?"), description: t("It can't be restored afterwards."), confirmLabel: t("Delete") },
+          onSelect: () => deleteNote(n.id),
+        },
+    ])
+  }
+
+  const folderActions = (f: NoteFolder): MenuAction[] =>
+    cleanActions([
+      { label: t("Open"), icon: FolderOpen, onSelect: () => (setFolderId(f.id), setView("all")) },
+      { label: t("New note in this folder"), icon: Plus, onSelect: () => createNote(f.id) },
+      { separator: true },
+      { label: t("Rename…"), icon: Pencil, onSelect: () => setFolderDialog(f) },
+      props.canManage && {
+        label: t("Delete folder"),
+        icon: Trash2,
+        destructive: true,
+        confirm: { title: t("Delete the folder \"{name}\"?", { name: f.name }), description: t("Its notes stay, without a folder."), confirmLabel: t("Delete folder") },
+        onSelect: () => removeFolder(f),
+      },
+    ])
+
   const folder = folders.find((f) => f.id === folderId)
   const viewMeta = VIEWS.find((v) => v.value === view)!
   const title = query ? t("Search") : folder ? folder.name : t(viewMeta.label)
@@ -243,7 +339,7 @@ export function NotesApp(props: NotesAppProps) {
       }
       footer={props.account ? <AccountMenu user={props.account} canManage={props.canManage} /> : undefined}
     >
-      <RailAction icon={Plus} label={t("New note")} shortcut="C" onClick={createNote} />
+      <RailAction icon={Plus} label={t("New note")} shortcut="C" onClick={() => createNote()} />
       <RailList>
         {VIEWS.map(({ value, label, icon }) => (
           <RailItem
@@ -277,20 +373,7 @@ export function NotesApp(props: NotesAppProps) {
                   setFolderId(f.id)
                   setView("all")
                 }}
-                trailing={
-                  props.canManage ? (
-                    <ConfirmButton
-                      title={t("Delete the folder \"{name}\"?", { name: f.name })}
-                      description={t("Its notes stay, without a folder.")}
-                      confirmLabel={t("Delete folder")}
-                      onConfirm={() => removeFolder(f)}
-                    >
-                      <button type="button" className="text-muted-foreground hover:text-destructive rounded p-0.5" aria-label={t("Delete folder")}>
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </ConfirmButton>
-                  ) : null
-                }
+                actions={() => folderActions(f)}
               />
             ))}
           </RailList>
@@ -335,7 +418,7 @@ export function NotesApp(props: NotesAppProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" className="rounded-full" onClick={createNote}>
+              <Button size="sm" className="rounded-full" onClick={() => createNote()}>
                 <NotebookPen /> {t("New")}
               </Button>
               {props.account ? <AccountMenu user={props.account} canManage={props.canManage} compact /> : null}
@@ -363,6 +446,8 @@ export function NotesApp(props: NotesAppProps) {
               time={mounted ? shortDate(n.updatedAt) : null}
               snippet={previewWithoutTitle(n) || t("Empty note")}
               onClick={() => open(n.id)}
+              actions={() => noteActions(n, "list")}
+              menuLabel={t("Note actions")}
             />
           )
         })}
@@ -372,7 +457,7 @@ export function NotesApp(props: NotesAppProps) {
             title={query ? t("Nothing matches that search") : view === "archived" ? t("Nothing archived") : t("No notes here yet")}
             action={
               !query && view !== "archived" ? (
-                <Button size="sm" variant="outline" onClick={createNote}>
+                <Button size="sm" variant="outline" onClick={() => createNote()}>
                   <Plus /> {t("New note")}
                 </Button>
               ) : undefined
@@ -391,7 +476,16 @@ export function NotesApp(props: NotesAppProps) {
   )
 
   const detail = selectedId ? (
-    <NotePane key={selectedId} id={selectedId} user={props.user} folders={folders} onBack={() => open(null)} onChanged={onChanged} />
+    <NotePane
+      key={selectedId}
+      id={selectedId}
+      version={detailVersion}
+      user={props.user}
+      onBack={() => open(null)}
+      actions={(n) => noteActions(n, "detail")}
+      onPatch={(body, done) => patchNote(selectedId, body, done)}
+      onShare={() => openShare(selectedId)}
+    />
   ) : (
     <div className="grid h-full place-items-center p-6">
       <EmptyState
@@ -411,7 +505,18 @@ export function NotesApp(props: NotesAppProps) {
     <AppFrame userView={userView}>
       {desktop ? rail : null}
       <SplitView list={list} detail={detail} showDetail={!!selectedId} />
-      <FolderDialog open={folderDialog} onOpenChange={setFolderDialog} onCreate={addFolder} />
+      <FolderDialog folder={typeof folderDialog === "object" ? folderDialog : null} open={!!folderDialog} onOpenChange={(o) => !o && setFolderDialog(false)} onSave={saveFolder} />
+      {sharing ? (
+        <ShareDialog
+          note={sharing}
+          open
+          onOpenChange={(o) => !o && setSharing(null)}
+          onSaved={(n) => {
+            onChanged(n, n.id)
+            setDetailVersion((v) => v + 1)
+          }}
+        />
+      ) : null}
     </AppFrame>
   )
 }
@@ -421,12 +526,12 @@ function previewWithoutTitle(n: NoteSummary) {
   return (lines[0]?.trim() === n.title.trim() ? lines.slice(1) : lines).join(" ").trim()
 }
 
-function FolderDialog({ open, onOpenChange, onCreate }: { open: boolean; onOpenChange: (o: boolean) => void; onCreate: (name: string) => Promise<void> }) {
+function FolderDialog({ folder, open, onOpenChange, onSave }: { folder: NoteFolder | null; open: boolean; onOpenChange: (o: boolean) => void; onSave: (name: string) => Promise<void> }) {
   const [name, setName] = React.useState("")
   const [saving, setSaving] = React.useState(false)
   React.useEffect(() => {
-    if (open) setName("")
-  }, [open])
+    if (open) setName(folder?.name ?? "")
+  }, [open, folder])
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
@@ -436,12 +541,12 @@ function FolderDialog({ open, onOpenChange, onCreate }: { open: boolean; onOpenC
             e.preventDefault()
             if (!name.trim()) return
             setSaving(true)
-            await onCreate(name.trim())
+            await onSave(name.trim())
             setSaving(false)
           }}
         >
           <DialogHeader>
-            <DialogTitle>{t("New folder")}</DialogTitle>
+            <DialogTitle>{folder ? t("Rename folder") : t("New folder")}</DialogTitle>
             <DialogDescription>{t("Folders are shared by the whole organization; each note keeps its own sharing.")}</DialogDescription>
           </DialogHeader>
           <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Folder name")} maxLength={80} aria-label={t("Folder name")} />
@@ -450,7 +555,7 @@ function FolderDialog({ open, onOpenChange, onCreate }: { open: boolean; onOpenC
               {t("Cancel")}
             </Button>
             <Button type="submit" disabled={saving || !name.trim()}>
-              {t("Create")}
+              {folder ? t("Save") : t("Create")}
             </Button>
           </DialogFooter>
         </form>
@@ -461,21 +566,25 @@ function FolderDialog({ open, onOpenChange, onCreate }: { open: boolean; onOpenC
 
 function NotePane({
   id,
+  version,
   user,
-  folders,
   onBack,
-  onChanged,
+  actions,
+  onPatch,
+  onShare,
 }: {
   id: string
+  /** Changes after a menu action, so the details reload. */
+  version: number
   user: { id: string; name: string }
-  folders: NoteFolder[]
   onBack: () => void
-  onChanged: (note: NoteDetail | null, id: string) => void
+  actions: (note: NoteDetail) => MenuAction[]
+  onPatch: (body: Record<string, unknown>, done?: string) => Promise<void>
+  onShare: () => void
 }) {
   const [note, setNote] = React.useState<NoteDetail | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [presence, setPresence] = React.useState<Presence[]>([])
-  const [shareOpen, setShareOpen] = React.useState(false)
   const [lost, setLost] = React.useState(false)
 
   React.useEffect(() => {
@@ -486,34 +595,7 @@ function NotePane({
     return () => {
       live = false
     }
-  }, [id])
-
-  async function patch(body: Record<string, unknown>, done?: string) {
-    try {
-      const saved = await api<NoteDetail>("PATCH", `/api/app/notes/${id}`, body)
-      setNote(saved)
-      onChanged(saved, id)
-      if (done) toast.success(done)
-    } catch (e) {
-      toast.error((e as Error).message)
-    }
-  }
-
-  async function remove() {
-    try {
-      await api("DELETE", `/api/app/notes/${id}`)
-      onChanged(null, id)
-      onBack()
-      toast.success(t("Note deleted"))
-    } catch (e) {
-      toast.error((e as Error).message)
-    }
-  }
-
-  async function copy(text: string, done: string) {
-    await navigator.clipboard.writeText(text)
-    toast.success(done)
-  }
+  }, [id, version])
 
   if (error || lost)
     return (
@@ -548,69 +630,23 @@ function NotePane({
         <div className="ml-auto flex items-center gap-0.5">
           <PresenceStack people={presence} />
           {note && editable ? (
-            <IconAction label={note.pinned ? t("Unpin") : t("Pin")} onClick={() => patch({ pinned: !note.pinned })}>
+            <IconAction label={note.pinned ? t("Unpin") : t("Pin")} onClick={() => onPatch({ pinned: !note.pinned })}>
               {note.pinned ? <PinOff /> : <Pin />}
             </IconAction>
           ) : null}
           {note?.canManage && !note.archived ? (
-            <IconAction label={t("Archive")} onClick={() => patch({ archived: true }, t("Note archived"))}>
+            <IconAction label={t("Archive")} onClick={() => onPatch({ archived: true }, t("Note archived"))}>
               <Archive />
             </IconAction>
           ) : null}
           {note?.canManage && note.archived ? (
-            <>
-              <IconAction label={t("Restore")} onClick={() => patch({ archived: false }, t("Note restored"))}>
-                <ArchiveRestore />
-              </IconAction>
-              <ConfirmButton title={t("Delete this note for good?")} description={t("It can't be restored afterwards.")} confirmLabel={t("Delete")} onConfirm={remove}>
-                <Button variant="ghost" size="icon-sm" className="text-destructive" aria-label={t("Delete for good")} title={t("Delete for good")}>
-                  <Trash2 />
-                </Button>
-              </ConfirmButton>
-            </>
+            <IconAction label={t("Restore")} onClick={() => onPatch({ archived: false }, t("Note restored"))}>
+              <ArchiveRestore />
+            </IconAction>
           ) : null}
-          {note ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon-sm" variant="ghost" aria-label={t("More")}>
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                {editable ? (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <Folder />
-                      {t("Move to folder")}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      <DropdownMenuItem onSelect={() => patch({ folderId: null })}>{t("No folder")}</DropdownMenuItem>
-                      {folders.map((f) => (
-                        <DropdownMenuItem key={f.id} onSelect={() => patch({ folderId: f.id })} className={cn(note.folderId === f.id && "font-medium")}>
-                          {f.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                ) : null}
-                <DropdownMenuItem onSelect={() => copy(`${location.origin}/app/notes/${id}`, t("Link copied"))}>
-                  <Link2 />
-                  {t("Copy link")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={async () => {
-                    const fresh = await api<NoteDetail>("GET", `/api/app/notes/${id}`)
-                    await copy(fresh.markdown, t("Copied as Markdown"))
-                  }}
-                >
-                  <Copy />
-                  {t("Copy as Markdown")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
+          {note ? <ActionMenuButton actions={() => actions(note)} label={t("More")} size="icon-sm" /> : null}
           {note?.canManage && !note.archived ? (
-            <Button size="sm" variant="outline" className="ml-1" onClick={() => setShareOpen(true)}>
+            <Button size="sm" variant="outline" className="ml-1" onClick={onShare}>
               <Share2 />
               {t("Share")}
             </Button>
@@ -624,17 +660,6 @@ function NotePane({
           </React.Suspense>
         </div>
       </div>
-      {note ? (
-        <ShareDialog
-          note={note}
-          open={shareOpen}
-          onOpenChange={setShareOpen}
-          onSaved={(n) => {
-            setNote(n)
-            onChanged(n, id)
-          }}
-        />
-      ) : null}
     </section>
   )
 }

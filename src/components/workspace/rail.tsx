@@ -5,6 +5,7 @@
 import * as React from "react"
 import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { ActionMenu, ActionMenuButton, type MenuAction } from "./action-menu"
 import { Kbd } from "./ui"
 
 export function Rail({ label, children, footer, hint }: { label: string; children: React.ReactNode; footer?: React.ReactNode; hint?: React.ReactNode }) {
@@ -46,34 +47,51 @@ export function RailItem({
   onClick,
   trailing,
   title,
+  actions,
+  leading,
 }: {
-  icon: LucideIcon
+  icon?: LucideIcon
+  /** Instead of the icon (a mailbox's colour box). */
+  leading?: React.ReactNode
   label: React.ReactNode
   active: boolean
   count?: number
   onClick: () => void
-  /** Shown on hover when there is no count (a shortcut, a delete button…). */
+  /** Shown on hover when there is no count (a shortcut…). */
   trailing?: React.ReactNode
   title?: string
+  /** Right-click menu and a "…" on hover. */
+  actions?: MenuAction[] | (() => MenuAction[])
 }) {
+  const [menuOpen, setMenuOpen] = React.useState(false)
   return (
-    <li className="group/item relative">
-      <button
-        type="button"
-        onClick={onClick}
-        title={title}
-        aria-current={active ? "page" : undefined}
-        className={cn(
-          "focus-visible:ring-ring/50 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-[13px] outline-none focus-visible:ring-[3px]",
-          active ? "bg-foreground/[0.06] text-foreground font-medium" : "text-foreground/70 hover:bg-foreground/[0.035] hover:text-foreground",
-        )}
-      >
-        <Icon className={cn("size-4 shrink-0", active ? "text-foreground" : "text-muted-foreground")} />
-        <span className="min-w-0 flex-1 truncate text-left">{label}</span>
-        {count ? <span className={cn("text-xs tabular-nums", active ? "text-foreground font-semibold" : "text-foreground/60 font-medium")}>{count}</span> : null}
-      </button>
-      {trailing && !count ? <span className="absolute top-1/2 right-1.5 hidden -translate-y-1/2 items-center gap-0.5 group-hover/item:flex">{trailing}</span> : null}
-    </li>
+    <ActionMenu actions={actions} onOpenChange={setMenuOpen}>
+      <li className="group/item relative" data-menu-open={menuOpen || undefined}>
+        <button
+          type="button"
+          onClick={onClick}
+          title={title}
+          aria-current={active ? "page" : undefined}
+          className={cn(
+            "focus-visible:ring-ring/50 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-[13px] outline-none focus-visible:ring-[3px]",
+            active ? "bg-foreground/[0.06] text-foreground font-medium" : "text-foreground/70 hover:bg-foreground/[0.035] hover:text-foreground group-data-[menu-open]/item:bg-foreground/[0.035]",
+          )}
+        >
+          {leading ?? (Icon ? <Icon className={cn("size-4 shrink-0", active ? "text-foreground" : "text-muted-foreground")} /> : null)}
+          <span className="min-w-0 flex-1 truncate text-left">{label}</span>
+          {count ? (
+            <span className={cn("text-xs tabular-nums", actions && "group-hover/item:invisible group-data-[menu-open]/item:invisible", active ? "text-foreground font-semibold" : "text-foreground/60 font-medium")}>{count}</span>
+          ) : null}
+        </button>
+        {actions ? (
+          <span className="absolute top-1/2 right-1 hidden -translate-y-1/2 group-focus-within/item:flex group-hover/item:flex group-data-[menu-open]/item:flex">
+            <ActionMenuButton actions={actions} label={typeof label === "string" ? `${label}: more` : "More"} onOpenChange={setMenuOpen} className="size-5" />
+          </span>
+        ) : trailing && !count ? (
+          <span className="absolute top-1/2 right-1.5 hidden -translate-y-1/2 items-center gap-0.5 group-hover/item:flex">{trailing}</span>
+        ) : null}
+      </li>
+    </ActionMenu>
   )
 }
 

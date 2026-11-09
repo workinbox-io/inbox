@@ -42,7 +42,13 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   toasts in the user view), `Rail`/`RailAction`/`RailItem`/`RailSection`, `ListPane`/`ListHeader`/`ListSearch`/
   `ListRow`/`ListEmpty`, `SplitView` (resizable list + detail from md, one of them on phones), `DetailHeader`/
   `IconAction`, `ui.tsx` (`Kbd`, `tint`, `WORKSPACE_COLORS`, `useMediaQuery`, `isTyping`, `useMounted`), and the Astro
-  parts `AppRail.astro` (app switcher) and `AppTopBar.astro`. Shortcuts follow Mail: `c` new, `/` search, `Esc` close.
+  parts `AppRail.astro` (app switcher) and `AppTopBar.astro`. Shortcuts follow Mail: `c` new, `/` search, `Esc` close;
+  check `shortcutsPaused(e)` so they pause while typing or with a dialog or menu open.
+- Row actions are defined once as `MenuAction[]` (`workspace/action-menu.tsx`, `cleanActions` drops hidden ones) and
+  shown two ways: right-click / long press (`ActionMenu`) and the "…" on hover (`ActionMenuButton`). `ListRow` and
+  `RailItem` take `actions`. In use: mail threads (`threadActions` in `mailbox-app.tsx`, acting on the selection when the
+  row is in it), mailboxes in the rail, messages in a thread, notes (`noteActions`) and note folders. Editors and fields
+  keep the browser's own menu.
   Mail still uses its own `FolderRail`/`ThreadList` (the kit's originals); move it onto the kit when touching them.
 
 ## Shared notes (product)
