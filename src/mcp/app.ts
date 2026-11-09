@@ -5,6 +5,7 @@
  */
 import { z } from "zod";
 import { mailTools } from "./mail";
+import { notesTools } from "./notes";
 import { createProject, deleteProject, getProject, listProjects, updateProject, type Project } from "@/lib/server/projects";
 import { projectSchema } from "@/lib/validation";
 import { defineTool, type Tools } from "./define";
@@ -21,6 +22,7 @@ const projectId = z.object({ id: z.string().min(1).describe("Project id from lis
 
 export const appTools: Tools = {
   ...mailTools,
+  ...notesTools,
   list_projects: defineTool({
     title: "List projects",
     description: "All projects in the organization, newest first, with their ids, names and descriptions.",

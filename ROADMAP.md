@@ -98,7 +98,8 @@ Implemented and acceptance:
 
 ## Phase 7: shared notes
 
-- ⬜ Personal and shared notes for the organization, with access for selected members or the whole team
-- ⬜ Create, edit, organize and search notes; archive and restore them
-- ⬜ Collaborative editing with changes synchronized between participants
-- ⬜ `/app/notes`, public API and MCP tools for searching, reading and editing notes
+- ✅ Personal and shared notes for the organization, with access for selected members or the whole team
+- ✅ Create, edit, organize and search notes; archive and restore them
+- ✅ Collaborative editing with changes synchronized between participants (Plate + Yjs on a Durable Object per note)
+- ✅ `/app/notes`, public API and MCP tools for searching, reading and editing notes
+- ⬜ Later: version history, comments, mention notifications, full-text search (FTS5), offline editing

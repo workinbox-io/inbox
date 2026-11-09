@@ -2,6 +2,7 @@
 import { NotificationCenter } from "@/components/mailbox/notification-center";
 import { MailViewToggle } from "@/components/mailbox/view-toggle";
 import AppLayout from "@/layouts/AppLayout.astro";
+import AppRail from "@/components/workspace/AppRail.astro";
 import MailLayout from "@/layouts/MailLayout.astro";
 import { MailboxApp } from "@/components/mailbox/mailbox-app";
 import { viewerMailboxes } from "@/lib/server/mail/access";
@@ -39,7 +40,7 @@ const user = Astro.locals.user!;
     </Fragment>
   )}
   <div class="flex h-full min-h-0">
-  {mailOnly && <nav aria-label="Applications" class="hidden w-14 shrink-0 flex-col items-center border-r py-3 sm:flex"><a href="/app/mail" aria-label="Mail" aria-current="page" class="bg-muted flex size-9 items-center justify-center rounded-md"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></a></nav>}
+  {mailOnly && <AppRail current="mail" />}
   <div class="flex min-w-0 flex-1 flex-col">
   {/* Mail only has its own bar; in the dashboard the same controls sit in its header (slot "actions"). */}
   {mailOnly && (

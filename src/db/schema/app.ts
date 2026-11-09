@@ -27,3 +27,5 @@ export * from "./mail-accounts";
 
 export * from "./mail-storage";
 export * from "./mail-integrations";
+
+export * from "./notes";

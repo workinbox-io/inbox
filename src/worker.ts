@@ -13,9 +13,17 @@ import { reportError } from "@/lib/server/errors";
 import { backfillMailBodies } from "@/lib/server/mail/storage";
 import { recoverOutbox, handleDeliveryEvent } from "@/lib/server/mail/outbox";
 import type { JobMessage } from "@/lib/server/queue";
+import { noteSync } from "@/lib/server/notes/sync";
+
+// Durable Objects must be exported from the entry module (wrangler.jsonc → durable_objects).
+export { NoteRoom } from "@/notes/room";
 
 export default {
-  fetch: (request, env, ctx) => handle(request, env, ctx),
+  async fetch(request, env, ctx) {
+    // Shared notes' WebSockets go straight to the note's Durable Object (lib/server/notes/sync.ts).
+    if (new URL(request.url).pathname.startsWith("/notes-sync/")) return noteSync(request);
+    return handle(request, env, ctx);
+  },
 
   async email(message) {
     const to = message.to.toLowerCase();

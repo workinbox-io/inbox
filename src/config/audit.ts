@@ -35,6 +35,13 @@ export const AUDIT_ACTIONS = {
   "mailbox.access": "Changed mailbox access",
   "mail_alias.add": "Added alias",
   "mail_alias.remove": "Removed alias",
+  "note.create": "Created note",
+  "note.update": "Changed note",
+  "note.share": "Changed note sharing",
+  "note.archive": "Archived note",
+  "note.restore": "Restored note",
+  "note.delete": "Deleted note",
+  "note_folder.change": "Changed note folders",
 } as const;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

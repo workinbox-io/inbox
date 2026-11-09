@@ -31,6 +31,30 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `components/app/settings-nav.tsx` (Mail tab). Template bug to fix there: `components/admin-mail/composer.tsx` shows
   a hardcoded "Luxivo" sender name and `admin-mail/drafts.ts` uses `luxivo:` storage keys (fixed in `components/mailbox`).
 
+## Shared notes (product)
+
+- Tables: `src/db/schema/notes.ts` (`notes`, `note_access`, `note_folders`). Sharing is `private` (owner only, admins
+  included out), `people` (`note_access` with view/edit) or `team` (everyone, `team_role`). Rules in `lib/notes/access.ts`
+  (pure), queries scoped by `lib/server/notes/access.ts` (`visibleNotes`, `requireNote`). API keys see team notes only.
+- Live editing: one Durable Object per note, `NoteRoom` (`src/notes/room.ts`, y-partyserver `YServer`, hibernating,
+  SQLite storage). The browser asks `POST /api/app/notes/:id/ticket` for a 60 s HMAC ticket (`lib/notes/ticket.ts`) and
+  connects to `/notes-sync/:id?ticket=…`; `src/worker.ts` verifies it before Astro (`lib/server/notes/sync.ts`) and the
+  room enforces read-only. The room saves content, plain text and title back to D1 (debounced, and when the last person
+  leaves); a new room starts from D1. API/MCP content changes go through the room (`applyToRoom`: replace/append
+  markdown), sharing/archive changes close sockets (`kickRoom`) so clients reconnect with new tickets.
+- Document model: Plate (platejs v53) node types in `lib/notes/plate.ts` (server-side, markdown in/out) and the editor in
+  `components/notes/editor/*` (plugins, nodes, floating toolbar, "/" menu, @mentions, cursors, image upload through
+  `/api/app/attachments`). The Yjs doc holds the content (`XmlText "content"`) and the title (`Text "title"`),
+  `lib/notes/ydoc.ts`. Plate's Slate context only exists inside `PlateContent`: render overlays with a plugin's
+  `render.afterEditable`. Plate packages are in `optimizeDeps.include` (astro.config.mjs) so slate-react isn't duplicated.
+- UI: `/app/notes[/<id>]` (`pages/app/notes/[...id].astro`, `components/notes/notes-app.tsx`); members get it in
+  MailLayout with the app rail (`components/workspace/AppRail.astro`, also on `/app/mail`).
+- API: `/api/app/notes` (list/search, create), `/[id]` (get with markdown, patch, delete archived), `/[id]/share`,
+  `/[id]/ticket`, `/people`, `/folders`; `/api/v1/notes` re-exports them. MCP: `src/mcp/notes.ts` (`notes_search`,
+  `notes_get`, `notes_create`, `notes_update`, `notes_archive`).
+- Template files changed here: `src/worker.ts` (notes WebSocket route, `NoteRoom` export), `wrangler.jsonc`
+  (`NOTE_ROOM` binding and DO migration), `astro.config.mjs` (`optimizeDeps`).
+
 ## Template
 
 Micro SaaS on Cloudflare Workers, built from the shared template (see TEMPLATE.md for how template

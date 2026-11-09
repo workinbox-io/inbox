@@ -37,5 +37,32 @@ export default defineConfig({
   vite: {
     // mcpWidgets: `?widget` imports become MCP Apps HTML (src/mcp/widgets).
     plugins: [tailwindcss(), mcpWidgets({ srcDir: fileURLToPath(new URL("./src", import.meta.url)) })],
+    // The notes editor (components/notes/editor): prebundle Plate and slate-yjs in one pass so they share one
+    // slate-react (two copies mean two React contexts and "useSlateStatic must be used inside <Slate>").
+    optimizeDeps: {
+      include: [
+        "platejs",
+        "platejs/react",
+        "slate-react",
+        "@slate-yjs/core",
+        "@slate-yjs/react",
+        "@platejs/yjs/react",
+        "@platejs/floating",
+        "@platejs/link/react",
+        "@platejs/list/react",
+        "@platejs/table/react",
+        "@platejs/media/react",
+        "@platejs/mention/react",
+        "@platejs/slash-command/react",
+        "@platejs/code-block/react",
+        "@platejs/basic-nodes/react",
+        "@platejs/indent/react",
+        "@platejs/combobox/react",
+        "@platejs/markdown",
+        "@ariakit/react",
+        "y-partyserver/provider",
+        "yjs",
+      ],
+    },
   },
 });
