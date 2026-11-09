@@ -1,5 +1,5 @@
 ---
-/** WorkInbox vs one competitor, from config/compare.ts. */
+/** Work Inbox vs one competitor, from config/compare.ts. */
 import { ArrowRight, Check } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import ComparisonTable from "@/components/site/ComparisonTable.astro";
@@ -34,10 +34,9 @@ const jsonLd = [
 
 <MarketingLayout title={`${siteConfig.name} vs ${c.name}`} description={`${c.intro.split(". ")[0]}. Prices, shared mailboxes, self-hosting and what each does better, checked ${checked}.`} jsonLd={jsonLd}>
   <div class="mx-auto flex w-full max-w-[1120px] flex-1 flex-col px-5 pb-8 sm:px-10">
-    <nav class="pt-10 text-sm text-foreground/60"><a href="/vs" class="hover:text-foreground">Compare</a> / {c.name}</nav>
+    <nav class="flex items-center gap-2 pt-10 text-sm text-foreground/60"><a href="/vs" class="hover:text-foreground">Compare</a> / <img src={c.logo} alt="" width="16" height="16" class="size-4 rounded bg-white object-contain" /> {c.name}</nav>
     <header class="pt-8">
-      <p class="text-sm font-medium tracking-wide text-foreground/60 uppercase">{siteConfig.name} vs {c.name}</p>
-      <h1 class="hero-title mt-4 max-w-4xl text-[clamp(2.3rem,4.6vw,4rem)]">{c.tagline}</h1>
+      <h1 class="hero-title max-w-4xl text-[clamp(2.3rem,4.6vw,4rem)]">{c.tagline}</h1>
       <p class="mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65">{c.intro}</p>
       <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
         <a href="/signup" class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
@@ -84,7 +83,7 @@ const jsonLd = [
     <section class="pt-16">
       <h2 class="text-xl">Other comparisons</h2>
       <div class="mt-4 flex flex-wrap gap-2">
-        {others.map((o) => <a href={`/vs/${o.slug}`} class="rounded-full border border-(--border) px-4 py-2 text-sm hover:bg-(--accent)">vs {o.name}</a>)}
+        {others.map((o) => <a href={`/vs/${o.slug}`} class="inline-flex items-center gap-2 rounded-full border border-(--border) py-1.5 pr-4 pl-2 text-sm hover:bg-(--accent)"><img src={o.logo} alt="" width="20" height="20" loading="lazy" class="size-5 rounded-full bg-white object-contain p-0.5" />vs {o.name}</a>)}
       </div>
     </section>
   </div>

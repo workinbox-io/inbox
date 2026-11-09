@@ -1,5 +1,5 @@
 /**
- * Comparison pages (/vs and /vs/<slug>), modelled on Luxivo's config/compare.ts: WorkInbox next to one competitor.
+ * Comparison pages (/vs and /vs/<slug>), modelled on Luxivo's config/compare.ts: Work Inbox next to one competitor.
  * Competitor facts come from their own pricing and help pages on `checked` (links in `sources`); re-check them before
  * changing a page. Keep "pick them if" honest, and keep our gaps (no IMAP, no calendar yet) in the table: a comparison
  * that hides the other side's strengths, or ours' weaknesses, doesn't convert and doesn't get cited.
@@ -47,6 +47,8 @@ export const OURS: Record<RowKey, Cell> = {
 export interface Competitor {
   slug: string;
   name: string;
+  /** Their icon in public/logos (from their own site), for menus, lists and table heads. */
+  logo: string;
   /** Page title and H1: "<name> alternative". */
   tagline: string;
   intro: string;
@@ -67,9 +69,10 @@ export const COMPETITORS: Competitor[] = [
   {
     slug: "google-workspace",
     name: "Google Workspace",
+    logo: "/logos/google-workspace.png",
     tagline: "Team email without Google: an open-source Google Workspace alternative",
     intro:
-      "Google Workspace is the default for team email with Docs and Meet around it. WorkInbox does less (mail and shared notes today) for a lower price per person, with free shared mailboxes and the option to run it on your own Cloudflare account.",
+      "Google Workspace is the default for team email with Docs and Meet around it. Work Inbox does less (mail and shared notes today) for a lower price per person, with free shared mailboxes and the option to run it on your own Cloudflare account.",
     checked: CHECKED,
     theirPricing: [
       "Business Starter: $7 a person a month on an annual plan, $8.40 flexible; 30 GB pooled storage",
@@ -98,8 +101,8 @@ export const COMPETITORS: Competitor[] = [
       "You need Gemini across mail, documents and meetings.",
     ],
     faq: [
-      { question: "Can WorkInbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, files and video calls, not yet: calendar, contacts and drive are on the roadmap, and WorkInbox has no video calls." },
-      { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in WorkInbox and point its MX records at Cloudflare Email Routing. New mail then arrives in WorkInbox. Importing old mail isn't built yet." },
+      { question: "Can Work Inbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, files and video calls, not yet: calendar, contacts and drive are on the roadmap, and Work Inbox has no video calls." },
+      { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in Work Inbox and point its MX records at Cloudflare Email Routing. New mail then arrives in Work Inbox. Importing old mail isn't built yet." },
     ],
     sources: [
       "https://workspace.google.com/pricing",
@@ -111,9 +114,10 @@ export const COMPETITORS: Competitor[] = [
   {
     slug: "microsoft-365",
     name: "Microsoft 365",
+    logo: "/logos/microsoft-365.png",
     tagline: "A lighter Microsoft 365 alternative for team email",
     intro:
-      "Microsoft 365 Business bundles Exchange mail with Office, Teams and device management. WorkInbox covers team mail and shared notes in the browser, at a lower price per person, and can run on your own Cloudflare account.",
+      "Microsoft 365 Business bundles Exchange mail with Office, Teams and device management. Work Inbox covers team mail and shared notes in the browser, at a lower price per person, and can run on your own Cloudflare account.",
     checked: CHECKED,
     theirPricing: [
       "Business Basic: $7 a person a month, annual commitment (was $6 before 1 July 2026)",
@@ -142,7 +146,7 @@ export const COMPETITORS: Competitor[] = [
       "You need eDiscovery, litigation hold or archiving today.",
     ],
     faq: [
-      { question: "Do shared mailboxes cost extra in Microsoft 365?", answer: "Microsoft says a shared mailbox needs no licence up to 50 GB, but everyone who opens it needs a licensed mailbox, and archives or 100 GB need Exchange Online Plan 2. In WorkInbox shared mailboxes are free on every plan." },
+      { question: "Do shared mailboxes cost extra in Microsoft 365?", answer: "Microsoft says a shared mailbox needs no licence up to 50 GB, but everyone who opens it needs a licensed mailbox, and archives or 100 GB need Exchange Online Plan 2. In Work Inbox shared mailboxes are free on every plan." },
     ],
     sources: [
       "https://www.microsoft.com/en-us/licensing/news/2026-m365-packaging-pricing-updates",
@@ -153,9 +157,10 @@ export const COMPETITORS: Competitor[] = [
   {
     slug: "zoho-mail",
     name: "Zoho Mail",
+    logo: "/logos/zoho-mail.png",
     tagline: "A Zoho Mail alternative you can self-host",
     intro:
-      "Zoho Mail and Zoho Workplace are the budget choice, with a free plan for five people. WorkInbox is priced close to Workplace, adds live shared notes in the same app, and can run on your own Cloudflare account.",
+      "Zoho Mail and Zoho Workplace are the budget choice, with a free plan for five people. Work Inbox is priced close to Workplace, adds live shared notes in the same app, and can run on your own Cloudflare account.",
     checked: CHECKED,
     theirPricing: [
       "Mail Free: up to 5 people and one domain, 5 GB each, no IMAP",
@@ -194,9 +199,10 @@ export const COMPETITORS: Competitor[] = [
   {
     slug: "proton-mail",
     name: "Proton Mail",
+    logo: "/logos/proton-mail.png",
     tagline: "A Proton for Business alternative for team mailboxes",
     intro:
-      "Proton for Business puts end-to-end encryption first. WorkInbox puts teamwork first: shared mailboxes that several people answer, live shared notes, and the option to run everything on your own Cloudflare account.",
+      "Proton for Business puts end-to-end encryption first. Work Inbox puts teamwork first: shared mailboxes that several people answer, live shared notes, and the option to run everything on your own Cloudflare account.",
     checked: CHECKED,
     theirPricing: [
       "Mail Essentials: $6.99 a person a month, annual; 15 GB, 3 domains, 10 addresses each",
@@ -230,9 +236,10 @@ export const COMPETITORS: Competitor[] = [
   {
     slug: "fastmail",
     name: "Fastmail",
+    logo: "/logos/fastmail.png",
     tagline: "A Fastmail alternative with shared mailboxes and notes",
     intro:
-      "Fastmail is fast, standards-based mail with excellent IMAP, CalDAV and JMAP support. WorkInbox trades that client support (no IMAP yet) for shared mailboxes, live notes and the option to self-host on Cloudflare.",
+      "Fastmail is fast, standards-based mail with excellent IMAP, CalDAV and JMAP support. Work Inbox trades that client support (no IMAP yet) for shared mailboxes, live notes and the option to self-host on Cloudflare.",
     checked: CHECKED,
     theirPricing: [
       "Basic, Standard and Professional: 6 GB, 60 GB and 150 GB a person (prices shown in the visitor's currency)",
@@ -261,9 +268,10 @@ export const COMPETITORS: Competitor[] = [
   {
     slug: "nextcloud",
     name: "Nextcloud",
+    logo: "/logos/nextcloud.png",
     tagline: "A self-hosted alternative to Nextcloud for team email",
     intro:
-      "Nextcloud is the open-source, self-hosted suite for files, calendar and office documents, but it has no mail server: Nextcloud Mail is a client for a mail server you run yourself. WorkInbox is the mail server and the app, on Cloudflare, with nothing to patch.",
+      "Nextcloud is the open-source, self-hosted suite for files, calendar and office documents, but it has no mail server: Nextcloud Mail is a client for a mail server you run yourself. Work Inbox is the mail server and the app, on Cloudflare, with nothing to patch.",
     checked: CHECKED,
     theirPricing: [
       "Community edition: free to self-host (AGPLv3)",

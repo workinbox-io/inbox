@@ -1,9 +1,9 @@
-# WorkInbox
+# Work Inbox
 
 Open-source team email on your own domain, with shared notes, running on Cloudflare. A Google Workspace alternative
 for small teams: hosted at [workinbox.io](https://workinbox.io), or self-hosted on your own Cloudflare account.
 
-![WorkInbox mail](public/marketing/mail-thread.webp)
+![Work Inbox mail](public/marketing/mail-thread.webp)
 
 ## What it does today
 
@@ -31,7 +31,7 @@ pnpm deploy                    # build, migrate, deploy
 
 ## License
 
-[AGPL-3.0](LICENSE). You can run, change and self-host WorkInbox freely; if you offer a modified version as a service
+[AGPL-3.0](LICENSE). You can run, change and self-host Work Inbox freely; if you offer a modified version as a service
 to others, publish your changes under the same licence.
 
 Built on a shared SaaS template for Cloudflare Workers (Astro SSR + React islands, D1 + Drizzle, Better Auth, Paddle);

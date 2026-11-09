@@ -1,4 +1,5 @@
-import { BookOpen, Code, HelpCircle, Inbox, NotebookPen, Plug, Scale, Server, Users, type LucideIcon } from "lucide-react";
+import { COMPETITORS } from "@/config/compare";
+import { BookOpen, Code, HelpCircle, Inbox, NotebookPen, Plug, Server, Users, type LucideIcon } from "lucide-react";
 
 /** Header links: optional descriptions, Lucide components or local logo paths. */
 export type NavLink = { href: string; label: string; description?: string; icon?: LucideIcon; logo?: string };
@@ -11,7 +12,8 @@ export type NavItem =
  * keep `accent` in sync with --primary in styles/brand.css.
  */
 export const siteConfig = {
-  name: "WorkInbox",
+  /** The brand as written in marketing, the app and e-mails (the domain stays workinbox.io). */
+  name: "Work Inbox",
   description: "Open-source team email on your own domain: personal and shared mailboxes, aliases, catch-all and shared notes, on Cloudflare.",
   /** The public code, linked from the self-hosting docs and the footer. */
   repoUrl: "https://github.com/jakub-kalamarz/inbox",
@@ -35,9 +37,10 @@ export const siteConfig = {
     {
       label: "Compare",
       items: [
-        { href: "/google-workspace-alternative", label: "Google Workspace alternative", description: "What you keep, what you give up, what it costs.", icon: Scale },
-        { href: "/vs", label: "All comparisons", description: "Microsoft 365, Zoho, Proton, Fastmail, Nextcloud.", icon: Scale },
+        { href: "/google-workspace-alternative", label: "Google Workspace alternative", description: "What you keep, what you give up, what it costs.", logo: "/logos/google-workspace.png" },
+        ...COMPETITORS.filter((c) => c.slug !== "google-workspace").map((c) => ({ href: `/vs/${c.slug}`, label: `vs ${c.name}`, logo: c.logo })),
       ],
+      footer: { href: "/vs", label: "All comparisons" },
     },
     { href: "/pricing", label: "Pricing" },
     {

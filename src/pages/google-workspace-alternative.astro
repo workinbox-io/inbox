@@ -7,6 +7,7 @@
 import { ArrowRight, Check, Minus } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
+import Shot from "@/components/site/Shot.astro";
 import ComparisonTable from "@/components/site/ComparisonTable.astro";
 import Faq from "@/components/site/Faq.astro";
 import Stage from "@/components/site/craft/Stage.astro";
@@ -22,8 +23,8 @@ const checked = new Date(google.checked).toLocaleDateString("en-GB", { day: "num
 
 /** Five people and one shared support@ mailbox, cheapest plan with custom-domain mail, annual billing, list prices before tax. */
 const team = [
-  { name: "WorkInbox Starter", each: `€${PLANS.starter.priceMonthly / 100}`, total: `€${(PLANS.starter.priceMonthly * 5) / 100}`, shared: "Included, free" },
-  { name: "WorkInbox self-hosted", each: "€0", total: "€0 + your Cloudflare usage", shared: "Included, free" },
+  { name: "Work Inbox Starter", each: `€${PLANS.starter.priceMonthly / 100}`, total: `€${(PLANS.starter.priceMonthly * 5) / 100}`, shared: "Included, free" },
+  { name: "Work Inbox self-hosted", each: "€0", total: "€0 + your Cloudflare usage", shared: "Included, free" },
   { name: "Google Workspace Business Starter", each: "$7", total: "$35", shared: "Google Groups' collaborative inbox" },
   { name: "Microsoft 365 Business Basic", each: "$7", total: "$35", shared: "Free up to 50 GB and 25 users" },
   { name: "Zoho Workplace Standard", each: "$3", total: "$15", shared: "Shared mailbox group" },
@@ -46,15 +47,15 @@ const giveUp = [
 ];
 
 const steps = [
-  { title: "Add the domain", text: "In Settings → Mail. WorkInbox shows the MX, SPF and DMARC records." },
+  { title: "Add the domain", text: "In Settings → Mail. Work Inbox shows the MX, SPF and DMARC records." },
   { title: "Add your people", text: "Each person gets a mailbox with the same address they had in Gmail." },
-  { title: "Switch the MX records", text: "Point them at Cloudflare Email Routing. New mail arrives in WorkInbox; keep Google as an archive." },
+  { title: "Switch the MX records", text: "Point them at Cloudflare Email Routing. New mail arrives in Work Inbox; keep Google as an archive." },
 ];
 
 const faq = [
   ...google.faq,
-  { question: "Is there a free Google Workspace alternative?", answer: `WorkInbox is free when you run it on your own Cloudflare account; you pay Cloudflare for what you use. Hosted, it starts at €${PLANS.starter.priceMonthly / 100} a person a month after a ${TRIAL_DAYS}-day trial. Zoho Mail also has a free plan for up to five people.` },
-  { question: "Is there an open-source Google Workspace alternative?", answer: "WorkInbox is open source and runs on Cloudflare. Nextcloud is open source too and covers files, calendar and office documents, but it has no mail server of its own." },
+  { question: "Is there a free Google Workspace alternative?", answer: `Work Inbox is free when you run it on your own Cloudflare account; you pay Cloudflare for what you use. Hosted, it starts at €${PLANS.starter.priceMonthly / 100} a person a month after a ${TRIAL_DAYS}-day trial. Zoho Mail also has a free plan for up to five people.` },
+  { question: "Is there an open-source Google Workspace alternative?", answer: "Work Inbox is open source and runs on Cloudflare. Nextcloud is open source too and covers files, calendar and office documents, but it has no mail server of its own." },
 ];
 
 const url = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
@@ -67,10 +68,9 @@ const jsonLd = [
 <MarketingLayout title="Google Workspace alternative for team email" description="An open-source Google Workspace alternative: team email on your own domain with free shared mailboxes and live notes, from €3 a person or self-hosted. What you keep, what you give up, what five people cost." jsonLd={jsonLd}>
   <div class="mx-auto flex w-full max-w-[1120px] flex-1 flex-col px-5 pb-8 sm:px-10">
     <header class="pt-14 text-center sm:pt-20">
-      <p class="text-sm font-medium tracking-wide text-foreground/60 uppercase">Google Workspace alternative</p>
-      <h1 class="hero-title mx-auto mt-4 max-w-4xl">Leave Google, <em>keep your addresses.</em></h1>
+      <h1 class="hero-title mx-auto max-w-4xl">Leave Google, <em>keep your addresses.</em></h1>
       <p class="mx-auto mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65">
-        WorkInbox is open-source team email on your own domain, with free shared mailboxes and notes your team writes
+        Work Inbox is open-source team email on your own domain, with free shared mailboxes and notes your team writes
         together. It does less than Google Workspace, costs less, and can run on your own Cloudflare account.
       </p>
       <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
@@ -79,7 +79,7 @@ const jsonLd = [
       </div>
     </header>
 
-    <div class="mt-14"><Stage><BrowserFrame url="workinbox.io/app/mail"><img src="/marketing/mail-thread-dark.webp" alt="WorkInbox mail with an open message" width="2880" height="1800" loading="eager" decoding="async" /></BrowserFrame></Stage></div>
+    <div class="mt-14"><Stage><BrowserFrame url="workinbox.io/app/mail"><Shot name="mail-thread" alt="Work Inbox mail with an open message" eager /></BrowserFrame></Stage></div>
 
     <section class="grid gap-10 pt-20 md:grid-cols-2">
       <div>

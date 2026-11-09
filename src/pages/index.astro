@@ -8,6 +8,7 @@ import { ArrowRight, AtSign, Bot, Braces, Calendar, Check, Contact, HardDrive, I
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import SectionHeading from "@/components/site/SectionHeading.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
+import Shot from "@/components/site/Shot.astro";
 import PricingCards from "@/components/site/PricingCards.astro";
 import Faq from "@/components/site/Faq.astro";
 import Stage from "@/components/site/craft/Stage.astro";
@@ -25,14 +26,14 @@ const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly)) / 100;
 const shot = (file: string) => `/marketing/${file}`;
 
 const tabs = [
-  { id: "inbox", label: "Inbox", icon: Inbox, url: "workinbox.io/app/mail", src: shot("mail-thread-dark.webp"), alt: "WorkInbox mail: folders, the inbox of anna@ and support@, an open message and the sender panel" },
-  { id: "shared", label: "Shared mailbox", icon: Users, url: "workinbox.io/app/mail", src: shot("shared-mailbox-dark.webp"), alt: "The shared mailbox support@ with a customer question open" },
-  { id: "notes", label: "Notes", icon: NotebookPen, url: "workinbox.io/app/notes", src: shot("notes-dark.webp"), alt: "A shared note with decisions, a checklist and open questions, and the formatting toolbar" },
-  { id: "domains", label: "Domains", icon: AtSign, url: "workinbox.io/app/settings/mail", src: shot("mail-settings-dark.webp"), alt: "Mail settings: the domain's DNS records with a Check DNS button, the catch-all choice and the mailboxes" },
+  { id: "inbox", label: "Inbox", icon: Inbox, url: "workinbox.io/app/mail", name: "mail-thread", alt: "Work Inbox mail: folders, the inbox of anna@ and support@, an open message and the sender panel" },
+  { id: "shared", label: "Shared mailbox", icon: Users, url: "workinbox.io/app/mail", name: "shared-mailbox", alt: "The shared mailbox support@ with a customer question open" },
+  { id: "notes", label: "Notes", icon: NotebookPen, url: "workinbox.io/app/notes", name: "notes", alt: "A shared note with decisions, a checklist and open questions, and the formatting toolbar" },
+  { id: "domains", label: "Domains", icon: AtSign, url: "workinbox.io/app/settings/mail", name: "mail-settings", alt: "Mail settings: the domain's DNS records with a Check DNS button, the catch-all choice and the mailboxes" },
 ];
 
 const pins: Pin[] = [
-  { x: 74, y: 7, title: "Check DNS. ", text: "WorkInbox looks the records up and ticks each one off." },
+  { x: 74, y: 7, title: "Check DNS. ", text: "Work Inbox looks the records up and ticks each one off." },
   { x: 86, y: 18, title: "Records to copy. ", text: "MX, SPF and DMARC. On Cloudflare, Email Routing adds them for you." },
   { x: 61, y: 55, title: "Unknown addresses. ", text: "Reject them, or catch them all in one mailbox." },
   { x: 62, y: 87, title: "Shared mailboxes. ", text: "support@ with the people who answer it." },
@@ -62,12 +63,12 @@ const steps = [
 
 const faq = [
   {
-    question: "Is WorkInbox really open source?",
+    question: "Is Work Inbox really open source?",
     answer: `Yes. The code is public at ${siteConfig.repoUrl}, and you can run it on your own Cloudflare account with every feature and no fee to us. The hosted version is the same app, run by us.`,
   },
   {
     question: "Can I use Outlook, Apple Mail or my phone's mail app?",
-    answer: "Not yet. WorkInbox has no IMAP access today: you read and send mail in the web app, which you can install on a phone or a computer. An IMAP gateway is on the roadmap.",
+    answer: "Not yet. Work Inbox has no IMAP access today: you read and send mail in the web app, which you can install on a phone or a computer. An IMAP gateway is on the roadmap.",
   },
   {
     question: "Do I have to move my domain to Cloudflare?",
@@ -79,7 +80,7 @@ const faq = [
   },
   {
     question: "Can I bring my old mail from Gmail or Outlook?",
-    answer: "Importing old mail isn't built yet. Point your MX records at WorkInbox and new mail arrives here; keep the old account as an archive for now.",
+    answer: "Importing old mail isn't built yet. Point your MX records at Work Inbox and new mail arrives here; keep the old account as an archive for now.",
   },
   {
     question: "Where is my mail stored?",
@@ -122,7 +123,6 @@ const jsonLd = [
   <div class="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-5 sm:px-10">
     <section class="relative pt-14 pb-10 text-center sm:pt-20">
       <div class="dot-grid" aria-hidden="true"></div>
-      <p class="hero-fade relative mb-6 inline-flex items-center gap-2 rounded-full border border-(--mk-line-2) bg-(--mk-glass) px-3.5 py-1.5 text-sm text-foreground/80 backdrop-blur" style="--d: 40ms"><span class="size-1.5 rounded-full bg-(--mk-teal) shadow-[0_0_10px_var(--mk-teal)]"></span>Open-source Google Workspace alternative</p>
       <h1 class="hero-title relative mx-auto max-w-5xl">
         <span class="hero-fade block" style="--d: 80ms">Your team's email,</span>
         <span class="hero-fade block" style="--d: 180ms"><em>on your own domain.</em></span>
@@ -138,7 +138,7 @@ const jsonLd = [
       <p class="hero-fade relative mt-5 text-sm text-foreground/60" style="--d: 560ms">{TRIAL_DAYS}-day trial, no card needed. Shared mailboxes are free.</p>
 
       <div id="tour" class="hero-fade relative mt-14 scroll-mt-24" style="--d: 650ms" data-tabs>
-        <div role="tablist" aria-label="WorkInbox screens" class="tour-tabs mx-auto">
+        <div role="tablist" aria-label="Work Inbox screens" class="tour-tabs mx-auto">
           {
             tabs.map((t, i) => (
               <button type="button" role="tab" id={`tab-${t.id}`} aria-controls={`panel-${t.id}`} aria-selected={i === 0 ? "true" : "false"} data-tab={t.id} class="tour-tab">
@@ -148,12 +148,12 @@ const jsonLd = [
             ))
           }
         </div>
-        <div class="hero-glow relative mt-10">
+        <div class="relative mt-10">
           <BrowserFrame url={tabs[0]!.url}>
             {
               tabs.map((t, i) => (
                 <div role="tabpanel" id={`panel-${t.id}`} aria-labelledby={`tab-${t.id}`} data-panel={t.id} data-url-value={t.url} hidden={i !== 0} class="h-full">
-                  <img src={t.src} alt={t.alt} width="2880" height="1800" loading={i === 0 ? "eager" : "lazy"} decoding="async" class="block h-full w-full object-cover object-top-left" />
+                  <Shot name={t.name} alt={t.alt} eager={i === 0} class="h-full w-full object-cover object-top-left" />
                 </div>
               ))
             }
@@ -182,7 +182,7 @@ const jsonLd = [
         </div>
         <Stage>
           <BrowserFrame url="workinbox.io/app/mail">
-            <img src={shot("mail-dark.webp")} alt="The inbox across anna@ and support@, with unread messages on top" width="2880" height="1800" loading="lazy" decoding="async" />
+            <Shot name="mail" alt="The inbox across anna@ and support@, with unread messages on top" />
           </BrowserFrame>
         </Stage>
       </div>
@@ -190,7 +190,7 @@ const jsonLd = [
       <div class="mt-24 grid items-center gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-14">
         <Stage>
           <BrowserFrame url="workinbox.io/app/mail">
-            <img src={shot("shared-mailbox-dark.webp")} alt="support@ open as a shared mailbox, with its own unread count" width="2880" height="1800" loading="lazy" decoding="async" />
+            <Shot name="shared-mailbox" alt="support@ open as a shared mailbox, with its own unread count" />
           </BrowserFrame>
         </Stage>
         <div data-reveal>
@@ -215,7 +215,7 @@ const jsonLd = [
         </div>
         <Stage>
           <BrowserFrame url="workinbox.io/app/notes">
-            <img src={shot("notes-dark.webp")} alt="A shared note: decisions, a to-do list and open questions" width="2880" height="1800" loading="lazy" decoding="async" />
+            <Shot name="notes" alt="A shared note: decisions, a to-do list and open questions" />
           </BrowserFrame>
         </Stage>
       </div>
@@ -230,7 +230,7 @@ const jsonLd = [
         </div>
         <Stage>
           <BrowserFrame url="workinbox.io/app/settings/mail">
-            <Annotated src={shot("mail-settings-dark.webp")} alt="The domain acme.test with its DNS records, the catch-all choice and four mailboxes" width={2880} height={1800} pins={pins} />
+            <Annotated src={shot("mail-settings.webp")} darkSrc={shot("mail-settings-dark.webp")} alt="The domain acme.test with its DNS records, the catch-all choice and four mailboxes" width={2880} height={1800} pins={pins} />
           </BrowserFrame>
         </Stage>
       </div>
@@ -241,13 +241,13 @@ const jsonLd = [
       <FeatureLedger items={extras} cols={3} class="mt-12" />
     </section>
 
-    <section id="self-host" class="glow-section glow-teal scroll-mt-24 pt-24 sm:pt-32">
+    <section id="self-host" class="scroll-mt-24 pt-24 sm:pt-32">
       <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
         <div data-reveal>
           <p class="flex items-center gap-2 text-sm font-semibold"><Server className="size-4" /> Self-hosted or hosted</p>
           <h3 class="mt-4 text-[clamp(1.9rem,3vw,2.7rem)]">Your Cloudflare account, <em>your data.</em></h3>
           <p class="mt-4 text-lg leading-7 text-foreground/65">
-            WorkInbox runs on Cloudflare Workers, D1 and R2. Self-hosted, every message, attachment and note stays on your own
+            Work Inbox runs on Cloudflare Workers, D1 and R2. Self-hosted, every message, attachment and note stays on your own
             account, and you pay Cloudflare for what you use. Hosted, we run the same code for you.
           </p>
           <ul class="mt-6 space-y-2.5">
@@ -258,7 +258,7 @@ const jsonLd = [
           <a href="/docs/self-host" class="mt-6 inline-flex items-center gap-2 underline underline-offset-4">Deploy it yourself <ArrowRight className="size-4" /></a>
         </div>
         <div data-reveal class="code-card p-6 font-mono text-sm leading-7 sm:p-8">
-          <p class="text-white/45"># your own WorkInbox, on your Cloudflare account</p>
+          <p class="text-white/45"># your own Work Inbox, on your Cloudflare account</p>
           <p><span class="text-white/45">$</span> git clone {siteConfig.repoUrl.replace("https://", "")}</p>
           <p><span class="text-white/45">$</span> pnpm install && pnpm setup</p>
           <p><span class="text-white/45">$</span> pnpm deploy</p>
@@ -279,7 +279,7 @@ const jsonLd = [
       <FeatureLedger items={next} cols={4} class="mt-12" />
     </section>
 
-    <section id="pricing" class="glow-section scroll-mt-16 pt-24 sm:pt-32">
+    <section id="pricing" class="scroll-mt-16 pt-24 sm:pt-32">
       <SectionHeading muted="Shared mailboxes are free.">Pay per person.</SectionHeading>
       <p class="mx-auto mt-5 max-w-xl text-center text-lg text-foreground/65">Every plan has unlimited shared mailboxes and aliases. Yearly billing gives two months free. Prices exclude VAT.</p>
       <div data-reveal="items" class="mt-14"><PricingCards /></div>
@@ -290,7 +290,8 @@ const jsonLd = [
       <div class="mx-auto mt-12 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {COMPETITORS.map((c) => (
           <a href={`/vs/${c.slug}`} class="group flex items-center gap-3 rounded-xl border border-(--border) p-5 transition-colors hover:bg-(--accent)">
-            <span class="flex-1 font-medium">WorkInbox vs {c.name}</span>
+            <img src={c.logo} alt="" width="20" height="20" loading="lazy" class="size-5 shrink-0 rounded-md bg-white object-contain p-0.5 shadow-[0_0_0_1px_var(--border)]" />
+            <span class="flex-1 font-medium">vs {c.name}</span>
             <ArrowRight className="size-4 text-foreground/50" />
           </a>
         ))}
@@ -300,7 +301,7 @@ const jsonLd = [
     <section id="faq" class="scroll-mt-16 pt-24 pb-8 sm:pt-32">
       <div class="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
         <div>
-          <h2 class="text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.08]">Questions about WorkInbox</h2>
+          <h2 class="text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.08]">Questions about Work Inbox</h2>
           <p class="mt-4 max-w-xs text-foreground/60">
             Something else? Write to <a href={`mailto:${siteConfig.supportEmail}`} class="text-foreground underline underline-offset-4">{siteConfig.supportEmail}</a>.
           </p>
@@ -310,13 +311,14 @@ const jsonLd = [
     </section>
 
     <section class="pt-24 pb-12 sm:pt-32">
-      <div data-reveal class="cta-panel">
-        <h2 class="mx-auto max-w-3xl text-[clamp(2.2rem,5vw,4rem)]">Your domain's mail, <em>set up this afternoon.</em></h2>
+      <div data-reveal class="stage text-center">
+        <h2 class="mx-auto max-w-3xl pt-6 text-[clamp(2.2rem,5vw,4rem)]">Your domain's mail, <em>set up this afternoon.</em></h2>
         <p class="mx-auto mt-5 max-w-xl text-lg text-foreground/70">{TRIAL_DAYS}-day trial, no card needed. Or run it on your own Cloudflare account, free.</p>
         <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
           <a href="/signup" data-magnetic class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
           <a href={siteConfig.repoUrl} target="_blank" rel="noopener" class="mk-btn mk-btn-ghost">View on GitHub</a>
         </div>
+        <div class="pb-6"></div>
       </div>
     </section>
   </div>

@@ -2,6 +2,7 @@
 /** WorkInbox next to one or more products, row by row (config/compare.ts). Status icons say how each covers a row. */
 import { Check, CircleDashed, Clock, Info, Minus } from "lucide-react";
 import { OURS, ROW_LABELS, type Cell, type Competitor, type RowKey } from "@/config/compare";
+import { siteConfig } from "@/config/site";
 
 interface Props {
   competitors: Competitor[];
@@ -17,8 +18,8 @@ const labels = { yes: "Included", partial: "Partly", no: "Not available", soon: 
     <thead>
       <tr class="border-b border-(--border)">
         <th class="w-[22%] p-4 font-medium text-foreground/60"><span class="sr-only">Feature</span></th>
-        <th class="p-4 font-semibold">WorkInbox</th>
-        {competitors.map((c) => <th class="p-4 font-semibold">{c.name}</th>)}
+        <th class="p-4 font-semibold"><span class="flex items-center gap-2"><img src="/favicon.svg" alt="" width="20" height="20" class="size-5 rounded-md" />{siteConfig.name}</span></th>
+        {competitors.map((c) => <th class="p-4 font-semibold"><span class="flex items-center gap-2"><img src={c.logo} alt="" width="20" height="20" loading="lazy" class="size-5 rounded-md bg-white object-contain p-0.5" />{c.name}</span></th>)}
       </tr>
     </thead>
     <tbody>

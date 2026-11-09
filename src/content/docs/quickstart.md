@@ -12,7 +12,7 @@ updated: 2026-11-09
 
 ## 2. Add your domain
 
-Open **Settings → Mail** and add your domain, for example `yourcompany.com`. WorkInbox lists the DNS records it needs:
+Open **Settings → Mail** and add your domain, for example `yourcompany.com`. Work Inbox lists the DNS records it needs:
 
 - **MX** records pointing at Cloudflare Email Routing,
 - an **SPF** record (TXT) and a **DMARC** record (TXT on `_dmarc`).

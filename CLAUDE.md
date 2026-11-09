@@ -83,10 +83,11 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Modelled on Luxivo (`../support-chat`): the same look system (`styles/marketing.css`, scoped to `.mk` by
   `MarketingLayout look="paper"`; docs, legal and error pages use `look="plain"`), GSAP motion
   (`scripts/marketing-motion.ts`: `data-split`, `data-reveal`, `data-magnetic`) and craft components
-  (`components/site/craft/*`, `BrowserFrame`, `ComparisonTable`). The look is dark in the spirit of Raycast's site:
-  near-black page, violet/teal/pink glows (the mailbox colours), glass cards, film grain (`.mk-grain`), Instrument Serif
-  headlines fading white→grey, `<em>` = serif italic in the violet→teal gradient; `.hero-glow`, `.glow-section`, `.cta-panel`.
-  Marketing pages are always dark and use the `*-dark.webp` shots.
+  (`components/site/craft/*`, `BrowserFrame`, `ComparisonTable`). Look: paper and ink (no brand colour, no glows),
+  Instrument Serif headlines with italic soft-ink emphasis, light and dark themes; app screens swap with the theme
+  (`components/site/Shot.astro`: `<name>.webp` / `<name>-dark.webp`). No eyebrow pills above headlines. Competitor
+  icons in `public/logos/<slug>.png` (`logo` in `config/compare.ts`), used in /vs, tables and the Compare menu.
+  The brand is written "Work Inbox" (`siteConfig.name`); the domain stays workinbox.io.
 - Screens on the site are the real app: `pnpm shots [--seed] [name]` (`scripts/marketing-shots.ts`, needs `pnpm dev`)
   seeds the demo org (acme.test) through the local email handler and the notes API, then saves `public/marketing/*.webp`
   and `*-dark.webp`.

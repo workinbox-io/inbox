@@ -1,12 +1,12 @@
 ---
 title: Introduction
-description: What WorkInbox does today, what's next, and where to start.
+description: What Work Inbox does today, what's next, and where to start.
 section: Getting started
 order: 1
 updated: 2026-11-09
 ---
 
-WorkInbox is open-source team email on your own domain, with shared notes. It runs on Cloudflare: hosted by us, or
+Work Inbox is open-source team email on your own domain, with shared notes. It runs on Cloudflare: hosted by us, or
 self-hosted on your own Cloudflare account.
 
 ## What ships today
@@ -23,5 +23,5 @@ install on a phone or a computer.
 ## Where to start
 
 - [Quickstart](/docs/quickstart): from sign-up to your first mail.
-- [Self-hosting](/docs/self-host): run WorkInbox on your own Cloudflare account.
+- [Self-hosting](/docs/self-host): run Work Inbox on your own Cloudflare account.
 - [Team and roles](/docs/team): who can see which mailboxes.

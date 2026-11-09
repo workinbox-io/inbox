@@ -1,12 +1,12 @@
 ---
 title: Self-hosting
-description: Run WorkInbox on your own Cloudflare account, with every feature and no fee to us.
+description: Run Work Inbox on your own Cloudflare account, with every feature and no fee to us.
 section: Getting started
 order: 3
 updated: 2026-11-09
 ---
 
-WorkInbox is open source. Self-hosted, it runs for one company on its own Cloudflare account: mail, attachments and
+Work Inbox is open source. Self-hosted, it runs for one company on its own Cloudflare account: mail, attachments and
 notes stay there, and you pay Cloudflare for what you use. Every feature is on; there are no plans or billing.
 
 ## What you need
@@ -44,7 +44,7 @@ and `ADMIN_EMAILS` to your own address. Optional: `GOOGLE_CLIENT_ID` and `GOOGLE
 
 ## 4. Sending mail
 
-Onboard each mail domain in **Cloudflare Email Service** so WorkInbox can send from it, and set `EMAIL_FROM_ADDRESS`
+Onboard each mail domain in **Cloudflare Email Service** so Work Inbox can send from it, and set `EMAIL_FROM_ADDRESS`
 for the app's own messages (sign-in links, password resets).
 
 ## 5. Deploy
@@ -59,7 +59,7 @@ Cloudflare dashboard.
 ## 6. Receiving mail
 
 For each mail domain, turn on **Email Routing** and add a **catch-all rule** with the action **Send to a Worker**,
-pointing at your WorkInbox Worker. Then sign up in your WorkInbox, add the domain in **Settings → Mail** and click
+pointing at your Work Inbox Worker. Then sign up in your Work Inbox, add the domain in **Settings → Mail** and click
 **Check DNS**. The [Quickstart](/docs/quickstart) covers the rest.
 
 ## Updating
