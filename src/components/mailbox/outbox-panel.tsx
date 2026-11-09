@@ -2,12 +2,10 @@ import * as React from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { DateTimePicker } from "@/components/ui/date-time-picker"
 import { Toaster } from "@/components/ui/sonner"
 
 export interface OutboxRow { id: string; subject: string; to: string; cc: string[]; sendAt: number; status: string; error: string | null; deliveryStatus: string | null; threadId?: string }
-const localDateTime = (at: number) => new Date(at - new Date(at).getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
 export function OutboxPanel({ initial }: { initial: OutboxRow[] }) {
   const [jobs, setJobs] = React.useState(initial)
   const [busy, setBusy] = React.useState<string | null>(null)
@@ -29,7 +27,7 @@ export function OutboxPanel({ initial }: { initial: OutboxRow[] }) {
       {job.status === "uncertain" ? <p className="text-muted-foreground text-sm">Check the recipient's mailbox or ask your administrator to check delivery using reference <code>{job.id}</code>. This message will not be automatically sent again.</p> : null}
       {job.status === "failed" ? <p className="text-muted-foreground text-sm">This message was stopped before sending. Fix the reported issue and compose a new message. Reference: <code>{job.id}</code>.</p> : null}
       {job.status === "pending" ? <div className="flex flex-wrap items-end gap-2">
-        <div className="flex flex-col gap-1"><Label htmlFor={`reschedule-${job.id}`}>Send at (your local time)</Label><Input key={job.sendAt} id={`reschedule-${job.id}`} type="datetime-local" defaultValue={localDateTime(job.sendAt)} disabled={busy === job.id} onBlur={e => { const sendAt = new Date(e.target.value).getTime(); if (Number.isFinite(sendAt) && sendAt !== Math.floor(job.sendAt / 60000) * 60000) void action(job, "PATCH", { sendAt }) }} /></div>
+        <div className="flex flex-col gap-1"><span className="text-sm font-medium">Send at (your local time)</span><DateTimePicker value={job.sendAt} confirmLabel="Reschedule" disabled={busy === job.id} onChange={sendAt => { if (sendAt && sendAt !== Math.floor(job.sendAt / 60000) * 60000) void action(job, "PATCH", { sendAt }) }} /></div>
         <Button variant="outline" disabled={busy === job.id} onClick={() => action(job, "DELETE")}>Cancel send</Button>
       </div> : job.status === "sent" && job.threadId ? <a className="text-sm underline" href={`/app/mail?t=${job.threadId}`}>Open thread</a> : null}
     </article>)}</div><Toaster />

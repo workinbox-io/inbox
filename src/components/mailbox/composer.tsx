@@ -8,6 +8,7 @@ import { replySubject } from "@/lib/mail/threading"
 import { cn } from "@/lib/utils"
 import { guardLeaving } from "@/lib/panel-history"
 import { Button } from "@/components/ui/button"
+import { DateTimePicker, type DateTimePreset } from "@/components/ui/date-time-picker"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AttachmentDropZone, uploadWithProgress, useAttachments, type Attachments, type UploadFn } from "@/components/uploads/attachments"
@@ -33,6 +34,22 @@ export interface SendJob {
  * Sending waits a few seconds with an "Undo" toast, like Gmail; leaving the page meanwhile asks first.
  * onSent runs after the server took the mail (refreshes the list and thread).
  */
+/** Scheduled-send shortcuts: tomorrow morning and afternoon, and Monday morning. */
+function sendPresets(now = new Date()): DateTimePreset[] {
+  const at = (days: number, hour: number) => {
+    const d = new Date(now)
+    d.setDate(d.getDate() + days)
+    d.setHours(hour, 0, 0, 0)
+    return d
+  }
+  const toMonday = ((8 - now.getDay()) % 7) || 7
+  return [
+    { id: "tomorrow-am", label: "Tomorrow morning", at: at(1, 8) },
+    { id: "tomorrow-pm", label: "Tomorrow afternoon", at: at(1, 13) },
+    ...(toMonday > 1 ? [{ id: "monday", label: "Monday morning", at: at(toMonday, 8) }] : []),
+  ]
+}
+
 export function useUndoSend(onSent: (threadId: string) => void) {
   const pending = React.useRef(0)
   const sent = React.useRef(onSent)
@@ -69,11 +86,6 @@ export function useUndoSend(onSent: (threadId: string) => void) {
       } finally { pending.current-- }
     })()
   }, [])
-}
-
-const localDateTime = (at: number) => {
-  const date = new Date(at)
-  return new Date(at - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
 }
 
 const invalid = (d: Draft) => [...d.to, ...d.cc].filter((a) => !EMAIL.test(a))
@@ -188,8 +200,8 @@ function MailForm({
         </FieldRow>
       ) : null}
       <FieldRow label="Send at" icon={Clock} htmlFor="mail-send-at">
-        <input id="mail-send-at" type="datetime-local" aria-label="Schedule sending" className="h-8 bg-transparent text-sm" value={draft.sendAt ? localDateTime(draft.sendAt) : ""} onChange={e => set({ sendAt: e.target.value ? new Date(e.target.value).getTime() : undefined })} />
-        <span className="text-muted-foreground text-xs">{draft.sendAt ? "Your local time" : "Now · 10 seconds to undo"}</span>
+        <DateTimePicker value={draft.sendAt} onChange={(sendAt) => set({ sendAt })} presets={sendPresets()} placeholder="Now" confirmLabel="Schedule" clearLabel="Send now instead" className="h-7 border-transparent px-2 shadow-none" />
+        <span className="text-muted-foreground text-xs">{draft.sendAt ? "Your local time" : "10 seconds to undo"}</span>
       </FieldRow>
       <ComposeBody
         bodyRef={body}

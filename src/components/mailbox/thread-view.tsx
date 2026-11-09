@@ -7,7 +7,7 @@ import { hasOtherRecipients, snoozePresets } from "@/lib/admin-mail/rules"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+import { DateTimePanel } from "@/components/ui/date-time-picker"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ConfirmButton } from "@/components/app/confirm-button"
 import { InlineComposer, replyDraft, type SendJob } from "./composer"
@@ -20,7 +20,6 @@ const presetTime = (d: Date) => d.toLocaleString(undefined, { weekday: "short", 
 /** Snooze presets plus a date picker; `onSnooze` gets the time in ms. */
 export function SnoozeMenu({ onSnooze, children }: { onSnooze: (at: number) => void; children: React.ReactNode }) {
   const [custom, setCustom] = React.useState(false)
-  const [value, setValue] = React.useState("")
   const presets = React.useMemo(() => snoozePresets(new Date()), [custom])
   return (
     <>
@@ -38,23 +37,21 @@ export function SnoozeMenu({ onSnooze, children }: { onSnooze: (at: number) => v
         </DropdownMenuContent>
       </DropdownMenu>
       <Dialog open={custom} onOpenChange={setCustom}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
+        <DialogContent className="w-auto gap-0 p-0 sm:max-w-fit">
+          <DialogHeader className="border-b px-5 pt-5 pb-4">
             <DialogTitle>Snooze until</DialogTitle>
             <DialogDescription>It comes back to the inbox as unread.</DialogDescription>
           </DialogHeader>
-          <Input type="datetime-local" value={value} onChange={(e) => setValue(e.target.value)} min={new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)} />
-          <DialogFooter>
-            <Button
-              disabled={!value || new Date(value).getTime() <= Date.now()}
-              onClick={() => {
-                onSnooze(new Date(value).getTime())
+          {custom ? (
+            <DateTimePanel
+              presets={presets}
+              confirmLabel="Snooze"
+              onConfirm={(at) => {
+                onSnooze(at)
                 setCustom(false)
               }}
-            >
-              Snooze
-            </Button>
-          </DialogFooter>
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
     </>
