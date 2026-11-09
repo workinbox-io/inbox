@@ -5,6 +5,7 @@ import { and, asc, db, eq, member, session as sessionTable } from "@/db";
 import { authenticateApiKey, withinRateLimit } from "@/lib/server/api-keys";
 import { clientIp } from "@/lib/server/api";
 import { getAuth } from "@/lib/server/auth";
+import { mustChangePassword } from "@/lib/server/mail/account-security";
 import { reportError } from "@/lib/server/errors";
 import { subscriptionUsable } from "@/lib/server/billing";
 import { createPersonalOrg, getSubscription } from "@/lib/server/org";
@@ -29,9 +30,11 @@ async function apiKeyAuth(ctx: APIContext, next: MiddlewareNext) {
     return apiError(401, "Missing or invalid API key. Send it as: Authorization: Bearer <key>", { "WWW-Authenticate": "Bearer" });
   }
   if (!(await withinRateLimit(key.id))) return apiError(429, "Too many requests", { "Retry-After": "60" });
-  const sub = await getSubscription(key.orgId);
-  if (!sub || !subscriptionUsable(sub) || !hasFeature(planById(sub.plan), "apiAccess")) {
-    return apiError(402, `${featureUpsell("apiAccess")} Check Billing in the dashboard.`);
+  if (env.DEPLOY_MODE !== "self") {
+    const sub = await getSubscription(key.orgId);
+    if (!sub || !subscriptionUsable(sub) || !hasFeature(planById(sub.plan), "apiAccess")) {
+      return apiError(402, `${featureUpsell("apiAccess")} Check Billing in the dashboard.`);
+    }
   }
   ctx.locals.orgId = key.orgId;
   ctx.locals.role = key.role;
@@ -76,9 +79,13 @@ async function route(ctx: APIContext, next: MiddlewareNext) {
   const orgId = membership?.orgId;
   if (!result || !orgId) {
     if (path.startsWith("/api/")) return apiError(401, "Unauthorized");
-    return ctx.redirect(`/login?next=${encodeURIComponent(path)}`);
+    return ctx.redirect(`/login?next=${encodeURIComponent(path + ctx.url.search)}`);
   }
 
+  if (path !== "/app/change-password" && await mustChangePassword(result.user.id)) {
+    if (path.startsWith("/api/")) return apiError(403, "Change your temporary password first");
+    return ctx.redirect("/app/change-password");
+  }
   ctx.locals.user = result.user;
   ctx.locals.session = result.session;
   ctx.locals.orgId = orgId;

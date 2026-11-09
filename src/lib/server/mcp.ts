@@ -82,6 +82,7 @@ async function authenticate(request: Request): Promise<AuthResult> {
         orgId: key.orgId,
         role: key.role,
         userId: null,
+        apiKeyId: key.id,
         scopes: Object.keys(MCP_SCOPES),
         actor: { type: "api_key", id: key.id, name },
         via: `MCP (${name})`,
@@ -94,6 +95,8 @@ async function authenticate(request: Request): Promise<AuthResult> {
   // DPoP-bound tokens would need the proof checked; our clients use plain bearer tokens.
   if (!claims || claims.cnf) return { error: unauthorized("invalid_token", "The access token is invalid or expired.") };
   const userId = String(claims.sub);
+  const { mustChangePassword } = await import("./mail/account-security");
+  if (await mustChangePassword(userId)) return { error: unauthorized("invalid_token", "Change your temporary password before connecting this app.") };
   const clientId = String(claims.azp);
   const orgId = typeof claims[ORG_CLAIM] === "string" ? (claims[ORG_CLAIM] as string) : null;
   if (!orgId) return { error: unauthorized("invalid_token", "The access token has no organization.") };

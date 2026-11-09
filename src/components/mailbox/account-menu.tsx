@@ -1,15 +1,9 @@
 import * as React from "react"
-import { ChevronsUpDown, KeyRound, LogOut, Monitor, Moon, PenLine, Sun } from "lucide-react"
-import { toast } from "sonner"
+import { ChevronsUpDown, KeyRound, LogOut, Monitor, Moon, PenLine, Settings, Sun } from "lucide-react"
 
 import { authClient } from "@/lib/auth-client"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import type { PreferenceSection } from "./mail-preferences"
 import { UserAvatar } from "@/components/app/user-avatar"
 
 export interface MailUser {
@@ -18,13 +12,11 @@ export interface MailUser {
 }
 
 /**
- * The account corner of the mail-only view (members): signature, password, theme, sign out.
+ * The account corner of the mail-only view (members): settings, theme, sign out.
  * `compact` is the avatar alone, for the phone layout's list header.
  */
-export function AccountMenu({ user, onSignature, compact = false }: { user: MailUser; onSignature?: () => void; compact?: boolean }) {
-  const [passwordOpen, setPasswordOpen] = React.useState(false)
+export function AccountMenu({ user, onSettings, compact = false, canManage = false }: { user: MailUser; onSettings?: (section?: PreferenceSection) => void; compact?: boolean; canManage?: boolean }) {
   return (
-    <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           {compact ? (
@@ -51,14 +43,20 @@ export function AccountMenu({ user, onSignature, compact = false }: { user: Mail
             <span className="text-muted-foreground truncate text-xs">{user.email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {onSignature ? (
-            <DropdownMenuItem onSelect={onSignature}>
-              <PenLine /> Signature
-            </DropdownMenuItem>
+          {canManage && <DropdownMenuItem asChild><a href="/app/mail?view=console">Admin console</a></DropdownMenuItem>}
+          {onSettings ? (
+            <>
+              <DropdownMenuItem onSelect={() => onSettings()}>
+                <Settings /> Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onSettings("signature")}>
+                <PenLine /> Signature
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onSettings("password")}>
+                <KeyRound /> Change password
+              </DropdownMenuItem>
+            </>
           ) : null}
-          <DropdownMenuItem onSelect={() => setPasswordOpen(true)}>
-            <KeyRound /> Change password
-          </DropdownMenuItem>
           <DropdownMenuItem onSelect={(e) => {
             e.preventDefault()
             window.setThemeMode(window.nextThemeMode())
@@ -79,63 +77,5 @@ export function AccountMenu({ user, onSignature, compact = false }: { user: Mail
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <PasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
-    </>
-  )
-}
-
-function PasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const [current, setCurrent] = React.useState("")
-  const [next, setNext] = React.useState("")
-  const [signOutOthers, setSignOutOthers] = React.useState(true)
-  const [pending, setPending] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-  React.useEffect(() => {
-    if (!open) return
-    setCurrent("")
-    setNext("")
-    setError(null)
-  }, [open])
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Change password</DialogTitle>
-          <DialogDescription>Got a temporary one from your admin? Pick your own here. At least 10 characters.</DialogDescription>
-        </DialogHeader>
-        <form
-          className="grid gap-4"
-          onSubmit={async (e) => {
-            e.preventDefault()
-            setPending(true)
-            setError(null)
-            const { error } = await authClient.changePassword({ currentPassword: current, newPassword: next, revokeOtherSessions: signOutOthers })
-            setPending(false)
-            if (error) return setError(error.message ?? "Couldn't change the password")
-            toast.success("Password changed")
-            onOpenChange(false)
-          }}
-        >
-          <div className="grid gap-1.5">
-            <Label htmlFor="pw-current">Current password</Label>
-            <Input id="pw-current" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="pw-next">New password</Label>
-            <Input id="pw-next" type="password" autoComplete="new-password" minLength={10} value={next} onChange={(e) => setNext(e.target.value)} />
-          </div>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={signOutOthers} onCheckedChange={(v) => setSignOutOthers(v === true)} />
-            Sign out on other devices
-          </label>
-          {error ? <p className={cn("text-destructive text-sm")}>{error}</p> : null}
-          <DialogFooter>
-            <Button type="submit" loading={pending} disabled={pending || !current || next.length < 10}>
-              Change password
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   )
 }

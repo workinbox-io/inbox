@@ -4,6 +4,7 @@ export interface MailThread {
   id: string
   mailbox: string
   subject: string
+  labels?: {id:string;name:string}[]
   contactEmail: string
   contactName: string | null
   unread: boolean
@@ -29,6 +30,8 @@ export interface MailFile {
 }
 
 export interface MailMessage {
+  deliveryStatus?: string | null
+  deliveryError?: string | null
   id: string
   threadId: string
   direction: "in" | "out"
@@ -65,6 +68,8 @@ export type ReplyMode = "reply" | "replyAll" | "forward"
 
 /** A message being written; kept in the browser per thread ("new" for a new e-mail) until it's sent or discarded. */
 export interface Draft {
+  sendAt?: number
+  idempotencyKey?: string
   mode: "new" | ReplyMode
   from: string
   to: string[]

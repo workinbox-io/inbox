@@ -19,6 +19,7 @@ export interface McpContext {
   role: OrgRole;
   /** Null for API keys. */
   userId: string | null;
+  apiKeyId?: string;
   /** Notes a change for the audit log; it's written only if the tool succeeds. */
   audit: (action: AuditAction, note?: McpAuditNote) => void;
 }

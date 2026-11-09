@@ -9,12 +9,14 @@ import { canManage, type OrgRole } from "@/lib/server/roles";
 export type Mailbox = typeof mailboxes.$inferSelect;
 
 export interface MailViewer {
+  apiKeyId?: string;
   orgId: string;
   userId: string;
   role: OrgRole;
 }
 
 export async function viewerMailboxes(v: MailViewer): Promise<Mailbox[]> {
+  if (v.apiKeyId) return resolveApiKeyMailboxes(v.orgId, v.apiKeyId);
   const shared = canManage(v.role)
     ? eq(mailboxes.kind, "shared")
     : and(
@@ -36,4 +38,16 @@ export async function resolveMailboxes(v: MailViewer, addresses?: string[]) {
   const picked = all.filter((m) => addresses.includes(m.address));
   if (picked.length !== addresses.length) throw new HttpError(404, "Not found");
   return picked;
+}
+
+
+/** API keys never inherit admin access to personal or shared mailboxes. */
+export async function resolveApiKeyMailboxes(orgId: string, apiKeyId: string): Promise<Mailbox[]> {
+  const { mailApiAccess } = await import("@/db/schema/mail-integrations");
+  const { apiKeys } = await import("@/db/schema/core");
+  return db.select({ mailbox: mailboxes }).from(mailboxes)
+    .innerJoin(mailApiAccess, eq(mailApiAccess.mailboxId, mailboxes.id))
+    .innerJoin(apiKeys, eq(apiKeys.id, mailApiAccess.apiKeyId))
+    .where(and(eq(mailboxes.orgId, orgId), eq(apiKeys.orgId, orgId), eq(mailApiAccess.apiKeyId, apiKeyId)))
+    .then(rows => rows.map(row => row.mailbox));
 }

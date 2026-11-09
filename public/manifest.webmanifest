@@ -1,0 +1,9 @@
+{
+  "id": "/app/mail", "name": "WorkInbox", "short_name": "WorkInbox",
+  "start_url": "/app/mail", "scope": "/app/", "display": "standalone",
+  "background_color": "#ffffff", "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/mail-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/mail-icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

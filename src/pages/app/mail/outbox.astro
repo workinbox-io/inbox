@@ -1,0 +1,9 @@
+---
+import MailLayout from "@/layouts/MailLayout.astro";
+import { OutboxPanel } from "@/components/mailbox/outbox-panel";
+import { viewerMailboxes } from "@/lib/server/mail/access";
+import { listOutboxJobs } from "@/lib/server/mail/outbox";
+const boxes = await viewerMailboxes({ orgId: Astro.locals.orgId!, userId: Astro.locals.user!.id, role: Astro.locals.role ?? "member" });
+const initial = await listOutboxJobs(boxes);
+---
+<MailLayout title="Outbox & scheduled"><OutboxPanel client:load initial={initial} /></MailLayout>

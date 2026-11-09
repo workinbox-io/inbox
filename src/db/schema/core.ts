@@ -131,6 +131,9 @@ export const invitation = sqliteTable(
     inviterId: text("inviter_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    mailboxAddress: text("mailbox_address"),
+    mailboxDomainId: text("mailbox_domain_id"),
+    mailboxProvisioned: bool("mailbox_provisioned").notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => [index("invitation_email_idx").on(t.email)],

@@ -90,6 +90,7 @@ describe("dns", () => {
 describe("search", () => {
   it("parses operators", () => {
     expect(parseQuery('from:anna subject:"q3 plan" has:attachment is:unread budget')).toEqual({
+      labels: [],
       text: ["budget"],
       from: ["anna"],
       to: [],

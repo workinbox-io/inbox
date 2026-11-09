@@ -20,3 +20,10 @@ export const projects = sqliteTable(
   (t) => [index("projects_org_idx").on(t.orgId)],
 );
 export * from "./mail";
+
+export * from "./outbox";
+
+export * from "./mail-accounts";
+
+export * from "./mail-storage";
+export * from "./mail-integrations";

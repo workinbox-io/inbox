@@ -3,7 +3,7 @@
  * shared like support@), aliases, catch-all and who may open a shared mailbox.
  */
 import { env } from "cloudflare:workers";
-import { and, count, db, eq, inArray, mailAliases, mailboxAccess, mailboxes, mailDomains, mailMessages, mailThreads, member, user } from "@/db";
+import { and, count, db, eq, inArray, invitation, gt, mailboxAccess, mailAliases, mailboxes, mailDomains, mailMessages, mailThreads, mailOutbox, member, user } from "@/db";
 import { ATTACHMENT_URL_PREFIX } from "@/lib/uploads";
 import { evaluateDns, isValidDomain, isValidLocalPart, normalizeDomain, requiredDnsRecords } from "@/lib/mail/rules";
 import { HttpError } from "@/lib/server/api";
@@ -103,11 +103,12 @@ export async function freeAddress(orgId: string, domainId: string, local: string
   const l = local.trim().toLowerCase();
   if (!isValidLocalPart(l)) throw new HttpError(422, "Use letters, digits, dots, dashes or underscores");
   const address = `${l}@${d.domain}`;
-  const [[box], [alias]] = await Promise.all([
+  const [[box], [alias], [reserved]] = await Promise.all([
     db.select({ id: mailboxes.id }).from(mailboxes).where(eq(mailboxes.address, address)),
     db.select({ id: mailAliases.id }).from(mailAliases).where(eq(mailAliases.address, address)),
+    db.select({ id: invitation.id }).from(invitation).where(and(eq(invitation.mailboxAddress, address), eq(invitation.status, "pending"), gt(invitation.expiresAt, new Date()))),
   ]);
-  if (box || alias) throw new HttpError(409, "This address is already taken");
+  if (box || alias || reserved) throw new HttpError(409, "This address is already taken");
   return { address, domain: d };
 }
 
@@ -183,9 +184,11 @@ export async function deleteMailbox(orgId: string, id: string, force = false) {
   const mb = await ownMailbox(orgId, id);
   const [n] = await db.select({ n: count() }).from(mailThreads).where(eq(mailThreads.mailboxId, id));
   if (n!.n && !force) throw new HttpError(409, "This mailbox still has mail. Turn it into a shared mailbox, or delete it with its mail.");
+  const outbox = await db.select().from(mailOutbox).where(eq(mailOutbox.mailboxId,id));
+  if(outbox.some(job=>job.status==="sending"))throw new HttpError(409,"A message is being sent from this mailbox; try again shortly");
   // Incoming files and raw messages in R2 go with it (sent files stay: they are the org's uploads).
-  const rows = await db.select({ files: mailMessages.files, rawKey: mailMessages.rawKey }).from(mailMessages).where(and(eq(mailMessages.mailboxId, id), eq(mailMessages.direction, "in")));
-  const keys = rows.flatMap((r) => [...r.files.map((f) => f.url.slice(ATTACHMENT_URL_PREFIX.length)), ...(r.rawKey ? [r.rawKey] : [])]);
+  const rows = await db.select({ files: mailMessages.files, rawKey: mailMessages.rawKey, htmlKey: mailMessages.htmlKey, storageKeys: mailMessages.storageKeys, direction: mailMessages.direction }).from(mailMessages).where(eq(mailMessages.mailboxId, id));
+  const keys = [...new Set([...rows.flatMap((r) => [...r.storageKeys, ...(r.direction === "in" ? r.files.map((f) => f.url.slice(ATTACHMENT_URL_PREFIX.length)) : []), ...(r.rawKey ? [r.rawKey] : []), ...(r.htmlKey ? [r.htmlKey] : [])]), ...outbox.flatMap(job=>[...job.payload.files.map(f=>f.url.slice(ATTACHMENT_URL_PREFIX.length)),...(job.payload.htmlKey?[job.payload.htmlKey]:[])])])];
   for (let i = 0; i < keys.length; i += 1000) await env.FILES.delete(keys.slice(i, i + 1000));
   await db.batch([db.update(mailDomains).set({ catchAllMailboxId: null }).where(eq(mailDomains.catchAllMailboxId, id)), db.delete(mailboxes).where(eq(mailboxes.id, id))]);
   return mb;

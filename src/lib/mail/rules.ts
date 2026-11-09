@@ -148,11 +148,12 @@ export function evaluateDns(answers: { mx: string[]; txt: string[]; dmarc: strin
 
 /** Search operators: from:, to:, subject:, has:attachment, is:unread, is:starred; the rest is free text. */
 export function parseQuery(q: string) {
-  const out = { text: [] as string[], from: [] as string[], to: [] as string[], subject: [] as string[], hasAttachment: false, unread: false, starred: false };
+  const out = { labels: [] as string[], text: [] as string[], from: [] as string[], to: [] as string[], subject: [] as string[], hasAttachment: false, unread: false, starred: false };
   for (const token of q.match(/\S+:"[^"]*"|\S+/g) ?? []) {
     const [, key, value] = token.match(/^(\w+):"?([^"]*)"?$/) ?? [];
     const v = value?.toLowerCase() ?? "";
-    if (key === "from" && v) out.from.push(v);
+    if (key === "label" && v) out.labels.push(v);
+    else if (key === "from" && v) out.from.push(v);
     else if (key === "to" && v) out.to.push(v);
     else if (key === "subject" && v) out.subject.push(v);
     else if (key === "has" && v === "attachment") out.hasAttachment = true;

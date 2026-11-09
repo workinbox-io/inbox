@@ -152,6 +152,7 @@ export function MessageItem({
 
   return (
     <li className={cn("bg-background rounded-lg border border-border/70", out && "bg-foreground/[0.015]")}>
+      {out && (m.deliveryError || ["bounced", "failed", "rejected", "complained"].includes(m.deliveryStatus ?? "")) ? <p className="text-destructive px-4 pt-3 text-sm">{m.deliveryError ?? `Delivery status: ${m.deliveryStatus}`}</p> : null}
       <div className="flex items-start gap-3 p-4 pb-0">
         <button type="button" onClick={onToggle} className="shrink-0" aria-label="Collapse">
           <UserAvatar seed={m.fromEmail} size={36} />
@@ -169,7 +170,7 @@ export function MessageItem({
         <span className="flex shrink-0 items-center gap-0.5">
           {out ? (
             <span className="text-primary mr-1 hidden items-center gap-1 text-xs font-medium sm:flex">
-              <CheckCheck className="size-3.5" /> Sent
+              <CheckCheck className="size-3.5" /> {m.deliveryStatus ?? "Sent"}
             </span>
           ) : null}
           {m.files.length ? (

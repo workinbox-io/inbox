@@ -1,4 +1,5 @@
 import * as React from "react"
+import { RecoveryEmailSettings } from "@/components/mailbox/security-settings"
 import { Laptop, Smartphone } from "lucide-react"
 import { toast } from "sonner"
 
@@ -52,6 +53,7 @@ export function AccountSettings(props: AccountSettingsProps) {
     <>
       <ProfileSection user={props.user} locale={props.locale ?? "en"} />
       <PasswordSection hasPassword={props.hasPassword} />
+      {props.hasPassword ? <SettingsSection title="Recovery email" description="Recover your account through a verified private address."><RecoveryEmailSettings /></SettingsSection> : null}
       <SessionsSection initial={props.sessions} />
       {props.googleEnabled ? (
         <SignInMethodsSection hasPassword={props.hasPassword} googleAccountId={props.googleAccountId} />

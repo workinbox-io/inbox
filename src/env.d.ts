@@ -31,6 +31,9 @@ declare namespace Cloudflare {
     DEPLOY_MODE?: "self" | "cloud";
     /** cloud: the domain whose subdomains orgs get at once (acme.<MAIL_BASE_DOMAIN>). */
     MAIL_BASE_DOMAIN?: string;
+    VAPID_PUBLIC_KEY?: string;
+    VAPID_PRIVATE_KEY?: string;
+    VAPID_SUBJECT?: string;
   }
 }
 

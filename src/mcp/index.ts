@@ -24,6 +24,7 @@ export interface McpPrincipal {
   orgId: string;
   role: OrgRole;
   userId: string | null;
+  apiKeyId?: string;
   scopes: string[];
   /** Who the audit log names: the user, or the API key. */
   actor: AuditActor;
@@ -43,6 +44,7 @@ async function runTool(name: string, tool: ToolDef, args: unknown, p: McpPrincip
       orgId: p.orgId,
       role: p.role,
       userId: p.userId,
+      apiKeyId: p.apiKeyId,
       audit: (action, note = {}) => void notes.push({ action, ...note }),
     });
     for (const n of notes) {

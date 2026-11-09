@@ -7,9 +7,11 @@ import { handle } from "@astrojs/cloudflare/handler";
 import { jobHandlers } from "@/jobs";
 import { adminMailboxes } from "@/lib/server/admin";
 import { handleAdminMail } from "@/lib/server/admin-mail";
-import { handleOrgMail } from "@/lib/server/mail/store";
+import { handleOrgMail, wakeDueSnoozed } from "@/lib/server/mail/store";
 import { dailyTasks } from "@/jobs/cron";
 import { reportError } from "@/lib/server/errors";
+import { backfillMailBodies } from "@/lib/server/mail/storage";
+import { recoverOutbox, handleDeliveryEvent } from "@/lib/server/mail/outbox";
 import type { JobMessage } from "@/lib/server/queue";
 
 export default {
@@ -29,9 +31,16 @@ export default {
     }
   },
 
-  async queue(batch: MessageBatch<JobMessage>) {
+  async queue(batch: MessageBatch<JobMessage | unknown>) {
+    if (batch.queue === "inbox-mail-events") {
+      for (const msg of batch.messages) {
+        try { await handleDeliveryEvent(msg.body); msg.ack(); }
+        catch (e) { await reportError("queue", e, { job: "mail.delivery" }); msg.retry({ delaySeconds: 60 }); }
+      }
+      return;
+    }
     for (const msg of batch.messages) {
-      const { type, data } = msg.body;
+      const { type, data } = msg.body as JobMessage;
       const run = jobHandlers[type] as ((data: unknown) => Promise<void>) | undefined;
       if (!run) {
         console.error(`[queue] unknown job ${type}`);
@@ -50,6 +59,13 @@ export default {
   },
 
   async scheduled(controller) {
+    if (controller.cron === "* * * * *") {
+      for (const [name, task] of Object.entries({ wakeDueSnoozed, recoverOutbox, backfillMailBodies })) {
+        try { await task(); }
+        catch (error) { await reportError("cron", error, { task: name, cron: controller.cron }); }
+      }
+      return;
+    }
     for (const [name, task] of Object.entries(dailyTasks)) {
       try {
         await task();
@@ -58,4 +74,4 @@ export default {
       }
     }
   },
-} satisfies ExportedHandler<Env, JobMessage>;
+} satisfies ExportedHandler<Env, JobMessage | unknown>;

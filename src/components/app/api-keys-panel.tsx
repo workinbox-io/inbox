@@ -1,4 +1,5 @@
 import * as React from "react"
+import { ApiKeyMailAccess } from "./api-key-mail-access"
 import { KeyRound, Plus } from "lucide-react"
 import { toast } from "sonner"
 
@@ -63,6 +64,7 @@ export function ApiKeysPanel(props: { keys: ApiKeyRow[] }) {
                     {k.createdBy ? ` by ${k.createdBy}` : ""} · {k.lastUsedAt ? `last used ${timeAgo(k.lastUsedAt)}` : "never used"}
                   </span>
                 </div>
+                <ApiKeyMailAccess id={k.id} />
                 <ConfirmButton
                   title={`Revoke ${k.name}?`}
                   description="Requests with this key fail right away. This can't be undone."

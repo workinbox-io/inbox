@@ -9,15 +9,15 @@ import { replaceUrl } from "@/lib/panel-history"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Textarea } from "@/components/ui/textarea"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { EmptyState } from "@/components/app/empty-state"
 import { ComposeWindow, useUndoSend } from "./composer"
 import { useDraftKeys } from "./drafts"
 import { SenderPanel } from "./sender-panel"
 import { ThreadList } from "./thread-list"
+import { LabelActions } from "./mail-rules"
+import { MailPreferences, type PreferenceSection } from "./mail-preferences"
 import { FolderRail } from "./folder-rail"
 import { AccountMenu, type MailUser } from "./account-menu"
 import { Toaster } from "@/components/ui/sonner"
@@ -92,6 +92,11 @@ export function MailboxApp(props: MailboxAppProps) {
   const [infoOpen, setInfoOpen] = React.useState(false)
   const [helpOpen, setHelpOpen] = React.useState(false)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
+  const [settingsSection, setSettingsSection] = React.useState<PreferenceSection>("signature")
+  const openSettings = (section: PreferenceSection = "signature") => {
+    setSettingsSection(section)
+    setSettingsOpen(true)
+  }
   const searchRef = React.useRef<HTMLInputElement>(null)
   const gPending = React.useRef(false)
   const threadRef = React.useRef<ThreadViewHandle>(null)
@@ -349,7 +354,7 @@ export function MailboxApp(props: MailboxAppProps) {
     return (
       <div className="relative grid h-full place-items-center p-6">
         <div className="absolute top-3 right-3">
-          <AccountMenu user={props.account} compact />
+          <AccountMenu canManage={props.canManage} user={props.account} compact />
         </div>
         {empty}
         <Toaster />
@@ -358,6 +363,9 @@ export function MailboxApp(props: MailboxAppProps) {
   }
 
   const listPane = (
+    <div className="flex h-full min-h-0 flex-col">
+    <LabelActions threadIds={selection.size ? [...selection] : selectedId ? [selectedId] : []} onApplied={() => { void loadThreads() }} onFilter={setQuery} />
+    <div className="min-h-0 flex-1">
     <ThreadList
       mailboxes={props.mailboxes}
       mailbox={mailbox}
@@ -386,10 +394,11 @@ export function MailboxApp(props: MailboxAppProps) {
       onBulkDelete={() => remove([...selection])}
       drafts={drafts}
       onCompose={() => openCompose()}
-      onSettings={() => setSettingsOpen(true)}
+      onSettings={() => openSettings()}
       rail={desktop}
-      account={props.account && !desktop ? <AccountMenu user={props.account} onSignature={() => setSettingsOpen(true)} compact /> : null}
+      account={props.account && !desktop ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} compact /> : null}
     />
+    </div></div>
   )
 
   const sender = detail ? <SenderPanel detail={detail} multipleMailboxes={multiple} onOpen={setSelectedId} onCompose={openCompose} /> : null
@@ -427,7 +436,7 @@ export function MailboxApp(props: MailboxAppProps) {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className={props.account ? "bg-background flex h-svh min-h-[480px] overflow-hidden" : "bg-background -mx-2 -mb-2 flex h-[calc(100svh-4.5rem)] min-h-[520px] overflow-hidden rounded-b-xl border-t"}>
+      <div className={props.account ? "bg-background flex h-full min-h-0 overflow-hidden" : "bg-background -mx-2 -mb-2 flex h-full min-h-0 overflow-hidden rounded-b-xl border-t"}>
         {desktop ? (
           <FolderRail
             mailboxes={props.mailboxes}
@@ -444,8 +453,8 @@ export function MailboxApp(props: MailboxAppProps) {
             }}
             unread={unread}
             onCompose={() => openCompose()}
-            onSettings={() => setSettingsOpen(true)}
-            footer={props.account ? <AccountMenu user={props.account} onSignature={() => setSettingsOpen(true)} /> : undefined}
+            onSettings={() => openSettings()}
+            footer={props.account ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} /> : undefined}
           />
         ) : null}
         <div className="min-w-0 flex-1">
@@ -482,6 +491,7 @@ export function MailboxApp(props: MailboxAppProps) {
           {sender}
         </SheetContent>
       </Sheet>
+      {!desktop ? <a href="/app/mail/outbox" className="bg-background fixed right-4 bottom-4 rounded-md border px-3 py-2 text-sm shadow-sm">Outbox &amp; scheduled</a> : null}
       <ComposeWindow
         open={compose.open}
         prefill={compose.prefill}
@@ -492,7 +502,7 @@ export function MailboxApp(props: MailboxAppProps) {
         schedule={schedule}
         onClose={() => setCompose((c) => ({ ...c, open: false }))}
       />
-      <SignatureDialog open={settingsOpen} onOpenChange={setSettingsOpen} mailboxes={props.mailboxes} initial={mailbox === ALL_MAILBOXES ? props.mailboxes[0]! : mailbox} signatures={signatures} onSaved={setSignatures} />
+      <MailPreferences open={settingsOpen} onOpenChange={setSettingsOpen} section={settingsSection} mailboxes={props.mailboxes} mailbox={mailbox === ALL_MAILBOXES ? props.mailboxes[0]! : mailbox} signatures={signatures} onSignatures={setSignatures} account={!!props.account} />
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -516,77 +526,5 @@ export function MailboxApp(props: MailboxAppProps) {
       {/* The dashboard's toasts live in its sidebar island, which the mail-only view doesn't have. */}
       {props.account ? <Toaster /> : null}
     </TooltipProvider>
-  )
-}
-
-/** Each mailbox's signature: added under new e-mails, replies and forwards. */
-function SignatureDialog({
-  open,
-  onOpenChange,
-  mailboxes,
-  initial,
-  signatures,
-  onSaved,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  mailboxes: string[]
-  initial: string
-  signatures: Record<string, { signature: string; name?: string }>
-  onSaved: (s: Record<string, { signature: string; name?: string }>) => void
-}) {
-  const [mailbox, setMailbox] = React.useState(initial)
-  const [text, setText] = React.useState("")
-  const [saving, setSaving] = React.useState(false)
-  React.useEffect(() => {
-    if (open) setMailbox(initial)
-  }, [open, initial])
-  React.useEffect(() => {
-    setText(signatures[mailbox]?.signature ?? "")
-  }, [mailbox, signatures])
-
-  async function save() {
-    setSaving(true)
-    try {
-      await api("PUT", "/api/app/mail/mailboxes", { mailbox, signature: text })
-      onSaved({ ...signatures, [mailbox]: { ...signatures[mailbox], signature: text } })
-      toast.success("Signature saved")
-      onOpenChange(false)
-    } catch (e) {
-      toast.error((e as Error).message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Signature</DialogTitle>
-          <DialogDescription>Goes under new e-mails, replies and forwards from this address. You can still edit it in each message.</DialogDescription>
-        </DialogHeader>
-        {mailboxes.length > 1 ? (
-          <Select value={mailbox} onValueChange={setMailbox}>
-            <SelectTrigger className="w-full" aria-label="Mailbox">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {mailboxes.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {m}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : null}
-        <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} placeholder={"Anna Kowalska\nAcme · acme.com"} />
-        <DialogFooter>
-          <Button onClick={save} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   )
 }

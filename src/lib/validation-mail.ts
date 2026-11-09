@@ -7,6 +7,8 @@ const ids = z.array(z.string().uuid()).min(1).max(200);
 /** A reply in a thread, a forward (`forwardOf`), or a new e-mail with `mailbox` and `subject`. */
 export const mailSendSchema = z
   .object({
+    sendAt: z.number().int().positive().optional(),
+    idempotencyKey: z.string().trim().min(1).max(200).optional(),
     mailbox: z.string().trim().toLowerCase().optional(),
     forwardOf: z.string().uuid().optional(),
     to: mailAddress,

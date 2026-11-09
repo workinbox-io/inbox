@@ -4,6 +4,7 @@ import { AlarmClock, Archive, AtSign, CheckCheck, Clock, CornerUpLeft, Inbox, Lo
 import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
@@ -139,7 +140,7 @@ export function ThreadList({
           ) : (
             <span className="min-w-0 flex-1 truncate text-sm font-medium">{mailboxes[0]}</span>
           )}
-          <Button variant="ghost" size="icon-sm" onClick={onSettings} aria-label="Signatures" title="Signatures">
+          <Button variant="ghost" size="icon-sm" onClick={onSettings} aria-label="Settings" title="Settings">
             <Settings2 />
           </Button>
           <Button size="sm" className="rounded-full" onClick={onCompose} title="New e-mail (c)">
@@ -287,6 +288,7 @@ export function ThreadList({
                       </span>
                     ) : null}
                     <span className="min-w-0 truncate">{t.subject || "(no subject)"}</span>
+                    {t.labels?.map(label=><Badge key={label.id} variant="secondary">{label.name}</Badge>)}
                   </span>
                   <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                     {all && !rail ? (

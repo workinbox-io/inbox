@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users } from "lucide-react"
+import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users, Clock } from "lucide-react"
 import { toast } from "sonner"
 
 import { api } from "@/lib/api-client"
@@ -15,12 +15,14 @@ import { AddressInput, ComposeBody, ComposeFrame, EMAIL, FieldRow } from "@/comp
 import { NEW_DRAFT, readDraft, writeDraft } from "./drafts"
 import type { Draft, MailMessage, MailThread, ReplyMode } from "./types"
 
-const UNDO_MS = 5000
+const UNDO_MS = 10_000
+
+interface QueuedSend { id: string; threadId: string; sendAt: number; status: string }
 
 const upload: UploadFn = (file, mediaType, onProgress) => uploadWithProgress("/api/app/attachments", {}, file, mediaType, onProgress, "Upload failed")
 
 export interface SendJob {
-  run: () => Promise<{ threadId: string }>
+  run: () => Promise<QueuedSend>
   /** Undo pressed: show the message again. */
   undo: () => void
   failed: () => void
@@ -38,41 +40,53 @@ export function useUndoSend(onSent: (threadId: string) => void) {
   React.useEffect(() => guardLeaving(() => pending.current > 0), [])
   return React.useCallback((job: SendJob) => {
     pending.current++
-    const timer = setTimeout(async () => {
+    const id = toast.loading("Saving to outbox…")
+    void (async () => {
       try {
-        const res = await job.run()
-        toast.success("Sent", { id })
-        job.done(res.threadId)
-        sent.current(res.threadId)
+        const result = await job.run()
+        const scheduled = result.sendAt > Date.now() + UNDO_MS + 1000
+        let cancelled = false
+        toast(scheduled ? "Scheduled" : "Queued for sending", {
+          id, duration: UNDO_MS,
+          action: { label: "Undo", onClick: async () => {
+            try {
+              await api("DELETE", `/api/app/mail/outbox/${result.id}`)
+              cancelled = true
+              toast.success("Send cancelled", { id })
+              job.undo()
+            } catch (e) { toast.error((e as Error).message, { id }) }
+          } },
+        })
+        // The server owns the timer. Leaving after this response is safe.
+        setTimeout(() => {
+          if (cancelled) return
+          job.done(result.threadId)
+          sent.current(result.threadId)
+        }, UNDO_MS)
       } catch (e) {
         toast.error((e as Error).message, { id })
         job.failed()
-      } finally {
-        pending.current--
-      }
-    }, UNDO_MS)
-    const id = toast("Sending…", {
-      duration: UNDO_MS,
-      action: {
-        label: "Undo",
-        onClick: () => {
-          clearTimeout(timer)
-          pending.current--
-          job.undo()
-        },
-      },
-    })
+      } finally { pending.current-- }
+    })()
   }, [])
+}
+
+const localDateTime = (at: number) => {
+  const date = new Date(at)
+  return new Date(at - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
 }
 
 const invalid = (d: Draft) => [...d.to, ...d.cc].filter((a) => !EMAIL.test(a))
 
 /** The request that sends a draft: a reply in its thread, a forward, or a new e-mail. */
-function sendRequest(d: Draft, files: { url: string; mediaType: string; filename: string }[], threadId?: string) {
-  const base = { to: d.to[0], cc: [...d.to.slice(1), ...d.cc], text: d.text.trim(), files }
-  if ((d.mode === "reply" || d.mode === "replyAll") && threadId) return api<{ threadId: string }>("POST", `/api/app/mail/threads/${threadId}/reply`, base)
-  if (d.mode === "forward") return api<{ threadId: string }>("POST", "/api/app/mail/threads", { ...base, forwardOf: d.messageId, subject: d.subject })
-  return api<{ threadId: string }>("POST", "/api/app/mail/threads", { ...base, mailbox: d.from, subject: d.subject })
+async function sendRequest(d: Draft, files: { url: string; mediaType: string; filename: string }[], threadId?: string) {
+  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ ...d, files })))
+  const digest = [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, "0")).join("")
+  const requestKey = `${d.idempotencyKey ?? crypto.randomUUID()}:${digest}`
+  const base = { sendAt: d.sendAt, idempotencyKey: requestKey, to: d.to[0], cc: [...d.to.slice(1), ...d.cc], text: d.text.trim(), files }
+  if ((d.mode === "reply" || d.mode === "replyAll") && threadId) return api<QueuedSend>("POST", `/api/app/mail/threads/${threadId}/reply`, base)
+  if (d.mode === "forward") return api<QueuedSend>("POST", "/api/app/mail/threads", { ...base, forwardOf: d.messageId, subject: d.subject })
+  return api<QueuedSend>("POST", "/api/app/mail/threads", { ...base, mailbox: d.from, subject: d.subject })
 }
 
 /** Header fields, body, files and the send row, shared by the inline reply and the new e-mail window. */
@@ -173,6 +187,10 @@ function MailForm({
           />
         </FieldRow>
       ) : null}
+      <FieldRow label="Send at" icon={Clock} htmlFor="mail-send-at">
+        <input id="mail-send-at" type="datetime-local" aria-label="Schedule sending" className="h-8 bg-transparent text-sm" value={draft.sendAt ? localDateTime(draft.sendAt) : ""} onChange={e => set({ sendAt: e.target.value ? new Date(e.target.value).getTime() : undefined })} />
+        <span className="text-muted-foreground text-xs">{draft.sendAt ? "Your local time" : "Now · 10 seconds to undo"}</span>
+      </FieldRow>
       <ComposeBody
         bodyRef={body}
         value={draft.text}
@@ -181,6 +199,7 @@ function MailForm({
         note={note}
         attachments={attachments}
         disabled={disabled}
+        sendLabel={draft.sendAt ? "Schedule" : "Send"}
         onSend={onSend}
         onDiscard={onDiscard}
       />
@@ -225,7 +244,7 @@ export function InlineComposer({
   const [draft, setDraft] = React.useState(initial)
   const [pending, setPending] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
-  const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }))
+  const set = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch, idempotencyKey: undefined }))
   // Kept per thread while it's being written (an effect: writing notifies the list's "Draft" labels).
   const closed = React.useRef(false)
   React.useEffect(() => {
@@ -251,10 +270,12 @@ export function InlineComposer({
     if (bad.length) return void toast.error(`Check ${bad.join(", ")}`)
     if (draft.mode === "forward" && !draft.messageId) return
     const files = attachments.ready
+    const sending = { ...draft, idempotencyKey: draft.idempotencyKey ?? crypto.randomUUID() }
+    setDraft(sending)
     setPending(true)
     schedule({
-      run: () => sendRequest(draft, files, thread.id),
-      undo: () => setPending(false),
+      run: () => sendRequest(sending, files, thread.id),
+      undo: () => { setDraft(d => ({ ...d, idempotencyKey: undefined })); setPending(false) },
       failed: () => setPending(false),
       done: () => {
         closed.current = true
@@ -350,7 +371,7 @@ export function ComposeWindow({
   const set = (patch: Partial<Draft>) => {
     touched.current = true
     setDraft((d) => {
-      const next = { ...d, ...patch }
+      const next = { ...d, ...patch, idempotencyKey: undefined }
       // A new sender brings their signature, unless the text was already changed.
       if (patch.from && patch.from !== d.from && d.text === withSignature("", signatures[d.from]?.signature ?? "")) return { ...next, text: withSignature("", signatures[patch.from]?.signature ?? "") }
       return next
@@ -373,11 +394,12 @@ export function ComposeWindow({
     if (bad.length) return void toast.error(`Check ${bad.join(", ")}`)
     if (!draft.subject.trim()) return void toast.error("Add a subject")
     const files = attachments.ready
-    const sending = draft
+    const sending = { ...draft, idempotencyKey: draft.idempotencyKey ?? crypto.randomUUID() }
+    setDraft(sending)
     setPending(true)
     schedule({
       run: () => sendRequest(sending, files),
-      undo: () => setPending(false),
+      undo: () => { setDraft(d => ({ ...d, idempotencyKey: undefined })); setPending(false) },
       failed: () => setPending(false),
       done: () => {
         touched.current = false

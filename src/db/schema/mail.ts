@@ -151,6 +151,9 @@ export const mailMessages = sqliteTable(
     text: text("text").notNull().default(""),
     /** Incoming HTML up to a size; bigger bodies stay only in the raw message (rawKey). */
     html: text("html"),
+    htmlKey: text("html_key"),
+    storageKeys: text("storage_keys", { mode: "json" }).$type<string[]>().notNull().default([]),
+    storageVersion: integer("storage_version").notNull().default(1),
     /** Message-ID with angle brackets. Unique per mailbox: one mail to two of our mailboxes is two copies. */
     messageId: text("message_id"),
     inReplyTo: text("in_reply_to"),

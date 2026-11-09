@@ -36,6 +36,48 @@
       "when": 1794163632211,
       "tag": "0004_org_mail",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1794211352913,
+      "tag": "0005_mail_fts",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794211352914,
+      "tag": "0006_accounts",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1794211352915,
+      "tag": "0007_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1794211352916,
+      "tag": "0008_storage_filters",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794211352917,
+      "tag": "0009_mail_integrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1794211352918,
+      "tag": "0010_mail_notifications",
+      "breakpoints": true
     }
   ]
 }

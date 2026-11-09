@@ -37,6 +37,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname.replace(/(.)\/$/, "$1"
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" transition:persist="favicon-svg" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" transition:persist="favicon-ico" />
     <slot name="head" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="description" content={description} />
     <title>{fullTitle}</title>

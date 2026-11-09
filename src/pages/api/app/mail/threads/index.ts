@@ -27,7 +27,7 @@ export const POST = handler(async (ctx) => {
   const body = await parseBody(ctx.request, mailSendSchema);
   if (!body.forwardOf && !body.subject) throw new HttpError(422, "Add a subject");
   const files = await checkAttachments(ctx.orgId, body.files);
-  return json(await sendMail({ ...body, files }, boxes, ctx.locals.user!.name), 201);
+  return json(await sendMail({ ...body, files }, boxes, ctx.locals.user!.name, { actorUserId: ctx.locals.user!.id, idempotencyKey: ctx.request.headers.get("Idempotency-Key") ?? body.idempotencyKey }), 202);
 });
 
 export const PATCH = handler(async (ctx) => {

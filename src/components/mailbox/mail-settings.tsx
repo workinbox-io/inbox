@@ -1,7 +1,9 @@
 import * as React from "react"
+import { SendingLimits } from "./sending-limits"
 import { AtSign, CheckCircle2, Globe, Inbox, KeyRound, Plus, RefreshCw, UserPlus, Users, XCircle } from "lucide-react"
 import { toast } from "sonner"
 
+import { StorageSettings } from "./storage-settings"
 import type { DnsRecord } from "@/lib/mail/rules"
 import { api } from "@/lib/api-client"
 import { useLiveData } from "@/lib/use-live-data"
@@ -53,9 +55,11 @@ export function MailSettings(props: { initial: MailSetup }) {
   }
   return (
     <div className="grid gap-12">
+      <SendingLimits mailboxes={setup.mailboxes} />
       <DomainsSection setup={setup} act={act} />
       <MailboxesSection setup={setup} act={act} refresh={refresh} />
       <AliasesSection setup={setup} act={act} />
+      <StorageSettings mailboxes={setup.mailboxes} />
     </div>
   )
 }

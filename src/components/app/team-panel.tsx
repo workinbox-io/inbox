@@ -3,6 +3,7 @@ import { Mail, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { authClient } from "@/lib/auth-client"
+import { api } from "@/lib/api-client"
 import { useLiveData } from "@/lib/use-live-data"
 import { Button } from "@/components/ui/button"
 import {
@@ -136,7 +137,7 @@ export function TeamPanel(props: TeamPanelProps) {
                 {canManage && !m.isMe && m.role !== "owner" ? (
                   <ConfirmButton
                     title={`Remove ${m.name}?`}
-                    description="They lose access to this organization right away. Their account stays."
+                    description="They lose access right away. Their personal mailbox becomes shared and keeps its mail and aliases. To hand it to someone else, change its owner in Mail settings first."
                     confirmLabel="Remove"
                     onConfirm={async () => {
                       await run(authClient.organization.removeMember({ memberIdOrEmail: m.id }), `${m.name} removed`, refresh)
@@ -248,12 +249,26 @@ export function TeamPanel(props: TeamPanelProps) {
 function InviteDialog({ onClose, onInvited }: { onClose: () => void; onInvited: () => Promise<void> }) {
   const [email, setEmail] = React.useState("")
   const [role, setRole] = React.useState<Role>("member")
+  const [domains, setDomains] = React.useState<{ id: string; domain: string }[]>([])
+  const [domainId, setDomainId] = React.useState("")
+  const [local, setLocal] = React.useState("")
+  const [domainsLoaded, setDomainsLoaded] = React.useState(false)
+  React.useEffect(() => {
+    void api<{ domains: { id: string; domain: string; status: string }[] }>("GET", "/api/app/mail/settings").then(data => {
+      const active = data.domains.filter(d => d.status === "active")
+      setDomains(active)
+      setDomainId(active[0]?.id ?? "")
+      setDomainsLoaded(true)
+    }).catch(e => toast.error((e as Error).message))
+  }, [])
   const [pending, setPending] = React.useState(false)
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setPending(true)
-    const ok = await run(authClient.organization.inviteMember({ email: email.trim(), role }), `Invitation sent to ${email.trim()}`, onInvited)
+    const mailboxAddress = domains.length ? local.trim().toLowerCase() + "@" + domains.find(d => d.id === domainId)!.domain : undefined
+    const call = api("POST", "/api/auth/organization/invite-member", { email: email.trim(), role, mailboxAddress, mailboxDomainId: domainId || undefined }).then(() => ({ error: null })).catch(e => ({ error: { message: (e as Error).message } }))
+    const ok = await run(call, `Invitation sent to ${email.trim()}`, onInvited)
     if (ok) onClose()
     else setPending(false)
   }
@@ -278,6 +293,14 @@ function InviteDialog({ onClose, onInvited }: { onClose: () => void; onInvited: 
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+          {domains.length ? <fieldset className="flex flex-col gap-2">
+            <legend>Personal mailbox</legend>
+            <Label htmlFor="invite-mailbox">Mailbox address</Label>
+            <Input id="invite-mailbox" value={local} onChange={e => setLocal(e.target.value)} placeholder="name" pattern="[A-Za-z0-9._-]+" maxLength={64} required />
+            <Label htmlFor="invite-domain">Domain</Label>
+            <Select value={domainId} onValueChange={setDomainId}><SelectTrigger id="invite-domain"><SelectValue /></SelectTrigger><SelectContent>{domains.map(d => <SelectItem key={d.id} value={d.id}>{d.domain}</SelectItem>)}</SelectContent></Select>
+            <p className="text-muted-foreground text-xs">Reserved until the invitation expires; created when accepted.</p>
+          </fieldset> : null}
           <div className="grid gap-2">
             <Label>Role</Label>
             <Select value={role} onValueChange={(v) => setRole(v as Role)}>
@@ -298,7 +321,7 @@ function InviteDialog({ onClose, onInvited }: { onClose: () => void; onInvited: 
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button loading={pending} type="submit" disabled={pending}>
+            <Button loading={pending} type="submit" disabled={pending || !domainsLoaded || (domains.length > 0 && !local.trim())}>
               {pending ? "Sending…" : "Send invitation"}
             </Button>
           </DialogFooter>

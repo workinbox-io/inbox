@@ -39,6 +39,37 @@ const spec = {
   security: [{ bearer: [] }],
   components: { securitySchemes: { bearer: { type: "http", scheme: "bearer", description: "API key from Settings → API keys" } } },
   paths: {
+    "/mail/mailboxes": {
+      get: { summary: "List mailboxes explicitly granted to this API key", responses: { 200: { description: "Accessible mailboxes" }, ...errors } },
+    },
+    "/mail/threads": {
+      get: { summary: "Search mail threads", parameters: [
+        { name: "q", in: "query", schema: { type: "string" }, description: "Free text; from:, to:, subject:, has:attachment, is:unread, is:starred" },
+        { name: "mailbox", in: "query", schema: { type: "string" }, description: "Mailbox address or all" },
+        { name: "folder", in: "query", schema: { type: "string" } },
+        { name: "before", in: "query", schema: { type: "integer" }, description: "Pagination timestamp in milliseconds" },
+      ], responses: { 200: { description: "Threads and pagination flag" }, ...errors } },
+    },
+    "/mail/threads/{id}": {
+      parameters: idParam,
+      get: { summary: "Read a thread without changing its read status", responses: { 200: { description: "Thread and messages" }, ...errors } },
+    },
+    "/mail/send": {
+      post: { summary: "Queue mail with a 10-second undo window", parameters: [
+        { name: "Idempotency-Key", in: "header", schema: { type: "string", maxLength: 200 } },
+      ], requestBody: { required: true, ...json({ type: "object", required: ["mailbox", "to", "subject", "text"], properties: {
+        mailbox: { type: "string", format: "email" }, to: { type: "string", format: "email" },
+        cc: { type: "array", maxItems: 20, items: { type: "string", format: "email" } },
+        subject: { type: "string", maxLength: 300 }, text: { type: "string", maxLength: 50000 },
+        forwardOf: { type: "string", format: "uuid" }, sendAt: { type: "integer", description: "UTC Unix timestamp in milliseconds, within one year" },
+        files: { type: "array", maxItems: 5, items: { type: "object", required: ["url", "mediaType", "filename"], properties: { url: { type: "string" }, mediaType: { type: "string" }, filename: { type: "string" } } } },
+      } }) }, responses: { 202: { description: "Durable send job: id, outboxId, sendAt, status" }, ...errors } },
+    },
+    "/mail/outbox/{id}": {
+      parameters: idParam,
+      get: { summary: "Get a send job", responses: { 200: { description: "Send job" }, ...errors } },
+      delete: { summary: "Cancel before sending starts", responses: { 200: { description: "Cancelled job" }, 409: { description: "Sending has already started" }, ...errors } },
+    },
     "/projects": {
       get: { summary: "List projects", responses: { 200: { description: "Projects", ...json({ type: "object", properties: { projects: { type: "array", items: project } } }) }, ...errors } },
       post: { summary: "Create a project", requestBody: json(projectInput), responses: { 201: { description: "Created", ...json(project) }, ...errors } },

@@ -42,7 +42,8 @@
   "send_email": [{ "name": "EMAIL" }],
   "queues": {
     "producers": [{ "binding": "JOBS", "queue": "inbox-jobs" }],
-    "consumers": [{ "queue": "inbox-jobs", "max_retries": 5, "max_batch_size": 10 }]
+    "consumers": [{ "queue": "inbox-jobs", "max_retries": 5, "max_batch_size": 10, "dead_letter_queue": "inbox-jobs-dlq" },
+      { "queue": "inbox-mail-events", "max_retries": 10, "max_batch_size": 10, "dead_letter_queue": "inbox-mail-events-dlq" }]
   },
   "ratelimits": [
     // Public API: requests per API key per minute.
@@ -52,6 +53,6 @@
   ],
   "triggers": {
     // Daily housekeeping and trial reminders (see src/jobs/cron.ts).
-    "crons": ["17 3 * * *"]
+    "crons": ["17 3 * * *", "* * * * *"]
   }
 }

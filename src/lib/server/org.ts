@@ -1,3 +1,4 @@
+import { env } from "cloudflare:workers";
 import { TRIAL_DAYS, TRIAL_PLAN, featureUpsell, hasFeature, planById, type Feature } from "@/config/plans";
 import type { BillingDetails } from "@/lib/validation";
 import {
@@ -67,6 +68,7 @@ export async function getSubscription(orgId: string) {
 
 /** Throws 402 unless the org's trial or subscription is active, and returns its plan. */
 export async function requireActivePlan(orgId: string) {
+  if (env.DEPLOY_MODE === "self") return planById("business");
   const sub = await getSubscription(orgId);
   if (!sub || !subscriptionUsable(sub)) {
     throw new HttpError(402, "Your trial has ended or your subscription is inactive. Choose a plan to continue.");

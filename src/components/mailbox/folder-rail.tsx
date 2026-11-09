@@ -44,6 +44,7 @@ export function FolderRail({
         <Kbd className="ml-auto">C</Kbd>
       </button>
 
+      <a href="/app/mail/outbox" className="text-muted-foreground hover:text-foreground rounded-md px-2 text-sm">Outbox &amp; scheduled</a>
       <ul className="grid gap-px">
         {FOLDERS.map((f) => {
           const active = folder === f.id
@@ -78,11 +79,12 @@ export function FolderRail({
         <div className="grid gap-1">
           <div className="text-muted-foreground flex items-center justify-between px-2 text-xs font-medium">
             Mailboxes
-            <button type="button" onClick={onSettings} className="hover:text-foreground rounded p-0.5" aria-label="Signatures" title="Signatures">
+            <button type="button" onClick={onSettings} className="hover:text-foreground rounded p-0.5" aria-label="Settings" title="Settings">
               <Settings2 className="size-3.5" />
             </button>
           </div>
-          <ul className="grid gap-px">
+          <a href="/app/mail/outbox" className="text-muted-foreground hover:text-foreground rounded-md px-2 text-sm">Outbox &amp; scheduled</a>
+      <ul className="grid gap-px">
             {mailboxes.map((m) => (
               <MailboxRow
                 key={m}

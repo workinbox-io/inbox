@@ -3,7 +3,7 @@
  * owner/admin together with its personal mailbox and access to shared ones. The new address can't receive an
  * invitation before it exists, so the admin gets a temporary password to hand over, like a Workspace admin.
  */
-import { account, and, db, eq, inArray, mailboxAccess, mailboxes, member, session, user } from "@/db";
+import { account, and, db, eq, inArray, mailboxAccess, mailboxes, mailAccountSecurity, member, session, user } from "@/db";
 import { HttpError } from "@/lib/server/api";
 import { getAuth } from "@/lib/server/auth";
 import { seatUpsell, seatsLeft } from "@/lib/server/org";
@@ -48,6 +48,7 @@ export async function addPerson(orgId: string, input: NewPerson) {
   // trial organization (the user.create hook in auth.ts) — they belong to this org only.
   await db.batch([
     db.insert(user).values({ id: userId, name, email: address, emailVerified: true }),
+    db.insert(mailAccountSecurity).values({ userId, mustChangePassword: true }),
     db.insert(account).values({ id: crypto.randomUUID(), accountId: userId, providerId: "credential", userId, password: await hash(password) }),
     db.insert(member).values({ id: crypto.randomUUID(), organizationId: orgId, userId, role: "member" }),
     db.insert(mailboxes).values({ id: mailboxId, orgId, domainId: domain.id, address, kind: "personal", userId, displayName: name }),
@@ -67,6 +68,7 @@ export async function resetPersonPassword(orgId: string, mailboxId: string) {
   if (!m || m.role === "owner") throw new HttpError(403, "Only a member's password can be reset here");
   const password = temporaryPassword();
   await db.batch([
+    db.insert(mailAccountSecurity).values({ userId: mb.userId, mustChangePassword: true }).onConflictDoUpdate({ target: mailAccountSecurity.userId, set: { mustChangePassword: true } }),
     db.update(account).set({ password: await hash(password), updatedAt: new Date() }).where(and(eq(account.userId, mb.userId), eq(account.providerId, "credential"))),
     db.delete(session).where(eq(session.userId, mb.userId)),
   ]);

@@ -1,8 +1,17 @@
 /** Every action the audit log records, with the label the dashboard shows. Add your product's here. */
 export const AUDIT_ACTIONS = {
+  "mail_send.queue": "Queued outgoing mail",
+  "mail_send.limit": "Changed mail sending limit",
+  "mail_send.cancel": "Cancelled outgoing mail",
+  "mail_send.schedule": "Changed outgoing mail schedule",
+  "mail_storage.quota": "Changed mailbox storage limit",
+  "mail_label.change": "Changed mail labels",
+  "mail_filter.change": "Changed mail filters",
+  "mail_forward.request": "Requested forwarding confirmation",
   "project.create": "Created project",
   "project.update": "Changed project",
   "project.delete": "Deleted project",
+  "api_key.mail_access": "Changed API key mail access",
   "api_key.create": "Created API key",
   "api_key.revoke": "Revoked API key",
   "member.invite": "Invited member",
