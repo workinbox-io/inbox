@@ -3,6 +3,12 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.15.0 (2026-11-09)
+
+- `AppLayout` has an `actions` slot in the header, left of search, for a page's own controls (a view toggle,
+  notifications) instead of a second bar under the header. Pass them as a direct child of the layout:
+  `<Fragment slot="actions">…</Fragment>`. No manual steps.
+
 ## v1.14.0 (2026-11-09)
 
 - New in `components/ui`: `Calendar` (shadcn, react-day-picker v9), `Popover`, and `DateTimePicker` / `DateTimePanel`
