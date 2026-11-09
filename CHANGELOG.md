@@ -3,6 +3,16 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.14.0 (2026-11-09)
+
+- New in `components/ui`: `Calendar` (shadcn, react-day-picker v9), `Popover`, and `DateTimePicker` / `DateTimePanel`
+  (`date-time-picker.tsx`): presets, a month calendar, a time field and a confirm button. Past times can't be confirmed;
+  the week starts on the browser locale's first day. `formatDateTime(ms)` is exported for showing a chosen time.
+- Staff mailbox: "Snooze → Pick a date and time…" uses `DateTimePanel` with the snooze presets instead of a native
+  `datetime-local` input.
+- **Manual step:** `config/icons.tsx` (a product file) gets `CalendarClockIcon`. Add it to your copy:
+  `CalendarClockIcon` from lucide, or your icon set's equivalent. Then `pnpm install` for `react-day-picker`.
+
 ## v1.13.1 (2026-11-08)
 
 - Staff mailbox (`/app/admin-mail`): the composer's From line showed a hardcoded "Luxivo"; it now shows

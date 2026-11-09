@@ -13,6 +13,7 @@ export {
   ArrowDownIcon,
   ArrowUpDownIcon,
   ArrowUpIcon,
+  CalendarClockIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronLeftIcon,

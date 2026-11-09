@@ -1,7 +1,7 @@
 import * as React from "react"
-import { CalendarClock, X } from "lucide-react"
+import { cn } from "cn"
+import { CalendarClockIcon, XIcon } from "@/config/icons"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
@@ -144,7 +144,7 @@ export function DateTimePicker({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button type="button" variant="outline" size="sm" disabled={disabled} className={cn("justify-start font-normal", !value && "text-muted-foreground", className)}>
-            <CalendarClock />
+            <CalendarClockIcon />
             <span className="truncate" suppressHydrationWarning>{value ? formatDateTime(value) : placeholder}</span>
           </Button>
         </PopoverTrigger>
@@ -164,7 +164,7 @@ export function DateTimePicker({
       </Popover>
       {value && clearLabel ? (
         <Button type="button" variant="ghost" size="icon-sm" aria-label={clearLabel} title={clearLabel} disabled={disabled} onClick={() => onChange(undefined)}>
-          <X />
+          <XIcon />
         </Button>
       ) : null}
     </div>

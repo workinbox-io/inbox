@@ -1,4 +1,4 @@
-/** shadcn's Calendar (react-day-picker v9), with lucide chevrons. */
+/** shadcn's Calendar (react-day-picker v9); chevrons from `config/icons.tsx`. */
 import * as React from "react"
 import {
   DayPicker,
@@ -7,9 +7,9 @@ import {
   type Locale,
 } from "react-day-picker"
 
-import { cn } from "@/lib/utils"
+import { cn } from "cn"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@/config/icons"
 
 function Calendar({
   className,
@@ -146,18 +146,18 @@ function Calendar({
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
             return (
-              <ChevronLeft className={cn("size-4", className)} {...props} />
+              <ChevronLeftIcon className={cn("size-4", className)} {...props} />
             )
           }
 
           if (orientation === "right") {
             return (
-              <ChevronRight className={cn("size-4", className)} {...props} />
+              <ChevronRightIcon className={cn("size-4", className)} {...props} />
             )
           }
 
           return (
-            <ChevronDown className={cn("size-4", className)} {...props} />
+            <ChevronDownIcon className={cn("size-4", className)} {...props} />
           )
         },
         DayButton: ({ ...props }) => (
