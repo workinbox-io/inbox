@@ -52,6 +52,7 @@ export default defineConfig({
         "@platejs/list/react",
         "@platejs/table/react",
         "@platejs/media/react",
+        "@platejs/basic-styles/react",
         "@platejs/mention/react",
         "@platejs/slash-command/react",
         "@platejs/code-block/react",

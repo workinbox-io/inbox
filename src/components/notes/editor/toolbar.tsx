@@ -31,12 +31,13 @@ import {
   usePluginOption,
 } from "platejs/react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { SLASH_GROUPS, setBlockType } from "./transforms"
 
-const toolButton =
-  "inline-flex h-7 min-w-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground aria-pressed:bg-accent aria-pressed:text-foreground [&_svg]:size-4"
+export const toolButton =
+  "inline-flex h-8 min-w-8 shrink-0 items-center justify-center gap-1 rounded-md px-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground aria-pressed:bg-accent aria-pressed:text-foreground [&_svg]:size-4"
 
 export function FloatingToolbar() {
   const editorId = useEditorId()
@@ -54,6 +55,7 @@ export function FloatingToolbar() {
   const { clickOutsideRef, hidden, props, ref } = useFloatingToolbar(state)
   if (hidden) return null
   return (
+    <TooltipProvider delayDuration={400}>
     <div ref={clickOutsideRef}>
       <div
         {...props}
@@ -71,32 +73,60 @@ export function FloatingToolbar() {
         <LinkButton />
       </div>
     </div>
+    </TooltipProvider>
   )
 }
 
-function Mark({ nodeType, label, icon: Icon }: { nodeType: string; label: string; icon: typeof Bold }) {
+/** A toolbar button with a tooltip; keeps the editor's selection on mouse down. */
+export function ToolButton({
+  label,
+  pressed,
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"button"> & { label: string; pressed?: boolean }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          aria-pressed={pressed}
+          className={cn(toolButton, className)}
+          onMouseDown={(e) => e.preventDefault()}
+          {...props}
+        >
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+export function Mark({ nodeType, label, icon: Icon }: { nodeType: string; label: string; icon: typeof Bold }) {
   const state = useMarkToolbarButtonState({ nodeType })
   const { props } = useMarkToolbarButton(state)
   return (
-    <button type="button" className={toolButton} aria-label={label} title={label} aria-pressed={props.pressed} onClick={props.onClick} onMouseDown={(e) => e.preventDefault()}>
+    <ToolButton label={label} pressed={props.pressed} onClick={props.onClick}>
       <Icon />
-    </button>
+    </ToolButton>
   )
 }
 
-function LinkButton() {
+export function LinkButton() {
   const state = useLinkToolbarButtonState()
   const { props } = useLinkToolbarButton(state)
   return (
-    <button type="button" className={toolButton} aria-label={t("Link")} title={t("Link")} aria-pressed={props.pressed} onClick={props.onClick} onMouseDown={props.onMouseDown}>
+    <ToolButton label={`${t("Link")} (${typeof navigator !== "undefined" && /Mac/.test(navigator.platform) ? "⌘" : "Ctrl+"}K)`} pressed={props.pressed} onClick={props.onClick} onMouseDown={props.onMouseDown}>
       <Link />
-    </button>
+    </ToolButton>
   )
 }
 
 const TURN_INTO = SLASH_GROUPS[0].items
 
-function TurnInto() {
+export function TurnInto() {
   const editor = useEditorRef()
   const current = useEditorSelector((ed) => {
     const block = ed.api.block()

@@ -67,6 +67,9 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `/api/app/attachments`). The Yjs doc holds the content (`XmlText "content"`) and the title (`Text "title"`),
   `lib/notes/ydoc.ts`. Plate's Slate context only exists inside `PlateContent`: render overlays with a plugin's
   `render.afterEditable`. Plate packages are in `optimizeDeps.include` (astro.config.mjs) so slate-react isn't duplicated.
+  The editor is browser-only: `NotePane` mounts it after hydration (`useMounted`), since rendering it on the server
+  never finishes the page stream. Fixed toolbar above the note (`editor/fixed-toolbar.tsx`, Plate playground layout)
+  plus the floating one on selection; colours and alignment come from `@platejs/basic-styles`.
 - UI: `/app/notes[/<id>]` (`pages/app/notes/[...id].astro`, `components/notes/notes-app.tsx`), built on the workspace
   kit below.
 - API: `/api/app/notes` (list/search, create), `/[id]` (get with markdown, patch, delete archived), `/[id]/share`,

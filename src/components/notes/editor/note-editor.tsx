@@ -25,6 +25,7 @@ import {
   StrikethroughPlugin,
   UnderlinePlugin,
 } from "@platejs/basic-nodes/react"
+import { FontBackgroundColorPlugin, FontColorPlugin, TextAlignPlugin } from "@platejs/basic-styles/react"
 import { CodeBlockRules } from "@platejs/code-block"
 import { CodeBlockPlugin, CodeLinePlugin } from "@platejs/code-block/react"
 import { IndentPlugin } from "@platejs/indent/react"
@@ -66,6 +67,7 @@ import {
   TableRowElement,
 } from "./nodes"
 import { NOTE_PROVIDER, type NoteTicketResponse } from "./provider"
+import { FixedToolbar } from "./fixed-toolbar"
 import { FloatingToolbar, LinkFloatingToolbar, RemoteCursorOverlay } from "./toolbar"
 import { uploadDataUrl } from "./transforms"
 
@@ -84,6 +86,14 @@ const plugins = [
   UnderlinePlugin,
   StrikethroughPlugin.configure({ inputRules: [StrikethroughRules.markdown()] }),
   CodePlugin.configure({ inputRules: [CodeRules.markdown()], node: { component: CodeLeaf } }),
+  FontColorPlugin,
+  FontBackgroundColorPlugin,
+  TextAlignPlugin.configure({
+    inject: {
+      nodeProps: { nodeKey: "align", styleKey: "textAlign", defaultNodeValue: "start", validNodeValues: ["start", "left", "center", "right", "end", "justify"] },
+      targetPlugins: [...KEYS.heading, KEYS.p, KEYS.img],
+    },
+  }),
   CodeBlockPlugin.configure({ inputRules: [CodeBlockRules.markdown({ on: "match" })], node: { component: CodeBlockElement } }),
   CodeLinePlugin.withComponent(CodeLineElement),
   IndentPlugin.configure({ inject: { targetPlugins: blockTargets }, options: { offset: 24 } }),
@@ -198,18 +208,25 @@ export function NoteEditor({ noteId, user, onTicket, onLost, onPresence }: NoteE
 
   return (
     <Plate editor={editor} readOnly={!canEdit || !synced}>
-      <NoteTitle editor={editor} readOnly={!canEdit || !synced} />
-      <PlateContainer className="relative">
-        <PlateContent
-          className={cn(
-            "min-h-[50svh] pb-[30svh] text-[15px] leading-7 outline-none [&_strong]:font-semibold",
-            "[&_[data-slate-placeholder]]:!opacity-50",
-            !synced && "pointer-events-none opacity-60",
-          )}
-          placeholder={canEdit ? t("Write, or press / for blocks and @ to mention someone") : undefined}
-          aria-label={t("Note")}
-        />
-      </PlateContainer>
+      <div className="flex h-full min-h-0 flex-col">
+        {canEdit && <FixedToolbar disabled={!synced} />}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-3xl px-6 py-8 sm:px-12">
+            <NoteTitle editor={editor} readOnly={!canEdit || !synced} />
+            <PlateContainer className="relative">
+              <PlateContent
+                className={cn(
+                  "min-h-[50svh] pb-[30svh] text-[15px] leading-7 outline-none [&_strong]:font-semibold",
+                  "[&_[data-slate-placeholder]]:!opacity-50",
+                  !synced && "pointer-events-none opacity-60",
+                )}
+                placeholder={canEdit ? t("Write, or press / for blocks and @ to mention someone") : undefined}
+                aria-label={t("Note")}
+              />
+            </PlateContainer>
+          </div>
+        </div>
+      </div>
     </Plate>
   )
 }

@@ -586,6 +586,8 @@ function NotePane({
   const [error, setError] = React.useState<string | null>(null)
   const [presence, setPresence] = React.useState<Presence[]>([])
   const [lost, setLost] = React.useState(false)
+  // The editor is browser-only (Yjs over a WebSocket): rendering it on the server never finishes the stream.
+  const mounted = useMounted()
 
   React.useEffect(() => {
     let live = true
@@ -653,12 +655,14 @@ function NotePane({
           ) : null}
         </div>
       </DetailHeader>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-6 py-8 sm:px-12">
+      <div className="min-h-0 flex-1">
+        {mounted ? (
           <React.Suspense fallback={<EditorSkeleton />}>
             <NoteEditor noteId={id} user={user} onPresence={setPresence} onLost={() => setLost(true)} />
           </React.Suspense>
-        </div>
+        ) : (
+          <EditorSkeleton />
+        )}
       </div>
     </section>
   )
@@ -696,7 +700,7 @@ const initials = (name: string) =>
 
 function EditorSkeleton() {
   return (
-    <div className="grid gap-3" aria-hidden>
+    <div className="mx-auto grid max-w-3xl gap-3 px-6 py-8 sm:px-12" aria-hidden>
       <div className="bg-muted h-9 w-2/3 animate-pulse rounded-md" />
       <div className="bg-muted h-4 w-full animate-pulse rounded" />
       <div className="bg-muted h-4 w-5/6 animate-pulse rounded" />

@@ -47,6 +47,7 @@
     "@modelcontextprotocol/server": "^2.4.0",
     "@platejs/autoformat": "^53.0.0",
     "@platejs/basic-nodes": "^53.0.0",
+    "@platejs/basic-styles": "^53.0.0",
     "@platejs/code-block": "^53.0.0",
     "@platejs/combobox": "^53.0.0",
     "@platejs/floating": "^53.0.0",
