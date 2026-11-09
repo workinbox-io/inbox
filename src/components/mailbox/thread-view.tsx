@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { DateTimePanel } from "@/components/ui/date-time-picker"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ConfirmButton } from "@/components/app/confirm-button"
+import { IconAction } from "@/components/workspace/detail-header"
 import { InlineComposer, replyDraft, type SendJob } from "./composer"
 import { readDraft, writeDraft } from "./drafts"
 import { MessageItem } from "./message-view"
@@ -58,22 +59,6 @@ export function SnoozeMenu({ onSnooze, children }: { onSnooze: (at: number) => v
   )
 }
 
-function IconAction({ label, onClick, children }: { label: string; onClick?: () => void; children: React.ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button variant="ghost" size="icon-sm" onClick={onClick} aria-label={label}>
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent className="flex items-center gap-2">
-        {/* "Archive (e)" shows as "Archive" with an E key chip. */}
-        {label.replace(/\s*\(([^)]+)\)$/, "")}
-        {/\(([^)]+)\)$/.exec(label) ? <Kbd className="border-white/20 bg-white/10 text-current shadow-none">{/\(([^)]+)\)$/.exec(label)![1]!.toUpperCase()}</Kbd> : null}
-      </TooltipContent>
-    </Tooltip>
-  )
-}
 
 export interface ThreadViewHandle {
   reply: (mode: ReplyMode, messageId?: string) => void

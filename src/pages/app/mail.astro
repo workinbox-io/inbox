@@ -1,13 +1,14 @@
 ---
 import { NotificationCenter } from "@/components/mailbox/notification-center";
-import { MailViewToggle } from "@/components/mailbox/view-toggle";
 import AppLayout from "@/layouts/AppLayout.astro";
 import AppRail from "@/components/workspace/AppRail.astro";
+import AppTopBar from "@/components/workspace/AppTopBar.astro";
 import MailLayout from "@/layouts/MailLayout.astro";
 import { MailboxApp } from "@/components/mailbox/mailbox-app";
 import { viewerMailboxes } from "@/lib/server/mail/access";
 import { listThreads, unreadCounts } from "@/lib/server/mail/store";
 import { canManage } from "@/lib/server/roles";
+import { workspaceView } from "@/lib/server/workspace-view";
 
 const role = Astro.locals.role ?? "member";
 const boxes = await viewerMailboxes({ orgId: Astro.locals.orgId!, userId: Astro.locals.user!.id, role });
@@ -18,13 +19,12 @@ const signatures = Object.fromEntries(boxes.map((b) => [b.address, { signature: 
 const threads = JSON.parse(JSON.stringify(list.threads));
 // Members get mail only (MailLayout); owners and admins get it inside the dashboard.
 const manager = canManage(role);
-const preferenceKey = "mail-view-" + Astro.locals.user!.id;
+// Members get mail only (MailLayout); owners and admins pick the user or admin view (avatar menu, /app/view).
+// Old links with ?view=mail|console still switch.
 const requestedView = Astro.url.searchParams.get("view");
-if (manager && (requestedView === "mail" || requestedView === "console")) {
-  Astro.cookies.set(preferenceKey, requestedView, { path: "/", httpOnly: true, secure: Astro.url.protocol === "https:", sameSite: "lax", maxAge: 31536000 });
-  return Astro.redirect("/app/mail");
-}
-const mailOnly = !manager || Astro.cookies.get(preferenceKey)?.value !== "console";
+if (manager && (requestedView === "mail" || requestedView === "console"))
+  return Astro.redirect(`/app/view?to=${requestedView === "mail" ? "user" : "admin"}&next=/app/mail`);
+const mailOnly = workspaceView(Astro.cookies, Astro.locals.user!.id, role) === "user";
 const Layout = mailOnly ? MailLayout : AppLayout;
 const user = Astro.locals.user!;
 ---
@@ -35,21 +35,14 @@ const user = Astro.locals.user!;
 <Layout title="Mail" fullBleed>
   {!mailOnly && (
     <Fragment slot="actions">
-      <MailViewToggle client:load view="console" />
       <NotificationCenter client:load />
     </Fragment>
   )}
   <div class="flex h-full min-h-0">
   {mailOnly && <AppRail current="mail" />}
   <div class="flex min-w-0 flex-1 flex-col">
-  {/* Mail only has its own bar; in the dashboard the same controls sit in its header (slot "actions"). */}
-  {mailOnly && (
-    <div class="flex shrink-0 items-center justify-end gap-2 border-b bg-background px-3 py-1">
-      <span class="mr-auto text-sm font-medium">Mail</span>
-      {manager && <MailViewToggle client:load view="mail" />}
-      <NotificationCenter client:load />
-    </div>
-  )}
+  {/* The user view has its own bar; in the dashboard the same controls sit in its header (slot "actions"). */}
+  {mailOnly && <AppTopBar title="Mail" />}
   <div class="min-h-0 flex-1">
   <MailboxApp
     client:load

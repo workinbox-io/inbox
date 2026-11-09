@@ -31,6 +31,20 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `components/app/settings-nav.tsx` (Mail tab). Template bug to fix there: `components/admin-mail/composer.tsx` shows
   a hardcoded "Luxivo" sender name and `admin-mail/drafts.ts` uses `luxivo:` storage keys (fixed in `components/mailbox`).
 
+## Workspace apps: views and UI kit (product)
+
+- Two views of the apps (mail, notes, and the ones to come): the **user view** (MailLayout, full screen, app rail on the
+  left, `AppTopBar`, account menu at the bottom of the app's rail) and the **admin view** (inside AppLayout, controls in
+  its header slot "actions"). Members always get the user view; owners and admins pick it in the avatar menu ("Switch to
+  user/admin view" → `/app/view?to=user|admin&next=…`), stored per user in a cookie (`lib/server/workspace-view.ts`,
+  `workspaceView()` in each app page).
+- UI kit in `components/workspace/` (extracted from Mail, so new apps look like Inbox): `AppFrame` (both views' frame,
+  toasts in the user view), `Rail`/`RailAction`/`RailItem`/`RailSection`, `ListPane`/`ListHeader`/`ListSearch`/
+  `ListRow`/`ListEmpty`, `SplitView` (resizable list + detail from md, one of them on phones), `DetailHeader`/
+  `IconAction`, `ui.tsx` (`Kbd`, `tint`, `WORKSPACE_COLORS`, `useMediaQuery`, `isTyping`, `useMounted`), and the Astro
+  parts `AppRail.astro` (app switcher) and `AppTopBar.astro`. Shortcuts follow Mail: `c` new, `/` search, `Esc` close.
+  Mail still uses its own `FolderRail`/`ThreadList` (the kit's originals); move it onto the kit when touching them.
+
 ## Shared notes (product)
 
 - Tables: `src/db/schema/notes.ts` (`notes`, `note_access`, `note_folders`). Sharing is `private` (owner only, admins
@@ -47,8 +61,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `/api/app/attachments`). The Yjs doc holds the content (`XmlText "content"`) and the title (`Text "title"`),
   `lib/notes/ydoc.ts`. Plate's Slate context only exists inside `PlateContent`: render overlays with a plugin's
   `render.afterEditable`. Plate packages are in `optimizeDeps.include` (astro.config.mjs) so slate-react isn't duplicated.
-- UI: `/app/notes[/<id>]` (`pages/app/notes/[...id].astro`, `components/notes/notes-app.tsx`); members get it in
-  MailLayout with the app rail (`components/workspace/AppRail.astro`, also on `/app/mail`).
+- UI: `/app/notes[/<id>]` (`pages/app/notes/[...id].astro`, `components/notes/notes-app.tsx`), built on the workspace
+  kit below.
 - API: `/api/app/notes` (list/search, create), `/[id]` (get with markdown, patch, delete archived), `/[id]/share`,
   `/[id]/ticket`, `/people`, `/folders`; `/api/v1/notes` re-exports them. MCP: `src/mcp/notes.ts` (`notes_search`,
   `notes_get`, `notes_create`, `notes_update`, `notes_archive`).

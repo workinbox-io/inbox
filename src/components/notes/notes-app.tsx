@@ -1,62 +1,61 @@
 /**
- * /app/notes: views and folders, the list with search, and the open note (components/notes/editor, synced
- * live through the note's Durable Object). Members get it full screen (MailLayout), owners and admins inside
- * the dashboard.
+ * /app/notes on the workspace kit (components/workspace, the same parts as Mail): the rail with views and folders,
+ * the list with search, and the open note (components/notes/editor, synced live through the note's Durable Object).
+ * The user view (members, and owners/admins who pick it) is full screen; the admin view sits in the dashboard.
  */
 import * as React from "react"
 import {
   Archive,
   ArchiveRestore,
-  ArrowLeft,
   Copy,
   FileText,
   Folder,
   FolderPlus,
   Globe,
-  Inbox,
   Link2,
   Lock,
   MoreHorizontal,
+  NotebookPen,
   Pin,
   PinOff,
   Plus,
-  Search,
+  SearchX,
   Share2,
   Trash2,
   User,
   Users,
 } from "lucide-react"
 import { toast } from "sonner"
+import { ConfirmButton } from "@/components/app/confirm-button"
+import { EmptyState } from "@/components/app/empty-state"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { shortDate } from "@/components/mailbox/message-view"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AppFrame } from "@/components/workspace/app-frame"
+import { DetailHeader, IconAction } from "@/components/workspace/detail-header"
+import { ListBody, ListEmpty, ListHeader, ListPane, ListRow, ListSearch } from "@/components/workspace/list-pane"
+import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
+import { SplitView } from "@/components/workspace/split-view"
+import { isTyping, Kbd, useMediaQuery, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
-import { timeAgo } from "@/lib/format"
 import { t } from "@/lib/i18n/panel"
 import { pushUrl, replaceUrl } from "@/lib/panel-history"
 import { cn } from "@/lib/utils"
 import type { Presence } from "./editor/note-editor"
 import { ShareDialog } from "./share-dialog"
-import type { NoteDetail, NoteFolder, NoteSummary, NoteView } from "./types"
+import type { NoteDetail, NoteFolder, NoteSummary, NoteView, Sharing } from "./types"
 
 // Plate and Yjs load only when a note is opened (and never during SSR).
 const NoteEditor = React.lazy(() => import("./editor/note-editor").then((m) => ({ default: m.NoteEditor })))
@@ -68,11 +67,11 @@ export interface NotesAppProps {
   folders: NoteFolder[]
   selectedId: string | null
   canManage: boolean
-  /** Members' full-screen view: the account menu sits in the sidebar. */
+  /** The user view: full screen, the account menu at the bottom of the rail. */
   account?: MailUser
 }
 
-const VIEWS: { value: NoteView; label: string; icon: typeof Inbox }[] = [
+const VIEWS: { value: NoteView; label: string; icon: typeof FileText }[] = [
   { value: "all", label: "All notes", icon: FileText },
   { value: "mine", label: "My notes", icon: User },
   { value: "shared", label: "Shared with me", icon: Users },
@@ -80,8 +79,12 @@ const VIEWS: { value: NoteView; label: string; icon: typeof Inbox }[] = [
   { value: "archived", label: "Archive", icon: Archive },
 ]
 
-const sharingIcon = { private: Lock, people: Users, team: Globe }
-const sharingLabel = { private: "Only me", people: "Shared with people", team: "Everyone in the organization" }
+/** Rows wear the sharing kind's colour, like mailboxes in Mail. */
+const SHARING: Record<Sharing, { icon: typeof Lock; label: string; color: string }> = {
+  private: { icon: Lock, label: "Only me", color: "#9ca3af" },
+  people: { icon: Users, label: "Shared with people", color: WORKSPACE_COLORS[1] },
+  team: { icon: Globe, label: "Everyone in the organization", color: WORKSPACE_COLORS[0] },
+}
 
 export function NotesApp(props: NotesAppProps) {
   const [notes, setNotes] = React.useState(props.notes)
@@ -92,9 +95,11 @@ export function NotesApp(props: NotesAppProps) {
   const [query, setQuery] = React.useState("")
   const [selectedId, setSelectedId] = React.useState(props.selectedId)
   const [loading, setLoading] = React.useState(false)
-  // Relative times only after hydration: the server's "now" differs from the browser's.
-  const [mounted, setMounted] = React.useState(false)
-  React.useEffect(() => setMounted(true), [])
+  const [folderDialog, setFolderDialog] = React.useState(false)
+  const searchRef = React.useRef<HTMLInputElement>(null)
+  const mounted = useMounted()
+  const desktop = useMediaQuery("(min-width: 768px)")
+  const userView = !!props.account
 
   const listUrl = React.useCallback(
     (before?: string) => {
@@ -143,21 +148,29 @@ export function NotesApp(props: NotesAppProps) {
     setHasMore(res.hasMore)
   }
 
-  function open(id: string | null) {
+  const open = React.useCallback((id: string | null) => {
     setSelectedId(id)
     const url = new URL(location.href)
     url.pathname = id ? `/app/notes/${id}` : "/app/notes"
     pushUrl(url)
-  }
+  }, [])
 
   React.useEffect(() => {
-    const onPop = () => {
-      const m = /^\/app\/notes\/([0-9a-f-]{36})/.exec(location.pathname)
-      setSelectedId(m?.[1] ?? null)
-    }
+    const onPop = () => setSelectedId(/^\/app\/notes\/([0-9a-f-]{36})/.exec(location.pathname)?.[1] ?? null)
     window.addEventListener("popstate", onPop)
     return () => window.removeEventListener("popstate", onPop)
   }, [])
+
+  const createNote = React.useCallback(async () => {
+    try {
+      const note = await api<NoteDetail>("POST", "/api/app/notes", { folderId })
+      if (view === "archived" || view === "shared" || view === "pinned") setView("all")
+      setNotes((list) => [note, ...list])
+      open(note.id)
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }, [folderId, view, open])
 
   // "New note" from the command palette (/app/notes?new=1).
   React.useEffect(() => {
@@ -169,30 +182,38 @@ export function NotesApp(props: NotesAppProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function createNote() {
-    try {
-      const note = await api<NoteDetail>("POST", "/api/app/notes", { folderId })
-      if (view === "archived" || view === "shared" || view === "pinned") setView("all")
-      setNotes((list) => [note, ...list])
-      open(note.id)
-    } catch (e) {
-      toast.error((e as Error).message)
+  // Shortcuts, as in Mail: c new note, / search, Esc closes the note.
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target) || document.querySelector("[role=dialog]")) return
+      if (e.key === "c") {
+        e.preventDefault()
+        void createNote()
+      } else if (e.key === "/") {
+        e.preventDefault()
+        searchRef.current?.focus()
+      } else if (e.key === "Escape" && selectedId) open(null)
     }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [createNote, open, selectedId])
+
+  function pickView(v: NoteView) {
+    setView(v)
+    setFolderId(null)
   }
 
-  async function addFolder() {
-    const name = window.prompt(t("Folder name"))?.trim()
-    if (!name) return
+  async function addFolder(name: string) {
     try {
       const folder = await api<NoteFolder>("POST", "/api/app/notes/folders", { name })
       setFolders((list) => [...list, folder].sort((a, b) => a.name.localeCompare(b.name)))
+      setFolderDialog(false)
     } catch (e) {
       toast.error((e as Error).message)
     }
   }
 
   async function removeFolder(folder: NoteFolder) {
-    if (!window.confirm(t("Delete the folder \"{name}\"? Its notes stay, without a folder.", { name: folder.name }))) return
     try {
       await api("DELETE", `/api/app/notes/folders/${folder.id}`)
       setFolders((list) => list.filter((f) => f.id !== folder.id))
@@ -203,155 +224,195 @@ export function NotesApp(props: NotesAppProps) {
   }
 
   const onChanged = React.useCallback((note: NoteDetail | null, id: string) => {
-    if (!note) {
-      setNotes((list) => list.filter((n) => n.id !== id))
-      return
-    }
-    setNotes((list) => list.map((n) => (n.id === note.id ? { ...n, ...note } : n)))
+    if (!note) setNotes((list) => list.filter((n) => n.id !== id))
+    else setNotes((list) => list.map((n) => (n.id === note.id ? { ...n, ...note } : n)))
   }, [])
 
-  const currentTitle = folderId ? folders.find((f) => f.id === folderId)?.name : t(VIEWS.find((v) => v.value === view)!.label)
+  const folder = folders.find((f) => f.id === folderId)
+  const viewMeta = VIEWS.find((v) => v.value === view)!
+  const title = query ? t("Search") : folder ? folder.name : t(viewMeta.label)
+  const pinnedCount = view === "all" && !folderId && !query ? notes.filter((n) => n.pinned).length : 0
 
-  return (
-    <div className="flex h-full min-h-0">
-      {/* Views and folders */}
-      <aside className="hidden w-56 shrink-0 flex-col border-r lg:flex">
-        <div className="p-3">
-          <Button className="w-full" onClick={createNote}>
-            <Plus />
-            {t("New note")}
-          </Button>
-        </div>
-        <nav className="grid gap-0.5 px-2" aria-label={t("Notes views")}>
-          {VIEWS.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => {
-                setView(value)
-                setFolderId(null)
-              }}
-              aria-current={view === value && !folderId ? "page" : undefined}
-              className="flex h-8 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-[current=page]:bg-accent aria-[current=page]:font-medium aria-[current=page]:text-foreground"
-            >
-              <Icon className="size-4" />
-              {t(label)}
-            </button>
-          ))}
-        </nav>
-        <div className="mt-4 flex items-center justify-between px-4">
-          <span className="eyebrow">{t("Folders")}</span>
-          <button type="button" className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground" onClick={addFolder} aria-label={t("New folder")}>
-            <FolderPlus className="size-3.5" />
-          </button>
-        </div>
-        <nav className="mt-1 grid gap-0.5 overflow-y-auto px-2 pb-3" aria-label={t("Folders")}>
-          {folders.length === 0 && <p className="px-2 py-1 text-xs text-muted-foreground">{t("No folders yet.")}</p>}
-          {folders.map((f) => (
-            <div key={f.id} className="group flex items-center">
-              <button
-                type="button"
+  const rail = (
+    <Rail
+      label={t("Notes")}
+      hint={
+        <>
+          <Kbd>C</Kbd> {t("New note")} <Kbd>/</Kbd> {t("Search")}
+        </>
+      }
+      footer={props.account ? <AccountMenu user={props.account} canManage={props.canManage} /> : undefined}
+    >
+      <RailAction icon={Plus} label={t("New note")} shortcut="C" onClick={createNote} />
+      <RailList>
+        {VIEWS.map(({ value, label, icon }) => (
+          <RailItem
+            key={value}
+            icon={icon}
+            label={t(label)}
+            active={view === value && !folderId}
+            count={value === "pinned" ? pinnedCount : undefined}
+            onClick={() => pickView(value)}
+          />
+        ))}
+      </RailList>
+      <RailSection
+        title={t("Folders")}
+        action={
+          <RailSectionButton label={t("New folder")} onClick={() => setFolderDialog(true)}>
+            <FolderPlus />
+          </RailSectionButton>
+        }
+      >
+        {folders.length ? (
+          <RailList>
+            {folders.map((f) => (
+              <RailItem
+                key={f.id}
+                icon={Folder}
+                label={f.name}
+                title={f.name}
+                active={folderId === f.id}
                 onClick={() => {
                   setFolderId(f.id)
                   setView("all")
                 }}
-                aria-current={folderId === f.id ? "page" : undefined}
-                className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground aria-[current=page]:bg-accent aria-[current=page]:font-medium aria-[current=page]:text-foreground"
-              >
-                <Folder className="size-4 shrink-0" />
-                <span className="truncate">{f.name}</span>
-              </button>
-              {props.canManage && (
-                <button type="button" className="invisible rounded p-1 text-muted-foreground group-hover:visible hover:text-destructive" onClick={() => removeFolder(f)} aria-label={t("Delete folder")}>
-                  <Trash2 className="size-3.5" />
-                </button>
-              )}
-            </div>
-          ))}
-        </nav>
-        {props.account && (
-          <div className="mt-auto border-t p-2">
-            <AccountMenu user={props.account} />
-          </div>
-        )}
-      </aside>
-
-      {/* List */}
-      <section className={cn("flex w-full min-w-0 flex-col border-r md:w-80 md:shrink-0", selectedId && "hidden md:flex")} aria-label={t("Notes")}>
-        <div className="grid gap-2 border-b p-3">
-          <div className="flex items-center gap-2">
-            <h1 className="min-w-0 flex-1 truncate text-sm font-medium">{currentTitle}</h1>
-            <MobileViews view={view} setView={(v) => { setView(v); setFolderId(null) }} />
-            <Button size="icon-sm" variant="ghost" className="lg:hidden" onClick={createNote} aria-label={t("New note")}>
-              <Plus />
-            </Button>
-          </div>
-          <label className="flex h-8 items-center gap-2 rounded-md bg-foreground/[0.04] px-2 text-sm dark:bg-foreground/[0.06]">
-            <Search className="size-4 text-muted-foreground" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search notes")} className="min-w-0 flex-1 bg-transparent outline-none" aria-label={t("Search notes")} />
-          </label>
-        </div>
-        <ul className={cn("min-h-0 flex-1 overflow-y-auto", loading && "opacity-60")}>
-          {notes.length === 0 && (
-            <li className="grid place-items-center gap-2 px-6 py-16 text-center text-sm text-muted-foreground">
-              <FileText className="size-6" />
-              {query ? t("No notes match your search.") : view === "archived" ? t("Nothing archived.") : t("No notes yet.")}
-              {!query && view !== "archived" && (
-                <Button size="sm" variant="outline" onClick={createNote}>
-                  {t("New note")}
-                </Button>
-              )}
-            </li>
-          )}
-          {notes.map((n) => {
-            const Share = sharingIcon[n.sharing]
-            return (
-              <li key={n.id}>
-                <button
-                  type="button"
-                  onClick={() => open(n.id)}
-                  aria-current={selectedId === n.id ? "true" : undefined}
-                  className="grid w-full gap-1 border-b px-4 py-3 text-left hover:bg-accent/40 aria-[current=true]:bg-accent"
-                >
-                  <span className="flex items-center gap-1.5">
-                    {n.pinned && <Pin className="size-3 shrink-0 text-muted-foreground" />}
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{n.title || t("Untitled")}</span>
-                    <Share className="size-3 shrink-0 text-muted-foreground" aria-label={t(sharingLabel[n.sharing])} />
-                  </span>
-                  <span className="line-clamp-2 text-xs text-muted-foreground">{previewWithoutTitle(n) || t("Empty note")}</span>
-                  <span className="text-[11px] text-muted-foreground/80" suppressHydrationWarning>{mounted ? timeAgo(n.updatedAt) : "\u00a0"}</span>
-                </button>
-              </li>
-            )
-          })}
-          {hasMore && (
-            <li className="p-3">
-              <Button variant="ghost" size="sm" className="w-full" onClick={loadMore}>
-                {t("Load more")}
-              </Button>
-            </li>
-          )}
-        </ul>
-      </section>
-
-      {/* The open note */}
-      <main className={cn("min-w-0 flex-1", !selectedId && "hidden md:block")}>
-        {selectedId ? (
-          <NotePane key={selectedId} id={selectedId} user={props.user} folders={folders} onBack={() => open(null)} onChanged={onChanged} />
+                trailing={
+                  props.canManage ? (
+                    <ConfirmButton
+                      title={t("Delete the folder \"{name}\"?", { name: f.name })}
+                      description={t("Its notes stay, without a folder.")}
+                      confirmLabel={t("Delete folder")}
+                      onConfirm={() => removeFolder(f)}
+                    >
+                      <button type="button" className="text-muted-foreground hover:text-destructive rounded p-0.5" aria-label={t("Delete folder")}>
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </ConfirmButton>
+                  ) : null
+                }
+              />
+            ))}
+          </RailList>
         ) : (
-          <div className="grid h-full place-items-center p-8 text-center text-sm text-muted-foreground">
-            <div className="grid justify-items-center gap-3">
-              <FileText className="size-8" />
-              <p>{t("Pick a note or start a new one.")}</p>
-              <Button size="sm" onClick={createNote}>
-                <Plus />
-                {t("New note")}
-              </Button>
-            </div>
-          </div>
+          <p className="text-muted-foreground px-2 text-xs">{t("No folders yet.")}</p>
         )}
-      </main>
+      </RailSection>
+    </Rail>
+  )
+
+  const list = (
+    <ListPane label={t("Notes")}>
+      <ListHeader
+        title={title}
+        subtitle={query ? undefined : folder ? t("Folder") : undefined}
+        loading={loading}
+        actions={
+          desktop ? undefined : (
+            <>
+              <Select
+                value={folderId ? `f:${folderId}` : view}
+                onValueChange={(v) => {
+                  if (v.startsWith("f:")) {
+                    setFolderId(v.slice(2))
+                    setView("all")
+                  } else pickView(v as NoteView)
+                }}
+              >
+                <SelectTrigger size="sm" className="max-w-36" aria-label={t("Notes views")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VIEWS.map((v) => (
+                    <SelectItem key={v.value} value={v.value}>
+                      {t(v.label)}
+                    </SelectItem>
+                  ))}
+                  {folders.map((f) => (
+                    <SelectItem key={f.id} value={`f:${f.id}`}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button size="sm" className="rounded-full" onClick={createNote}>
+                <NotebookPen /> {t("New")}
+              </Button>
+              {props.account ? <AccountMenu user={props.account} canManage={props.canManage} compact /> : null}
+            </>
+          )
+        }
+      >
+        <ListSearch ref={searchRef} value={query} onChange={setQuery} placeholder={t("Search notes")} />
+      </ListHeader>
+      <ListBody dimmed={loading}>
+        {notes.map((n) => {
+          const share = SHARING[n.sharing]
+          return (
+            <ListRow
+              key={n.id}
+              color={share.color}
+              selected={selectedId === n.id}
+              title={n.title || t("Untitled")}
+              meta={
+                <>
+                  {n.pinned ? <Pin className="text-muted-foreground size-3" aria-label={t("Pinned")} /> : null}
+                  <share.icon className="text-muted-foreground size-3" aria-label={t(share.label)} />
+                </>
+              }
+              time={mounted ? shortDate(n.updatedAt) : null}
+              snippet={previewWithoutTitle(n) || t("Empty note")}
+              onClick={() => open(n.id)}
+            />
+          )
+        })}
+        {notes.length === 0 && !loading ? (
+          <ListEmpty
+            icon={query ? <SearchX /> : view === "archived" ? <Archive /> : <FileText />}
+            title={query ? t("Nothing matches that search") : view === "archived" ? t("Nothing archived") : t("No notes here yet")}
+            action={
+              !query && view !== "archived" ? (
+                <Button size="sm" variant="outline" onClick={createNote}>
+                  <Plus /> {t("New note")}
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : null}
+        {hasMore ? (
+          <li className="p-3 text-center">
+            <Button variant="ghost" size="sm" onClick={loadMore} disabled={loading}>
+              {t("Load more")}
+            </Button>
+          </li>
+        ) : null}
+      </ListBody>
+    </ListPane>
+  )
+
+  const detail = selectedId ? (
+    <NotePane key={selectedId} id={selectedId} user={props.user} folders={folders} onBack={() => open(null)} onChanged={onChanged} />
+  ) : (
+    <div className="grid h-full place-items-center p-6">
+      <EmptyState
+        variant="plain"
+        icon={<FileText />}
+        title={t("No note open")}
+        description={
+          <>
+            {t("Pick one on the left, or press")} <kbd className="bg-muted rounded px-1 font-mono text-xs">C</kbd> {t("for a new note.")}
+          </>
+        }
+      />
     </div>
+  )
+
+  return (
+    <AppFrame userView={userView}>
+      {desktop ? rail : null}
+      <SplitView list={list} detail={detail} showDetail={!!selectedId} />
+      <FolderDialog open={folderDialog} onOpenChange={setFolderDialog} onCreate={addFolder} />
+    </AppFrame>
   )
 }
 
@@ -360,23 +421,41 @@ function previewWithoutTitle(n: NoteSummary) {
   return (lines[0]?.trim() === n.title.trim() ? lines.slice(1) : lines).join(" ").trim()
 }
 
-function MobileViews({ view, setView }: { view: NoteView; setView: (v: NoteView) => void }) {
+function FolderDialog({ open, onOpenChange, onCreate }: { open: boolean; onOpenChange: (o: boolean) => void; onCreate: (name: string) => Promise<void> }) {
+  const [name, setName] = React.useState("")
+  const [saving, setSaving] = React.useState(false)
+  React.useEffect(() => {
+    if (open) setName("")
+  }, [open])
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="icon-sm" variant="ghost" className="lg:hidden" aria-label={t("Notes views")}>
-          <Inbox />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {VIEWS.map(({ value, label, icon: Icon }) => (
-          <DropdownMenuItem key={value} onSelect={() => setView(value)} className={cn(view === value && "font-medium")}>
-            <Icon />
-            {t(label)}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm">
+        <form
+          className="grid gap-4"
+          onSubmit={async (e) => {
+            e.preventDefault()
+            if (!name.trim()) return
+            setSaving(true)
+            await onCreate(name.trim())
+            setSaving(false)
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>{t("New folder")}</DialogTitle>
+            <DialogDescription>{t("Folders are shared by the whole organization; each note keeps its own sharing.")}</DialogDescription>
+          </DialogHeader>
+          <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Folder name")} maxLength={80} aria-label={t("Folder name")} />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t("Cancel")}
+            </Button>
+            <Button type="submit" disabled={saving || !name.trim()}>
+              {t("Create")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -397,21 +476,17 @@ function NotePane({
   const [error, setError] = React.useState<string | null>(null)
   const [presence, setPresence] = React.useState<Presence[]>([])
   const [shareOpen, setShareOpen] = React.useState(false)
-  const [confirmDelete, setConfirmDelete] = React.useState(false)
   const [lost, setLost] = React.useState(false)
 
-  const load = React.useCallback(async () => {
-    try {
-      setNote(await api<NoteDetail>("GET", `/api/app/notes/${id}`))
-      setError(null)
-    } catch (e) {
-      setError((e as Error).message)
+  React.useEffect(() => {
+    let live = true
+    api<NoteDetail>("GET", `/api/app/notes/${id}`)
+      .then((n) => live && (setNote(n), setError(null)))
+      .catch((e) => live && setError((e as Error).message))
+    return () => {
+      live = false
     }
   }, [id])
-
-  React.useEffect(() => {
-    void load()
-  }, [load])
 
   async function patch(body: Record<string, unknown>, done?: string) {
     try {
@@ -442,41 +517,59 @@ function NotePane({
 
   if (error || lost)
     return (
-      <div className="grid h-full place-items-center p-8 text-center text-sm text-muted-foreground">
-        <div className="grid justify-items-center gap-3">
-          <Lock className="size-6" />
-          <p>{lost ? t("You can no longer open this note.") : error}</p>
-          <Button size="sm" variant="outline" onClick={onBack}>
-            {t("Back to notes")}
-          </Button>
-        </div>
+      <div className="grid h-full place-items-center p-6">
+        <EmptyState
+          variant="plain"
+          icon={<Lock />}
+          title={lost ? t("You can no longer open this note") : t("This note can't be opened")}
+          description={lost ? undefined : error}
+          action={
+            <Button size="sm" variant="outline" onClick={onBack}>
+              {t("Back to notes")}
+            </Button>
+          }
+        />
       </div>
     )
 
-  const Share = note ? sharingIcon[note.sharing] : Lock
+  const share = note ? SHARING[note.sharing] : null
+  const editable = !!note && note.role !== "view" && !note.archived
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
-        <Button variant="ghost" size="icon-sm" className="md:hidden" onClick={onBack} aria-label={t("Back to notes")}>
-          <ArrowLeft />
-        </Button>
-        {note && (
-          <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-            <Share className="size-3.5 shrink-0" />
-            <span className="truncate">{t(sharingLabel[note.sharing])}</span>
-            {note.archived && <span className="rounded bg-muted px-1.5 py-0.5 font-medium">{t("Archived")}</span>}
-            {note.role === "view" && !note.archived && <span className="rounded bg-muted px-1.5 py-0.5 font-medium">{t("View only")}</span>}
+    <section className="flex h-full min-h-0 min-w-0 flex-col">
+      <DetailHeader onBack={onBack} backLabel={t("Back to notes")}>
+        {note && share ? (
+          <span className="text-muted-foreground flex min-w-0 items-center gap-1.5 px-1 text-xs">
+            <share.icon className="size-3.5 shrink-0" style={{ color: share.color }} />
+            <span className="truncate">{t(share.label)}</span>
+            {note.archived && <span className="bg-muted rounded px-1.5 py-0.5 font-medium">{t("Archived")}</span>}
+            {note.role === "view" && !note.archived && <span className="bg-muted rounded px-1.5 py-0.5 font-medium">{t("View only")}</span>}
           </span>
-        )}
-        <div className="ml-auto flex items-center gap-1">
+        ) : null}
+        <div className="ml-auto flex items-center gap-0.5">
           <PresenceStack people={presence} />
-          {note?.canManage && !note.archived && (
-            <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
-              <Share2 />
-              {t("Share")}
-            </Button>
-          )}
-          {note && (
+          {note && editable ? (
+            <IconAction label={note.pinned ? t("Unpin") : t("Pin")} onClick={() => patch({ pinned: !note.pinned })}>
+              {note.pinned ? <PinOff /> : <Pin />}
+            </IconAction>
+          ) : null}
+          {note?.canManage && !note.archived ? (
+            <IconAction label={t("Archive")} onClick={() => patch({ archived: true }, t("Note archived"))}>
+              <Archive />
+            </IconAction>
+          ) : null}
+          {note?.canManage && note.archived ? (
+            <>
+              <IconAction label={t("Restore")} onClick={() => patch({ archived: false }, t("Note restored"))}>
+                <ArchiveRestore />
+              </IconAction>
+              <ConfirmButton title={t("Delete this note for good?")} description={t("It can't be restored afterwards.")} confirmLabel={t("Delete")} onConfirm={remove}>
+                <Button variant="ghost" size="icon-sm" className="text-destructive" aria-label={t("Delete for good")} title={t("Delete for good")}>
+                  <Trash2 />
+                </Button>
+              </ConfirmButton>
+            </>
+          ) : null}
+          {note ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="icon-sm" variant="ghost" aria-label={t("More")}>
@@ -484,13 +577,7 @@ function NotePane({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                {note.role !== "view" && !note.archived && (
-                  <DropdownMenuItem onSelect={() => patch({ pinned: !note.pinned })}>
-                    {note.pinned ? <PinOff /> : <Pin />}
-                    {note.pinned ? t("Unpin") : t("Pin")}
-                  </DropdownMenuItem>
-                )}
-                {note.role !== "view" && !note.archived && (
+                {editable ? (
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
                       <Folder />
@@ -505,7 +592,7 @@ function NotePane({
                       ))}
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
-                )}
+                ) : null}
                 <DropdownMenuItem onSelect={() => copy(`${location.origin}/app/notes/${id}`, t("Link copied"))}>
                   <Link2 />
                   {t("Copy link")}
@@ -519,33 +606,17 @@ function NotePane({
                   <Copy />
                   {t("Copy as Markdown")}
                 </DropdownMenuItem>
-                {note.canManage && (
-                  <>
-                    <DropdownMenuSeparator />
-                    {note.archived ? (
-                      <>
-                        <DropdownMenuItem onSelect={() => patch({ archived: false }, t("Note restored"))}>
-                          <ArchiveRestore />
-                          {t("Restore")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem variant="destructive" onSelect={() => setConfirmDelete(true)}>
-                          <Trash2 />
-                          {t("Delete for good")}
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <DropdownMenuItem onSelect={() => patch({ archived: true }, t("Note archived"))}>
-                        <Archive />
-                        {t("Archive")}
-                      </DropdownMenuItem>
-                    )}
-                  </>
-                )}
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          ) : null}
+          {note?.canManage && !note.archived ? (
+            <Button size="sm" variant="outline" className="ml-1" onClick={() => setShareOpen(true)}>
+              <Share2 />
+              {t("Share")}
+            </Button>
+          ) : null}
         </div>
-      </header>
+      </DetailHeader>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-6 py-8 sm:px-12">
           <React.Suspense fallback={<EditorSkeleton />}>
@@ -553,22 +624,18 @@ function NotePane({
           </React.Suspense>
         </div>
       </div>
-      {note && <ShareDialog note={note} open={shareOpen} onOpenChange={setShareOpen} onSaved={(n) => { setNote(n); onChanged(n, id) }} />}
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("Delete this note for good?")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("It can't be restored afterwards.")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={remove}>
-              {t("Delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+      {note ? (
+        <ShareDialog
+          note={note}
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          onSaved={(n) => {
+            setNote(n)
+            onChanged(n, id)
+          }}
+        />
+      ) : null}
+    </section>
   )
 }
 
@@ -576,20 +643,20 @@ function PresenceStack({ people }: { people: Presence[] }) {
   if (!people.length) return null
   const shown = people.slice(0, 4)
   return (
-    <div className="mr-1 flex -space-x-1.5" aria-label={t("Also here: {names}", { names: people.map((p) => p.name).join(", ") })}>
+    <div className="mr-1.5 flex -space-x-1.5" aria-label={t("Also here: {names}", { names: people.map((p) => p.name).join(", ") })}>
       {shown.map((p) => (
         <span
           key={p.clientId}
           title={p.name}
-          className="grid size-7 place-items-center rounded-full border-2 border-background text-[11px] font-medium text-white"
+          className="border-background grid size-6 place-items-center rounded-full border-2 text-[10px] font-medium text-white"
           style={{ background: p.color }}
         >
           {initials(p.name)}
         </span>
       ))}
-      {people.length > shown.length && (
-        <span className="grid size-7 place-items-center rounded-full border-2 border-background bg-muted text-[11px] font-medium">+{people.length - shown.length}</span>
-      )}
+      {people.length > shown.length ? (
+        <span className="border-background bg-muted grid size-6 place-items-center rounded-full border-2 text-[10px] font-medium">+{people.length - shown.length}</span>
+      ) : null}
     </div>
   )
 }
@@ -605,11 +672,10 @@ const initials = (name: string) =>
 function EditorSkeleton() {
   return (
     <div className="grid gap-3" aria-hidden>
-      <div className="h-9 w-2/3 animate-pulse rounded-md bg-muted" />
-      <div className="h-4 w-full animate-pulse rounded bg-muted" />
-      <div className="h-4 w-5/6 animate-pulse rounded bg-muted" />
-      <div className="h-4 w-4/6 animate-pulse rounded bg-muted" />
+      <div className="bg-muted h-9 w-2/3 animate-pulse rounded-md" />
+      <div className="bg-muted h-4 w-full animate-pulse rounded" />
+      <div className="bg-muted h-4 w-5/6 animate-pulse rounded" />
+      <div className="bg-muted h-4 w-4/6 animate-pulse rounded" />
     </div>
   )
 }
-

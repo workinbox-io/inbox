@@ -22,6 +22,8 @@ import { FolderRail } from "./folder-rail"
 import { AccountMenu, type MailUser } from "./account-menu"
 import { OutboxPanel, scheduledCount, type OutboxRow } from "./outbox-panel"
 import { Toaster } from "@/components/ui/sonner"
+import { AppFrame } from "@/components/workspace/app-frame"
+import { isTyping, useMediaQuery } from "@/components/workspace/ui"
 import { FOLDER_KEYS, Kbd, assignMailboxColors } from "./mail-ui"
 import { ThreadView, type ThreadViewHandle } from "./thread-view"
 import type { MailThread, ThreadDetail, ThreadPatch } from "./types"
@@ -43,20 +45,8 @@ const SHORTCUTS: [string, string][] = [
   ["?", "These shortcuts"],
 ]
 
-/** Client-only media query; renders the wide layout on the server (no hydration mismatch). */
-function useMediaQuery(query: string) {
-  return React.useSyncExternalStore(
-    (notify) => {
-      const mq = window.matchMedia(query)
-      mq.addEventListener("change", notify)
-      return () => mq.removeEventListener("change", notify)
-    },
-    () => window.matchMedia(query).matches,
-    () => true,
-  )
-}
 
-const typing = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))
+const typing = isTyping
 
 export interface MailboxAppProps {
   mailboxes: string[]
@@ -455,7 +445,7 @@ export function MailboxApp(props: MailboxAppProps) {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className={props.account ? "bg-background flex h-full min-h-0 overflow-hidden" : "bg-background -mx-2 -mb-2 flex h-full min-h-0 overflow-hidden rounded-b-xl border-t"}>
+      <AppFrame userView={!!props.account}>
         {desktop ? (
           <FolderRail
             mailboxes={props.mailboxes}
@@ -516,7 +506,7 @@ export function MailboxApp(props: MailboxAppProps) {
           listPane
         )}
         </div>
-      </div>
+      </AppFrame>
       <Sheet open={infoOpen && !wide} onOpenChange={setInfoOpen}>
         <SheetContent className="w-[22rem] max-w-full overflow-y-auto">
           <SheetHeader>
@@ -556,8 +546,6 @@ export function MailboxApp(props: MailboxAppProps) {
           </dl>
         </DialogContent>
       </Dialog>
-      {/* The dashboard's toasts live in its sidebar island, which the mail-only view doesn't have. */}
-      {props.account ? <Toaster /> : null}
     </TooltipProvider>
   )
 }

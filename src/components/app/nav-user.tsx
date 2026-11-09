@@ -12,11 +12,12 @@ import {
   Moon,
   ShieldCheck,
   Sun,
-  Mail,
+  AppWindow,
   UserRound,
   Users,
 } from "lucide-react"
 import { siteConfig } from "@/config/site"
+import { switchView } from "@/components/mailbox/account-menu"
 
 import {
   DropdownMenu,
@@ -81,12 +82,11 @@ export function NavUser({ user }: { user: { name: string; email: string } }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <a href="/app/mail?view=mail" data-astro-reload>
-                  <Mail />
-                  Mail only
-                </a>
+              <DropdownMenuItem onSelect={() => switchView("user")}>
+                <AppWindow />
+                Switch to user view
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <a href="/app/settings/account">
                   <UserRound />

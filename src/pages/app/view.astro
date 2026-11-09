@@ -1,0 +1,11 @@
+---
+/** Switches an owner's or admin's view (lib/server/workspace-view.ts): /app/view?to=user|admin&next=/app/notes */
+import { canManage } from "@/lib/server/roles";
+import { setWorkspaceView, viewLanding, type WorkspaceView } from "@/lib/server/workspace-view";
+
+const to = Astro.url.searchParams.get("to");
+const next = Astro.url.searchParams.get("next");
+if (!canManage(Astro.locals.role) || (to !== "user" && to !== "admin")) return Astro.redirect(viewLanding("user", next));
+setWorkspaceView(Astro.cookies, Astro.locals.user!.id, to as WorkspaceView, Astro.url.protocol === "https:");
+return Astro.redirect(viewLanding(to as WorkspaceView, next));
+---
