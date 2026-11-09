@@ -1,0 +1,128 @@
+---
+/**
+ * Landing page for "google workspace alternative(s)" (480 US searches a month each, KD 0; OpenSEO, 2026-11-09). The
+ * results are list articles, so this page answers what a list can't: what a team keeps and gives up, and what five
+ * people cost. Competitor facts from config/compare.ts (their own pages, `checked`).
+ */
+import { ArrowRight, Check, Minus } from "lucide-react";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import BrowserFrame from "@/components/site/BrowserFrame.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import Faq from "@/components/site/Faq.astro";
+import Stage from "@/components/site/craft/Stage.astro";
+import InstallTimeline from "@/components/site/craft/InstallTimeline.astro";
+import { COMPETITORS, competitorBySlug } from "@/config/compare";
+import { PLANS, TRIAL_DAYS } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+
+export const prerender = true;
+
+const google = competitorBySlug("google-workspace")!;
+const checked = new Date(google.checked).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
+/** Five people and one shared support@ mailbox, cheapest plan with custom-domain mail, annual billing, list prices before tax. */
+const team = [
+  { name: "WorkInbox Starter", each: `€${PLANS.starter.priceMonthly / 100}`, total: `€${(PLANS.starter.priceMonthly * 5) / 100}`, shared: "Included, free" },
+  { name: "WorkInbox self-hosted", each: "€0", total: "€0 + your Cloudflare usage", shared: "Included, free" },
+  { name: "Google Workspace Business Starter", each: "$7", total: "$35", shared: "Google Groups' collaborative inbox" },
+  { name: "Microsoft 365 Business Basic", each: "$7", total: "$35", shared: "Free up to 50 GB and 25 users" },
+  { name: "Zoho Workplace Standard", each: "$3", total: "$15", shared: "Shared mailbox group" },
+  { name: "Proton Mail Essentials", each: "$6.99", total: "$34.95", shared: "No shared mailboxes listed" },
+];
+
+const keep = [
+  "Mail on your own domain, for every person",
+  "Shared mailboxes like support@ and sales@",
+  "Aliases, a catch-all and plus addressing",
+  "Notes your team edits together, live",
+  "Search with from:, has:attachment, is:unread",
+  "Two-factor sign-in, an audit log and an API",
+];
+const giveUp = [
+  "Calendar, contacts and Drive (on our roadmap)",
+  "Sheets, Slides and Meet (not planned)",
+  "Gmail on phones and IMAP apps (an IMAP gateway is planned)",
+  "Importing your old mail (not built yet)",
+];
+
+const steps = [
+  { title: "Add the domain", text: "In Settings → Mail. WorkInbox shows the MX, SPF and DMARC records." },
+  { title: "Add your people", text: "Each person gets a mailbox with the same address they had in Gmail." },
+  { title: "Switch the MX records", text: "Point them at Cloudflare Email Routing. New mail arrives in WorkInbox; keep Google as an archive." },
+];
+
+const faq = [
+  ...google.faq,
+  { question: "Is there a free Google Workspace alternative?", answer: `WorkInbox is free when you run it on your own Cloudflare account; you pay Cloudflare for what you use. Hosted, it starts at €${PLANS.starter.priceMonthly / 100} a person a month after a ${TRIAL_DAYS}-day trial. Zoho Mail also has a free plan for up to five people.` },
+  { question: "Is there an open-source Google Workspace alternative?", answer: "WorkInbox is open source and runs on Cloudflare. Nextcloud is open source too and covers files, calendar and office documents, but it has no mail server of its own." },
+];
+
+const url = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
+const jsonLd = [
+  { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) },
+  { "@context": "https://schema.org", "@type": "WebPage", name: "Google Workspace alternative", url: url("/google-workspace-alternative"), dateModified: google.checked },
+];
+---
+
+<MarketingLayout title="Google Workspace alternative for team email" description="An open-source Google Workspace alternative: team email on your own domain with free shared mailboxes and live notes, from €3 a person or self-hosted. What you keep, what you give up, what five people cost." jsonLd={jsonLd}>
+  <div class="mx-auto flex w-full max-w-[1120px] flex-1 flex-col px-5 pb-8 sm:px-10">
+    <header class="pt-14 text-center sm:pt-20">
+      <p class="text-sm font-medium tracking-wide text-foreground/60 uppercase">Google Workspace alternative</p>
+      <h1 class="hero-title mx-auto mt-4 max-w-4xl">Leave Google, <em>keep your addresses.</em></h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65">
+        WorkInbox is open-source team email on your own domain, with free shared mailboxes and notes your team writes
+        together. It does less than Google Workspace, costs less, and can run on your own Cloudflare account.
+      </p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+        <a href="/signup" class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
+        <a href="/docs/self-host" class="underline underline-offset-4">Self-host on Cloudflare</a>
+      </div>
+    </header>
+
+    <div class="mt-14"><Stage><BrowserFrame url="workinbox.io/app/mail"><img src="/marketing/mail-thread.webp" alt="WorkInbox mail with an open message" width="2880" height="1800" loading="eager" decoding="async" /></BrowserFrame></Stage></div>
+
+    <section class="grid gap-10 pt-20 md:grid-cols-2">
+      <div>
+        <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">What you keep</h2>
+        <ul class="mt-5 space-y-3">{keep.map((k) => <li class="flex gap-2.5"><Check className="mt-1 size-4 shrink-0" />{k}</li>)}</ul>
+      </div>
+      <div>
+        <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">What you give up, <em>for now</em></h2>
+        <ul class="mt-5 space-y-3">{giveUp.map((k) => <li class="flex gap-2.5"><Minus className="mt-1 size-4 shrink-0 text-foreground/50" />{k}</li>)}</ul>
+      </div>
+    </section>
+
+    <section class="pt-20">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">What five people and a support@ mailbox cost</h2>
+      <p class="mt-2 text-sm text-foreground/60">The cheapest plan with mail on your own domain, a month, billed yearly, list prices before tax, in the currency each vendor shows. Checked {checked}.</p>
+      <div class="mt-6 overflow-x-auto rounded-2xl border border-(--border) bg-(--card)">
+        <table class="w-full min-w-[560px] text-left text-sm">
+          <thead><tr class="border-b border-(--border)"><th class="p-4 font-medium">Plan</th><th class="p-4 font-medium">Per person</th><th class="p-4 font-medium">Five people</th><th class="p-4 font-medium">The shared mailbox</th></tr></thead>
+          <tbody>
+            {team.map((r, i) => (
+              <tr class:list={["border-b border-(--border) last:border-0", i < 2 && "bg-(--accent)"]}>
+                <th scope="row" class="p-4 font-medium">{r.name}</th><td class="p-4 tabular-nums">{r.each}</td><td class="p-4 tabular-nums">{r.total}</td><td class="p-4">{r.shared}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="pt-20">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Feature by feature</h2>
+      <div class="mt-6"><ComparisonTable competitors={[google, competitorBySlug("microsoft-365")!, competitorBySlug("zoho-mail")!]} /></div>
+      <p class="mt-4 text-sm text-foreground/60">More detail, with sources: {COMPETITORS.map((c, i) => <>{i ? ", " : ""}<a href={`/vs/${c.slug}`} class="underline underline-offset-4">{c.name}</a></>)}.</p>
+    </section>
+
+    <section class="pt-20">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Moving your domain's mail</h2>
+      <div class="mt-10"><InstallTimeline steps={steps} /></div>
+    </section>
+
+    <section class="pt-20">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Questions</h2>
+      <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
+    </section>
+  </div>
+</MarketingLayout>

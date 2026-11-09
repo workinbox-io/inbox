@@ -1,8 +1,7 @@
 ---
-/** Plan cards from config/plans.ts, used on the home page and /pricing. */
-import { cn } from "cn";
-import { buttonVariants } from "@/components/ui/button";
-import { CURRENCY, PLAN_LIST, POPULAR_PLAN, planFeatures, priceYearly } from "@/config/plans";
+/** Plan cards from config/plans.ts, used on the home page and /pricing, plus the self-hosted line under them. */
+import { ArrowRight, Check, Server } from "lucide-react";
+import { CURRENCY, PLAN_LIST, POPULAR_PLAN, PRICE_UNIT, planFeatures, priceYearly } from "@/config/plans";
 
 interface Props {
   /** Show the yearly price under the monthly one. */
@@ -10,38 +9,45 @@ interface Props {
 }
 const { yearly = false } = Astro.props;
 const money = (cents: number) =>
-  new Intl.NumberFormat("en", { style: "currency", currency: CURRENCY, maximumFractionDigits: 0 }).format(cents / 100);
+  new Intl.NumberFormat("en", { style: "currency", currency: CURRENCY, maximumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
 ---
 
-<div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
+<div class="grid gap-4 sm:gap-5 lg:grid-cols-3">
   {
     PLAN_LIST.map((p) => (
-      <div class:list={["bg-surface flex flex-col rounded-2xl p-6 sm:p-8", p.id === POPULAR_PLAN && "ring-primary/70 ring-2"]}>
+      <div data-reveal-item class="price-card flex flex-col p-6 sm:p-8" data-popular={String(p.id === POPULAR_PLAN)}>
         <div class="flex items-center justify-between">
-          <span class="eyebrow text-foreground">{p.name}</span>
-          {p.id === POPULAR_PLAN ? <span class="eyebrow text-primary">Most popular</span> : null}
+          <span class="text-sm font-semibold">{p.name}</span>
+          {p.id === POPULAR_PLAN ? <span class="rounded-full bg-foreground px-2.5 py-0.5 text-xs font-medium text-background">Most popular</span> : null}
         </div>
-        <p class="mt-6 flex items-baseline gap-1">
-          <span class="text-5xl font-medium tracking-tight tabular-nums">{money(p.priceMonthly)}</span>
-          <span class="text-muted-foreground text-sm">/ month</span>
+        <p class="mt-6 flex items-baseline gap-2">
+          <span class="font-display text-6xl tabular-nums">{money(p.priceMonthly)}</span>
+          <span class="text-sm text-foreground/60">{PRICE_UNIT}</span>
         </p>
-        {yearly ? <p class="text-muted-foreground mt-1 text-sm">or {money(priceYearly(p))} billed yearly</p> : null}
+        {yearly ? <p class="mt-1 text-sm text-foreground/60">or {money(priceYearly(p))} a year, two months free</p> : null}
         <ul class="mt-6 flex-1 space-y-2.5 text-sm">
           {planFeatures(p).map((f) => (
-            <li class="flex items-center gap-2.5">
-              <span class="bg-primary size-2 shrink-0 rounded-full" />
-              {f.label}
-              {f.soon ? <span class="eyebrow">Soon</span> : null}
+            <li class="flex items-start gap-2.5">
+              <Check className="mt-0.5 size-4 shrink-0" />
+              <span>
+                {f.label}
+                {f.soon ? <span class="ml-1.5 rounded-full border border-(--border) px-1.5 py-px text-[11px] text-foreground/60">Soon</span> : null}
+              </span>
             </li>
           ))}
         </ul>
-        <a
-          href="/signup"
-          class={cn(buttonVariants({ size: "lg", variant: p.id === POPULAR_PLAN ? "default" : "secondary" }), "mt-8 w-full")}
-        >
+        <a href="/signup" class:list={["mk-btn mt-8 w-full", p.id !== POPULAR_PLAN && "mk-btn-ghost"]}>
           Start free trial
         </a>
       </div>
     ))
   }
 </div>
+<a href="/docs/self-host" class="mt-5 flex flex-col gap-3 rounded-2xl border border-dashed border-(--border) p-5 transition-colors hover:bg-(--accent) sm:flex-row sm:items-center sm:p-6">
+  <Server className="size-5 shrink-0" />
+  <span class="flex-1">
+    <b class="font-semibold">Self-hosted: free.</b>
+    <span class="text-foreground/65"> The same app on your own Cloudflare account. Open source, every feature, you pay Cloudflare for what you use.</span>
+  </span>
+  <span class="inline-flex items-center gap-1.5 text-sm font-medium">How to deploy <ArrowRight className="size-4" /></span>
+</a>

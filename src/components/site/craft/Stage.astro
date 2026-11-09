@@ -1,0 +1,12 @@
+---
+/** A tinted band (paper and a mint glow) that holds a product scene. `bleed` lets the scene run off one edge. */
+interface Props {
+  bleed?: "right" | "bottom";
+  class?: string;
+}
+const { bleed, class: className } = Astro.props;
+---
+
+<div data-reveal="frame" class:list={["stage", bleed && `stage-bleed-${bleed}`, className]}>
+  <div class="stage-inner"><slot /></div>
+</div>

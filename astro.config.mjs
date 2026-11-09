@@ -8,11 +8,14 @@ import { fileURLToPath } from "node:url";
 import { mcpWidgets } from "./scripts/mcp-widgets.ts";
 
 // Only prerendered routes end up in the sitemap; app and auth pages stay out of it.
-const NOT_INDEXED = /^\/(app|api|login|signup|forgot-password|reset-password|verified|pay|invite|oauth|mcp)(\/|$)/;
+const NOT_INDEXED = /^\/(app|api|login|signup|forgot-password|reset-password|verified|pay|invite|oauth|mcp|mail)(\/|$)/;
 
 export default defineConfig({
   // Production URL; keep in sync with siteConfig.url (src/config/site.ts).
   site: "https://workinbox.io",
+  // Prerendered pages as pricing.html, not pricing/index.html (as in Luxivo): Cloudflare then serves /pricing as is
+  // instead of redirecting to /pricing/, matching the canonical URLs and the sitemap.
+  build: { format: "file" },
   output: "server",
   adapter: cloudflare({
     // Images are served as-is; turn on the Images binding when you need resizing.

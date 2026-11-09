@@ -1,0 +1,48 @@
+---
+/** WorkInbox next to one or more products, row by row (config/compare.ts). Status icons say how each covers a row. */
+import { Check, CircleDashed, Clock, Info, Minus } from "lucide-react";
+import { OURS, ROW_LABELS, type Cell, type Competitor, type RowKey } from "@/config/compare";
+
+interface Props {
+  competitors: Competitor[];
+  rows?: RowKey[];
+}
+const { competitors, rows = Object.keys(ROW_LABELS) as RowKey[] } = Astro.props;
+const icons = { yes: Check, partial: CircleDashed, no: Minus, soon: Clock, info: Info };
+const labels = { yes: "Included", partial: "Partly", no: "Not available", soon: "Coming", info: "" };
+---
+
+<div class="overflow-x-auto rounded-2xl border border-(--border) bg-(--card)">
+  <table class="w-full min-w-[640px] border-collapse text-left text-sm">
+    <thead>
+      <tr class="border-b border-(--border)">
+        <th class="w-[22%] p-4 font-medium text-foreground/60"><span class="sr-only">Feature</span></th>
+        <th class="p-4 font-semibold">WorkInbox</th>
+        {competitors.map((c) => <th class="p-4 font-semibold">{c.name}</th>)}
+      </tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((key) => (
+          <tr class="border-b border-(--border) align-top last:border-0">
+            <th scope="row" class="p-4 font-medium">{ROW_LABELS[key]}</th>
+            {[OURS[key], ...competitors.map((c) => c.rows[key])].map((cell: Cell, i) => {
+              const Icon = icons[cell.status];
+              return (
+                <td class:list={["p-4 leading-6", i === 0 && "bg-(--accent)"]}>
+                  <span class="flex gap-2">
+                    <Icon className={`mt-1 size-4 shrink-0 ${cell.status === "no" ? "text-foreground/40" : ""}`} aria-hidden="true" />
+                    <span>
+                      {labels[cell.status] ? <span class="sr-only">{labels[cell.status]}: </span> : null}
+                      {cell.text}
+                    </span>
+                  </span>
+                </td>
+              );
+            })}
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

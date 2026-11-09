@@ -1,0 +1,23 @@
+---
+/** The numbered list next to an `Annotated` screenshot. */
+import type { Pin } from "./Annotated.astro";
+
+interface Props {
+  pins: Pin[];
+}
+const { pins } = Astro.props;
+---
+
+<ol class="pin-legend">
+  {
+    pins.map((p, i) => (
+      <li>
+        <span class="pin">{i + 1}</span>
+        <span>
+          <b>{p.title}</b>
+          {p.text}
+        </span>
+      </li>
+    ))
+  }
+</ol>

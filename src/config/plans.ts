@@ -7,7 +7,9 @@ export type PlanId = "starter" | "pro" | "business";
 export interface Plan {
   id: PlanId;
   name: string;
-  /** Monthly price in EUR cents. Yearly = 10× monthly (2 months free). */
+  /** Monthly price per person (a personal mailbox) in EUR cents. Yearly = 10× monthly (2 months free).
+   *  Shared mailboxes and aliases cost nothing. Paddle checkout still sells quantity 1: per-person billing
+   *  (quantity = people on the org's domains) is the next billing change. */
   priceMonthly: number;
   /** Limits; null = unlimited. Add your own (they're checked with withinLimit). */
   projects: number | null;
@@ -15,9 +17,9 @@ export interface Plan {
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  starter: { id: "starter", name: "Starter", priceMonthly: 900, projects: 3, members: 3 },
-  pro: { id: "pro", name: "Pro", priceMonthly: 2900, projects: 25, members: null },
-  business: { id: "business", name: "Business", priceMonthly: 9900, projects: null, members: null },
+  starter: { id: "starter", name: "Starter", priceMonthly: 300, projects: null, members: null },
+  pro: { id: "pro", name: "Pro", priceMonthly: 600, projects: null, members: null },
+  business: { id: "business", name: "Business", priceMonthly: 1000, projects: null, members: null },
 };
 
 export const PLAN_LIST = Object.values(PLANS);
@@ -79,18 +81,21 @@ export interface PlanFeature {
 
 /** Feature lists for the pricing page: what each plan adds on top of the one below. */
 const EXTRAS: Record<PlanId, PlanFeature[]> = {
-  starter: [{ label: "Email support" }, { label: "Two-factor authentication" }],
+  starter: [
+    { label: "Mail on your own domains" },
+    { label: "Shared mailboxes, aliases and catch-all" },
+    { label: "Spam filter and sender rules" },
+    { label: "Shared notes with live editing" },
+    { label: "Two-factor authentication" },
+  ],
   pro: [{ label: "Everything in Starter" }, { label: "REST API" }, { label: "Claude & ChatGPT connector" }, { label: "Audit log" }],
-  business: [{ label: "Everything in Pro" }, { label: "SSO", soon: true }, { label: "Priority support" }],
+  business: [{ label: "Everything in Pro" }, { label: "Calendar and contacts", soon: true }, { label: "SSO", soon: true }, { label: "Priority support" }],
 };
 
-const limitLabel = (n: number | null, one: string, many: string) =>
-  n === null ? `Unlimited ${many}` : `${n} ${n === 1 ? one : many}`;
-
+/** Pricing-page lines. Every plan is per person with unlimited people, so no limit lines. */
 export function planFeatures(plan: Plan): PlanFeature[] {
-  return [
-    { label: limitLabel(plan.projects, "project", "projects") },
-    { label: limitLabel(plan.members, "team member", "team members") },
-    ...EXTRAS[plan.id],
-  ];
+  return EXTRAS[plan.id];
 }
+
+/** "€3 per person a month": the unit shown next to every price. */
+export const PRICE_UNIT = "per person / month";

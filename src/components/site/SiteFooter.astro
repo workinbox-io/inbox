@@ -8,8 +8,10 @@ const columns = [
     label: "Product",
     links: [
       { href: "/#features", label: "Features" },
+      { href: "/shared-mailbox", label: "Shared mailboxes" },
+      { href: "/google-workspace-alternative", label: "Google Workspace alternative" },
+      { href: "/vs", label: "Comparisons" },
       { href: "/pricing", label: "Pricing" },
-      { href: "/signup", label: "Start free trial" },
     ],
   },
   {
@@ -17,6 +19,8 @@ const columns = [
     links: [
       { href: "/docs", label: "Introduction" },
       { href: "/docs/quickstart", label: "Quickstart" },
+      { href: "/docs/self-host", label: "Self-hosting" },
+      { href: "/docs/mcp", label: "AI apps" },
       { href: "/docs/api", label: "API" },
     ],
   },
@@ -25,6 +29,7 @@ const columns = [
     links: [
       { href: "/#faq", label: "FAQ" },
       { href: `mailto:${siteConfig.supportEmail}`, label: "Support" },
+      { href: siteConfig.repoUrl, label: "Source code" },
       { href: "/login", label: "Sign in" },
     ],
   },

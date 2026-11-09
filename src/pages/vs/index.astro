@@ -1,0 +1,40 @@
+---
+/** All comparisons on one page: the table across every competitor, then a link to each detail page. */
+import { ArrowRight } from "lucide-react";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import { COMPETITORS } from "@/config/compare";
+import { siteConfig } from "@/config/site";
+
+export const prerender = true;
+
+const url = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  itemListElement: COMPETITORS.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: `${siteConfig.name} vs ${c.name}`, url: url(`/vs/${c.slug}`) })),
+};
+---
+
+<MarketingLayout title="Compare WorkInbox with Google Workspace, Microsoft 365 and others" description="WorkInbox next to Google Workspace, Microsoft 365, Zoho Mail, Proton, Fastmail and Nextcloud: prices, shared mailboxes, self-hosting and what each does better." jsonLd={jsonLd}>
+  <div class="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-5 pb-8 sm:px-10">
+    <header class="pt-14 text-center sm:pt-20">
+      <h1 class="hero-title mx-auto max-w-4xl text-[clamp(2.3rem,4.6vw,4rem)]">How WorkInbox compares, <em>with sources.</em></h1>
+      <p class="mx-auto mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65">
+        Every fact about another product comes from its own pricing and help pages, linked on each comparison. Where they do
+        something better, the page says so.
+      </p>
+    </header>
+    <section class="pt-14">
+      <ComparisonTable competitors={COMPETITORS.filter((c) => ["google-workspace", "microsoft-365", "zoho-mail"].includes(c.slug))} />
+    </section>
+    <section class="mx-auto grid w-full max-w-4xl gap-3 pt-12 sm:grid-cols-2 lg:grid-cols-3">
+      {COMPETITORS.map((c) => (
+        <a href={`/vs/${c.slug}`} class="flex items-center gap-3 rounded-xl border border-(--border) p-5 transition-colors hover:bg-(--accent)">
+          <span class="flex-1 font-medium">WorkInbox vs {c.name}</span>
+          <ArrowRight className="size-4 text-foreground/50" />
+        </a>
+      ))}
+    </section>
+  </div>
+</MarketingLayout>

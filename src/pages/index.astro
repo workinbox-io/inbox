@@ -1,38 +1,115 @@
 ---
-import { cn } from "cn";
-import { ArrowRight } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+/**
+ * The home page, laid out like Luxivo's (support-chat, components/site/pages/Home.astro): one stable promise, a tour of
+ * the real app (screenshots from scripts/marketing-shots.ts), chapters per feature, a closer look, setup, pricing, FAQ.
+ * Only claim what ships; calendar, contacts, drive and IMAP stay under "Coming next".
+ */
+import { ArrowRight, AtSign, Bot, Braces, Calendar, Check, Contact, HardDrive, Inbox, Keyboard, MailCheck, NotebookPen, Search, Server, Smartphone, UserPlus, Users } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import SectionHeading from "@/components/site/SectionHeading.astro";
-import StepCards from "@/components/site/StepCards.astro";
+import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import PricingCards from "@/components/site/PricingCards.astro";
 import Faq from "@/components/site/Faq.astro";
-import CtaBanner from "@/components/site/CtaBanner.astro";
-import HeroDemo from "@/components/marketing/hero-demo";
-import FeaturesBento from "@/components/marketing/features-bento";
-import { TRIAL_DAYS } from "@/config/plans";
+import Stage from "@/components/site/craft/Stage.astro";
+import FeatureLedger from "@/components/site/craft/FeatureLedger.astro";
+import Annotated, { type Pin } from "@/components/site/craft/Annotated.astro";
+import PinLegend from "@/components/site/craft/PinLegend.astro";
+import InstallTimeline from "@/components/site/craft/InstallTimeline.astro";
+import { COMPETITORS } from "@/config/compare";
+import { CURRENCY, PLAN_LIST, PLANS, TRIAL_DAYS } from "@/config/plans";
 import { organizationJsonLd, siteConfig } from "@/config/site";
 
 export const prerender = true;
 
-// Placeholder copy: replace with your product's. The layout and sections are the reusable part.
-const steps = [
-  { title: "Sign up", text: "Create an account with email or Google. Your trial starts right away.", code: "→ trial started" },
-  { title: "Create a project", text: "Set it up in the dashboard, or from a script with the API.", code: "POST /api/v1/projects" },
-  { title: "Invite your team", text: "Owners, admins and members, each with the right access.", code: "→ invitation sent" },
+const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly)) / 100;
+const shot = (file: string) => `/marketing/${file}`;
+
+const tabs = [
+  { id: "inbox", label: "Inbox", icon: Inbox, url: "workinbox.io/app/mail", src: shot("mail-thread.webp"), alt: "WorkInbox mail: folders, the inbox of anna@ and support@, an open message and the sender panel" },
+  { id: "shared", label: "Shared mailbox", icon: Users, url: "workinbox.io/app/mail", src: shot("shared-mailbox.webp"), alt: "The shared mailbox support@ with a customer question open" },
+  { id: "notes", label: "Notes", icon: NotebookPen, url: "workinbox.io/app/notes", src: shot("notes.webp"), alt: "A shared note with decisions, a checklist and open questions, and the formatting toolbar" },
+  { id: "domains", label: "Domains", icon: AtSign, url: "workinbox.io/app/settings/mail", src: shot("mail-settings.webp"), alt: "Mail settings: the domain's DNS records with a Check DNS button, the catch-all choice and the mailboxes" },
 ];
 
+const pins: Pin[] = [
+  { x: 74, y: 7, title: "Check DNS. ", text: "WorkInbox looks the records up and ticks each one off." },
+  { x: 86, y: 18, title: "Records to copy. ", text: "MX, SPF and DMARC. On Cloudflare, Email Routing adds them for you." },
+  { x: 61, y: 55, title: "Unknown addresses. ", text: "Reject them, or catch them all in one mailbox." },
+  { x: 62, y: 87, title: "Shared mailboxes. ", text: "support@ with the people who answer it." },
+];
+
+const extras = [
+  { icon: Search, title: "Search that knows mail", text: "from:, to:, subject:, has:attachment, is:unread and is:starred, across every mailbox you can open." },
+  { icon: Keyboard, title: "Keyboard first", text: "c to write, / to search, Esc to close. Right-click any thread for its actions." },
+  { icon: UserPlus, title: "People on your domain", text: "Add a person and they get a mailbox and a temporary password in one step. No invitation mail to chase." },
+  { icon: Bot, title: "Claude and ChatGPT", text: "Search, read and answer mail and notes from your AI app, signed in as you.", href: "/docs/mcp" },
+  { icon: Braces, title: "REST API", text: "Threads, replies and notes over an API with organization keys.", href: "/docs/api" },
+  { icon: MailCheck, title: "Spam filter and sender rules", text: "A spam score on every message, and rules to always allow or block a sender or domain." },
+];
+
+const next = [
+  { icon: Calendar, title: "Calendar", text: "Shared and personal calendars, invitations by mail.", soon: true },
+  { icon: Contact, title: "Contacts", text: "The people your team writes to, in one address book.", soon: true },
+  { icon: HardDrive, title: "Drive", text: "Files next to the mail and notes they belong to.", soon: true },
+  { icon: Smartphone, title: "IMAP and mobile mail apps", text: "Use Apple Mail, Outlook or Thunderbird. Today it's the web app, installable on phones.", soon: true },
+];
+
+const steps = [
+  { title: "Add your domain", text: "Turn on Cloudflare Email Routing for it, or add the MX, SPF and DMARC records at your DNS provider." },
+  { title: "Add your people", text: "Each person gets a mailbox on the domain and a temporary password to sign in with." },
+  { title: "Share mailboxes", text: "Create support@ or sales@ and pick who answers it. Owners and admins see every shared mailbox." },
+];
 
 const faq = [
-  { question: "Is there a free trial?", answer: `Yes. Every account starts with a ${TRIAL_DAYS}-day trial of the Pro plan, no credit card needed.` },
-  { question: "Can I cancel any time?", answer: "Yes. Cancel from the Billing page; your plan stays active until the end of the paid period." },
-  { question: "Who handles payments?", answer: "Paddle, our merchant of record. They take care of VAT and send your invoices." },
-  { question: "Do you have an API?", answer: "Yes. Create a key in Settings and see the API docs for every endpoint." },
+  {
+    question: "Is WorkInbox really open source?",
+    answer: `Yes. The code is public at ${siteConfig.repoUrl}, and you can run it on your own Cloudflare account with every feature and no fee to us. The hosted version is the same app, run by us.`,
+  },
+  {
+    question: "Can I use Outlook, Apple Mail or my phone's mail app?",
+    answer: "Not yet. WorkInbox has no IMAP access today: you read and send mail in the web app, which you can install on a phone or a computer. An IMAP gateway is on the roadmap.",
+  },
+  {
+    question: "Do I have to move my domain to Cloudflare?",
+    answer: "No. If your domain is on Cloudflare, turning on Email Routing adds the records for you. Anywhere else, add the MX, SPF and DMARC records the setup shows and click Check DNS.",
+  },
+  {
+    question: "What does a shared mailbox cost?",
+    answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}. Shared mailboxes, aliases and the catch-all are free on every plan.`,
+  },
+  {
+    question: "Can I bring my old mail from Gmail or Outlook?",
+    answer: "Importing old mail isn't built yet. Point your MX records at WorkInbox and new mail arrives here; keep the old account as an archive for now.",
+  },
+  {
+    question: "Where is my mail stored?",
+    answer: "On Cloudflare: messages in D1 and each original message (.eml) and its attachments in R2. Self-hosted, all of it lives on your own Cloudflare account.",
+  },
+  {
+    question: "What about calendar, contacts and files?",
+    answer: "They are next. Mail and shared notes ship today; calendar, contacts and drive follow, on the same plans.",
+  },
+  {
+    question: "Is there a free trial?",
+    answer: `Yes. Every hosted account starts with a ${TRIAL_DAYS}-day trial, no card needed. Self-hosting is free for good.`,
+  },
 ];
 
 const url = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
+const prices = PLAN_LIST.map((p) => p.priceMonthly / 100);
 const jsonLd = [
   organizationJsonLd(url),
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: siteConfig.name,
+    description: siteConfig.description,
+    applicationCategory: "BusinessApplication",
+    applicationSubCategory: "Email",
+    operatingSystem: "Web",
+    url: url("/"),
+    offers: { "@type": "AggregateOffer", lowPrice: Math.min(...prices), highPrice: Math.max(...prices), priceCurrency: CURRENCY, offerCount: prices.length },
+  },
   {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -41,74 +118,245 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout title={siteConfig.description} description={siteConfig.description} jsonLd={jsonLd}>
-  <div class="container-page flex flex-1 flex-col">
-    <!-- Hero -->
-    <div class="mx-auto mt-14 max-w-4xl text-center sm:mt-20">
-      <div class="reveal" style="--reveal-delay: 80ms">
-        <h1 class="dark:text-foreground/85 text-3xl leading-[1.1] font-medium tracking-tight text-balance text-[#454545] sm:text-6xl sm:leading-[1.06]">
-          The headline of<br class="hidden sm:block" /> <span class="text-primary">your product.</span>
-        </h1>
+<MarketingLayout title="Open-source team email on your own domain" description={siteConfig.description} jsonLd={jsonLd}>
+  <div class="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-5 sm:px-10">
+    <section class="relative pt-14 pb-10 text-center sm:pt-20">
+      <div class="dot-grid" aria-hidden="true"></div>
+      <p class="hero-fade relative mb-5 text-sm font-medium tracking-wide text-foreground/60 uppercase" style="--d: 40ms">Open-source Google Workspace alternative</p>
+      <h1 class="hero-title relative mx-auto max-w-5xl">
+        <span class="hero-fade block" style="--d: 80ms">Your team's email,</span>
+        <span class="hero-fade block italic text-(--mk-soft-ink)" style="--d: 180ms">on your own domain.</span>
+      </h1>
+      <p class="hero-fade relative mx-auto mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65" style="--d: 300ms">
+        Personal and shared mailboxes, aliases and a catch-all, plus notes your team writes together. Run it free on your own
+        Cloudflare account, or let us host it from €{lowest} per person a month.
+      </p>
+      <div class="hero-fade relative mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-4" style="--d: 500ms">
+        <a href="/signup" data-magnetic class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
+        <a href="/docs/self-host" class="text-foreground/70 underline decoration-foreground/30 underline-offset-4 transition-colors hover:text-foreground">Self-host on Cloudflare</a>
       </div>
-      <div class="reveal" style="--reveal-delay: 160ms">
-        <p class="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg leading-7 text-pretty sm:text-xl sm:leading-8">
-          {siteConfig.description}
-          <span class="bg-primary/10 text-primary rounded-2xl box-decoration-clone px-1 py-0.5">One sentence that sells it.</span>
-        </p>
-        <div class="mt-7 flex flex-row flex-wrap items-center justify-center gap-3">
-          <a href="/signup" class={cn(buttonVariants({ size: "lg" }), "group pr-1.5 pl-4")}>
-            Start {TRIAL_DAYS}-day free trial
-            <span class="relative ml-1 inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white p-2">
-              <ArrowRight className="text-primary size-3.5 transition-transform group-hover:translate-x-0.5" />
-            </span>
-          </a>
-          <a href="#how-it-works" class={buttonVariants({ size: "lg", variant: "secondary" })}>See how it works</a>
+      <p class="hero-fade relative mt-5 text-sm text-foreground/60" style="--d: 560ms">{TRIAL_DAYS}-day trial, no card needed. Shared mailboxes are free.</p>
+
+      <div id="tour" class="hero-fade relative mt-14 scroll-mt-24" style="--d: 650ms" data-tabs>
+        <div role="tablist" aria-label="WorkInbox screens" class="tour-tabs mx-auto">
+          {
+            tabs.map((t, i) => (
+              <button type="button" role="tab" id={`tab-${t.id}`} aria-controls={`panel-${t.id}`} aria-selected={i === 0 ? "true" : "false"} data-tab={t.id} class="tour-tab">
+                <t.icon className="size-4" />
+                {t.label}
+              </button>
+            ))
+          }
         </div>
-        <p class="text-muted-foreground mt-5 text-sm">No credit card required</p>
+        <div class="relative mt-10">
+          <BrowserFrame url={tabs[0]!.url}>
+            {
+              tabs.map((t, i) => (
+                <div role="tabpanel" id={`panel-${t.id}`} aria-labelledby={`tab-${t.id}`} data-panel={t.id} data-url-value={t.url} hidden={i !== 0} class="mk-light h-full">
+                  <img src={t.src} alt={t.alt} width="2880" height="1800" loading={i === 0 ? "eager" : "lazy"} decoding="async" class="block h-full w-full object-cover object-top-left" />
+                </div>
+              ))
+            }
+          </BrowserFrame>
+        </div>
+        <div class="mx-auto mt-8 max-w-2xl">
+          <h2 class="text-2xl sm:text-3xl">These are screens of the real app.</h2>
+          <p class="mt-3 leading-7 text-foreground/65">Mail with folders, mailboxes and a panel about the sender; notes edited live by the whole team; and the settings where a domain, its DNS and its mailboxes come together.</p>
+        </div>
       </div>
-    </div>
-    <!-- The product, doing its one thing: components/marketing/hero-demo.tsx -->
-    <div class="reveal mx-auto mt-10 mb-12 w-full max-w-[1104px] sm:mt-14 sm:mb-20" style="--reveal-delay: 240ms">
-      <HeroDemo client:visible />
-    </div>
+    </section>
+  </div>
 
-    <section id="how-it-works" class="scroll-mt-16 py-12 sm:py-16">
-      <div class="reveal px-4 sm:px-6">
-        <SectionHeading muted="in three steps.">Get started</SectionHeading>
+  <div class="mx-auto flex w-full max-w-[1280px] flex-col px-5 sm:px-10">
+    <section id="features" class="scroll-mt-24 pt-20 sm:pt-28">
+      <SectionHeading muted="and the people who answer it.">Your domain, your mailboxes</SectionHeading>
+
+      <div class="mt-16 grid items-center gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-14">
+        <div data-reveal>
+          <p class="flex items-center gap-2 text-sm font-semibold"><Inbox className="size-4" /> Mail</p>
+          <h3 class="mt-4 text-[clamp(1.9rem,3vw,2.7rem)]">Every address on your domain, <em>in one inbox.</em></h3>
+          <p class="mt-4 text-lg leading-7 text-foreground/65">
+            A personal mailbox for each person, aliases that land where you say, and a catch-all for everything else. Plus
+            addressing works out of the box. Each message gets a spam score, and sender rules keep the regulars in and the rest out.
+          </p>
+        </div>
+        <Stage>
+          <BrowserFrame url="workinbox.io/app/mail">
+            <img src={shot("mail.webp")} alt="The inbox across anna@ and support@, with unread messages on top" width="2880" height="1800" loading="lazy" decoding="async" />
+          </BrowserFrame>
+        </Stage>
       </div>
-      <div class="reveal mt-12 sm:mt-16" style="--reveal-delay: 120ms">
-        <StepCards steps={steps} />
+
+      <div class="mt-24 grid items-center gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-14">
+        <Stage>
+          <BrowserFrame url="workinbox.io/app/mail">
+            <img src={shot("shared-mailbox.webp")} alt="support@ open as a shared mailbox, with its own unread count" width="2880" height="1800" loading="lazy" decoding="async" />
+          </BrowserFrame>
+        </Stage>
+        <div data-reveal>
+          <p class="flex items-center gap-2 text-sm font-semibold"><Users className="size-4" /> Shared mailboxes</p>
+          <h3 class="mt-4 text-[clamp(1.9rem,3vw,2.7rem)]">support@ that the whole team <em>can answer.</em></h3>
+          <p class="mt-4 text-lg leading-7 text-foreground/65">
+            Create support@, sales@ or invoices@ and choose who gets it. Replies go out from the shared address, and everyone
+            sees the same threads. No forwarding rules, no shared password, no extra licence.
+          </p>
+          <a href="/shared-mailbox" class="mt-5 inline-flex items-center gap-2 underline underline-offset-4">How shared mailboxes work <ArrowRight className="size-4" /></a>
+        </div>
+      </div>
+
+      <div id="notes" class="mt-24 grid scroll-mt-24 items-center gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-14">
+        <div data-reveal>
+          <p class="flex items-center gap-2 text-sm font-semibold"><NotebookPen className="size-4" /> Notes</p>
+          <h3 class="mt-4 text-[clamp(1.9rem,3vw,2.7rem)]">Notes your team writes <em>together.</em></h3>
+          <p class="mt-4 text-lg leading-7 text-foreground/65">
+            Meeting notes, checklists and how-tos, edited live with everyone's cursor on the page. Headings, tables, images and
+            @mentions. Keep a note private, share it with a few people, or with the whole team.
+          </p>
+        </div>
+        <Stage>
+          <BrowserFrame url="workinbox.io/app/notes">
+            <img src={shot("notes.webp")} alt="A shared note: decisions, a to-do list and open questions" width="2880" height="1800" loading="lazy" decoding="async" />
+          </BrowserFrame>
+        </Stage>
       </div>
     </section>
 
-    <section id="features" class="scroll-mt-16 py-12 sm:py-16">
-      <div class="reveal px-4 sm:px-6">
-        <SectionHeading muted="so you can focus on the product.">Everything a SaaS needs,</SectionHeading>
-      </div>
-      <div class="reveal mt-12 sm:mt-16" style="--reveal-delay: 120ms">
-        <FeaturesBento client:visible />
-      </div>
-    </section>
-
-    <section id="pricing" class="scroll-mt-16 py-12 sm:py-16">
-      <div class="reveal px-4 sm:px-6">
-        <SectionHeading muted="Pay yearly and get two months free.">Simple pricing.</SectionHeading>
-      </div>
-      <div class="reveal mt-12 sm:mt-16" style="--reveal-delay: 120ms">
-        <PricingCards />
-        <p class="text-muted-foreground mt-6 text-center text-sm">Prices exclude VAT.</p>
+    <section id="closer-look" class="scroll-mt-16 pt-24 sm:pt-32">
+      <SectionHeading muted="in one settings page.">A domain, its DNS and its mailboxes</SectionHeading>
+      <div class="mt-14 grid items-center gap-10 lg:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] lg:gap-14">
+        <div data-reveal>
+          <h3 class="text-[clamp(1.8rem,3vw,2.6rem)]">Set up in the time it takes DNS <em>to update.</em></h3>
+          <div class="mt-8"><PinLegend pins={pins} /></div>
+        </div>
+        <Stage>
+          <BrowserFrame url="workinbox.io/app/settings/mail">
+            <Annotated src={shot("mail-settings.webp")} alt="The domain acme.test with its DNS records, the catch-all choice and four mailboxes" width={2880} height={1800} pins={pins} />
+          </BrowserFrame>
+        </Stage>
       </div>
     </section>
 
-    <section id="faq" class="scroll-mt-16 py-12 sm:py-16">
-      <div class="reveal px-4 sm:px-6">
-        <SectionHeading muted="before they sign up.">What people ask</SectionHeading>
-      </div>
-      <div class="reveal mx-auto mt-12 w-full max-w-2xl sm:mt-16" style="--reveal-delay: 120ms">
-        <Faq items={faq} />
+    <section id="more" class="scroll-mt-24 pt-24 sm:pt-32">
+      <SectionHeading muted="without extra apps.">Also in the box</SectionHeading>
+      <FeatureLedger items={extras} cols={3} class="mt-12" />
+    </section>
+
+    <section id="self-host" class="scroll-mt-24 pt-24 sm:pt-32">
+      <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
+        <div data-reveal>
+          <p class="flex items-center gap-2 text-sm font-semibold"><Server className="size-4" /> Self-hosted or hosted</p>
+          <h3 class="mt-4 text-[clamp(1.9rem,3vw,2.7rem)]">Your Cloudflare account, <em>your data.</em></h3>
+          <p class="mt-4 text-lg leading-7 text-foreground/65">
+            WorkInbox runs on Cloudflare Workers, D1 and R2. Self-hosted, every message, attachment and note stays on your own
+            account, and you pay Cloudflare for what you use. Hosted, we run the same code for you.
+          </p>
+          <ul class="mt-6 space-y-2.5">
+            {["Open source, every feature in both versions", "The original of each message kept as .eml in R2", "One company per deployment, nothing shared with other customers"].map((f) => (
+              <li class="flex items-start gap-2.5"><Check className="mt-1 size-4 shrink-0" /> {f}</li>
+            ))}
+          </ul>
+          <a href="/docs/self-host" class="mt-6 inline-flex items-center gap-2 underline underline-offset-4">Deploy it yourself <ArrowRight className="size-4" /></a>
+        </div>
+        <div data-reveal class="code-card p-6 font-mono text-sm leading-7 sm:p-8">
+          <p class="text-white/45"># your own WorkInbox, on your Cloudflare account</p>
+          <p><span class="text-white/45">$</span> git clone {siteConfig.repoUrl.replace("https://", "")}</p>
+          <p><span class="text-white/45">$</span> pnpm install && pnpm setup</p>
+          <p><span class="text-white/45">$</span> pnpm deploy</p>
+          <p class="mt-3 text-white/45">✓ Worker, D1, R2 and queues created</p>
+          <p class="text-white/45">✓ Deployed to mail.yourcompany.com</p>
+        </div>
       </div>
     </section>
 
-    <CtaBanner muted="Start in a minute.">Ready to try it?</CtaBanner>
+    <section id="setup" class="scroll-mt-24 pt-24 sm:pt-32">
+      <SectionHeading muted="in three steps.">From domain to inbox</SectionHeading>
+      <div class="mt-14"><InstallTimeline steps={steps} /></div>
+    </section>
+
+    <section id="next" class="scroll-mt-24 pt-24 sm:pt-32">
+      <SectionHeading muted="on the same plans.">Coming next</SectionHeading>
+      <p class="mx-auto mt-5 max-w-xl text-center text-lg text-pretty text-foreground/65">Mail and notes ship today. This is what we are building next, so you know what you are signing up for.</p>
+      <FeatureLedger items={next} cols={4} class="mt-12" />
+    </section>
+
+    <section id="pricing" class="scroll-mt-16 pt-24 sm:pt-32">
+      <SectionHeading muted="Shared mailboxes are free.">Pay per person.</SectionHeading>
+      <p class="mx-auto mt-5 max-w-xl text-center text-lg text-foreground/65">Every plan has unlimited shared mailboxes and aliases. Yearly billing gives two months free. Prices exclude VAT.</p>
+      <div data-reveal="items" class="mt-14"><PricingCards /></div>
+    </section>
+
+    <section id="compare" class="scroll-mt-16 pt-24 sm:pt-32">
+      <SectionHeading muted="side by side, with sources.">How it compares</SectionHeading>
+      <div class="mx-auto mt-12 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {COMPETITORS.map((c) => (
+          <a href={`/vs/${c.slug}`} class="group flex items-center gap-3 rounded-xl border border-(--border) p-5 transition-colors hover:bg-(--accent)">
+            <span class="flex-1 font-medium">WorkInbox vs {c.name}</span>
+            <ArrowRight className="size-4 text-foreground/50" />
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section id="faq" class="scroll-mt-16 pt-24 pb-8 sm:pt-32">
+      <div class="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+        <div>
+          <h2 class="text-[clamp(1.9rem,3.6vw,3.1rem)] leading-[1.08]">Questions about WorkInbox</h2>
+          <p class="mt-4 max-w-xs text-foreground/60">
+            Something else? Write to <a href={`mailto:${siteConfig.supportEmail}`} class="text-foreground underline underline-offset-4">{siteConfig.supportEmail}</a>.
+          </p>
+        </div>
+        <div data-reveal><Faq items={faq} /></div>
+      </div>
+    </section>
   </div>
 </MarketingLayout>
+
+<script>
+  // Tour tabs (from Luxivo's home page): arrow keys move between them, the address bar follows.
+  const tabs = document.querySelector<HTMLElement>("[data-tabs]");
+  if (tabs) {
+    const buttons = [...tabs.querySelectorAll<HTMLButtonElement>("[data-tab]")];
+    const tablist = tabs.querySelector<HTMLElement>('[role="tablist"]')!;
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    const positionPill = () => {
+      const active = buttons.find((b) => b.getAttribute("aria-selected") === "true")!;
+      tablist.style.setProperty("--tour-pill-x", `${active.offsetLeft}px`);
+      tablist.style.setProperty("--tour-pill-y", `${active.offsetTop}px`);
+      tablist.style.setProperty("--tour-pill-width", `${active.offsetWidth}px`);
+      tablist.style.setProperty("--tour-pill-height", `${active.offsetHeight}px`);
+    };
+    positionPill();
+    requestAnimationFrame(() => requestAnimationFrame(() => (tablist.dataset.pillReady = "")));
+    const resizeObserver = new ResizeObserver(positionPill);
+    resizeObserver.observe(tablist);
+    buttons.forEach((b) => resizeObserver.observe(b));
+    void document.fonts.ready.then(positionPill);
+    const url = tabs.querySelector<HTMLElement>("[data-url]")!;
+    const select = (btn: HTMLButtonElement) => {
+      for (const b of buttons) {
+        const on = b === btn;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+        const panel = tabs.querySelector<HTMLElement>(`[data-panel="${b.dataset.tab}"]`)!;
+        panel.hidden = !on;
+        if (on) url.textContent = panel.dataset.urlValue ?? "";
+      }
+      positionPill();
+      if (btn.offsetLeft < tablist.scrollLeft || btn.offsetLeft + btn.offsetWidth > tablist.scrollLeft + tablist.clientWidth) {
+        tablist.scrollTo({ left: btn.offsetLeft - (tablist.clientWidth - btn.offsetWidth) / 2, behavior: reducedMotion.matches ? "instant" : "smooth" });
+      }
+    };
+    buttons.forEach((b, n) => {
+      b.tabIndex = n === 0 ? 0 : -1;
+      b.addEventListener("click", () => select(b));
+      b.addEventListener("keydown", (e) => {
+        const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!d && e.key !== "Home" && e.key !== "End") return;
+        e.preventDefault();
+        const next = buttons[e.key === "Home" ? 0 : e.key === "End" ? buttons.length - 1 : (n + d + buttons.length) % buttons.length]!;
+        select(next);
+        next.focus();
+      });
+    });
+  }
+</script>

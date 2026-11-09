@@ -78,6 +78,24 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Template files changed here: `src/worker.ts` (notes WebSocket route, `NoteRoom` export), `wrangler.jsonc`
   (`NOTE_ROOM` binding and DO migration), `astro.config.mjs` (`optimizeDeps`).
 
+## Marketing site and SEO/GEO (product)
+
+- Modelled on Luxivo (`../support-chat`): the same look system (`styles/marketing.css`, scoped to `.mk` by
+  `MarketingLayout look="paper"`; docs, legal and error pages use `look="plain"`), GSAP motion
+  (`scripts/marketing-motion.ts`: `data-split`, `data-reveal`, `data-magnetic`) and craft components
+  (`components/site/craft/*`, `BrowserFrame`, `ComparisonTable`). WorkInbox colours: paper and ink, no brand colour,
+  Instrument Serif headlines, emphasis = serif italic in `--mk-soft-ink`.
+- Screens on the site are the real app: `pnpm shots [--seed] [name]` (`scripts/marketing-shots.ts`, needs `pnpm dev`)
+  seeds the demo org (acme.test) through the local email handler and the notes API, then saves `public/marketing/*.webp`.
+- Pages: home (`pages/index.astro`), `/pricing`, `/shared-mailbox`, `/google-workspace-alternative`, `/vs` and
+  `/vs/<slug>` from `config/compare.ts` (competitor facts from their own pages with `checked` and `sources`; re-check
+  before editing, keep "pick them if" and our gaps honest). `/llms.txt` is generated from `config/plans.ts` and
+  `compare.ts` (`lib/llms.ts`): update it with every shipped feature, like Luxivo's feature rollout (landing, `/vs` row,
+  `llms.txt`, docs, footer).
+- Claim only what ships: no IMAP, no import, calendar/contacts/drive are "Soon". Pricing is per person (personal
+  mailbox) with free shared mailboxes; Paddle checkout still sells quantity 1 (per-seat billing is a TODO).
+- OpenSEO project "WorkInbox" (US/en) holds the keyword research and context.
+
 ## Template
 
 Micro SaaS on Cloudflare Workers, built from the shared template (see TEMPLATE.md for how template

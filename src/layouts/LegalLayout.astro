@@ -11,7 +11,7 @@ interface Props {
 const { title, description, updated = siteConfig.legal.updated } = Astro.props;
 ---
 
-<MarketingLayout title={title} description={description}>
+<MarketingLayout title={title} description={description} look="plain">
   <div class="container-page">
     <article class="typeset mx-auto max-w-160 py-12 sm:py-16">
       <h1>{title}</h1>

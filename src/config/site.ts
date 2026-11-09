@@ -1,4 +1,4 @@
-import { BookOpen, Code, HelpCircle, LayoutGrid, Plug, Users, type LucideIcon } from "lucide-react";
+import { BookOpen, Code, HelpCircle, Inbox, NotebookPen, Plug, Scale, Server, Users, type LucideIcon } from "lucide-react";
 
 /** Header links: optional descriptions, Lucide components or local logo paths. */
 export type NavLink = { href: string; label: string; description?: string; icon?: LucideIcon; logo?: string };
@@ -12,7 +12,9 @@ export type NavItem =
  */
 export const siteConfig = {
   name: "WorkInbox",
-  description: "Open-source mail, calendar, contacts and drive for your team, on Cloudflare.",
+  description: "Open-source team email on your own domain: personal and shared mailboxes, aliases, catch-all and shared notes, on Cloudflare.",
+  /** The public code, linked from the self-hosting docs and the footer. */
+  repoUrl: "https://github.com/jakub-kalamarz/inbox",
   /** Production URL, used for canonical links and the sitemap (astro.config.mjs reads it too). */
   url: "https://workinbox.io",
   supportEmail: "support@workinbox.io",
@@ -22,11 +24,20 @@ export const siteConfig = {
     {
       label: "Product",
       items: [
-        { href: "/#features", label: "All features", description: "Explore what you can do with the product.", icon: LayoutGrid },
-        { href: "/docs/team", label: "Your team", description: "Invite teammates and manage your workspace.", icon: Users },
-        { href: "/docs/mcp", label: "AI apps", description: "Connect your AI assistant to your workspace.", icon: Plug },
+        { href: "/#features", label: "Mail on your domain", description: "Personal mailboxes, aliases, catch-all and spam rules.", icon: Inbox },
+        { href: "/shared-mailbox", label: "Shared mailboxes", description: "support@ and sales@, answered by the whole team.", icon: Users },
+        { href: "/#notes", label: "Shared notes", description: "Notes your team writes together, live.", icon: NotebookPen },
+        { href: "/docs/self-host", label: "Self-hosting", description: "Run it free on your own Cloudflare account.", icon: Server },
+        { href: "/docs/mcp", label: "AI apps", description: "Read and answer mail from Claude or ChatGPT.", icon: Plug },
       ],
       footer: { href: "/docs/quickstart", label: "Get started" },
+    },
+    {
+      label: "Compare",
+      items: [
+        { href: "/google-workspace-alternative", label: "Google Workspace alternative", description: "What you keep, what you give up, what it costs.", icon: Scale },
+        { href: "/vs", label: "All comparisons", description: "Microsoft 365, Zoho, Proton, Fastmail, Nextcloud.", icon: Scale },
+      ],
     },
     { href: "/pricing", label: "Pricing" },
     {

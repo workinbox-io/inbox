@@ -15,7 +15,7 @@ switch between them in **Settings → Organization**.
 | ------ | ------------------------------------------------------------- |
 | Owner  | Everything, including deleting the organization               |
 | Admin  | Manage the team, billing and API keys                         |
-| Member | Day-to-day work on projects                                   |
+| Member | Their own mailbox, the shared ones they are given, and notes  |
 
 An owner changes someone's role from the member list. Ownership itself moves only with
 **Transfer ownership**, so an organization always has exactly one person who can delete it.

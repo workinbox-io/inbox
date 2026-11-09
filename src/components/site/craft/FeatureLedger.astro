@@ -1,0 +1,37 @@
+---
+/**
+ * Features split by hairlines (from Luxivo): no boxes, a numbered row with the icon, the title and a line of text.
+ * With `href` the number becomes an arrow and the item a link. A slot named `item-<index>` adds a small fragment under it.
+ */
+import { ArrowUpRight, type LucideIcon } from "lucide-react";
+
+export type LedgerItem = { icon?: LucideIcon; title: string; text: string; href?: string; soon?: boolean };
+
+interface Props {
+  items: LedgerItem[];
+  /** Columns from lg up. */
+  cols?: 2 | 3 | 4;
+  class?: string;
+}
+const { items, cols = 3, class: className } = Astro.props;
+const fragments = await Promise.all(items.map((_, i) => (Astro.slots.has(`item-${i}`) ? Astro.slots.render(`item-${i}`) : null)));
+---
+
+<div class:list={["ledger", `ledger-${cols}`, className]}>
+  {
+    items.map((f, i) => {
+      const Tag = f.href ? "a" : "div";
+      return (
+        <Tag href={f.href} class="ledger-item">
+          <span class="ledger-top">
+            {f.icon ? <f.icon className="size-5" /> : <span />}
+            {f.href ? <ArrowUpRight className="size-4 text-foreground/40" /> : <span class="ledger-num">{f.soon ? "Soon" : String(i + 1).padStart(2, "0")}</span>}
+          </span>
+          <h3>{f.title}</h3>
+          <p>{f.text}</p>
+          {fragments[i] ? <div class="ledger-fragment" set:html={fragments[i]} /> : null}
+        </Tag>
+      );
+    })
+  }
+</div>

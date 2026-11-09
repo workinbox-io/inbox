@@ -3,13 +3,13 @@ title: API
 description: Automate with the REST API and organization API keys.
 section: Guides
 order: 1
-updated: 2026-10-25
+updated: 2026-11-09
 ---
 
 Create a key in **Settings → Organization → API keys** and send it as a bearer token:
 
 ```sh
-curl https://example.com/api/v1/projects \
+curl https://workinbox.io/api/v1/notes \
   -H "Authorization: Bearer sk_…"
 ```
 

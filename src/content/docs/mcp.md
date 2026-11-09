@@ -3,11 +3,11 @@ title: AI apps (MCP)
 description: Use your data from Claude, ChatGPT, Claude Code and Cursor.
 section: Guides
 order: 2
-updated: 2026-10-27
+updated: 2026-11-09
 ---
 
-Connect an AI app and ask it about your projects, or let it create and change them for you. The
-app talks to our MCP server at `https://example.com/mcp`. You'll find the URL and short setup
+Connect an AI app and ask it to search your mail, read a thread, draft and send a reply, or find, write and update
+notes. The app talks to the MCP server at `https://workinbox.io/mcp` (self-hosted: your own address plus `/mcp`). You'll find the URL and short setup
 steps in **Settings → AI apps**.
 
 ## Claude
@@ -18,13 +18,12 @@ and click **Connect**. Sign in, pick an organization if you're in several, and a
 ## ChatGPT
 
 In ChatGPT, open **Settings → Apps → Advanced settings** and turn on developer mode. Choose
-**Create app**, paste the server URL, pick OAuth, then sign in and allow access. Project lists show
-up as an interactive card you can add projects from.
+**Create app**, paste the server URL, pick OAuth, then sign in and allow access.
 
 ## Claude Code, Cursor and other tools
 
 ```sh
-claude mcp add --transport http example https://example.com/mcp
+claude mcp add --transport http workinbox https://workinbox.io/mcp
 ```
 
 Then run `/mcp` in Claude Code to sign in. Tools without a sign-in flow can send an organization
