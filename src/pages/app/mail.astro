@@ -1,5 +1,6 @@
 ---
 import { NotificationCenter } from "@/components/mailbox/notification-center";
+import { MailViewToggle } from "@/components/mailbox/view-toggle";
 import AppLayout from "@/layouts/AppLayout.astro";
 import MailLayout from "@/layouts/MailLayout.astro";
 import { MailboxApp } from "@/components/mailbox/mailbox-app";
@@ -36,6 +37,7 @@ const user = Astro.locals.user!;
   <div class="flex min-w-0 flex-1 flex-col">
   <div class="flex shrink-0 items-center justify-end gap-2 border-b bg-background px-3 py-1">
     <span class="mr-auto text-sm font-medium">Mail</span>
+    {manager && <MailViewToggle client:load view={mailOnly ? "mail" : "console"} />}
     <NotificationCenter client:load />
 
   </div>

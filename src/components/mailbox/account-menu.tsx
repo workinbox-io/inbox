@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ChevronsUpDown, KeyRound, LogOut, Monitor, Moon, PenLine, Settings, Sun } from "lucide-react"
+import { ChevronsUpDown, KeyRound, LayoutDashboard, LogOut, Monitor, Moon, PenLine, Settings, Sun } from "lucide-react"
 
 import { authClient } from "@/lib/auth-client"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -43,7 +43,7 @@ export function AccountMenu({ user, onSettings, compact = false, canManage = fal
             <span className="text-muted-foreground truncate text-xs">{user.email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {canManage && <DropdownMenuItem asChild><a href="/app/mail?view=console">Admin console</a></DropdownMenuItem>}
+          {canManage && <DropdownMenuItem asChild><a href="/app/mail?view=console"><LayoutDashboard /> Admin console</a></DropdownMenuItem>}
           {onSettings ? (
             <>
               <DropdownMenuItem onSelect={() => onSettings()}>

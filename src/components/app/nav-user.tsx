@@ -12,6 +12,7 @@ import {
   Moon,
   ShieldCheck,
   Sun,
+  Mail,
   UserRound,
   Users,
 } from "lucide-react"
@@ -80,7 +81,12 @@ export function NavUser({ user }: { user: { name: string; email: string } }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem asChild><a href="/app/mail?view=mail">Mail only</a></DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="/app/mail?view=mail" data-astro-reload>
+                  <Mail />
+                  Mail only
+                </a>
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <a href="/app/settings/account">
                   <UserRound />
