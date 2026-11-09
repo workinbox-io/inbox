@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AlarmClock, Archive, AtSign, CheckCheck, Clock, CornerUpLeft, Inbox, Loader2, MailOpen, Mail, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, Settings2, ShieldAlert, Star, Trash2, X, type LucideIcon } from "lucide-react"
+import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, Inbox, Loader2, MailOpen, Mail, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, Settings2, ShieldAlert, Star, Trash2, X, type LucideIcon } from "lucide-react"
 
 import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
@@ -60,6 +60,8 @@ export function ThreadList({
   drafts,
   onCompose,
   onSettings,
+  onOutbox,
+  outboxCount = 0,
   rail = false,
   account,
 }: {
@@ -85,6 +87,9 @@ export function ThreadList({
   drafts: Set<string>
   onCompose: () => void
   onSettings: () => void
+  /** Opens the outbox; on a phone the list header has the button (the rail has it on desktop). */
+  onOutbox: () => void
+  outboxCount?: number
   /** Folders and mailboxes live in the rail (desktop): the list shows only the folder's name and search. */
   rail?: boolean
   /** The account menu (mail-only view on a phone), next to Compose. */
@@ -141,6 +146,10 @@ export function ThreadList({
           ) : (
             <span className="min-w-0 flex-1 truncate text-sm font-medium">{mailboxes[0]}</span>
           )}
+          <Button variant="ghost" size="icon-sm" className="relative" onClick={onOutbox} aria-label={outboxCount ? `Outbox, ${outboxCount} scheduled` : "Outbox"} title="Outbox">
+            <CalendarClock />
+            {outboxCount ? <span className="bg-foreground text-background absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums">{outboxCount}</span> : null}
+          </Button>
           <Button variant="ghost" size="icon-sm" onClick={onSettings} aria-label="Settings" title="Settings">
             <Settings2 />
           </Button>

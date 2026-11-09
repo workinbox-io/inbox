@@ -20,6 +20,7 @@ import { LabelActions } from "./mail-rules"
 import { MailPreferences, type PreferenceSection } from "./mail-preferences"
 import { FolderRail } from "./folder-rail"
 import { AccountMenu, type MailUser } from "./account-menu"
+import { OutboxPanel, scheduledCount, type OutboxRow } from "./outbox-panel"
 import { Toaster } from "@/components/ui/sonner"
 import { FOLDER_KEYS, Kbd, assignMailboxColors } from "./mail-ui"
 import { ThreadView, type ThreadViewHandle } from "./thread-view"
@@ -68,6 +69,8 @@ export interface MailboxAppProps {
   canManage?: boolean
   /** The mail-only view (MailLayout, members): full screen, with the account menu instead of the dashboard sidebar. */
   account?: MailUser
+  /** Open the outbox (scheduled and recent sends) instead of a folder: `/app/mail?pane=outbox`. */
+  outbox?: boolean
 }
 
 /** The member's mailboxes, laid out like a mail app: folders and threads, the open thread, and who it's with. */
@@ -79,6 +82,19 @@ export function MailboxApp(props: MailboxAppProps) {
   const multiple = props.mailboxes.length > 1
   const [mailbox, setMailbox] = React.useState(multiple ? ALL_MAILBOXES : (props.mailboxes[0] ?? ""))
   const [folder, setFolder] = React.useState<MailFolder>("inbox")
+  const [outbox, setOutbox] = React.useState(!!props.outbox)
+  const [outboxCount, setOutboxCount] = React.useState(0)
+  const onOutboxJobs = React.useCallback((jobs: OutboxRow[]) => setOutboxCount(scheduledCount(jobs)), [])
+  const refreshOutboxCount = React.useCallback(() => {
+    api<{ jobs: OutboxRow[] }>("GET", "/api/app/mail/outbox").then((r) => onOutboxJobs(r.jobs)).catch(() => {})
+  }, [onOutboxJobs])
+  React.useEffect(refreshOutboxCount, [refreshOutboxCount])
+  React.useEffect(() => {
+    const url = new URL(location.href)
+    if (outbox) url.searchParams.set("pane", "outbox")
+    else url.searchParams.delete("pane")
+    replaceUrl(url)
+  }, [outbox])
   const [query, setQuery] = React.useState("")
   const [threads, setThreads] = React.useState(props.threads)
   const [hasMore, setHasMore] = React.useState(props.hasMore)
@@ -192,6 +208,7 @@ export function MailboxApp(props: MailboxAppProps) {
 
   const schedule = useUndoSend((threadId) => {
     loadThreads().catch(() => {})
+    refreshOutboxCount()
     if (threadId === selectedId) loadDetail(threadId).catch(() => {})
   })
 
@@ -395,6 +412,8 @@ export function MailboxApp(props: MailboxAppProps) {
       drafts={drafts}
       onCompose={() => openCompose()}
       onSettings={() => openSettings()}
+      onOutbox={() => setOutbox(true)}
+      outboxCount={outboxCount}
       rail={desktop}
       account={props.account && !desktop ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} compact /> : null}
     />
@@ -444,21 +463,36 @@ export function MailboxApp(props: MailboxAppProps) {
             onMailbox={(m) => {
               setMailbox(m)
               setSelectedId(null)
+              setOutbox(false)
             }}
             folder={folder}
             onFolder={(f) => {
               setFolder(f)
               setQuery("")
               setSelectedId(null)
+              setOutbox(false)
             }}
             unread={unread}
             onCompose={() => openCompose()}
             onSettings={() => openSettings()}
+            outbox={outbox}
+            onOutbox={() => setOutbox(true)}
+            outboxCount={outboxCount}
             footer={props.account ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} /> : undefined}
           />
         ) : null}
         <div className="min-w-0 flex-1">
-        {desktop ? (
+        {outbox ? (
+          <OutboxPanel
+            onJobs={onOutboxJobs}
+            onBack={desktop ? undefined : () => setOutbox(false)}
+            onOpenThread={(id) => {
+              setOutbox(false)
+              setFolder("sent")
+              setSelectedId(id)
+            }}
+          />
+        ) : desktop ? (
           <ResizablePanelGroup key={wide ? "wide" : "narrow"} orientation="horizontal">
             <ResizablePanel id="list" defaultSize={wide ? "28%" : "36%"} minSize="260px" maxSize="50%">
               {listPane}
@@ -491,7 +525,6 @@ export function MailboxApp(props: MailboxAppProps) {
           {sender}
         </SheetContent>
       </Sheet>
-      {!desktop ? <a href="/app/mail/outbox" className="bg-background fixed right-4 bottom-4 rounded-md border px-3 py-2 text-sm shadow-sm">Outbox &amp; scheduled</a> : null}
       <ComposeWindow
         open={compose.open}
         prefill={compose.prefill}

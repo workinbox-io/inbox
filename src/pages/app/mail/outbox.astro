@@ -1,9 +1,4 @@
 ---
-import MailLayout from "@/layouts/MailLayout.astro";
-import { OutboxPanel } from "@/components/mailbox/outbox-panel";
-import { viewerMailboxes } from "@/lib/server/mail/access";
-import { listOutboxJobs } from "@/lib/server/mail/outbox";
-const boxes = await viewerMailboxes({ orgId: Astro.locals.orgId!, userId: Astro.locals.user!.id, role: Astro.locals.role ?? "member" });
-const initial = await listOutboxJobs(boxes);
+// The outbox lives inside the mail app now (Outbox in the folder rail); old links land there.
+return Astro.redirect("/app/mail?pane=outbox");
 ---
-<MailLayout title="Outbox & scheduled"><OutboxPanel client:load initial={initial} /></MailLayout>

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, Plus, Settings2 } from "lucide-react"
+import { CalendarClock, Check, Plus, Settings2 } from "lucide-react"
 
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
 import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
@@ -17,6 +17,9 @@ export function FolderRail({
   unread,
   onCompose,
   onSettings,
+  outbox,
+  onOutbox,
+  outboxCount,
   footer,
 }: {
   mailboxes: string[]
@@ -27,6 +30,11 @@ export function FolderRail({
   unread: Record<string, number>
   onCompose: () => void
   onSettings: () => void
+  /** The outbox (scheduled and recent sends) is open instead of a folder. */
+  outbox: boolean
+  onOutbox: () => void
+  /** Scheduled sends, shown next to "Outbox". */
+  outboxCount: number
   /** The mail-only view's account menu; the dashboard has its own in the sidebar. */
   footer?: React.ReactNode
 }) {
@@ -44,10 +52,9 @@ export function FolderRail({
         <Kbd className="ml-auto">C</Kbd>
       </button>
 
-      <a href="/app/mail/outbox" className="text-muted-foreground hover:text-foreground rounded-md px-2 text-sm">Outbox &amp; scheduled</a>
       <ul className="grid gap-px">
         {FOLDERS.map((f) => {
-          const active = folder === f.id
+          const active = !outbox && folder === f.id
           const count = f.id === "inbox" ? inboxUnread : 0
           return (
             <li key={f.id}>
@@ -74,6 +81,19 @@ export function FolderRail({
           )
         })}
       </ul>
+      <button
+        type="button"
+        onClick={onOutbox}
+        aria-current={outbox ? "page" : undefined}
+        className={cn(
+          "focus-visible:ring-ring/50 -mt-4 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-[13px] outline-none focus-visible:ring-[3px]",
+          outbox ? "bg-foreground/[0.06] text-foreground font-medium" : "text-foreground/70 hover:bg-foreground/[0.035] hover:text-foreground",
+        )}
+      >
+        <CalendarClock className={cn("size-4 shrink-0", outbox ? "text-foreground" : "text-muted-foreground")} />
+        <span className="flex-1 text-left">Outbox</span>
+        {outboxCount ? <span className={cn("text-xs tabular-nums", outbox ? "text-foreground font-semibold" : "text-foreground/60 font-medium")} title={`${outboxCount} scheduled`}>{outboxCount}</span> : null}
+      </button>
 
       {mailboxes.length ? (
         <div className="grid gap-1">
@@ -83,8 +103,7 @@ export function FolderRail({
               <Settings2 className="size-3.5" />
             </button>
           </div>
-          <a href="/app/mail/outbox" className="text-muted-foreground hover:text-foreground rounded-md px-2 text-sm">Outbox &amp; scheduled</a>
-      <ul className="grid gap-px">
+          <ul className="grid gap-px">
             {mailboxes.map((m) => (
               <MailboxRow
                 key={m}
