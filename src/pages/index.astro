@@ -310,15 +310,26 @@ const jsonLd = [
       </div>
     </section>
 
+    <!-- Closing call to action: an ink card (inverted from the paper page) with the app peeking out of its corner. -->
     <section class="pt-24 pb-12 sm:pt-32">
-      <div data-reveal class="stage text-center">
-        <h2 class="mx-auto max-w-3xl pt-6 text-[clamp(2.2rem,5vw,4rem)]">Your domain's mail, <em>set up this afternoon.</em></h2>
-        <p class="mx-auto mt-5 max-w-xl text-lg text-foreground/70">{TRIAL_DAYS}-day trial, no card needed. Or run it on your own Cloudflare account, free.</p>
-        <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <a href="/signup" data-magnetic class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
-          <a href={siteConfig.repoUrl} target="_blank" rel="noopener" class="mk-btn mk-btn-ghost">View on GitHub</a>
+      <div data-reveal class="cta-ink grid items-center lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+        <div class="relative z-10 px-7 py-12 sm:px-12 sm:py-16 lg:py-20 lg:pr-4 lg:pl-14">
+          <span aria-hidden="true" class="flex size-12 items-center justify-center rounded-2xl bg-white/8 ring-1 ring-white/12"><img src="/logo.svg" alt="" class="size-6" /></span>
+          <h2 class="mt-8 max-w-xl text-[clamp(2.2rem,4.4vw,3.6rem)] leading-[1.04]">Your domain's mail, <em>set up this afternoon.</em></h2>
+          <p class="mt-5 max-w-md text-lg leading-7 text-white/65">Add the domain, add your people, share support@. Hosted from €{lowest} per person, or free on your own Cloudflare account.</p>
+          <div class="mt-9 flex flex-wrap items-center gap-3">
+            <a href="/signup" data-magnetic class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
+            <a href={siteConfig.repoUrl} target="_blank" rel="noopener" class="mk-btn mk-btn-ghost">View on GitHub</a>
+          </div>
+          <ul class="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/55">
+            {[`${TRIAL_DAYS}-day trial, no card`, "Shared mailboxes free", "Open source"].map((f) => (
+              <li class="flex items-center gap-1.5"><Check className="size-3.5" /> {f}</li>
+            ))}
+          </ul>
         </div>
-        <div class="pb-6"></div>
+        <div class="cta-peek" aria-hidden="true">
+          <img src={shot("mail-thread-dark.webp")} alt="" width="2880" height="1800" loading="lazy" decoding="async" />
+        </div>
       </div>
     </section>
   </div>

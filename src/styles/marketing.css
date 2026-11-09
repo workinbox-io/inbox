@@ -1068,3 +1068,83 @@ a.ledger-item:hover {
     radial-gradient(ellipse 60% 70% at 50% 100%, rgb(255 255 255 / 0.05), transparent 70%),
     var(--mk-paper-2);
 }
+
+/* ---------- Closing CTA: ink on the paper page, the app peeking out of the corner ---------- */
+.cta-ink {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 1.75rem;
+  color: #f2f2f0;
+  background:
+    radial-gradient(ellipse 60% 80% at 100% 100%, rgb(255 255 255 / 0.07), transparent 65%),
+    #121212;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.06),
+    0 50px 90px -50px rgb(0 0 0 / 0.55);
+}
+/* Faint dots behind the words, fading out towards the screen. */
+.cta-ink::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 55% 75% at 20% 40%, #000, transparent 75%);
+}
+.dark .mk .cta-ink {
+  background:
+    radial-gradient(ellipse 60% 80% at 100% 100%, rgb(255 255 255 / 0.06), transparent 65%),
+    #1a1a1a;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.mk .cta-ink h2 {
+  color: #f4f4f2;
+}
+.mk .cta-ink h2 em {
+  color: rgb(244 244 242 / 0.5);
+}
+.cta-ink .mk-btn {
+  color: #121212;
+  background: #f4f4f2;
+}
+.cta-ink .mk-btn:hover {
+  background: #ffffff;
+}
+.cta-ink .mk-btn-ghost {
+  color: #f4f4f2;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.22);
+}
+.cta-ink .mk-btn-ghost:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+/* The app window runs off the card's right and bottom edges. */
+.cta-peek {
+  position: relative;
+  align-self: end;
+  height: 100%;
+  min-height: 16rem;
+  margin-left: 1.75rem;
+}
+.cta-peek img {
+  position: absolute;
+  top: 3.5rem;
+  left: 0;
+  width: 150%;
+  max-width: none;
+  border-radius: 0.9rem 0 0 0;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.1),
+    -30px 30px 80px -20px rgb(0 0 0 / 0.7);
+}
+@media (max-width: 1023px) {
+  .cta-peek {
+    height: 18rem;
+  }
+  .cta-peek img {
+    top: 0;
+    width: 160%;
+  }
+}
