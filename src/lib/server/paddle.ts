@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { PLANS, type BillingInterval, type PlanId } from "@/config/plans";
 import { db, eq, organization, subscriptions } from "@/db";
 import { HttpError } from "./api";
+import { billableSeats } from "./seats";
 import type { PaddleEvent } from "./paddle-webhook";
 
 export { verifyWebhook } from "./paddle-webhook";
@@ -24,7 +25,7 @@ export interface PaddleSubscription {
   status: string;
   customer_id: string;
   custom_data: Record<string, unknown> | null;
-  items: { price: Pick<PaddlePrice, "id" | "custom_data"> }[];
+  items: { quantity: number; price: Pick<PaddlePrice, "id" | "custom_data"> }[];
   billing_cycle: { interval: string } | null;
   current_billing_period: { ends_at: string } | null;
   scheduled_change: unknown;
@@ -63,12 +64,15 @@ async function findPrice(plan: PlanId, interval: BillingInterval) {
 }
 
 /** The plan item of a subscription; null when it isn't one of ours (a shared Paddle account). */
-function planOf(subscription: Pick<PaddleSubscription, "items">): PlanId | null {
-  for (const item of subscription.items) {
+export function planItem<T extends Pick<PaddleSubscription, "items">>(subscription: T): T["items"][number] | null {
+  return subscription.items.find((item) => {
     const plan = item.price.custom_data?.plan;
-    if (typeof plan === "string" && plan in PLANS) return plan as PlanId;
-  }
-  return null;
+    return typeof plan === "string" && plan in PLANS;
+  }) ?? null;
+}
+
+function planOf(subscription: Pick<PaddleSubscription, "items">): PlanId | null {
+  return (planItem(subscription)?.price.custom_data?.plan as PlanId | undefined) ?? null;
 }
 
 /** Each org maps to one Paddle customer. Paddle keeps customers unique by e-mail, so an existing one is reused. */
@@ -101,7 +105,8 @@ export async function createCheckout(orgId: string, email: string, plan: PlanId,
   const price = await findPrice(plan, interval);
   if (!price) throw new HttpError(500, `Price for ${plan}/${interval} is missing in Paddle. Run pnpm paddle:sync.`);
   const transaction = await paddleFetch<{ checkout: { url: string | null } | null }>("POST", "/transactions", {
-    items: [{ price_id: price.id, quantity: 1 }],
+    // Per person: one unit for each personal mailbox (lib/server/seats.ts keeps it in step afterwards).
+    items: [{ price_id: price.id, quantity: await billableSeats(orgId) }],
     customer_id: await ensureCustomer(orgId, email),
     // Copied onto the subscription, so webhooks can be matched to the org.
     custom_data: { orgId },

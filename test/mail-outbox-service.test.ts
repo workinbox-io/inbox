@@ -10,6 +10,8 @@ vi.mock("cloudflare:workers", () => ({ env: {
   FILES: { delete: async () => {}, list: async () => ({ objects: [], truncated: false }) },
 } }));
 vi.mock("@/lib/server/api", () => ({ HttpError: class extends Error { constructor(public status: number, message: string) { super(message) } } }));
+// Plan gating (hosted) is org.ts's job, covered elsewhere; the outbox only has to call it.
+vi.mock("@/lib/server/org", () => ({ requireActivePlan: async () => ({ id: "business" }) }));
 vi.mock("@/lib/server/queue", () => ({ enqueue: (...args: unknown[]) => state.enqueue(...args) }));
 vi.mock("@/lib/server/email", () => ({ sendNow: (...args: unknown[]) => state.send(...args) }));
 vi.mock("@/lib/server/mail/storage", () => ({

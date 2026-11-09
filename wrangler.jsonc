@@ -15,15 +15,16 @@
   "vars": {
     "PUBLIC_APP_URL": "https://workinbox.io",
     "EMAIL_FROM_ADDRESS": "noreply@workinbox.io",
-    "PADDLE_ENV": "sandbox",
+    "PADDLE_ENV": "production",
     "ADMIN_EMAILS": "",
     // Staff mailboxes on your domain, read and answered at /app/admin-mail (lib/server/admin-mail.ts),
     // comma-separated, e.g. "support@example.com,legal@example.com". Each needs an Email Routing rule
     // "Send to Worker"; incoming mail is also forwarded to ADMIN_MAIL_FORWARD (a verified destination).
     "ADMIN_MAILBOXES": "",
     "ADMIN_MAIL_FORWARD": "",
-    // "self": one company on its own Cloudflare account, billing off. "cloud": hosted, plans and limits on.
-    "DEPLOY_MODE": "self",
+    // "self": one company on its own Cloudflare account, billing off (self-hosters set this). "cloud": workinbox.io,
+    // hosted, per-person plans on (lib/server/seats.ts).
+    "DEPLOY_MODE": "cloud",
     // cloud: orgs get <slug>.<MAIL_BASE_DOMAIN> at once (needs a wildcard Email Routing rule). Empty: custom domains only.
     "MAIL_BASE_DOMAIN": ""
   },

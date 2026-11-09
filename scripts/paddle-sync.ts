@@ -41,13 +41,13 @@ for (const plan of PLAN_LIST) {
     }
     await paddle("POST", "/prices", {
       product_id: product.id,
-      description: `${plan.name}, billed ${interval}ly`,
+      description: `${plan.name}, per person, billed ${interval}ly`,
       unit_price: { amount: String(amount), currency_code: CURRENCY },
       billing_cycle: { interval, frequency: 1 },
       // Prices are quoted without VAT; Paddle adds it at checkout.
       tax_mode: "external",
-      // One plan per subscription: a fixed quantity hides the quantity picker at checkout.
-      quantity: { minimum: 1, maximum: 1 },
+      // Per person: the quantity is the org's personal mailboxes (lib/server/seats.ts sets it).
+      quantity: { minimum: 1, maximum: 10000 },
       custom_data: { plan: plan.id, interval },
     });
     if (existing) await paddle("PATCH", `/prices/${existing.id}`, { status: "archived" });

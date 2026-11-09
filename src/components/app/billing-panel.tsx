@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Check, ExternalLink, FolderKanban, Users } from "lucide-react"
+import { Check, ExternalLink, Users } from "lucide-react"
 import { toast } from "sonner"
 import { CURRENCY, PLAN_LIST, priceYearly } from "@/config/plans"
 
@@ -36,7 +36,7 @@ const STATUS: Record<string, { label: string; dot: string }> = {
 }
 
 /** Shown under the plan table; replace with what every plan of your product includes. */
-const INCLUDED = ["Unlimited usage within fair use", "Two-factor authentication", "Email support", "Cancel any time"]
+const INCLUDED = ["Unlimited shared mailboxes and aliases", "Two-factor authentication", "Email support", "Cancel any time"]
 
 const money = (cents: number) =>
   new Intl.NumberFormat("en", { style: "currency", currency: CURRENCY, maximumFractionDigits: 0 }).format(cents / 100)
@@ -109,15 +109,16 @@ export function BillingPanel(props: BillingPanelProps) {
             </p>
           </div>
           <div className="text-right">
-            <div className="text-5xl font-medium tracking-tight tabular-nums">{money(usage.plan.priceMonthly)}</div>
+            <div className="text-5xl font-medium tracking-tight tabular-nums">{money(usage.plan.priceMonthly * usage.seats)}</div>
             <div className="text-muted-foreground text-sm">
-              {status === "trialing" && usage.plan.priceMonthly > 0 ? "per month after the trial" : "per month"}
+              {money(usage.plan.priceMonthly)} × {usage.seats} {usage.seats === 1 ? "person" : "people"}
+              {status === "trialing" && usage.plan.priceMonthly > 0 ? " a month after the trial" : " a month"}
             </div>
           </div>
         </div>
         <TickKpiCard
           metrics={[
-            { label: "Projects", icon: <FolderKanban />, value: usage.projects, max: usage.plan.projects },
+            { label: "People billed (personal mailboxes)", icon: <Users />, value: usage.seats, max: null },
             { label: "Team members", icon: <Users />, value: usage.members, max: usage.plan.members },
           ].map((m) => ({ ...m, color: usageColor(m.value, m.max) }))}
         />
@@ -128,7 +129,7 @@ export function BillingPanel(props: BillingPanelProps) {
           <CardHeader className="pb-4">
             <CardTitle>Choose a plan</CardTitle>
             <CardDescription>
-              Prices in {CURRENCY}, excluding VAT. Plans differ in limits and features.
+              Prices in {CURRENCY} per person (personal mailbox), excluding VAT. Shared mailboxes and aliases are free.
             </CardDescription>
             <CardAction>
               <PeriodTabs
@@ -147,9 +148,8 @@ export function BillingPanel(props: BillingPanelProps) {
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="pl-7">Plan</TableHead>
-                  <TableHead className="text-right">Projects</TableHead>
-                  <TableHead className="text-right">Members</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-right">Per person</TableHead>
+                  <TableHead className="text-right">For {usage.seats} {usage.seats === 1 ? "person" : "people"}</TableHead>
                   <TableHead className="w-40 pr-7" />
                 </TableRow>
               </TableHeader>
@@ -169,10 +169,12 @@ export function BillingPanel(props: BillingPanelProps) {
                           ) : null}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right tabular-nums">{plan.projects ?? "Unlimited"}</TableCell>
-                      <TableCell className="text-right tabular-nums">{plan.members ?? "Unlimited"}</TableCell>
                       <TableCell className="text-right">
-                        <span className="text-base font-medium tabular-nums">{money(price)}</span>
+                        <span className="tabular-nums">{money(price)}</span>
+                        <span className="text-muted-foreground text-xs">/{interval === "month" ? "mo" : "yr"}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-base font-medium tabular-nums">{money(price * usage.seats)}</span>
                         <span className="text-muted-foreground text-xs">/{interval === "month" ? "mo" : "yr"}</span>
                       </TableCell>
                       <TableCell className="pr-7 text-right">

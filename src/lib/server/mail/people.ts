@@ -6,7 +6,8 @@
 import { account, and, db, eq, inArray, mailboxAccess, mailboxes, mailAccountSecurity, member, session, user } from "@/db";
 import { HttpError } from "@/lib/server/api";
 import { getAuth } from "@/lib/server/auth";
-import { seatUpsell, seatsLeft } from "@/lib/server/org";
+import { requireActivePlan, seatUpsell, seatsLeft } from "@/lib/server/org";
+import { seatsChanged } from "@/lib/server/seats";
 import { freeAddress } from "./admin";
 
 /** 14 characters without look-alikes (0/O, 1/l/I), grouped for reading out loud: abcd-efgh-jkmn-pq. */
@@ -28,6 +29,7 @@ export interface NewPerson {
 }
 
 export async function addPerson(orgId: string, input: NewPerson) {
+  await requireActivePlan(orgId);
   const { plan, left } = await seatsLeft(orgId);
   if (left !== null && left < 1) throw new HttpError(403, seatUpsell(plan));
   const { address, domain } = await freeAddress(orgId, input.domainId, input.local);
@@ -54,6 +56,7 @@ export async function addPerson(orgId: string, input: NewPerson) {
     db.insert(mailboxes).values({ id: mailboxId, orgId, domainId: domain.id, address, kind: "personal", userId, displayName: name }),
     ...shared.map((s) => db.insert(mailboxAccess).values({ mailboxId: s.id, userId })),
   ]);
+  await seatsChanged(orgId);
   return { userId, address, password, shared: shared.length };
 }
 

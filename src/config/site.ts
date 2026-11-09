@@ -51,16 +51,16 @@ export const siteConfig = {
   ] as NavItem[],
   /** Shown on the legal pages and in the footer. */
   legal: {
-    company: "Your Company Ltd.",
+    company: "Swift Apps Jakub Kałamarz",
     /** Short trading name for the footer copyright. */
-    brand: "Your Company",
-    address: "Street 1, 00-000 City, Country",
-    registry: "",
-    taxId: "",
+    brand: "Swift Apps",
+    address: "Kielanówka 16e m. 23, 35-106 Kielanówka, Poland",
+    registry: "REGON: 523561765",
+    taxId: "NIP: 5170430587",
     email: "legal@workinbox.io",
     /** Country of the company, ISO 3166-1 alpha-2. */
     country: "PL",
-    updated: "2026-10-25",
+    updated: "2026-11-09",
   },
 };
 

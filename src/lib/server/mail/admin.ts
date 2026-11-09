@@ -7,6 +7,8 @@ import { and, count, db, eq, inArray, invitation, gt, mailboxAccess, mailAliases
 import { ATTACHMENT_URL_PREFIX } from "@/lib/uploads";
 import { evaluateDns, isValidDomain, isValidLocalPart, normalizeDomain, requiredDnsRecords } from "@/lib/mail/rules";
 import { HttpError } from "@/lib/server/api";
+import { requireActivePlan } from "@/lib/server/org";
+import { seatsChanged } from "@/lib/server/seats";
 
 const dohAnswers = async (name: string, type: "MX" | "TXT") => {
   const res = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=${type}`, { headers: { accept: "application/dns-json" } });
@@ -54,6 +56,7 @@ async function ownDomain(orgId: string, domainId: string) {
 }
 
 export async function addDomain(orgId: string, raw: string) {
+  await requireActivePlan(orgId);
   const domain = normalizeDomain(raw);
   if (!isValidDomain(domain)) throw new HttpError(422, "Enter a domain like acme.com");
   const [taken] = await db.select({ id: mailDomains.id }).from(mailDomains).where(eq(mailDomains.domain, domain));
@@ -122,6 +125,7 @@ export interface NewMailbox {
 }
 
 export async function createMailbox(orgId: string, input: NewMailbox) {
+  await requireActivePlan(orgId);
   const { address, domain } = await freeAddress(orgId, input.domainId, input.local);
   if (input.kind === "personal") {
     if (!input.userId) throw new HttpError(422, "Pick the member this mailbox belongs to");
@@ -141,6 +145,7 @@ export async function createMailbox(orgId: string, input: NewMailbox) {
       displayName: input.displayName?.trim().slice(0, 100) ?? "",
     })
     .returning();
+  if (row!.kind === "personal") await seatsChanged(orgId);
   return row!;
 }
 
@@ -169,6 +174,7 @@ export async function updateMailbox(orgId: string, id: string, patch: MailboxPat
     set.userId = userId;
   }
   const [row] = await db.update(mailboxes).set(set).where(eq(mailboxes.id, mb.id)).returning();
+  if (row!.kind !== mb.kind) await seatsChanged(orgId);
   return row!;
 }
 
@@ -191,6 +197,7 @@ export async function deleteMailbox(orgId: string, id: string, force = false) {
   const keys = [...new Set([...rows.flatMap((r) => [...r.storageKeys, ...(r.direction === "in" ? r.files.map((f) => f.url.slice(ATTACHMENT_URL_PREFIX.length)) : []), ...(r.rawKey ? [r.rawKey] : []), ...(r.htmlKey ? [r.htmlKey] : [])]), ...outbox.flatMap(job=>[...job.payload.files.map(f=>f.url.slice(ATTACHMENT_URL_PREFIX.length)),...(job.payload.htmlKey?[job.payload.htmlKey]:[])])])];
   for (let i = 0; i < keys.length; i += 1000) await env.FILES.delete(keys.slice(i, i + 1000));
   await db.batch([db.update(mailDomains).set({ catchAllMailboxId: null }).where(eq(mailDomains.catchAllMailboxId, id)), db.delete(mailboxes).where(eq(mailboxes.id, id))]);
+  if (mb.kind === "personal") await seatsChanged(orgId);
   return mb;
 }
 

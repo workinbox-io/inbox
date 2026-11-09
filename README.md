@@ -1,67 +1,41 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/banner/banner-dark.png" />
-  <img src="docs/banner/banner.png" alt="SaaS template: ship a micro SaaS on Cloudflare" />
-</picture>
+# WorkInbox
 
-# SaaS template for Cloudflare
+Open-source team email on your own domain, with shared notes, running on Cloudflare. A Google Workspace alternative
+for small teams: hosted at [workinbox.io](https://workinbox.io), or self-hosted on your own Cloudflare account.
 
-A starting point for a micro SaaS on Cloudflare Workers. It contains everything that isn't the product
-itself: marketing site, docs, sign-in, organizations and teams, billing, an API, an audit log and
-an admin dashboard with staff mailboxes. The UI and backend patterns are extracted from CloudFile.
+![WorkInbox mail](public/marketing/mail-thread.webp)
 
-| | |
-|---|---|
-| App | Astro 7 (SSR) + React islands on **Workers** (`@astrojs/cloudflare`) |
-| UI | Tailwind 4, shadcn/ui, dashboardcn (KPI cards, charts, command palette, tables), animated storyboards for marketing pages |
-| Database | **D1** + Drizzle (`src/db/schema`, SQL migrations in `migrations/`) |
-| Auth | Better Auth: email + password with verification, Google, TOTP 2FA, organizations, invitations |
-| Billing | **Paddle** (merchant of record): checkout, customer portal, webhooks, trial |
-| E-mail | **Cloudflare Email Service** (`send_email` binding), React Email templates, sent through the queue |
-| Jobs | **Queues** (retries with backoff) + **Cron Triggers**, in the same Worker (`src/worker.ts`) |
-| Files | **R2** binding `FILES`: uploads at `/api/app/attachments` (10 MB, 5 per message, no HTML/SVG), served by `/api/files` |
-| API | `/api/v1` with org API keys, rate limited by the Workers Rate Limiting binding, OpenAPI 3.1 |
-| AI apps | MCP server at `/mcp` with OAuth for Claude and ChatGPT, MCP Apps widgets, org API keys for CLIs |
-| Staff mail | Your own addresses (support@, legal@) at `/app/admin-mail`, laid out like Gmail, via **Email Routing** → `email()` |
-| Extras | Audit log, error tracking with e-mail alerts, cookieless analytics, `/app/admin`, `llms.txt`, IndexNow on deploy |
+## What it does today
 
-## Screenshots
+- **Mail on your domains**: a personal mailbox per person, shared mailboxes (support@, sales@) answered by several
+  people from the shared address, unlimited aliases, a catch-all per domain, plus addressing, a spam score and sender
+  rules, search operators (`from:`, `has:attachment`, `is:unread`…) and keyboard shortcuts.
+- **Shared notes**: live co-editing (Plate + Yjs on Durable Objects), checklists, tables, images, @mentions; private,
+  shared with people, or with the whole team.
+- **AI apps and API**: an MCP server for Claude, ChatGPT, Claude Code and Cursor, and a REST API.
 
-| | |
-|---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Dashboard, dark](docs/screenshots/dashboard-dark.png) |
-| Overview: plan usage, trial, recent activity | Every screen in light and dark |
-| ![Projects](docs/screenshots/projects.png) | ![Billing](docs/screenshots/billing.png) |
-| Example resource with plan limits | Billing with Paddle checkout and portal |
-| ![Settings](docs/screenshots/settings.png) | ![Admin analytics](docs/screenshots/admin.png) |
-| Organization, team, API keys, audit log | Staff analytics: MRR, sign-ups, traffic |
-| ![Home](docs/screenshots/home.png) | ![Pricing](docs/screenshots/pricing.png) |
-| Marketing home page | Pricing from `config/plans.ts` |
-| ![Staff mailboxes](docs/screenshots/admin-mail.png) | ![Staff mailboxes, HTML mail](docs/screenshots/admin-mail-html.png) |
-| Staff mailboxes: threads, sender panel, reply | Incoming HTML in a sandboxed frame |
+Not yet: IMAP access, mobile apps, importing old mail, calendar, contacts and drive (next on the roadmap).
 
-Screenshots show demo data. Re-take them after UI changes with Playwright against `pnpm dev`;
-the header is `docs/banner/banner.html`, rendered by `docs/banner/render.mjs`.
+## Self-hosting
 
-## Starting a new product
-
-Clone the template (don't use GitHub's "Use this template" button: it drops the history, and then
-template updates can't be merged; see [TEMPLATE.md](TEMPLATE.md)):
+Runs for one company on its own Cloudflare account (Workers, D1, R2, Queues, Durable Objects, Email Routing and Email
+Service), every feature on, no billing. Step by step: [workinbox.io/docs/self-host](https://workinbox.io/docs/self-host)
+(source: `src/content/docs/self-host.md`).
 
 ```sh
-git clone https://github.com/jakub-kalamarz/saas-template.git my-product && cd my-product
-git remote rename origin template
-gh repo create my-product --private --source=. --push
-
-pnpm install
-pnpm setup                       # name, domain, colors; optionally creates D1, R2 and the queue
-cp .dev.vars.example .dev.vars   # BETTER_AUTH_SECRET=$(openssl rand -hex 32)
-pnpm db:migrate                  # local D1
-pnpm dev                         # http://localhost:4321
+git clone https://github.com/jakub-kalamarz/inbox.git workinbox && cd workinbox
+pnpm install && pnpm setup     # creates D1, R2 and the queues
+# set "DEPLOY_MODE": "self" in wrangler.jsonc (billing off, every feature on)
+pnpm deploy                    # build, migrate, deploy
 ```
 
-Locally everything runs in `workerd` (D1, queues and cron included). E-mails are printed to the dev
-server log (`astro dev logs`) instead of being sent. Run the cron with
-`curl "localhost:4321/cdn-cgi/handler/scheduled?cron=17+3+*+*+*"`.
+## License
+
+[AGPL-3.0](LICENSE). You can run, change and self-host WorkInbox freely; if you offer a modified version as a service
+to others, publish your changes under the same licence.
+
+Built on a shared SaaS template for Cloudflare Workers (Astro SSR + React islands, D1 + Drizzle, Better Auth, Paddle);
+the sections below are the developer guide. Product notes for contributors and coding agents: [CLAUDE.md](CLAUDE.md).
 
 ## Where things go
 

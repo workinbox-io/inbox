@@ -92,8 +92,13 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   before editing, keep "pick them if" and our gaps honest). `/llms.txt` is generated from `config/plans.ts` and
   `compare.ts` (`lib/llms.ts`): update it with every shipped feature, like Luxivo's feature rollout (landing, `/vs` row,
   `llms.txt`, docs, footer).
-- Claim only what ships: no IMAP, no import, calendar/contacts/drive are "Soon". Pricing is per person (personal
-  mailbox) with free shared mailboxes; Paddle checkout still sells quantity 1 (per-seat billing is a TODO).
+- Claim only what ships: no IMAP, no import, calendar/contacts/drive are "Soon".
+- Billing (workinbox.io runs `DEPLOY_MODE=cloud`, PADDLE_ENV production; self-hosters set `self`): per person = personal
+  mailboxes (`lib/server/seats.ts`). Checkout sells that quantity; adding/removing/converting a personal mailbox calls
+  `seatsChanged` → job `billing.seats` → PATCH the Paddle subscription (prorated next period); a daily task reconciles.
+  Sending mail, adding people, mailboxes and domains need an active trial or plan (`requireActivePlan`); receiving and
+  forwarding rules keep working.
+- Open source under AGPL-3.0 (LICENSE), public at github.com/jakub-kalamarz/inbox.
 - OpenSEO project "WorkInbox" (US/en) holds the keyword research and context.
 
 ## Template

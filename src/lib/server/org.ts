@@ -23,6 +23,7 @@ import {
 import { HttpError } from "./api";
 import { subscriptionUsable } from "./billing";
 import { cancelSubscription } from "./paddle";
+import { billableSeats } from "./seats";
 
 export class OrgError extends Error {
   constructor(message: string) {
@@ -85,12 +86,14 @@ export async function requireFeature(orgId: string, feature: Feature) {
 
 /** What the org uses of its plan limits (Billing page). Add your product's counts here. */
 export async function getOrgUsage(orgId: string) {
-  const [sub, [p], [m]] = await Promise.all([
+  const [sub, [p], [m], seats] = await Promise.all([
     getSubscription(orgId),
     db.select({ n: count() }).from(projects).where(eq(projects.orgId, orgId)),
     db.select({ n: count() }).from(member).where(eq(member.organizationId, orgId)),
+    billableSeats(orgId),
   ]);
-  return { plan: planById(sub?.plan), projects: p?.n ?? 0, members: m?.n ?? 0 };
+  /** `seats`: people billed for (personal mailboxes, at least one), the subscription's quantity. */
+  return { plan: planById(sub?.plan), projects: p?.n ?? 0, members: m?.n ?? 0, seats };
 }
 
 export type OrgUsage = Awaited<ReturnType<typeof getOrgUsage>>;

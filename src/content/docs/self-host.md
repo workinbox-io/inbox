@@ -30,7 +30,8 @@ pnpm setup
 ```
 
 Choose "create resources": it creates the D1 database, the R2 bucket and the queues and writes their ids to
-`wrangler.jsonc`. `DEPLOY_MODE` is already `"self"` there, which turns billing off.
+`wrangler.jsonc`. Then, in `wrangler.jsonc` `vars`, set `DEPLOY_MODE` to `"self"`: it turns billing off and every
+feature on (the repository ships with `"cloud"`, the hosted workinbox.io).
 
 ## 3. Secrets and settings
 
