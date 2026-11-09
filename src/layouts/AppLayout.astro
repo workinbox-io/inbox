@@ -100,6 +100,8 @@ const adminMail = boxes.length ? { unread: await adminUnreadCount(boxes).catch((
           }
         </nav>
         <div class="ml-auto flex items-center gap-2">
+          {/* Page-specific controls (e.g. mail's view toggle and notifications), left of search. */}
+          <slot name="actions" />
           <SearchButton client:load />
           <ThemeToggle client:load />
         </div>
