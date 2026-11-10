@@ -226,7 +226,7 @@ export async function createMailbox(orgId: string, input: NewMailbox) {
 export interface MailboxPatch {
   displayName?: string;
   signature?: string;
-  signatureCard?: { name?: string; role?: string; phone?: string };
+  signatureCard?: { name?: string; role?: string; phone?: string; photoUrl?: string };
   /** Turns a personal mailbox into a shared one (e.g. after someone leaves), or hands it to another member. */
   kind?: "personal" | "shared";
   userId?: string | null;
@@ -238,8 +238,8 @@ export async function updateMailbox(orgId: string, id: string, patch: MailboxPat
   if (patch.displayName !== undefined) set.displayName = patch.displayName.trim().slice(0, 100);
   if (patch.signature !== undefined) set.signature = patch.signature.slice(0, 2000);
   if (patch.signatureCard !== undefined) {
-    const { name, role, phone } = cleanCard(patch.signatureCard);
-    set.signatureCard = { name, role, phone };
+    const { name, role, phone, photoUrl } = cleanCard(patch.signatureCard);
+    set.signatureCard = { name, role, phone, photoUrl };
   }
   if (patch.kind === "shared") {
     set.kind = "shared";

@@ -13,10 +13,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ System mail through Email Service (DKIM/SPF/DMARC)
 - ✅ First customer domain wired up: `notelio.pl` (Email Routing catch-all → Worker, Email Sending on)
 - ✅ `LICENSE` (AGPL-3.0) and a self-hosting guide (README, `/docs/self-host`)
-- ⬜ Upstream to the template (in the saas-template repo): the org mail hook and notes WebSocket route in
-  `src/worker.ts`, the Mail tab in `settings-nav.tsx`, `ComposeBody` `footer` and `AddressInput` `search` in
-  `components/mail/compose.tsx`; template bugs: hardcoded "Luxivo" sender in `admin-mail/composer.tsx`, `luxivo:`
-  storage keys in `admin-mail/drafts.ts`
+- ✅ Upstreamed to the template (v1.17.0): Worker hooks (`src/app-worker.ts`), product settings tabs
+  (`APP_SETTINGS`), the composer's `footer` and address book `search`
 - ✅ Remove the template's `projects` example
 - ✅ App on its own domain: https://workinbox.io, system mail from `noreply@workinbox.io`
 - ✅ Brand: WorkInbox, icon: a robot peeking into a mailbox

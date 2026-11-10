@@ -18,3 +18,6 @@ export const APP_ACTIONS = [
   { href: "/app/mail?compose=1", label: "New e-mail", icon: PenSquare },
   { href: "/app/notes?new=1", label: "New note", icon: SquarePen },
 ];
+
+/** Your settings pages, shown after Account and Organization (components/app/settings-nav.tsx). */
+export const APP_SETTINGS: { href: string; label: string }[] = [{ href: "/app/settings/mail", label: "Mail" }];

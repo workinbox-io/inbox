@@ -1,35 +1,29 @@
 /**
  * The Worker's entry point (main in wrangler.jsonc): Astro serves HTTP, and the same Worker
  * consumes the JOBS queue, runs the cron triggers and receives mail for the staff mailboxes
- * (Email Routing "Send to Worker", lib/server/admin-mail.ts).
+ * (Email Routing "Send to Worker", lib/server/admin-mail.ts). Products hook in through src/app-worker.ts.
  */
 import { handle } from "@astrojs/cloudflare/handler";
 import { jobHandlers } from "@/jobs";
 import { adminMailboxes } from "@/lib/server/admin";
 import { handleAdminMail } from "@/lib/server/admin-mail";
-import { handleOrgMail, wakeDueSnoozed } from "@/lib/server/mail/store";
 import { dailyTasks } from "@/jobs/cron";
 import { reportError } from "@/lib/server/errors";
-import { backfillMailBodies } from "@/lib/server/mail/storage";
-import { recoverOutbox, handleDeliveryEvent } from "@/lib/server/mail/outbox";
 import type { JobMessage } from "@/lib/server/queue";
-import { noteSync } from "@/lib/server/notes/sync";
+import app from "@/app-worker";
 
-// Durable Objects must be exported from the entry module (wrangler.jsonc → durable_objects).
-export { NoteRoom } from "@/notes/room";
+// Durable Objects and other named exports from the product (src/app-worker.ts).
+export * from "@/app-worker";
 
 export default {
   async fetch(request, env, ctx) {
-    // Shared notes' WebSockets go straight to the note's Durable Object (lib/server/notes/sync.ts).
-    if (new URL(request.url).pathname.startsWith("/notes-sync/")) return noteSync(request);
-    return handle(request, env, ctx);
+    return (await app.fetch?.(request)) ?? handle(request, env, ctx);
   },
 
   async email(message) {
     const to = message.to.toLowerCase();
     try {
-      // Organizations' mailboxes first (lib/server/mail/store.ts), then the staff mailboxes.
-      if (await handleOrgMail(message)) return;
+      if (await app.email?.(message)) return;
       if (!adminMailboxes().includes(to)) return message.setReject("Unknown address");
       await handleAdminMail(message, to);
     } catch (e) {
@@ -40,13 +34,8 @@ export default {
   },
 
   async queue(batch: MessageBatch<JobMessage | unknown>) {
-    if (batch.queue === "inbox-mail-events") {
-      for (const msg of batch.messages) {
-        try { await handleDeliveryEvent(msg.body); msg.ack(); }
-        catch (e) { await reportError("queue", e, { job: "mail.delivery" }); msg.retry({ delaySeconds: 60 }); }
-      }
-      return;
-    }
+    const own = app.queues?.[batch.queue];
+    if (own) return own(batch);
     for (const msg of batch.messages) {
       const { type, data } = msg.body as JobMessage;
       const run = jobHandlers[type] as ((data: unknown) => Promise<void>) | undefined;
@@ -67,14 +56,8 @@ export default {
   },
 
   async scheduled(controller) {
-    if (controller.cron === "* * * * *") {
-      for (const [name, task] of Object.entries({ wakeDueSnoozed, recoverOutbox, backfillMailBodies })) {
-        try { await task(); }
-        catch (error) { await reportError("cron", error, { task: name, cron: controller.cron }); }
-      }
-      return;
-    }
-    for (const [name, task] of Object.entries(dailyTasks)) {
+    const tasks = app.crons?.[controller.cron] ?? dailyTasks;
+    for (const [name, task] of Object.entries(tasks)) {
       try {
         await task();
       } catch (e) {

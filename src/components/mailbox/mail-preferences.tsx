@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Bell, ChevronLeft, Filter, Forward, HardDrive, KeyRound, LifeBuoy, PenLine, SunMoon, Tag } from "lucide-react"
+import { Bell, ChevronLeft, Filter, ImagePlus, Forward, HardDrive, KeyRound, LifeBuoy, PenLine, SunMoon, Tag } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
@@ -19,6 +19,8 @@ import { PushControl } from "./push-control"
 import { RecoveryEmailSettings } from "./security-settings"
 import { PrefList, PrefRow } from "./pref-ui"
 import { SignatureHtml } from "./signature-preview"
+import { isImageType } from "@/lib/uploads"
+import { uploadWithProgress } from "@/components/uploads/attachments"
 import { signaturePreview, type MailboxSignature, type SignatureBrand } from "@/lib/mail/signature"
 
 export type PreferenceSection = "signature" | "labels" | "filters" | "forwarding" | "storage" | "notifications" | "appearance" | "password" | "recovery"
@@ -196,10 +198,48 @@ function MailboxPicker({ mailboxes, value, onChange }: { mailboxes: string[]; va
   )
 }
 
+/** A photo of the person, or their own logo, for the signature (an upload; round in the signature). */
+function SignaturePhoto({ url, hasOrgLogo, onChange }: { url: string; hasOrgLogo: boolean; onChange: (url: string) => void }) {
+  const input = React.useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = React.useState(false)
+  async function pick(file: File | undefined) {
+    if (!file) return
+    if (!isImageType(file.type)) return void toast.error("Use a PNG, JPEG, GIF or WebP image")
+    setUploading(true)
+    try {
+      onChange((await uploadWithProgress("/api/app/attachments", {}, file, file.type, () => {}, "Upload failed")).url)
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setUploading(false)
+      if (input.current) input.current.value = ""
+    }
+  }
+  return (
+    <div className="flex items-center gap-3">
+      {url ? <img src={url} alt="" className="size-12 rounded-full border object-cover" /> : <div className="bg-muted size-12 rounded-full border border-dashed" />}
+      <div className="grid gap-1">
+        <div className="flex items-center gap-2">
+          <input ref={input} type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden onChange={(e) => void pick(e.target.files?.[0])} />
+          <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => input.current?.click()}>
+            <ImagePlus /> {uploading ? "Uploading…" : url ? "Change photo" : "Add photo or logo"}
+          </Button>
+          {url ? (
+            <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")}>
+              Remove
+            </Button>
+          ) : null}
+        </div>
+        <p className="text-muted-foreground text-xs">{hasOrgLogo ? "Shown instead of your organization's logo." : "Shown next to your name."}</p>
+      </div>
+    </div>
+  )
+}
+
 /** The mailbox's signature: a few fields and free lines, shown under the org's template (logo, company, colour). */
 function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: string; signatures: Signatures; brand: SignatureBrand; onSaved: (s: Signatures) => void }) {
   const current = signatures[mailbox]
-  const saved = { name: current?.card?.name ?? "", role: current?.card?.role ?? "", phone: current?.card?.phone ?? "", note: current?.signature ?? "" }
+  const saved = { name: current?.card?.name ?? "", role: current?.card?.role ?? "", phone: current?.card?.phone ?? "", photoUrl: current?.card?.photoUrl ?? "", note: current?.signature ?? "" }
   const [form, setForm] = React.useState(saved)
   const [saving, setSaving] = React.useState(false)
   const changed = JSON.stringify(form) !== JSON.stringify(saved)
@@ -207,7 +247,7 @@ function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: st
   async function save() {
     setSaving(true)
     try {
-      const card = { name: form.name, role: form.role, phone: form.phone }
+      const card = { name: form.name, role: form.role, phone: form.phone, photoUrl: form.photoUrl }
       await api("PUT", "/api/app/mail/mailboxes", { mailbox, signature: form.note, signatureCard: card })
       onSaved({ ...signatures, [mailbox]: { ...current, signature: form.note, card } })
       toast.success("Signature saved")
@@ -225,6 +265,7 @@ function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: st
   )
   return (
     <div className="grid gap-5">
+      <SignaturePhoto url={form.photoUrl} hasOrgLogo={!!brand.logoUrl} onChange={(photoUrl) => setForm({ ...form, photoUrl })} />
       <FieldGroup className="grid gap-4 sm:grid-cols-2">
         {field("name", "Name", current?.name || "Anna Kowalska")}
         {field("role", "Role", "Head of Support")}

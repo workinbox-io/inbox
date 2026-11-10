@@ -9,7 +9,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Tables: `src/db/schema/mail.ts` (re-exported from `app.ts`): `mail_domains`, `mailboxes` (personal per member or
   shared), `mailbox_access`, `mail_aliases`, `mail_threads`, `mail_messages`, `mail_sender_rules`. Mailboxes hand out
   IMAP-style UIDs (`uid_next`, `uid_validity`) and bump `modseq` on every change, for a future IMAP gateway / sync API.
-- Incoming: `email()` in `src/worker.ts` calls `handleOrgMail` (`lib/server/mail/store.ts`) first: address → mailbox,
+- Incoming: `email()` in `src/worker.ts` calls `handleOrgMail` (hooked in `src/app-worker.ts`) (`lib/server/mail/store.ts`) first: address → mailbox,
   alias or the domain's catch-all (plus addressing stripped), spam score and sender rules (`lib/mail/rules.ts`), raw .eml
   in R2 under `mail-raw/<org>/<mailbox>/`, files under the org's `attachments/`. Unknown addresses fall through to the
   staff mailboxes, then are rejected.
@@ -45,10 +45,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - API: `/api/app/mail/threads` (list/send/patch/delete), `/threads/[id]`, `/threads/[id]/reply`,
   `/messages/[id]/raw`, `/mailboxes` (own signature), `/settings` (owners/admins, one `action` per POST).
 - Test incoming mail locally: `curl -X POST "localhost:4321/cdn-cgi/handler/email?from=a@b.com&to=anna@acme.test" --data-binary @mail.eml`.
-- Template files changed here (upstream them to the template): `src/worker.ts` (org mail hook),
-  `components/mail/compose.tsx` (ComposeBody `footer` slot for the signature preview),
-  `components/app/settings-nav.tsx` (Mail tab). Template bug to fix there: `components/admin-mail/composer.tsx` shows
-  a hardcoded "Luxivo" sender name and `admin-mail/drafts.ts` uses `luxivo:` storage keys (fixed in `components/mailbox`).
+- Worker hooks (org mail, delivery-event queue, every-minute cron) live in `src/app-worker.ts` (template v1.17.0);
+  the Mail settings tab is `APP_SETTINGS` in `config/nav.ts`. `src/worker.ts` stays the template's.
 
 ## Workspace apps: views and UI kit (product)
 
@@ -94,8 +92,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - API: `/api/app/notes` (list/search, create), `/[id]` (get with markdown, patch, delete archived), `/[id]/share`,
   `/[id]/ticket`, `/people`, `/folders`; `/api/v1/notes` re-exports them. MCP: `src/mcp/notes.ts` (`notes_search`,
   `notes_get`, `notes_create`, `notes_update`, `notes_archive`).
-- Template files changed here: `src/worker.ts` (notes WebSocket route, `NoteRoom` export), `wrangler.jsonc`
-  (`NOTE_ROOM` binding and DO migration), `astro.config.mjs` (`optimizeDeps`).
+- Template files changed here: `wrangler.jsonc` (`NOTE_ROOM` binding and DO migration), `astro.config.mjs`
+  (`optimizeDeps`). The WebSocket route and the `NoteRoom` export are in `src/app-worker.ts`.
 
 ## Contacts (product)
 
@@ -119,7 +117,6 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `AI_GATEWAY_ID`) for an industry theme, a brand colour and an optional second one (palette keys `a`/`b`; labels and confidence thresholds in `lib/contacts/banner.ts`),
   caches it in `caches.default` (30 days, 1 day when unsure). Free mail never leaves the server; anything unsure or
   failing gets a generic scene from the domain hash. New theme = label in `BANNER_THEMES` + scene in `THEMES`.
-- Template file changed here: `components/mail/compose.tsx` (`AddressInput` `search` prop, `AddressSuggestion`).
 
 ## AI apps: MCP modules and the ChatGPT app (product)
 
@@ -192,7 +189,7 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
 ## Architecture
 
 - `src/worker.ts` is the Worker entry: Astro's `handle()` for HTTP, plus `queue()` (jobs from
-  `src/jobs`) and `scheduled()` (daily tasks in `src/jobs/cron.ts`).
+  `src/jobs`) and `scheduled()` (daily tasks in `src/jobs/cron.ts`); product hooks and Durable Objects in `src/app-worker.ts`.
 - Bindings and secrets: `import { env } from "cloudflare:workers"`. Types come from
   `worker-configuration.d.ts` (generated, `pnpm cf-types`) plus secrets declared in `src/env.d.ts`.
 - Domain logic lives in `src/lib/server`; API routes and pages call it. `contacts.ts` shows the full pattern (audit,

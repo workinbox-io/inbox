@@ -15,6 +15,14 @@ describe("signature", () => {
     expect(sig.html).toContain('href="tel:+48600100200"');
     expect(sig.html).toContain("color:#e5484d");
   });
+  it("shows the person's photo instead of the org's logo", () => {
+    const photo = "/api/files/attachments/org1/qrstuvwxyzabcdefgh/me.jpg";
+    const sig = renderSignature({ ...card, photoUrl: photo }, brand, "https://workinbox.io")!;
+    expect(sig.html).toContain(`src="https://workinbox.io${photo}"`);
+    expect(sig.html).not.toContain("logo.png");
+    expect(sig.html).toContain("border-radius:20px");
+    expect(renderSignature({ ...card, photoUrl: "https://evil.example/me.jpg" }, brand, "https://workinbox.io")!.html).toContain("logo.png");
+  });
   it("escapes values and keeps note lines", () => {
     const sig = renderSignature({ ...EMPTY_CARD, name: '<b>"x"</b>', note: "line 1\nline 2" }, EMPTY_BRAND, "https://a.b")!;
     expect(sig.html).toContain("&lt;b&gt;&quot;x&quot;&lt;/b&gt;");

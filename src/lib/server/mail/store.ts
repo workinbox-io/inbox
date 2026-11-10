@@ -540,7 +540,7 @@ const FONT = "font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font
 /** The signature a mailbox sends with: its card and note under the org's brand. */
 async function mailboxSignature(mailbox: Mailbox) {
   const { getSignatureBrand } = await import("./admin");
-  const card = { name: mailbox.signatureCard?.name || mailbox.displayName, role: mailbox.signatureCard?.role ?? "", phone: mailbox.signatureCard?.phone ?? "", note: mailbox.signature, email: mailbox.address };
+  const card = { name: mailbox.signatureCard?.name || mailbox.displayName, role: mailbox.signatureCard?.role ?? "", phone: mailbox.signatureCard?.phone ?? "", note: mailbox.signature, email: mailbox.address, photoUrl: mailbox.signatureCard?.photoUrl };
   return renderSignature(card, await getSignatureBrand(mailbox.orgId), env.PUBLIC_APP_URL);
 }
 

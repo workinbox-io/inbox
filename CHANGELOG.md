@@ -3,6 +3,23 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.17.0 (2026-11-10)
+
+- `src/app-worker.ts` (a product file) hooks the product into the Worker entry without editing `src/worker.ts`:
+  `fetch` before Astro, `email` before the staff mailboxes, `queues` for extra queue consumers, `crons` for cron
+  triggers other than the daily one; its named exports (Durable Objects) are re-exported from the entry.
+- `APP_SETTINGS` in `config/nav.ts` adds the product's tabs to Settings.
+- `AddressInput` takes `search` (server suggestions, a group adds all its addresses; `AddressSuggestion`) and its
+  suggestions are out of the Tab order; `ComposeBody` takes a `footer` (e.g. a signature preview).
+- **Manual step:** if your product edited `src/worker.ts` or `settings-nav.tsx`, take the template's version and move
+  your code into `src/app-worker.ts` and `APP_SETTINGS`.
+
+## v1.16.1 (2026-11-10)
+
+- Toasts use more of Ding: the toast region's screen-reader names go through the panel `t()` ("Notifications",
+  "Dismiss notification"), and Undo on "Sending…" morphs the pill into "Not sent" instead of closing it. Return a
+  `ToastPatch` from any toast action to do the same. No manual steps.
+
 ## v1.16.0 (2026-11-10)
 
 - Toasts moved from Sonner to Ding (`@yusufceng1z/ding-react`): one pill on screen that morphs into the next message
