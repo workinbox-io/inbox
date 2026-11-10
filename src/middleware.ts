@@ -14,6 +14,7 @@ import { toRole } from "@/lib/server/roles";
 import { resolveLocale, withLocale } from "@/lib/server/i18n";
 import { LOCALE_COOKIE, isSiteLocale } from "@/lib/i18n/locales";
 import { t } from "@/lib/i18n/panel";
+import { proxyTapll } from "@/lib/server/tapll-proxy";
 
 const PROTECTED = ["/app", "/api/app"];
 /** /api/v1 paths that don't need a key. */
@@ -53,6 +54,7 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
 });
 
 async function route(ctx: APIContext, next: MiddlewareNext) {
+  if (ctx.url.pathname.startsWith("/_tapll/")) return proxyTapll(ctx.request);
   ctx.locals.user = null;
   ctx.locals.session = null;
   ctx.locals.orgId = null;

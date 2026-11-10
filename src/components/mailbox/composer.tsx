@@ -3,6 +3,7 @@ import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users,
 import { toast } from "sonner"
 
 import { api } from "@/lib/api-client"
+import { tapllEvent } from "@/lib/tapll"
 import { forwardSubject, replyRecipients, withSignature } from "@/lib/admin-mail/rules"
 import { replySubject } from "@/lib/mail/threading"
 import { cn } from "@/lib/utils"
@@ -92,13 +93,24 @@ const invalid = (d: Draft) => [...d.to, ...d.cc].filter((a) => !EMAIL.test(a))
 
 /** The request that sends a draft: a reply in its thread, a forward, or a new e-mail. */
 async function sendRequest(d: Draft, files: { url: string; mediaType: string; filename: string }[], threadId?: string) {
-  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ ...d, files })))
-  const digest = [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, "0")).join("")
-  const requestKey = `${d.idempotencyKey ?? crypto.randomUUID()}:${digest}`
-  const base = { sendAt: d.sendAt, idempotencyKey: requestKey, to: d.to[0], cc: [...d.to.slice(1), ...d.cc], text: d.text.trim(), files }
-  if ((d.mode === "reply" || d.mode === "replyAll") && threadId) return api<QueuedSend>("POST", `/api/app/mail/threads/${threadId}/reply`, base)
-  if (d.mode === "forward") return api<QueuedSend>("POST", "/api/app/mail/threads", { ...base, forwardOf: d.messageId, subject: d.subject })
-  return api<QueuedSend>("POST", "/api/app/mail/threads", { ...base, mailbox: d.from, subject: d.subject })
+  const kind = d.mode === "forward" ? "forward" : d.mode === "reply" || d.mode === "replyAll" ? "reply" : "new"
+  tapllEvent("mail_send_started", { kind })
+  try {
+    const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ ...d, files })))
+    const digest = [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, "0")).join("")
+    const requestKey = `${d.idempotencyKey ?? crypto.randomUUID()}:${digest}`
+    const base = { sendAt: d.sendAt, idempotencyKey: requestKey, to: d.to[0], cc: [...d.to.slice(1), ...d.cc], text: d.text.trim(), files }
+    const result = await ((d.mode === "reply" || d.mode === "replyAll") && threadId
+      ? api<QueuedSend>("POST", `/api/app/mail/threads/${threadId}/reply`, base)
+      : api<QueuedSend>("POST", "/api/app/mail/threads", d.mode === "forward"
+        ? { ...base, forwardOf: d.messageId, subject: d.subject }
+        : { ...base, mailbox: d.from, subject: d.subject }))
+    tapllEvent("mail_send_queued", { kind, scheduled: !!d.sendAt })
+    return result
+  } catch (error) {
+    tapllEvent("mail_send_failed", { kind, reason: "request_failed" })
+    throw error
+  }
 }
 
 /** Header fields, body, files and the send row, shared by the inline reply and the new e-mail window. */

@@ -47,6 +47,7 @@ type ThemeMode = "system" | "light" | "dark";
 
 /** Defined by the inline theme script in BaseLayout. */
 interface Window {
+  tapll?: ((command: string, ...args: unknown[]) => unknown) & { q?: unknown[][] };
   setThemeMode(mode: ThemeMode): void;
   nextThemeMode(): ThemeMode;
 }

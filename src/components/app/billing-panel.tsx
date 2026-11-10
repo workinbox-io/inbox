@@ -5,6 +5,7 @@ import { CURRENCY, PLAN_LIST, priceYearly } from "@/config/plans"
 
 import type { OrgUsage } from "@/lib/server/org"
 import { api } from "@/lib/api-client"
+import { tapllEvent, tapllSessionId } from "@/lib/tapll"
 import { cn } from "@/lib/utils"
 import { TickKpiCard, usageColor } from "@/components/tick-kpi-card"
 import { Badge } from "@/components/ui/badge"
@@ -50,12 +51,14 @@ export function BillingPanel(props: BillingPanelProps) {
     if (props.justCheckedOut) toast.success("Thanks! Your subscription is being activated.")
   }, [props.justCheckedOut])
 
-  async function go(key: string, path: string, body?: unknown) {
+  async function go(key: string, path: string, body?: { plan: string; interval: "month" | "year" }) {
     setPending(key)
+    if (body) tapllEvent("checkout_started", body)
     try {
-      const { url } = await api<{ url: string }>("POST", path, body)
+      const { url } = await api<{ url: string }>("POST", path, body ? { ...body, tapllSessionId: tapllSessionId() } : undefined)
       window.location.assign(url)
     } catch (e) {
+      if (body) tapllEvent("checkout_failed", { reason: "request_failed" })
       toast.error((e as Error).message)
       setPending(null)
     }

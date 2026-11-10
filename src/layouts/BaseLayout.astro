@@ -27,6 +27,38 @@ const canonical = Astro.site ? new URL(Astro.url.pathname.replace(/(.)\/$/, "$1"
 <html lang={lang} dir={localeDir(lang)}>
   <head>
     <meta charset="utf-8" />
+    <script is:inline>
+      window.tapll = window.tapll || function () { (window.tapll.q = window.tapll.q || []).push(Array.from(arguments)); };
+    </script>
+    {Astro.locals.user && <meta name="tapll-user" content={Astro.locals.user.id} />}
+    <script>
+      let identified: string | null = null;
+      function identify() {
+        const id = document.querySelector<HTMLMetaElement>('meta[name="tapll-user"]')?.content;
+        if (id && id !== identified) {
+          window.tapll?.("identify", id);
+          identified = id;
+        }
+      }
+      identify();
+      document.addEventListener("astro:page-load", identify);
+      document.addEventListener("click", (event) => {
+        if ((event.target as Element)?.closest('a[href="/api/auth/sign-out-redirect"]')) {
+          window.tapll?.("reset");
+          identified = null;
+        }
+      });
+    </script>
+    <script
+      is:inline
+      defer
+      src="/_tapll/u.js"
+      data-api="/_tapll"
+      data-key="av_cbdcef797dab98b5e655e9ed8498d056ed0e91896d891325"
+      data-mode="product_analytics"
+      data-exclude="/invite/*,/mail/verify-forward"
+      transition:persist="tapll"
+    ></script>
     {panelWords && <script is:inline src={panelWords}></script>}
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#ffffff" />

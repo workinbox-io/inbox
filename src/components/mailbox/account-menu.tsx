@@ -82,6 +82,7 @@ export function AccountMenu({ user, onSettings, compact = false, canManage = fal
           <DropdownMenuItem
             onSelect={async () => {
               await authClient.signOut()
+              window.tapll?.("reset")
               location.href = "/login"
             }}
           >

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { tapllEvent } from "@/lib/tapll"
 
 import { authClient, oauthRedirect } from "@/lib/auth-client"
 import { siteConfig } from "@/config/site"
@@ -150,15 +151,26 @@ export function AuthForm({ mode, next = "/app", email: prefill }: AuthFormProps)
     setPending(true)
     setError(null)
     setUnverified(null)
-    const { data, error } = signup
-      ? await authClient.signUp.email({ email, password, name: String(form.get("name")), callbackURL })
-      : await authClient.signIn.email({ email, password, callbackURL })
+    if (signup) tapllEvent("signup_started")
+    let result
+    try {
+      result = signup
+        ? await authClient.signUp.email({ email, password, name: String(form.get("name")), callbackURL })
+        : await authClient.signIn.email({ email, password, callbackURL })
+    } catch {
+      setPending(false)
+      if (signup) tapllEvent("signup_failed", { reason: "network_error" })
+      return setError("Something went wrong. Please try again.")
+    }
+    const { data, error } = result
     setPending(false)
     if (error) {
+      if (signup) tapllEvent("signup_failed", { reason: "request_rejected" })
       if (error.code === "EMAIL_NOT_VERIFIED") return setUnverified(email)
       return setError(error.message ?? "Something went wrong")
     }
     // With verification on, sign-up returns no session: ask the user to check their inbox.
+    if (signup) tapllEvent("signup_completed")
     if (signup && !data?.token) return setSignedUp(email)
     if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) return setTwoFactor(true)
     window.location.assign(oauthRedirect(data) ?? next)

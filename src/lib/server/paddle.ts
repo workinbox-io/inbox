@@ -97,7 +97,7 @@ async function ensureCustomer(orgId: string, email: string) {
  * Creates a draft transaction and returns its checkout URL. Paddle builds the URL from the default
  * payment link (set it to `<app>/pay` in Checkout settings), where Paddle.js opens the overlay.
  */
-export async function createCheckout(orgId: string, email: string, plan: PlanId, interval: BillingInterval) {
+export async function createCheckout(orgId: string, email: string, plan: PlanId, interval: BillingInterval, attribution: { tapll_session_id: string; tapll_user_id: string }) {
   const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.orgId, orgId));
   if (sub?.paddleSubscriptionId && sub.status !== "canceled") {
     throw new HttpError(409, "You already have a subscription. Use “Manage billing” to change plans.");
@@ -109,7 +109,7 @@ export async function createCheckout(orgId: string, email: string, plan: PlanId,
     items: [{ price_id: price.id, quantity: await billableSeats(orgId) }],
     customer_id: await ensureCustomer(orgId, email),
     // Copied onto the subscription, so webhooks can be matched to the org.
-    custom_data: { orgId },
+    custom_data: { orgId, ...attribution },
   });
   if (!transaction.checkout?.url) throw new HttpError(500, "Set a default payment link in Paddle checkout settings.");
   return transaction.checkout.url;

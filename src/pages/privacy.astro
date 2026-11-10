@@ -7,7 +7,7 @@ export const prerender = true;
 const l = siteConfig.legal;
 ---
 
-<LegalLayout title="Privacy policy" description={`What personal data ${siteConfig.name} collects, why, how long we keep it, who processes it, and your rights under the GDPR.`} updated="2026-10-23">
+<LegalLayout title="Privacy policy" description={`What personal data ${siteConfig.name} collects, why, how long we keep it, who processes it, and your rights under the GDPR.`} updated="2026-11-10">
   <p>
     This policy explains how {l.company} ("we") processes personal data when you use {siteConfig.name}. We process
     data in line with the EU General Data Protection Regulation (GDPR).
@@ -21,8 +21,11 @@ const l = siteConfig.legal;
     <li><strong>Account data:</strong> name, email address and password hash, to provide your account (Art. 6(1)(b) GDPR).</li>
     <li><strong>Billing data:</strong> company name, address, VAT ID and payment status, to bill you and meet tax obligations (Art. 6(1)(b) and (c)). Card details are handled by our payment provider and never reach our servers.</li>
     <li><strong>Technical logs:</strong> IP addresses and connection metadata, kept for up to 30 days for security and troubleshooting (Art. 6(1)(f)).</li>
-    <li><strong>Website statistics:</strong> the pages you view on our website, the referring site and campaign tags, to understand which pages work (Art. 6(1)(f)). We count visits ourselves, with no cookies and no third-party analytics. To tell visits apart we store a hash of your IP address and browser that changes every day and can't be traced back to you. When you sign up, the source of that day's first visit is stored with your account.</li>
+    <li><strong>Website statistics:</strong> the pages you view on our website, the referring site and campaign tags, to understand which pages work. Our own cookieless counter uses a hash of your IP address and browser that changes every day. When you sign up, the source of that day's first visit is stored with your account.</li>
+    <li><strong>Product analytics:</strong> Tapll measures visits, page paths, referral sources, campaigns and feature outcomes. It stores an anonymous browser identifier and session in localStorage. After you sign in, we associate activity with your internal account ID, never your email address. We do not send message contents, note contents, search terms, form values or URL query strings. Checkout attribution uses the visit and account IDs; payment data comes from Paddle when the revenue integration is connected.</li>
   </ul>
+
+  <p>We also use <a href="https://tapll.com">Tapll</a> to process the analytics described above.</p>
 
   <h2>Data we process on your behalf</h2>
   <p>
@@ -46,6 +49,7 @@ const l = siteConfig.legal;
     Account data is kept while your account is active and deleted within 30 days after closure, except where we must
     keep invoices for tax purposes.
   </p>
+  <p>Tapll session retention is configured to 180 days.</p>
 
   <h2>Your rights</h2>
   <p>
@@ -54,6 +58,6 @@ const l = siteConfig.legal;
     authority, the President of the Personal Data Protection Office (UODO).
   </p>
 
-  <h2>Cookies</h2>
-  <p>We use only strictly necessary cookies to keep you signed in. We don't use advertising, analytics or tracking cookies.</p>
+  <h2>Cookies and browser storage</h2>
+  <p>We use strictly necessary cookies to keep you signed in. Tapll uses localStorage for product analytics, rather than analytics cookies. Analytics starts when the page loads.</p>
 </LegalLayout>

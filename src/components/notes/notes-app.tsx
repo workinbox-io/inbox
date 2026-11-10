@@ -4,6 +4,7 @@
  * The user view (members, and owners/admins who pick it) is full screen; the admin view sits in the dashboard.
  */
 import * as React from "react"
+import { tapllEvent } from "@/lib/tapll"
 import {
   Archive,
   ArchiveRestore,
@@ -166,12 +167,15 @@ export function NotesApp(props: NotesAppProps) {
   }, [])
 
   const createNote = React.useCallback(async (inFolder?: string) => {
+    tapllEvent("note_creation_started")
     try {
       const note = await api<NoteDetail>("POST", "/api/app/notes", { folderId: inFolder ?? folderId })
+      tapllEvent("note_created")
       if (view === "archived" || view === "shared" || view === "pinned") setView("all")
       setNotes((list) => [note, ...list])
       open(note.id)
     } catch (e) {
+      tapllEvent("note_creation_failed", { reason: "request_failed" })
       toast.error((e as Error).message)
     }
   }, [folderId, view, open])

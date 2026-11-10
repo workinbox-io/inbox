@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { StorageSettings } from "./storage-settings"
 import type { DnsRecord } from "@/lib/mail/rules"
 import { api } from "@/lib/api-client"
+import { tapllEvent } from "@/lib/tapll"
 import { useLiveData } from "@/lib/use-live-data"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -36,11 +37,18 @@ export interface MailSetup {
 const NONE = "__none__"
 
 async function run(body: Record<string, unknown>, ok?: string) {
+  const checking = body.action === "domain.check"
+  if (checking) tapllEvent("domain_check_started")
   try {
     const res = await api("POST", "/api/app/mail/settings", body)
+    if (checking) {
+      if ((res as { status: string }).status === "active") tapllEvent("domain_check_completed")
+      else tapllEvent("domain_check_failed", { reason: "dns_incomplete" })
+    }
     if (ok) toast.success(ok)
     return res
   } catch (e) {
+    if (checking) tapllEvent("domain_check_failed", { reason: "request_failed" })
     toast.error((e as Error).message)
     throw e
   }

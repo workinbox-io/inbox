@@ -136,6 +136,8 @@ const per = interval === "year" ? "year" : "month";
   <script is:inline src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
   <script is:inline define:vars={{ token, sandbox, successUrl }}>
     const summary = document.querySelector("[data-summary]");
+    let completed = false;
+    let failed = false;
     const format = (major, currency) => new Intl.NumberFormat("en-IE", { style: "currency", currency }).format(major);
 
     // checkout.loaded and checkout.updated carry live totals in major units.
@@ -153,6 +155,7 @@ const per = interval === "year" ? "year" : "month";
     }
 
     if (!window.Paddle || !token) {
+      window.tapll?.("track", "checkout_failed", { reason: "checkout_unavailable" }, { feature: "checkout", role: "failure" });
       document.querySelector("[data-checkout-fallback]")?.classList.remove("hidden");
     } else {
       if (sandbox) Paddle.Environment.set("sandbox");
@@ -175,6 +178,14 @@ const per = interval === "year" ? "year" : "month";
         },
         eventCallback: (e) => {
           if (e.name === "checkout.loaded" || e.name === "checkout.updated") sync(e.data);
+          if (e.name === "checkout.completed" && !completed) {
+            completed = true;
+            window.tapll?.("track", "checkout_completed", undefined, { feature: "checkout", role: "success" });
+          }
+          if (e.name === "checkout.error" && !failed && !completed) {
+            failed = true;
+            window.tapll?.("track", "checkout_failed", { reason: "checkout_error" }, { feature: "checkout", role: "failure" });
+          }
           if (e.name === "checkout.error") document.querySelector("[data-checkout-fallback]")?.classList.remove("hidden");
         },
       });
