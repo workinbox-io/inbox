@@ -49,6 +49,7 @@ export const AUDIT_ACTIONS = {
   "drive.restore": "Restored a drive item",
   "drive.delete": "Deleted a drive item for good",
   "drive.share": "Changed drive sharing",
+  "drive.copy": "Copied a drive item",
   "drive.link_create": "Created a public drive link",
   "drive.link_delete": "Deleted a public drive link",
   "drive.save_attachment": "Saved a mail attachment to the drive",

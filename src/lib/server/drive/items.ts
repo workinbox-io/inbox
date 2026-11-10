@@ -3,11 +3,12 @@
  * sharing and deleting for good. Files arrive through ./uploads; their bytes live in R2 under `r2Key`.
  */
 import { env } from "cloudflare:workers";
-import { and, db, desc, driveAccess, driveItems, eq, inArray, isNotNull, isNull, lt, member, or, sql, user } from "@/db";
+import { and, db, desc, driveAccess, driveItems, driveStars, eq, inArray, isNotNull, isNull, lt, member, or, sql, user } from "@/db";
 import { cleanName, MAX_DEPTH, uniqueName, type DriveRole } from "@/lib/drive/access";
 import { HttpError } from "@/lib/server/api";
 import { enqueue } from "@/lib/server/queue";
 import type { DriveList, DriveShare, DriveUpdate } from "@/lib/validation-drive";
+import { requireDriveSpace } from "./quota";
 import { abortStaleUploads } from "./uploads";
 import { requireFolder, requireItem, rolesFor, visibleItems, type DriveItem, type DriveViewer } from "./access";
 
@@ -24,6 +25,7 @@ export interface DriveSummary {
   role: DriveRole;
   manage: boolean;
   trashed: boolean;
+  starred: boolean;
   updatedAt: string;
 }
 
@@ -41,8 +43,14 @@ async function ownerNames(ids: (string | null)[]) {
 }
 
 /** Summaries of the items the viewer can open, in the given order. */
+async function starsOf(v: DriveViewer, ids: string[]) {
+  if (!v.userId || !ids.length) return new Set<string>();
+  const rows = await db.select({ id: driveStars.itemId }).from(driveStars).where(and(eq(driveStars.userId, v.userId), inArray(driveStars.itemId, ids)));
+  return new Set(rows.map((r) => r.id));
+}
+
 export async function summarize(v: DriveViewer, items: DriveItem[], opts: { trashed?: boolean } = {}): Promise<DriveSummary[]> {
-  const [roles, names] = await Promise.all([rolesFor(v, items), ownerNames(items.map((i) => i.ownerId))]);
+  const [roles, names, stars] = await Promise.all([rolesFor(v, items), ownerNames(items.map((i) => i.ownerId)), starsOf(v, items.map((i) => i.id))]);
   return items.flatMap((i) => {
     const r = roles.get(i.id);
     if (!r?.role || (r.trashed && !opts.trashed)) return [];
@@ -60,6 +68,7 @@ export async function summarize(v: DriveViewer, items: DriveItem[], opts: { tras
         role: r.role,
         manage: r.manage,
         trashed: r.trashed,
+        starred: stars.has(i.id),
         updatedAt: i.updatedAt.toISOString(),
       },
     ];
@@ -108,6 +117,12 @@ export async function listItems(v: DriveViewer, q: DriveList) {
     return { items: (await summarize(v, rows, { trashed: true })).filter((i) => i.manage) };
   }
   if (q.view === "shared") return { items: await sharedWithMe(v) };
+  if (q.view === "starred") {
+    if (!v.userId) return { items: [] };
+    const starred = db.select({ id: driveStars.itemId }).from(driveStars).where(eq(driveStars.userId, v.userId));
+    const rows = await db.select().from(driveItems).where(and(visibleItems(v), inArray(driveItems.id, starred))).limit(500);
+    return { items: await summarize(v, rows.sort(folderFirst)) };
+  }
   if (!v.userId) return { items: [] };
   const rows = await db
     .select()
@@ -325,4 +340,96 @@ export async function cleanDrive() {
   for (const o of old) await enqueue("drive.purge", o);
   const aborted = await abortStaleUploads();
   return { purged: old.length, aborted };
+}
+
+/** Stars are personal: anyone who can open an item may star it. */
+export async function starItem(v: DriveViewer, id: string, starred: boolean) {
+  if (!v.userId) throw new HttpError(403, "Sign in to star items");
+  await requireItem(v, id);
+  if (starred) await db.insert(driveStars).values({ userId: v.userId, itemId: id }).onConflictDoNothing();
+  else await db.delete(driveStars).where(and(eq(driveStars.userId, v.userId), eq(driveStars.itemId, id)));
+}
+
+/** A copy is made synchronously up to this much; larger ones need splitting for now. */
+const COPY_MAX_ITEMS = 200;
+const COPY_MAX_BYTES = 1024 ** 3;
+
+/**
+ * "Make a copy": the item (and for a folder, everything in it the viewer can see) as new private items of the viewer,
+ * in `parentId` (default: next to the original if they may add there, else My drive). R2 objects are copied.
+ * shortcut: synchronous up to COPY_MAX_ITEMS / COPY_MAX_BYTES; move to a queue job if teams copy bigger trees.
+ */
+export async function copyItem(v: DriveViewer, id: string, parentId?: string | null) {
+  if (!v.userId) throw new HttpError(403, "Sign in to make copies");
+  const { item } = await requireItem(v, id);
+  let parent: DriveItem | null;
+  if (parentId !== undefined) parent = await requireFolder(v, parentId);
+  else parent = item.parentId ? await requireFolder(v, item.parentId).catch(() => null) : null;
+  const rows =
+    item.kind === "folder"
+      ? await db
+          .select()
+          .from(driveItems)
+          .where(and(eq(driveItems.orgId, v.orgId), sql`instr(${driveItems.path}, ${item.path}) = 1`, isNull(driveItems.trashedAt)))
+          .limit(COPY_MAX_ITEMS + 1)
+      : [item];
+  if (rows.length > COPY_MAX_ITEMS) throw new HttpError(422, `Folders with up to ${COPY_MAX_ITEMS} items can be copied`);
+  const bytes = rows.reduce((n, r) => n + r.size, 0);
+  if (bytes > COPY_MAX_BYTES) throw new HttpError(422, "Copies can be up to 1 GB; copy smaller parts");
+  if (parent && depthOf(parent.path) + Math.max(...rows.map((r) => depthOf(r.path))) - depthOf(item.path) + 1 > MAX_DEPTH)
+    throw new HttpError(422, `Folders can be nested ${MAX_DEPTH} deep`);
+  await requireDriveSpace(v.orgId, bytes);
+  // Parents before children, so every copy finds its new parent's path.
+  const ids = new Map(rows.map((r) => [r.id, crypto.randomUUID()]));
+  const paths = new Map<string, string>();
+  const values: (typeof driveItems.$inferInsert)[] = [];
+  const top = uniqueName(`Copy of ${item.name}`.slice(0, 200), await takenNames(v.orgId, parent?.id ?? null, v.userId));
+  for (const r of [...rows].sort((a, b) => a.path.length - b.path.length)) {
+    const newId = ids.get(r.id)!;
+    const newParent = r.id === item.id ? (parent?.id ?? null) : ids.get(r.parentId!)!;
+    const base = r.id === item.id ? (parent?.path ?? "/") : paths.get(newParent!);
+    if (!base) continue;
+    const path = `${base}${newId}/`;
+    paths.set(newId, path);
+    let r2Key: string | null = null;
+    if (r.kind === "file" && r.r2Key) {
+      const object = await env.FILES.get(r.r2Key);
+      if (!object) continue;
+      r2Key = `drive/${v.orgId}/${newId}`;
+      await env.FILES.put(r2Key, object.body, { httpMetadata: object.httpMetadata });
+    }
+    values.push({
+      ...placement(v, newId, null),
+      parentId: newParent,
+      path,
+      kind: r.kind,
+      name: r.id === item.id ? top : r.name,
+      size: r.size,
+      mediaType: r.mediaType,
+      r2Key,
+    });
+  }
+  // D1 caps bound parameters per statement: insert in chunks.
+  for (let i = 0; i < values.length; i += 20) await db.insert(driveItems).values(values.slice(i, i + 20));
+  return getItem(v, ids.get(item.id)!);
+}
+
+export type BatchAction = "move" | "trash" | "restore" | "delete" | "star" | "unstar";
+
+/** One action over many items; each is checked on its own, so one without access doesn't stop the rest. */
+export async function batchItems(v: DriveViewer, ids: string[], action: BatchAction, parentId?: string | null) {
+  const done: string[] = [];
+  const failed: { id: string; error: string }[] = [];
+  for (const id of new Set(ids)) {
+    try {
+      if (action === "move") await updateItem(v, id, { parentId: parentId ?? null });
+      else if (action === "trash" || action === "restore") await updateItem(v, id, { trashed: action === "trash" });
+      else if (action === "delete") await deleteForever(v, id);
+      else await starItem(v, id, action === "star");
+      done.push(id);
+    } catch (e) {
+      failed.push({ id, error: e instanceof HttpError ? e.message : "Failed" });
+    }
+  }
+  return { done, failed };
 }

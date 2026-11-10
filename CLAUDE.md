@@ -137,9 +137,17 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Mail: "Attach from Drive" (`components/drive/attach-from-drive.tsx`) fetches the file in the browser and passes it to
   the composer's own `attachments.add` (template components untouched); "Save to Drive" on a thread's attachment
   posts to `/api/app/drive/save-attachment`.
-- UI `/app/drive[/<folderId>]` (`?view=shared|recent|trash`, `?file=<id>`), `components/drive/drive-app.tsx` on the
-  workspace kit; `DrivePicker` for moving and attaching. Sharing uses `components/workspace/share-dialog.tsx`
-  (shared with notes) with the public links section as its children.
+- UI `/app/drive[/<folderId>]` (`?view=shared|recent|starred|trash`, `?file=<id>` = selected with details): an explorer
+  on the workspace kit. `drive-app.tsx` holds state and shortcuts; `folder-tree.tsx` (rail: lazy folder tree, drop
+  targets via `useDropTarget`), `toolbar.tsx` (breadcrumbs, search, sort, list/grid, the bulk bar), `item-views.tsx`
+  (table and grid, drag to move), `details.tsx` (details panel, Sheet on phones, Quick look), `upload-folder.ts`
+  (folders from drops and `webkitdirectory`), `use-marquee.ts`. Pure rules (sort, ⌘/Shift selection, marquee, arrow
+  focus) in `lib/drive/explorer.ts`. Preferences (layout, sort, panel) in localStorage. `DrivePicker` moves and
+  attaches; sharing uses `components/workspace/share-dialog.tsx` with the public links as its children.
+- Bulk: `POST /api/app/drive/batch` (move/trash/restore/delete/star/unstar, per-item `failed`), copies
+  `POST /items/[id]/copy` (folders up to 200 items / 1 GB, synchronous), personal stars (`drive_stars`, view
+  `starred`), ZIP downloads streamed without buffering (`lib/drive/zip.ts`: stored, data descriptors, no ZIP64, so
+  4 GB / 65k entries) at `/api/app/drive/zip?ids=` and `/s/<token>/zip`.
 - API `/api/app/drive/*`, `/api/v1/drive/items` re-exports list/get/patch/content. MCP `src/mcp/drive.ts` (read only).
 
 ## AI apps: MCP modules and the ChatGPT app (product)

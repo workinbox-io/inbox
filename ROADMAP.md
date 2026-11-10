@@ -97,7 +97,10 @@ Implemented and acceptance:
 - ✅ Mail integration: attach from drive, save an attachment to drive
 - ⬜ A link instead of a large attachment
 - ✅ Storage quota per org (GB per person on the plan, pooled; unlimited self-hosted); MCP: `drive_search`, `drive_read`
-- ⬜ Later: versions, full-text search in files, folder upload, WebDAV for Synology Cloud Sync / Hyper Backup (phase 6)
+- ✅ Explorer: folder tree, table and grid with thumbnails, sorting, selection (⌘/Shift/rectangle) with bulk actions,
+  drag and drop (move; upload files and whole folders), details panel, Quick look, keyboard shortcuts
+- ✅ ZIP downloads (also for public folder links), "Make a copy", stars and a Starred view
+- ⬜ Later: versions, full-text search in files, WebDAV for Synology Cloud Sync / Hyper Backup (phase 6)
 
 ## Phase 5: hosted cloud and billing
 

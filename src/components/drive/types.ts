@@ -4,7 +4,7 @@ import type { getItem } from "@/lib/server/drive/items"
 export type { DriveSummary } from "@/lib/server/drive/items"
 export type { DriveLinkView } from "@/lib/server/drive/links"
 export type DriveDetail = Awaited<ReturnType<typeof getItem>>
-export type DriveView = "mine" | "shared" | "recent" | "trash"
+export type DriveView = "mine" | "shared" | "recent" | "starred" | "trash"
 export interface DriveUsage {
   used: number
   quota: number | null

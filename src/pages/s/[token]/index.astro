@@ -58,6 +58,7 @@ const title = open.state === "open" ? item!.name : open.state === "locked" ? ope
         <img src="/logo.svg" alt="" class="size-6" />{siteConfig.name}
       </a>
       {item?.kind === "file" && <a href={fileUrl(item.id, true)} class="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm font-medium">Download</a>}
+      {item?.kind === "folder" && children.length > 0 && <a href={`/s/${token}/zip${item.id === open.root.id ? "" : `?item=${item.id}`}`} class="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm font-medium">Download all</a>}
     </header>
 
     {open.state === "missing" && (

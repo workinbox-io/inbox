@@ -32,8 +32,8 @@ export function DrivePicker({
   title: string
   description?: string
   confirmLabel: string
-  /** An item that can't be a destination (the folder being moved). */
-  exclude?: string
+  /** Items that can't be a destination (the folders being moved). */
+  exclude?: string[]
   onPick: (picked: { folderId: string | null; files: DriveSummary[] }) => Promise<void> | void
 }) {
   const [place, setPlace] = React.useState<Place>({ root: "mine", trail: [] })
@@ -54,12 +54,13 @@ export function DrivePicker({
     setItems(null)
     const url = folderId ? `/api/app/drive/items?folder=${folderId}` : `/api/app/drive/items?view=${place.root}`
     api<{ items: DriveSummary[] }>("GET", url)
-      .then((r) => live && setItems(r.items.filter((i) => i.id !== exclude && (mode === "files" || i.kind === "folder"))))
+      .then((r) => live && setItems(r.items.filter((i) => !exclude?.includes(i.id) && (mode === "files" || i.kind === "folder"))))
       .catch((e) => live && (setItems([]), toast.error((e as Error).message)))
     return () => {
       live = false
     }
-  }, [open, folderId, place.root, exclude, mode])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, folderId, place.root, exclude?.join(), mode])
 
   const here = place.trail.at(-1)
   // A folder you can't add to (view only), or "Shared with me" itself, can't take a move.

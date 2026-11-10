@@ -17,7 +17,8 @@ self-hosted on your own Cloudflare account.
 - **Contacts**: one address book for the team, filled from the mail you send, with Google, Outlook and vCard import and
   export, and suggestions in the composer.
 - **Drive**: folders and files shared with chosen people or the whole team (a folder's share covers everything in it),
-  previews, public links with a password and expiry, attach from the drive and save attachments to it.
+  a file explorer with drag and drop, folder upload and ZIP downloads, previews, public links with a password and
+  expiry, attach from the drive and save attachments to it.
 - **AI apps and API**: read and answer mail and notes from Claude or ChatGPT ([AI apps](/docs/mcp)), or over the
   [REST API](/docs/api).
 

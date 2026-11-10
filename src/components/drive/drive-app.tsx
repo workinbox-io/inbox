@@ -1,66 +1,41 @@
 /**
- * /app/drive on the workspace kit (components/workspace, the same parts as Mail and Notes): the rail with My drive,
- * Shared with me, Recent and Trash plus the storage used, the list of a folder or view, and the open file's preview.
- * Files go up by drag and drop or the Upload button (./upload.ts); sharing uses the workspace ShareDialog with
- * the drive's public links below it.
+ * /app/drive: a file explorer on the workspace kit. The rail holds the folder tree (./folder-tree), the middle the
+ * toolbar (./toolbar) over a table or grid (./item-views) with selection (click, ⌘, Shift, rectangle), drag and drop
+ * (moving, and uploading files and folders from the computer), and the right side the details (./details).
+ * Pure rules (sorting, selection, focus) are in lib/drive/explorer.ts; the server in lib/server/drive.
  */
 import * as React from "react"
-import {
-  ArchiveRestore,
-  ChevronRight,
-  Clock,
-  Download,
-  ExternalLink,
-  File,
-  FileArchive,
-  FileAudio,
-  FileImage,
-  FileText,
-  FileVideo,
-  Folder,
-  FolderInput,
-  FolderPlus,
-  Globe,
-  HardDrive,
-  Link2,
-  Lock,
-  Pencil,
-  SearchX,
-  Share2,
-  Trash2,
-  Upload,
-  Users,
-  X,
-} from "lucide-react"
+import { ArchiveRestore, Copy, Download, ExternalLink, FileText, Folder, FolderInput, FolderPlus, FolderUp, Info, Link2, Pencil, Share2, Star, StarOff, Trash2, Upload, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
-import { EmptyState } from "@/components/app/empty-state"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
-import { shortDate } from "@/components/mailbox/message-view"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { ActionMenu, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { AppFrame } from "@/components/workspace/app-frame"
-import { DetailHeader, IconAction } from "@/components/workspace/detail-header"
-import { ListBody, ListEmpty, ListHeader, ListPane, ListRow, ListSearch } from "@/components/workspace/list-pane"
-import { Rail, RailAction, RailItem, RailList } from "@/components/workspace/rail"
+import { ListEmpty } from "@/components/workspace/list-pane"
 import { ShareDialog } from "@/components/workspace/share-dialog"
-import { SplitView } from "@/components/workspace/split-view"
-import { Kbd, shortcutsPaused, useMediaQuery, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
-import { previewKind } from "@/lib/drive/access"
+import { shortcutsPaused, useMediaQuery } from "@/components/workspace/ui"
+import { clickSelect, moveFocus, sortItems, type Selection } from "@/lib/drive/explorer"
 import { api } from "@/lib/api-client"
 import { t } from "@/lib/i18n/panel"
 import { pushUrl, replaceUrl } from "@/lib/panel-history"
-import { formatBytes } from "@/lib/uploads"
 import { cn } from "@/lib/utils"
+import { DetailsPanel, QuickLook } from "./details"
 import { DrivePicker } from "./drive-picker"
+import { FolderTree, type DriveLocation } from "./folder-tree"
+import { ItemGrid, ItemTable } from "./item-views"
 import { PublicLinks } from "./links"
+import { contentUrl, download, isFileDrag, readPrefs, writePrefs, zipUrl, type DrivePrefs } from "./shared"
+import { Toolbar, type Crumb } from "./toolbar"
 import type { DriveDetail, DriveSummary, DriveUsage, DriveView } from "./types"
 import { uploadToDrive } from "./upload"
+import { createFolders, dropEntries, inputEntries, type PickedFile } from "./upload-folder"
+import { useMarquee } from "./use-marquee"
 
-/** Where the list is: a view, or inside a folder. */
-export type DriveLocation = { view: DriveView; folder?: undefined } | { folder: string; view?: undefined }
+export type { DriveLocation }
 
 export interface DriveAppProps {
   location: DriveLocation
@@ -73,31 +48,9 @@ export interface DriveAppProps {
   account?: MailUser
 }
 
-const VIEWS: { value: DriveView; label: string; icon: typeof File }[] = [
-  { value: "mine", label: "My drive", icon: HardDrive },
-  { value: "shared", label: "Shared with me", icon: Users },
-  { value: "recent", label: "Recent", icon: Clock },
-  { value: "trash", label: "Trash", icon: Trash2 },
-]
-
-const SHARING = {
-  private: { icon: Lock, label: "Only me", color: "#9ca3af" },
-  people: { icon: Users, label: "Shared with people", color: WORKSPACE_COLORS[1] },
-  team: { icon: Globe, label: "Everyone in the organization", color: WORKSPACE_COLORS[0] },
-} as const
-
-export function fileIcon(item: Pick<DriveSummary, "kind" | "mediaType" | "name">) {
-  if (item.kind === "folder") return Folder
-  const kind = previewKind(item.mediaType)
-  if (kind === "image") return FileImage
-  if (kind === "video") return FileVideo
-  if (kind === "audio") return FileAudio
-  if (kind === "pdf" || kind === "text") return FileText
-  if (/\.(zip|rar|7z|tar|gz)$/i.test(item.name)) return FileArchive
-  return File
-}
-
-const contentUrl = (id: string, download = false) => `/api/app/drive/items/${id}/content${download ? "?download=1" : ""}`
+const VIEW_LABELS: Record<DriveView, string> = { mine: "My drive", shared: "Shared with me", recent: "Recent", starred: "Starred", trash: "Trash" }
+const DEFAULT_PREFS: DrivePrefs = { layout: "list", sort: "name", dir: "asc", details: true, detailsWidth: 340 }
+type BatchAction = "move" | "trash" | "restore" | "delete" | "star" | "unstar"
 
 function urlFor(loc: DriveLocation, fileId: string | null) {
   const url = new URL(location.href)
@@ -111,8 +64,8 @@ function urlFor(loc: DriveLocation, fileId: string | null) {
 function readUrl(): { loc: DriveLocation; fileId: string | null } {
   const folder = /^\/app\/drive\/([0-9a-f-]{36})/.exec(location.pathname)?.[1]
   const params = new URLSearchParams(location.search)
-  const view = (params.get("view") as DriveView | null) ?? "mine"
-  return { loc: folder ? { folder } : { view: VIEWS.some((v) => v.value === view) ? view : "mine" }, fileId: params.get("file") }
+  const view = params.get("view") as DriveView | null
+  return { loc: folder ? { folder } : { view: view && view in VIEW_LABELS ? view : "mine" }, fileId: params.get("file") }
 }
 
 interface Upload {
@@ -122,29 +75,53 @@ interface Upload {
   error?: string
 }
 
+const none = (): Selection => ({ ids: new Set(), anchor: null })
+
 export function DriveApp(props: DriveAppProps) {
   const [loc, setLoc] = React.useState<DriveLocation>(props.location)
   const [items, setItems] = React.useState(props.items)
   const [folder, setFolder] = React.useState<DriveDetail | null>(props.folder)
-  const [selectedId, setSelectedId] = React.useState(props.fileId)
   const [query, setQuery] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [usage, setUsage] = React.useState(props.usage)
   const [uploads, setUploads] = React.useState<Upload[]>([])
-  const [dragging, setDragging] = React.useState(false)
+  const [prefs, setPrefsState] = React.useState<DrivePrefs>(DEFAULT_PREFS)
+  const [sel, setSel] = React.useState<Selection>(() => ({ ids: new Set(props.fileId ? [props.fileId] : []), anchor: props.fileId }))
+  const [focusId, setFocusId] = React.useState<string | null>(props.fileId)
   /** New folder (true) or the item being renamed. */
   const [naming, setNaming] = React.useState<boolean | DriveSummary>(false)
-  const [moving, setMoving] = React.useState<DriveSummary | null>(null)
+  const [moving, setMoving] = React.useState<string[] | null>(null)
   const [sharing, setSharing] = React.useState<DriveDetail | null>(null)
-  const [detailVersion, setDetailVersion] = React.useState(0)
+  const [quickLook, setQuickLook] = React.useState<string | null>(null)
+  const [sheet, setSheet] = React.useState(false)
+  const [dragging, setDragging] = React.useState(false)
+  const [version, setVersion] = React.useState(0)
+  const [treeKey, setTreeKey] = React.useState(0)
   const searchRef = React.useRef<HTMLInputElement>(null)
   const fileInput = React.useRef<HTMLInputElement>(null)
-  const mounted = useMounted()
+  const folderInput = React.useRef<HTMLInputElement>(null)
+  const scroller = React.useRef<HTMLDivElement>(null)
+  // desktop: room for the folder tree beside the files (the frame, not the window); wide: the details panel too.
   const desktop = useMediaQuery("(min-width: 768px)")
+  const wide = useMediaQuery("(min-width: 1024px)")
   const userView = !!props.account
 
+  // Preferences live in this browser; read them after hydration so the server's HTML matches the first render.
+  React.useEffect(() => setPrefsState(readPrefs()), [])
+  const setPrefs = (p: Partial<DrivePrefs>) =>
+    setPrefsState((old) => {
+      const next = { ...old, ...p }
+      writePrefs(next)
+      return next
+    })
+
+  const trashView = loc.view === "trash" && !query
+  const sorted = React.useMemo(() => sortItems(items, prefs.sort, prefs.dir), [items, prefs.sort, prefs.dir])
+  const order = React.useMemo(() => sorted.map((i) => i.id), [sorted])
+  const selected = React.useMemo(() => sorted.filter((i) => sel.ids.has(i.id)), [sorted, sel])
   /** Where new folders and uploads go: the open folder when the viewer may add to it, else My drive. */
   const target = loc.folder && folder && folder.role !== "view" ? loc.folder : null
+  const detailsId = selected.length === 1 ? selected[0]!.id : null
 
   const refresh = React.useCallback(async () => {
     const p = new URLSearchParams()
@@ -158,6 +135,8 @@ export function DriveApp(props: DriveAppProps) {
       ])
       setItems(list.items)
       setFolder(info)
+      // Keep only what's still on screen selected.
+      setSel((s) => ({ ids: new Set([...s.ids].filter((id) => list.items.some((i) => i.id === id))), anchor: s.anchor }))
     } catch (e) {
       toast.error((e as Error).message)
     }
@@ -178,26 +157,35 @@ export function DriveApp(props: DriveAppProps) {
     return () => clearTimeout(timer)
   }, [refresh, query])
 
+  /** After a change: the list, the details and (for folders) the tree. */
+  const changed = React.useCallback(
+    (folders = true) => {
+      void refresh()
+      setVersion((v) => v + 1)
+      if (folders) setTreeKey((k) => k + 1)
+    },
+    [refresh],
+  )
+
   const go = React.useCallback((next: DriveLocation) => {
     setLoc(next)
     setQuery("")
-    setSelectedId(null)
+    setSel(none())
+    setFocusId(null)
     pushUrl(urlFor(next, null))
   }, [])
 
-  const openFile = React.useCallback(
-    (id: string | null) => {
-      setSelectedId(id)
-      pushUrl(urlFor(loc, id))
-    },
-    [loc],
-  )
+  // ?file=<id> follows the single selected item, so a copied link opens it with its details.
+  React.useEffect(() => {
+    const url = urlFor(loc, detailsId)
+    if (url.href !== location.href) replaceUrl(url)
+  }, [loc, detailsId])
 
   React.useEffect(() => {
     const onPop = () => {
       const { loc: l, fileId } = readUrl()
       setLoc(l)
-      setSelectedId(fileId)
+      setSel({ ids: new Set(fileId ? [fileId] : []), anchor: fileId })
     }
     window.addEventListener("popstate", onPop)
     return () => window.removeEventListener("popstate", onPop)
@@ -212,64 +200,91 @@ export function DriveApp(props: DriveAppProps) {
     setNaming(true)
   }, [])
 
-  const upload = React.useCallback(
-    (files: FileList | File[]) => {
-      const list = Array.from(files)
-      if (!list.length) return
-      const dest = target
-      for (const file of list) {
-        const key = crypto.randomUUID()
-        setUploads((u) => [...u, { key, name: file.name, progress: 0 }])
-        uploadToDrive(file, dest, (progress) => setUploads((u) => u.map((x) => (x.key === key ? { ...x, progress } : x))))
-          .then((item) => {
-            setUploads((u) => u.filter((x) => x.key !== key))
-            // Show it where it landed, if that's the list on screen.
-            if ((dest && loc.folder === dest) || (!dest && loc.view === "mine")) setItems((l) => [...l.filter((i) => i.id !== item.id), item])
-            refreshUsage()
-          })
-          .catch((e) => setUploads((u) => u.map((x) => (x.key === key ? { ...x, error: (e as Error).message } : x))))
+  // ——— Uploads ———
+
+  const uploadFiles = React.useCallback(
+    async (files: PickedFile[], folders: string[][], dest: string | null) => {
+      if (!files.length && !folders.length) return
+      let where: (dirs: string[]) => string | null = () => dest
+      try {
+        if (folders.length) where = await createFolders(folders, dest)
+      } catch (e) {
+        return void toast.error((e as Error).message)
       }
+      if (folders.length) changed()
       if (!dest && loc.view !== "mine" && !loc.folder) toast.info(t("Uploading to My drive"))
+      await Promise.all(
+        files.map(async ({ file, dirs }) => {
+          const key = crypto.randomUUID()
+          setUploads((u) => [...u, { key, name: file.name, progress: 0 }])
+          try {
+            await uploadToDrive(file, where(dirs), (progress) => setUploads((u) => u.map((x) => (x.key === key ? { ...x, progress } : x))))
+            setUploads((u) => u.filter((x) => x.key !== key))
+          } catch (e) {
+            setUploads((u) => u.map((x) => (x.key === key ? { ...x, error: (e as Error).message } : x)))
+          }
+        }),
+      )
+      changed(folders.length > 0)
+      refreshUsage()
     },
-    [target, loc, refreshUsage],
+    [changed, loc, refreshUsage],
   )
+
+  const dropFiles = React.useCallback(
+    (data: DataTransfer, dest: string | null) => {
+      void dropEntries(data).then(({ files, folders }) => uploadFiles(files, folders, dest))
+    },
+    [uploadFiles],
+  )
+
+  // ——— Actions ———
+
+  async function batch(ids: string[], action: BatchAction, parentId?: string | null) {
+    try {
+      const { done, failed } = await api<{ done: string[]; failed: { id: string; error: string }[] }>("POST", "/api/app/drive/batch", { ids, action, parentId })
+      if (failed.length) toast.error(done.length ? t("{done} done, {failed} not: {error}", { done: done.length, failed: failed.length, error: failed[0]!.error }) : failed[0]!.error)
+      else if (action !== "star" && action !== "unstar") {
+        const labels = { move: "Moved", trash: "Moved to the trash", restore: "Restored", delete: "Deleted for good" } as const
+        toast.success(done.length > 1 ? t("{label}: {count} items", { label: t(labels[action]), count: done.length }) : t(labels[action]))
+      }
+      if (action === "star" || action === "unstar") {
+        setItems((l) => l.map((i) => (done.includes(i.id) ? { ...i, starred: action === "star" } : i)))
+        setVersion((v) => v + 1)
+        if (loc.view === "starred") void refresh()
+      } else {
+        changed(true)
+        if (action === "delete") setTimeout(refreshUsage, 2000)
+      }
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }
+
+  async function copyOf(item: DriveSummary) {
+    try {
+      const copy = await api<DriveDetail>("POST", `/api/app/drive/items/${item.id}/copy`, {})
+      toast.success(t("Copied as {name}", { name: copy.name }))
+      changed(item.kind === "folder")
+      refreshUsage()
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }
 
   async function saveName(name: string) {
     try {
       if (typeof naming === "object") {
-        const saved = await api<DriveDetail>("PATCH", `/api/app/drive/items/${naming.id}`, { name })
-        setItems((l) => l.map((i) => (i.id === saved.id ? saved : i)))
-        setDetailVersion((v) => v + 1)
+        await api<DriveDetail>("PATCH", `/api/app/drive/items/${naming.id}`, { name })
+        changed(naming.kind === "folder")
       } else {
         const created = await api<DriveDetail>("POST", "/api/app/drive/items", { name, parentId: target })
-        if (target || loc.view === "mine") setItems((l) => [created, ...l])
-        else go({ view: "mine" })
+        if (target || loc.view === "mine") {
+          changed()
+          setSel({ ids: new Set([created.id]), anchor: created.id })
+        } else go({ view: "mine" })
       }
       setNaming(false)
-    } catch (e) {
-      toast.error((e as Error).message)
-    }
-  }
-
-  async function patch(item: DriveSummary, body: Record<string, unknown>, done?: string) {
-    try {
-      await api<DriveDetail>("PATCH", `/api/app/drive/items/${item.id}`, body)
-      // Trashing, restoring and moving take it out of the list on screen.
-      setItems((l) => l.filter((i) => i.id !== item.id))
-      if (selectedId === item.id) openFile(null)
-      if (done) toast.success(done)
-    } catch (e) {
-      toast.error((e as Error).message)
-    }
-  }
-
-  async function deleteForever(item: DriveSummary) {
-    try {
-      await api("DELETE", `/api/app/drive/items/${item.id}`)
-      setItems((l) => l.filter((i) => i.id !== item.id))
-      if (selectedId === item.id) openFile(null)
-      toast.success(t("Deleted for good"))
-      setTimeout(refreshUsage, 2000)
     } catch (e) {
       toast.error((e as Error).message)
     }
@@ -294,265 +309,397 @@ export function DriveApp(props: DriveAppProps) {
     }
   }
 
-  const copy = (text: string, done: string) => navigator.clipboard.writeText(text).then(() => toast.success(done), (e) => toast.error((e as Error).message))
+  const downloadItems = (list: DriveSummary[]) => {
+    if (list.length === 1 && list[0]!.kind === "file") download(contentUrl(list[0]!.id, true))
+    else if (list.length) download(zipUrl(list.map((i) => i.id)))
+  }
 
-  const itemActions = (i: DriveSummary, where: "list" | "detail"): MenuAction[] => {
-    if (i.trashed)
+  const open = (item: DriveSummary) => {
+    if (item.trashed) return
+    if (item.kind === "folder") go({ folder: item.id })
+    else setQuickLook(item.id)
+  }
+
+  const copyLink = (i: DriveSummary) =>
+    navigator.clipboard
+      .writeText(`${location.origin}${i.kind === "folder" ? `/app/drive/${i.id}` : `/app/drive${i.parentId ? `/${i.parentId}` : ""}?file=${i.id}`}`)
+      .then(() => toast.success(t("Link copied")), (e) => toast.error((e as Error).message))
+
+  const showDetails = (item: DriveSummary) => {
+    setSel({ ids: new Set([item.id]), anchor: item.id })
+    if (wide) setPrefs({ details: true })
+    else setSheet(true)
+  }
+
+  /** An item's menu (right-click, long press, "…"); on an item inside a selection of several it acts on all of them. */
+  const itemActions = (item: DriveSummary): MenuAction[] => {
+    const many = sel.ids.size > 1 && sel.ids.has(item.id) ? selected : null
+    const list = many ?? [item]
+    const ids = list.map((i) => i.id)
+    const manage = list.every((i) => i.manage)
+    if (list.some((i) => i.trashed))
       return cleanActions([
-        i.manage && { label: t("Restore"), icon: ArchiveRestore, onSelect: () => patch(i, { trashed: false }, t("Restored")) },
-        i.manage && {
+        manage && { label: t("Restore"), icon: ArchiveRestore, onSelect: () => batch(ids, "restore") },
+        manage && {
           label: t("Delete for good"),
           icon: Trash2,
           destructive: true,
-          confirm: { title: t("Delete \"{name}\" for good?", { name: i.name }), description: i.kind === "folder" ? t("Everything in the folder goes too. It can't be restored.") : t("It can't be restored afterwards."), confirmLabel: t("Delete") },
-          onSelect: () => deleteForever(i),
+          confirm: {
+            title: many ? t("Delete {count} items for good?", { count: list.length }) : t("Delete \"{name}\" for good?", { name: item.name }),
+            description: t("Everything in the selected folders goes too. It can't be restored."),
+            confirmLabel: t("Delete"),
+          },
+          onSelect: () => batch(ids, "delete"),
         },
       ])
+    const starred = list.every((i) => i.starred)
+    if (many)
+      return cleanActions([
+        { label: t("Download as ZIP"), icon: Download, onSelect: () => downloadItems(list) },
+        { label: starred ? t("Remove star") : t("Star"), icon: starred ? StarOff : Star, onSelect: () => batch(ids, starred ? "unstar" : "star") },
+        { separator: true },
+        manage && { label: t("Move to…"), icon: FolderInput, onSelect: () => setMoving(ids) },
+        manage && { label: t("Move to trash"), icon: Trash2, destructive: true, onSelect: () => batch(ids, "trash") },
+      ])
     return cleanActions([
-      where === "list" && { label: t("Open"), icon: i.kind === "folder" ? Folder : FileText, onSelect: () => (i.kind === "folder" ? go({ folder: i.id }) : openFile(i.id)) },
-      i.kind === "file" && { label: t("Download"), icon: Download, onSelect: () => void window.open(contentUrl(i.id, true), "_self") },
-      i.kind === "file" && { label: t("Open in new tab"), icon: ExternalLink, onSelect: () => void window.open(contentUrl(i.id), "_blank") },
+      { label: t("Open"), icon: item.kind === "folder" ? Folder : FileText, onSelect: () => open(item) },
+      item.kind === "file" && { label: t("Open in new tab"), icon: ExternalLink, onSelect: () => void window.open(contentUrl(item.id), "_blank") },
+      { label: t("Details"), icon: Info, onSelect: () => showDetails(item) },
       { separator: true },
-      i.manage && { label: t("Share…"), icon: Share2, onSelect: () => openShare(i.id) },
-      { label: t("Copy link"), icon: Link2, onSelect: () => copy(`${location.origin}${i.kind === "folder" ? `/app/drive/${i.id}` : `/app/drive${i.parentId ? `/${i.parentId}` : ""}?file=${i.id}`}`, t("Link copied")) },
+      { label: item.kind === "folder" ? t("Download as ZIP") : t("Download"), icon: Download, onSelect: () => downloadItems([item]) },
+      item.manage && { label: t("Share…"), icon: Share2, onSelect: () => openShare(item.id) },
+      { label: t("Copy link"), icon: Link2, onSelect: () => copyLink(item) },
       { separator: true },
-      i.role !== "view" && { label: t("Rename…"), icon: Pencil, onSelect: () => setNaming(i) },
-      i.manage && { label: t("Move to…"), icon: FolderInput, onSelect: () => setMoving(i) },
+      item.role !== "view" && { label: t("Rename…"), icon: Pencil, onSelect: () => setNaming(item) },
+      item.manage && { label: t("Move to…"), icon: FolderInput, onSelect: () => setMoving([item.id]) },
+      { label: t("Make a copy"), icon: Copy, onSelect: () => copyOf(item) },
+      { label: item.starred ? t("Remove star") : t("Star"), icon: item.starred ? StarOff : Star, onSelect: () => batch([item.id], item.starred ? "unstar" : "star") },
       { separator: true },
-      i.manage && { label: t("Move to trash"), icon: Trash2, destructive: true, onSelect: () => patch(i, { trashed: true }, t("Moved to the trash")) },
+      item.manage && { label: t("Move to trash"), icon: Trash2, destructive: true, onSelect: () => batch([item.id], "trash") },
     ])
   }
 
-  const selected = items.find((i) => i.id === selectedId)
-  // Shortcuts, as in Mail: c new folder, u upload, / search, Esc closes the file, Delete trashes it.
+  const canAddHere = !trashView && !query && (loc.view === "mine" || !!target)
+  const backgroundActions = (): MenuAction[] =>
+    cleanActions([
+      canAddHere && { label: t("New folder"), icon: FolderPlus, onSelect: () => setNaming(true) },
+      canAddHere && { label: t("Upload files"), icon: Upload, onSelect: () => fileInput.current?.click() },
+      canAddHere && { label: t("Upload folder"), icon: FolderUp, onSelect: () => folderInput.current?.click() },
+      trashView && items.length > 0 && { label: t("Empty trash"), icon: Trash2, destructive: true, onSelect: emptyTrash },
+    ])
+
+  // ——— Selection ———
+
+  const onItemClick = (item: DriveSummary, e: React.MouseEvent) => {
+    // Phones: a tap opens, like any list there; the long-press menu has the rest.
+    if (!desktop) {
+      if (item.kind === "folder" && !item.trashed) return go({ folder: item.id })
+      setSel({ ids: new Set([item.id]), anchor: item.id })
+      return setSheet(true)
+    }
+    setSel((s) => clickSelect(s, order, item.id, { shift: e.shiftKey, meta: e.metaKey || e.ctrlKey }))
+    setFocusId(item.id)
+  }
+  const onToggle = (item: DriveSummary) => setSel((s) => clickSelect(s, order, item.id, { meta: true }))
+  const marquee = useMarquee(
+    scroller,
+    React.useCallback((ids: string[]) => setSel({ ids: new Set(ids), anchor: ids[0] ?? null }), []),
+    React.useCallback(() => setSel(none()), []),
+  )
+  const allChecked = order.length > 0 && selected.length === order.length ? true : selected.length ? "indeterminate" : false
+
+  // ——— Shortcuts (paused while typing or with a dialog or menu open) ———
+
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (shortcutsPaused(e)) return
-      if (e.key === "c") {
+      if (shortcutsPaused(e) || quickLook) return
+      const meta = e.metaKey || e.ctrlKey
+      const focused = sorted.find((i) => i.id === focusId) ?? selected[0]
+      const cols = prefs.layout === "grid" ? Math.max(1, Math.floor(((scroller.current?.clientWidth ?? 600) - 12) / 162)) : 1
+      if (["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key) && !(meta && e.key === "ArrowUp")) {
+        e.preventDefault()
+        const next = moveFocus(order, focusId, e.key, cols)
+        if (!next) return
+        setFocusId(next)
+        setSel((s) => (e.shiftKey ? clickSelect(s, order, next, { shift: true }) : { ids: new Set([next]), anchor: next }))
+        document.querySelector(`[data-drive-id="${next}"]`)?.scrollIntoView({ block: "nearest" })
+      } else if (e.key === "a" && meta) {
+        e.preventDefault()
+        setSel({ ids: new Set(order), anchor: order[0] ?? null })
+      } else if (e.key === "Escape") {
+        if (sel.ids.size) setSel(none())
+      } else if (e.key === "Enter" && focused) {
+        e.preventDefault()
+        open(focused)
+      } else if (e.key === " " && focused?.kind === "file") {
+        e.preventDefault()
+        setQuickLook(focused.id)
+      } else if ((e.key === "Backspace" && !meta) || (e.key === "ArrowUp" && meta)) {
+        if (!loc.folder || !folder) return
+        e.preventDefault()
+        const up = folder.crumbs.at(-1)
+        go(up ? { folder: up.id } : { view: folder.root })
+      } else if ((e.key === "Delete" || e.key === "#" || (e.key === "Backspace" && meta)) && selected.length && selected.every((i) => i.manage)) {
+        e.preventDefault()
+        void batch(selected.map((i) => i.id), trashView ? "restore" : "trash")
+      } else if (e.key === "F2" && selected.length === 1 && selected[0]!.role !== "view") {
+        e.preventDefault()
+        setNaming(selected[0]!)
+      } else if (e.key === "s" && !meta && selected.length) {
+        e.preventDefault()
+        void batch(selected.map((i) => i.id), selected.every((i) => i.starred) ? "unstar" : "star")
+      } else if (e.key === "i" && !meta) {
+        e.preventDefault()
+        if (wide) setPrefs({ details: !prefs.details })
+        else if (selected.length) setSheet(true)
+      } else if (e.key === "c" && !meta && canAddHere) {
         e.preventDefault()
         setNaming(true)
-      } else if (e.key === "u") {
+      } else if (e.key === "u" && !meta) {
         e.preventDefault()
         fileInput.current?.click()
       } else if (e.key === "/") {
         e.preventDefault()
         searchRef.current?.focus()
-      } else if (e.key === "Escape" && selectedId) openFile(null)
-      else if ((e.key === "Delete" || e.key === "#") && selected?.manage && !selected.trashed) void patch(selected, { trashed: true }, t("Moved to the trash"))
+      }
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   })
 
-  const viewMeta = VIEWS.find((v) => v.value === loc.view)
-  const title = query ? t("Search") : folder && loc.folder ? folder.name : t(viewMeta?.label ?? "My drive")
-  const trashView = loc.view === "trash" && !query
+  // ——— Layout ———
 
-  const usageBar = (
-    <div className="grid gap-1 px-2 pb-2 text-xs">
-      <div className="text-muted-foreground flex justify-between">
-        <span>{t("Storage")}</span>
-        <span className="tabular-nums">{usage.quota ? `${formatBytes(usage.used)} / ${formatBytes(usage.quota)}` : formatBytes(usage.used)}</span>
-      </div>
-      {usage.quota ? (
-        <div className="bg-muted h-1.5 overflow-hidden rounded-full" role="progressbar" aria-label={t("Storage used")} aria-valuenow={Math.round((usage.used / usage.quota) * 100)}>
-          <div className={cn("h-full rounded-full", usage.used / usage.quota > 0.9 ? "bg-destructive" : "bg-primary")} style={{ width: `${Math.min(100, (usage.used / usage.quota) * 100)}%` }} />
-        </div>
-      ) : null}
-    </div>
+  const drop = { onDropItems: (ids: string[], folderId: string | null) => void batch(ids, "move", folderId), onDropFiles: dropFiles }
+  const crumbs: Crumb[] =
+    loc.folder && folder && !query
+      ? [
+          { id: folder.root === "mine" ? null : "shared", name: folder.root === "mine" ? t("My drive") : t("Shared with me") },
+          ...folder.crumbs.map((c) => ({ id: c.id, name: c.name })),
+          { id: folder.id, name: folder.name },
+        ]
+      : loc.view === "mine" && !query
+        ? [{ id: null, name: t("My drive") }]
+        : []
+  const title = query ? t("Search") : t(VIEW_LABELS[loc.view ?? "mine"])
+  const openPath = React.useMemo(() => (loc.folder && folder ? { root: folder.root, ids: [...folder.crumbs.map((c) => c.id), folder.id] } : null), [loc.folder, folder])
+
+  const details = (
+    <DetailsPanel
+      id={detailsId}
+      version={version}
+      selectionCount={selected.length}
+      onClose={() => (wide ? setPrefs({ details: false }) : setSheet(false))}
+      onOpenFolder={(id) => go({ folder: id })}
+      onShare={(i) => setSharing(i)}
+      onStar={(i) => batch([i.id], i.starred ? "unstar" : "star")}
+      actions={itemActions}
+    />
   )
 
-  const rail = (
-    <Rail
-      label={t("Drive")}
-      hint={
-        <>
-          <Kbd>C</Kbd> {t("New folder")} <Kbd>U</Kbd> {t("Upload")}
-        </>
+  const viewProps = { items: sorted, selection: sel.ids, focusId, onClick: onItemClick, onToggle, onOpen: open, actions: itemActions, drop, readOnly: trashView }
+  const empty = (
+    <ListEmpty
+      icon={query ? <X /> : trashView ? <Trash2 /> : <Folder />}
+      title={
+        query
+          ? t("Nothing matches that search")
+          : trashView
+            ? t("The trash is empty")
+            : loc.view === "shared"
+              ? t("Nothing shared with you yet")
+              : loc.view === "starred"
+                ? t("No starred items")
+                : t("No files here yet")
       }
-      footer={
-        <>
-          {usageBar}
-          {props.account ? <AccountMenu user={props.account} canManage={props.canManage} /> : null}
-        </>
+      description={
+        canAddHere
+          ? t("Drop files or folders here, or upload them.")
+          : trashView
+            ? t("Items in the trash are deleted for good after 30 days.")
+            : loc.view === "starred"
+              ? t("Star files and folders to keep them at hand.")
+              : undefined
       }
-    >
-      <RailAction icon={Upload} label={t("Upload")} shortcut="U" onClick={() => fileInput.current?.click()} />
-      <RailList>
-        <RailItem icon={FolderPlus} label={t("New folder")} active={false} onClick={() => setNaming(true)} />
-      </RailList>
-      <RailList>
-        {VIEWS.map(({ value, label, icon }) => (
-          <RailItem key={value} icon={icon} label={t(label)} active={loc.view === value && !query} onClick={() => go({ view: value })} />
-        ))}
-      </RailList>
-    </Rail>
-  )
-
-  const crumbs = loc.folder && folder && !query ? (
-    <nav aria-label={t("Folders")} className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-1 text-xs">
-      <button type="button" className="hover:text-foreground" onClick={() => go({ view: folder.root })}>
-        {folder.root === "mine" ? t("My drive") : t("Shared with me")}
-      </button>
-      {folder.crumbs.map((c) => (
-        <React.Fragment key={c.id}>
-          <ChevronRight className="size-3 shrink-0" />
-          <button type="button" className="hover:text-foreground max-w-32 truncate" onClick={() => go({ folder: c.id })}>
-            {c.name}
-          </button>
-        </React.Fragment>
-      ))}
-    </nav>
-  ) : undefined
-
-  const list = (
-    <ListPane label={t("Files")}>
-      <ListHeader
-        title={title}
-        subtitle={crumbs}
-        loading={loading}
-        actions={
-          <>
-            {trashView && items.length ? (
-              <Button size="sm" variant="ghost" onClick={emptyTrash}>
-                {t("Empty trash")}
-              </Button>
-            ) : null}
-            {loc.folder && folder?.manage ? <ActionMenuButton actions={() => itemActions(folder, "detail")} label={t("Folder actions")} size="icon-sm" /> : null}
-            {desktop ? null : (
-              <>
-                <Select value={loc.view ?? ""} onValueChange={(v) => go({ view: v as DriveView })}>
-                  <SelectTrigger size="sm" className="max-w-36" aria-label={t("Drive views")}>
-                    <SelectValue placeholder={t("Folder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VIEWS.map((v) => (
-                      <SelectItem key={v.value} value={v.value}>
-                        {t(v.label)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button size="sm" className="rounded-full" onClick={() => fileInput.current?.click()}>
-                  <Upload /> {t("Upload")}
-                </Button>
-                {props.account ? <AccountMenu user={props.account} canManage={props.canManage} compact /> : null}
-              </>
-            )}
-          </>
-        }
-      >
-        <ListSearch ref={searchRef} value={query} onChange={setQuery} placeholder={t("Search the drive")} />
-      </ListHeader>
-      {uploads.length ? (
-        <ul className="mx-2 mb-1 grid gap-1" aria-label={t("Uploads")}>
-          {uploads.map((u) => (
-            <li key={u.key} className="bg-muted/60 relative overflow-hidden rounded-md px-3 py-1.5 text-xs">
-              {!u.error ? <span className="bg-primary/15 absolute inset-y-0 left-0" style={{ width: `${Math.round(u.progress * 100)}%` }} aria-hidden /> : null}
-              <span className="relative flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate">{u.name}</span>
-                {u.error ? <span className="text-destructive truncate">{u.error}</span> : <span className="tabular-nums">{Math.round(u.progress * 100)}%</span>}
-                {u.error ? (
-                  <button type="button" aria-label={t("Dismiss")} onClick={() => setUploads((l) => l.filter((x) => x.key !== u.key))}>
-                    <X className="size-3.5" />
-                  </button>
-                ) : null}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <ListBody dimmed={loading}>
-        {items.map((i) => {
-          const share = SHARING[i.sharing]
-          const Icon = fileIcon(i)
-          return (
-            <ListRow
-              key={i.id}
-              color={share.color}
-              selected={selectedId === i.id}
-              title={
-                <span className="flex min-w-0 items-center gap-2">
-                  <Icon className="text-muted-foreground size-4 shrink-0" />
-                  <span className="truncate">{i.name}</span>
-                </span>
-              }
-              meta={i.sharing !== "private" ? <share.icon className="text-muted-foreground size-3" aria-label={t(share.label)} /> : null}
-              time={mounted ? shortDate(i.updatedAt) : null}
-              snippet={[i.kind === "folder" ? t("Folder") : formatBytes(i.size), i.ownerName].filter(Boolean).join(" · ")}
-              onClick={() => (i.kind === "folder" && !i.trashed ? go({ folder: i.id }) : openFile(i.id))}
-              actions={() => itemActions(i, "list")}
-              menuLabel={t("File actions")}
-            />
-          )
-        })}
-        {items.length === 0 && !loading ? (
-          <ListEmpty
-            icon={query ? <SearchX /> : trashView ? <Trash2 /> : <HardDrive />}
-            title={query ? t("Nothing matches that search") : trashView ? t("The trash is empty") : loc.view === "shared" ? t("Nothing shared with you yet") : t("No files here yet")}
-            description={!query && !trashView && loc.view !== "shared" ? t("Drop files here, or upload them.") : trashView ? t("Items in the trash are deleted for good after 30 days.") : undefined}
-            action={
-              !query && !trashView && loc.view !== "shared" && loc.view !== "recent" ? (
-                <Button size="sm" variant="outline" onClick={() => fileInput.current?.click()}>
-                  <Upload /> {t("Upload")}
-                </Button>
-              ) : undefined
-            }
-          />
-        ) : null}
-      </ListBody>
-    </ListPane>
-  )
-
-  const detail = selectedId ? (
-    <FilePane key={selectedId} id={selectedId} version={detailVersion} onBack={() => openFile(null)} onOpenFolder={(id) => go({ folder: id })} actions={(i) => itemActions(i, "detail")} onShare={() => openShare(selectedId)} />
-  ) : (
-    <div className="grid h-full place-items-center p-6">
-      <EmptyState
-        variant="plain"
-        icon={<HardDrive />}
-        title={t("No file open")}
-        description={
-          <>
-            {t("Pick one on the left, or press")} <kbd className="bg-muted rounded px-1 font-mono text-xs">U</kbd> {t("to upload.")}
-          </>
-        }
-      />
-    </div>
+      action={
+        canAddHere ? (
+          <Button size="sm" variant="outline" onClick={() => fileInput.current?.click()}>
+            <Upload /> {t("Upload")}
+          </Button>
+        ) : undefined
+      }
+    />
   )
 
   return (
     <AppFrame userView={userView}>
-      {desktop ? rail : null}
-      <div
-        className="relative flex min-h-0 min-w-0 flex-1"
-        onDragOver={(e) => {
-          if (!e.dataTransfer.types.includes("Files")) return
-          e.preventDefault()
-          setDragging(true)
-        }}
-        onDragLeave={(e) => e.currentTarget === e.target && setDragging(false)}
-        onDrop={(e) => {
-          if (!e.dataTransfer.files.length) return
-          e.preventDefault()
-          setDragging(false)
-          upload(e.dataTransfer.files)
-        }}
-      >
-        <SplitView list={list} detail={detail} showDetail={!!selectedId} />
-        {dragging ? (
-          <div className="border-primary bg-primary/5 pointer-events-none absolute inset-2 z-20 grid place-items-center rounded-lg border-2 border-dashed" onDragLeave={() => setDragging(false)}>
-            <p className="bg-background rounded-md px-3 py-2 text-sm font-medium shadow-sm">{target ? t("Drop to upload to {name}", { name: folder?.name ?? "" }) : t("Drop to upload to My drive")}</p>
-          </div>
+      {desktop ? (
+        <FolderTree
+          location={loc}
+          openPath={openPath}
+          refreshKey={treeKey}
+          usage={usage}
+          footer={props.account ? <AccountMenu user={props.account} canManage={props.canManage} /> : undefined}
+          onNavigate={go}
+          onUploadFiles={() => fileInput.current?.click()}
+          onUploadFolder={() => folderInput.current?.click()}
+          onNewFolder={() => setNaming(true)}
+          drop={drop}
+        />
+      ) : null}
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col" aria-label={t("Files")}>
+        <Toolbar
+          crumbs={crumbs}
+          title={title}
+          query={query}
+          onQuery={setQuery}
+          searchRef={searchRef}
+          prefs={prefs}
+          onPrefs={setPrefs}
+          onGo={(c) => (c.id === "shared" ? go({ view: "shared" }) : c.id ? go({ folder: c.id }) : go({ view: "mine" }))}
+          drop={drop}
+          selected={selected}
+          trash={trashView}
+          onClearSelection={() => setSel(none())}
+          bulk={{
+            download: () => downloadItems(selected),
+            move: () => setMoving(selected.map((i) => i.id)),
+            copy: () => void (selected[0] && copyOf(selected[0])),
+            star: (on) => void batch(selected.map((i) => i.id), on ? "star" : "unstar"),
+            share: () => void (selected[0] && openShare(selected[0].id)),
+            trash: () => void batch(selected.map((i) => i.id), "trash"),
+            restore: () => void batch(selected.map((i) => i.id), "restore"),
+            remove: () => void batch(selected.map((i) => i.id), "delete"),
+          }}
+          extra={
+            <>
+              {trashView && items.length && !selected.length ? (
+                <Button size="sm" variant="ghost" onClick={emptyTrash}>
+                  {t("Empty trash")}
+                </Button>
+              ) : null}
+              {!desktop ? (
+                <>
+                  <Select value={loc.view ?? ""} onValueChange={(v) => go({ view: v as DriveView })}>
+                    <SelectTrigger size="sm" className="max-w-36" aria-label={t("Drive views")}>
+                      <SelectValue placeholder={t("Folder")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(VIEW_LABELS) as DriveView[]).map((v) => (
+                        <SelectItem key={v} value={v}>
+                          {t(VIEW_LABELS[v])}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="icon-sm" className="rounded-full" onClick={() => fileInput.current?.click()} aria-label={t("Upload")}>
+                    <Upload />
+                  </Button>
+                  {props.account ? <AccountMenu user={props.account} canManage={props.canManage} compact /> : null}
+                </>
+              ) : null}
+            </>
+          }
+        />
+        {uploads.length ? (
+          <ul className="mx-4 mt-2 grid gap-1" aria-label={t("Uploads")}>
+            {uploads.map((u) => (
+              <li key={u.key} className="bg-muted/60 relative overflow-hidden rounded-md px-3 py-1.5 text-xs">
+                {!u.error ? <span className="bg-primary/15 absolute inset-y-0 left-0 transition-[width]" style={{ width: `${Math.round(u.progress * 100)}%` }} aria-hidden /> : null}
+                <span className="relative flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate">{u.name}</span>
+                  {u.error ? <span className="text-destructive truncate">{u.error}</span> : <span className="tabular-nums">{Math.round(u.progress * 100)}%</span>}
+                  {u.error ? (
+                    <button type="button" aria-label={t("Dismiss")} onClick={() => setUploads((l) => l.filter((x) => x.key !== u.key))}>
+                      <X className="size-3.5" />
+                    </button>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
         ) : null}
-      </div>
+        <ActionMenu actions={backgroundActions}>
+          <div
+            ref={scroller}
+            className={cn("relative min-h-0 flex-1 overflow-y-auto", loading && "opacity-60 transition-opacity")}
+            onPointerDown={desktop ? marquee.onPointerDown : undefined}
+            onDragOver={(e) => {
+              if (!isFileDrag(e) || !canAddHere) return
+              e.preventDefault()
+              setDragging(true)
+            }}
+            onDragLeave={(e) => e.currentTarget === e.target && setDragging(false)}
+            onDrop={(e) => {
+              setDragging(false)
+              if (!isFileDrag(e) || !canAddHere) return
+              e.preventDefault()
+              dropFiles(e.dataTransfer, target)
+            }}
+          >
+            {sorted.length === 0 && !loading ? (
+              <div className="grid h-full place-items-center p-6">{empty}</div>
+            ) : prefs.layout === "grid" ? (
+              <ItemGrid {...viewProps} />
+            ) : (
+              <ItemTable
+                {...viewProps}
+                sort={prefs.sort}
+                dir={prefs.dir}
+                onSort={(key) => setPrefs(prefs.sort === key ? { dir: prefs.dir === "asc" ? "desc" : "asc" } : { sort: key, dir: key === "name" || key === "owner" ? "asc" : "desc" })}
+                allChecked={allChecked}
+                onToggleAll={() => setSel(allChecked === true ? none() : { ids: new Set(order), anchor: order[0] ?? null })}
+              />
+            )}
+            {marquee.rect ? (
+              <div
+                className="border-primary/60 bg-primary/10 pointer-events-none absolute z-20 rounded-sm border"
+                style={{ left: marquee.rect.left, top: marquee.rect.top, width: marquee.rect.right - marquee.rect.left, height: marquee.rect.bottom - marquee.rect.top }}
+              />
+            ) : null}
+            {dragging ? (
+              <div className="border-primary bg-primary/5 pointer-events-none sticky inset-x-2 bottom-2 z-20 mx-2 grid place-items-center rounded-lg border-2 border-dashed py-6">
+                <p className="bg-background rounded-md px-3 py-2 text-sm font-medium shadow-sm">{target && folder ? t("Drop to upload to {name}", { name: folder.name }) : t("Drop to upload to My drive")}</p>
+              </div>
+            ) : null}
+          </div>
+        </ActionMenu>
+      </section>
+      {wide && prefs.details ? (
+        <div className="relative shrink-0 border-l" style={{ width: prefs.detailsWidth }}>
+          <ResizeHandle width={prefs.detailsWidth} onResize={(w) => setPrefs({ detailsWidth: w })} />
+          {details}
+        </div>
+      ) : null}
+      {!wide ? (
+        <Sheet open={sheet && !!detailsId} onOpenChange={setSheet}>
+          <SheetContent side="right" className="w-full p-0 sm:max-w-md" showCloseButton={false}>
+            <SheetTitle className="sr-only">{t("Details")}</SheetTitle>
+            {details}
+          </SheetContent>
+        </Sheet>
+      ) : null}
+
       <input
         ref={fileInput}
         type="file"
         multiple
         hidden
         onChange={(e) => {
-          if (e.target.files) upload(e.target.files)
+          if (e.target.files) void uploadFiles([...e.target.files].map((file) => ({ file, dirs: [] })), [], target)
+          e.target.value = ""
+        }}
+      />
+      <input
+        ref={folderInput}
+        type="file"
+        multiple
+        hidden
+        {...{ webkitdirectory: "" }}
+        onChange={(e) => {
+          if (e.target.files) {
+            const { files, folders } = inputEntries(e.target.files)
+            void uploadFiles(files, folders, target)
+          }
           e.target.value = ""
         }}
       />
@@ -561,13 +708,14 @@ export function DriveApp(props: DriveAppProps) {
         open={!!moving}
         onOpenChange={(o) => !o && setMoving(null)}
         mode="folder"
-        title={moving ? t("Move \"{name}\"", { name: moving.name }) : ""}
+        title={moving?.length === 1 ? t("Move \"{name}\"", { name: items.find((i) => i.id === moving[0])?.name ?? "" }) : t("Move {count} items", { count: moving?.length ?? 0 })}
         confirmLabel={t("Move here")}
-        exclude={moving?.id}
+        exclude={moving ?? undefined}
         onPick={async ({ folderId }) => {
-          if (moving) await patch(moving, { parentId: folderId }, t("Moved"))
+          if (moving) await batch(moving, "move", folderId)
         }}
       />
+      <QuickLook items={sorted} id={quickLook} onChange={(id) => (setQuickLook(id), setSel({ ids: new Set([id]), anchor: id }))} onClose={() => setQuickLook(null)} />
       {sharing ? (
         <ShareDialog
           note={sharing}
@@ -576,10 +724,7 @@ export function DriveApp(props: DriveAppProps) {
           description={sharing.kind === "folder" ? t("People get access to everything in the folder, including what's added later.") : t("Choose who can open this file.")}
           open
           onOpenChange={(o) => !o && setSharing(null)}
-          onSaved={(saved) => {
-            setItems((l) => l.map((i) => (i.id === saved.id ? saved : i)))
-            setDetailVersion((v) => v + 1)
-          }}
+          onSaved={() => changed(false)}
         >
           <PublicLinks itemId={sharing.id} />
         </ShareDialog>
@@ -588,11 +733,46 @@ export function DriveApp(props: DriveAppProps) {
   )
 }
 
+/** Drag the details panel's left edge to resize it. */
+function ResizeHandle({ width, onResize }: { width: number; onResize: (w: number) => void }) {
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={t("Resize details")}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowLeft") onResize(Math.min(560, width + 16))
+        if (e.key === "ArrowRight") onResize(Math.max(260, width - 16))
+      }}
+      onPointerDown={(e) => {
+        const start = e.clientX
+        const move = (ev: PointerEvent) => onResize(Math.max(260, Math.min(560, width + start - ev.clientX)))
+        const up = () => {
+          window.removeEventListener("pointermove", move)
+          window.removeEventListener("pointerup", up)
+        }
+        window.addEventListener("pointermove", move)
+        window.addEventListener("pointerup", up)
+      }}
+      className="hover:bg-primary/30 focus-visible:bg-primary/40 absolute inset-y-0 -left-1 z-10 w-2 cursor-col-resize outline-none"
+    />
+  )
+}
+
 function NameDialog({ item, open, onOpenChange, onSave }: { item: DriveSummary | null; open: boolean; onOpenChange: (o: boolean) => void; onSave: (name: string) => Promise<void> }) {
   const [name, setName] = React.useState("")
   const [saving, setSaving] = React.useState(false)
+  const input = React.useRef<HTMLInputElement>(null)
   React.useEffect(() => {
-    if (open) setName(item?.name ?? "")
+    if (!open) return
+    setName(item?.name ?? "")
+    // Select the name without its extension, as Finder does.
+    requestAnimationFrame(() => {
+      const n = item?.name ?? ""
+      const dot = item?.kind === "file" && n.lastIndexOf(".") > 0 ? n.lastIndexOf(".") : n.length
+      input.current?.setSelectionRange(0, dot)
+    })
   }, [open, item])
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -610,7 +790,7 @@ function NameDialog({ item, open, onOpenChange, onSave }: { item: DriveSummary |
           <DialogHeader>
             <DialogTitle>{item ? t("Rename") : t("New folder")}</DialogTitle>
           </DialogHeader>
-          <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={item ? t("Name") : t("Folder name")} maxLength={200} aria-label={t("Name")} />
+          <Input ref={input} autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder={item ? t("Name") : t("Folder name")} maxLength={200} aria-label={t("Name")} />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t("Cancel")}
@@ -622,131 +802,5 @@ function NameDialog({ item, open, onOpenChange, onSave }: { item: DriveSummary |
         </form>
       </DialogContent>
     </Dialog>
-  )
-}
-
-function FilePane({ id, version, onBack, onOpenFolder, actions, onShare }: { id: string; version: number; onBack: () => void; onOpenFolder: (id: string) => void; actions: (i: DriveSummary) => MenuAction[]; onShare: () => void }) {
-  const [item, setItem] = React.useState<DriveDetail | null>(null)
-  const [error, setError] = React.useState<string | null>(null)
-
-  React.useEffect(() => {
-    let live = true
-    api<DriveDetail>("GET", `/api/app/drive/items/${id}`)
-      .then((i) => live && (setItem(i), setError(null)))
-      .catch((e) => live && setError((e as Error).message))
-    return () => {
-      live = false
-    }
-  }, [id, version])
-
-  if (error)
-    return (
-      <div className="grid h-full place-items-center p-6">
-        <EmptyState
-          variant="plain"
-          icon={<Lock />}
-          title={t("This file can't be opened")}
-          description={error}
-          action={
-            <Button size="sm" variant="outline" onClick={onBack}>
-              {t("Back to the drive")}
-            </Button>
-          }
-        />
-      </div>
-    )
-
-  const share = item ? SHARING[item.sharing] : null
-  return (
-    <section className="flex h-full min-h-0 min-w-0 flex-col">
-      <DetailHeader onBack={onBack} backLabel={t("Back to the drive")}>
-        {item && share ? (
-          <span className="flex min-w-0 items-center gap-1.5 px-1 text-sm font-medium">
-            <span className="truncate">{item.name}</span>
-            <share.icon className="size-3.5 shrink-0" style={{ color: share.color }} aria-label={t(share.label)} />
-            {item.trashed ? <span className="bg-muted rounded px-1.5 py-0.5 text-xs font-medium">{t("In the trash")}</span> : null}
-          </span>
-        ) : null}
-        <div className="ml-auto flex items-center gap-0.5">
-          {item?.kind === "file" && !item.trashed ? (
-            <IconAction label={t("Download")} onClick={() => void window.open(contentUrl(item.id, true), "_self")}>
-              <Download />
-            </IconAction>
-          ) : null}
-          {item ? <ActionMenuButton actions={() => actions(item)} label={t("More")} size="icon-sm" /> : null}
-          {item?.manage && !item.trashed ? (
-            <Button size="sm" variant="outline" className="ml-1" onClick={onShare}>
-              <Share2 />
-              {t("Share")}
-            </Button>
-          ) : null}
-        </div>
-      </DetailHeader>
-      <div className="min-h-0 flex-1 overflow-auto p-4">
-        {item ? (
-          <div className="grid gap-4">
-            {item.trashed ? null : item.kind === "folder" ? (
-              <div className="grid place-items-center gap-3 rounded-md border py-12 text-center">
-                <Folder className="text-muted-foreground size-10" />
-                <Button size="sm" variant="outline" onClick={() => onOpenFolder(item.id)}>
-                  {t("Open folder")}
-                </Button>
-              </div>
-            ) : (
-              <Preview item={item} />
-            )}
-            <dl className="text-muted-foreground grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
-              {item.kind === "file" ? (
-                <>
-                  <dt>{t("Size")}</dt>
-                  <dd className="text-foreground">{formatBytes(item.size)}</dd>
-                </>
-              ) : null}
-              <dt>{t("Owner")}</dt>
-              <dd className="text-foreground">{item.ownerName ?? t("The team")}</dd>
-              <dt>{t("Changed")}</dt>
-              <dd className="text-foreground">{new Date(item.updatedAt).toLocaleString()}</dd>
-              <dt>{t("Access")}</dt>
-              <dd className="text-foreground">{share ? t(share.label) : null}</dd>
-            </dl>
-          </div>
-        ) : (
-          <div className="bg-muted h-64 animate-pulse rounded-md" />
-        )}
-      </div>
-    </section>
-  )
-}
-
-function Preview({ item }: { item: DriveDetail }) {
-  const kind = previewKind(item.mediaType)
-  const src = contentUrl(item.id)
-  const [text, setText] = React.useState<string | null>(null)
-  React.useEffect(() => {
-    if (kind !== "text") return
-    let live = true
-    // The first 256 KB is plenty to read; the rest is a download away.
-    fetch(src, { headers: { Range: "bytes=0-262143" } })
-      .then((r) => r.text())
-      .then((s) => live && setText(s))
-      .catch(() => live && setText(""))
-    return () => {
-      live = false
-    }
-  }, [kind, src])
-  if (kind === "image") return <img src={src} alt={item.name} className="mx-auto max-h-[70vh] w-auto rounded-md border object-contain" />
-  if (kind === "video") return <video src={src} controls className="max-h-[70vh] w-full rounded-md border bg-black" />
-  if (kind === "audio") return <audio src={src} controls className="w-full" />
-  if (kind === "pdf") return <iframe src={src} title={item.name} className="h-[70vh] w-full rounded-md border" />
-  if (kind === "text") return <pre className="bg-muted max-h-[70vh] overflow-auto rounded-md p-4 text-xs whitespace-pre-wrap">{text ?? t("Loading…")}</pre>
-  const Icon = fileIcon(item)
-  return (
-    <div className="grid place-items-center gap-3 rounded-md border py-12 text-center">
-      <Icon className="text-muted-foreground size-10" />
-      <p className="text-muted-foreground text-sm">{t("No preview for this kind of file.")}</p>
-      <Button size="sm" variant="outline" onClick={() => void window.open(contentUrl(item.id, true), "_self")}>
-        <Download /> {t("Download")}
-      </Button>
-    </div>
   )
 }

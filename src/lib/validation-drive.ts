@@ -6,7 +6,7 @@ const role = z.enum(["view", "edit"]);
 const name = z.string().trim().min(1, "Enter a name").max(200);
 
 export const driveListSchema = z.object({
-  view: z.enum(["mine", "shared", "recent", "trash"]).default("mine"),
+  view: z.enum(["mine", "shared", "recent", "starred", "trash"]).default("mine"),
   folder: id.optional(),
   q: z.string().trim().max(200).optional(),
 });
@@ -47,6 +47,19 @@ export const driveSaveAttachmentSchema = z.object({
   filename: z.string().max(200),
   parentId: id.nullable().optional(),
 });
+
+export const driveBatchSchema = z.object({
+  ids: z.array(id).min(1).max(500),
+  action: z.enum(["move", "trash", "restore", "delete", "star", "unstar"]),
+  parentId: id.nullable().optional(),
+});
+
+export const driveCopySchema = z.object({ parentId: id.nullable().optional() });
+
+export const driveStarSchema = z.object({ starred: z.boolean() });
+
+/** Items to put in one ZIP (a folder brings everything in it). */
+export const driveZipSchema = z.object({ ids: z.string().max(4000).transform((s) => s.split(",").filter(Boolean)).pipe(z.array(id).min(1).max(100)) });
 
 export type DriveList = z.input<typeof driveListSchema>;
 export type DriveUpdate = z.output<typeof driveUpdateSchema>;

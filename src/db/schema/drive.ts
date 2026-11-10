@@ -93,3 +93,18 @@ export const driveLinks = sqliteTable(
   },
   (t) => [uniqueIndex("drive_links_token_idx").on(t.token), index("drive_links_item_idx").on(t.itemId)],
 );
+
+/** Personal stars: each person's own shortlist (the Starred view), never shared. */
+export const driveStars = sqliteTable(
+  "drive_stars",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    itemId: text("item_id")
+      .notNull()
+      .references(() => driveItems.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.itemId] }), index("drive_stars_item_idx").on(t.itemId)],
+);

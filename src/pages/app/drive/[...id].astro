@@ -20,7 +20,7 @@ import { t } from "@/lib/i18n/panel";
 const id = Astro.params.id ?? null;
 if (id && !/^[0-9a-f-]{36}$/.test(id)) return Astro.redirect("/app/drive");
 const viewParam = Astro.url.searchParams.get("view");
-const view = viewParam === "shared" || viewParam === "recent" || viewParam === "trash" ? viewParam : "mine";
+const view = viewParam === "shared" || viewParam === "recent" || viewParam === "starred" || viewParam === "trash" ? viewParam : "mine";
 const fileParam = Astro.url.searchParams.get("file");
 const fileId = fileParam && /^[0-9a-f-]{36}$/.test(fileParam) ? fileParam : null;
 
