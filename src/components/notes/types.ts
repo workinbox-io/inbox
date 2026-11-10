@@ -21,6 +21,8 @@ export interface NoteDetail extends NoteSummary {
   teamRole: "view" | "edit"
   canManage: boolean
   markdown: string
+  /** The saved Plate document (shown until the live one syncs). */
+  value: import("platejs").Value
   people: { userId: string; role: "view" | "edit"; name: string; email: string }[]
   createdAt: string
 }

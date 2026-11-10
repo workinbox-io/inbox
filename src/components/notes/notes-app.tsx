@@ -51,7 +51,8 @@ import { ShareDialog } from "./share-dialog"
 import type { NoteDetail, NoteFolder, NoteSummary, NoteView, Sharing } from "./types"
 
 // Plate and Yjs load only when a note is opened (and never during SSR).
-const NoteEditor = React.lazy(() => import("./editor/note-editor").then((m) => ({ default: m.NoteEditor })))
+const loadEditor = () => import("./editor/note-editor")
+const NoteEditor = React.lazy(() => loadEditor().then((m) => ({ default: m.NoteEditor })))
 
 export interface NotesAppProps {
   user: { id: string; name: string; email: string }
@@ -96,6 +97,12 @@ export function NotesApp(props: NotesAppProps) {
   const searchRef = React.useRef<HTMLInputElement>(null)
   const mounted = useMounted()
   const desktop = useMediaQuery("(min-width: 768px)")
+
+  // Fetch the editor's code once the list is up, so opening a note doesn't wait for it.
+  React.useEffect(() => {
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 300))
+    idle(() => void loadEditor())
+  }, [])
   const userView = !!props.account
 
   const listUrl = React.useCallback(
@@ -599,6 +606,8 @@ function NotePane({
     }
   }, [id, version])
 
+  const initial = React.useMemo(() => (note && note.id === id ? { title: note.title, value: note.value } : undefined), [note, id])
+
   if (error || lost)
     return (
       <div className="grid h-full place-items-center p-6">
@@ -658,7 +667,13 @@ function NotePane({
       <div className="min-h-0 flex-1">
         {mounted ? (
           <React.Suspense fallback={<EditorSkeleton />}>
-            <NoteEditor noteId={id} user={user} onPresence={setPresence} onLost={() => setLost(true)} />
+            <NoteEditor
+              noteId={id}
+              user={user}
+              initial={initial}
+              onPresence={setPresence}
+              onLost={() => setLost(true)}
+            />
           </React.Suspense>
         ) : (
           <EditorSkeleton />

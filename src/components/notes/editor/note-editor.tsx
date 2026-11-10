@@ -39,7 +39,7 @@ import { MentionInputPlugin, MentionPlugin } from "@platejs/mention/react"
 import { SlashInputPlugin, SlashPlugin } from "@platejs/slash-command/react"
 import { TableCellHeaderPlugin, TableCellPlugin, TablePlugin, TableRowPlugin } from "@platejs/table/react"
 import { YjsPlugin } from "@platejs/yjs/react"
-import { KEYS, TrailingBlockPlugin, type SlateEditor } from "platejs"
+import { KEYS, TrailingBlockPlugin, type SlateEditor, type Value } from "platejs"
 import { createPlatePlugin, ParagraphPlugin, Plate, PlateContainer, PlateContent, usePlateEditor } from "platejs/react"
 import remarkGfm from "remark-gfm"
 import { t } from "@/lib/i18n/panel"
@@ -128,6 +128,11 @@ const plugins = [
   createPlatePlugin({ key: "noteToolbar", editOnly: true, render: { afterEditable: () => <FloatingToolbar /> } }),
 ]
 
+/** For the read-only saved copy: no toolbars, inputs or upload. */
+const previewPlugins = plugins.filter(
+  (p) => ![SlashPlugin, SlashInputPlugin, MentionInputPlugin].some((x) => x.key === p.key) && p.key !== "noteToolbar",
+)
+
 export interface Presence {
   clientId: number
   name: string
@@ -142,9 +147,11 @@ export interface NoteEditorProps {
   /** The viewer can no longer open the note (access removed, deleted). */
   onLost?: () => void
   onPresence?: (people: Presence[]) => void
+  /** The note as last saved (from the API), shown read-only until the live document has synced. */
+  initial?: { title: string; value: Value }
 }
 
-export function NoteEditor({ noteId, user, onTicket, onLost, onPresence }: NoteEditorProps) {
+export function NoteEditor({ noteId, user, onTicket, onLost, onPresence, initial }: NoteEditorProps) {
   const [canEdit, setCanEdit] = React.useState(false)
   const [synced, setSynced] = React.useState(false)
   const callbacks = React.useRef({ onTicket, onLost })
@@ -206,28 +213,66 @@ export function NoteEditor({ noteId, user, onTicket, onLost, onPresence }: NoteE
     return () => awareness.off("change", update)
   }, [editor, onPresence])
 
+  // Until the first sync the live document is empty: show the saved copy instead (then keep the live one
+  // through reconnects, so later edits don't jump back to the saved copy).
+  const [everSynced, setEverSynced] = React.useState(false)
+  if (synced && !everSynced) setEverSynced(true)
+  const preview = !everSynced
+
   return (
     <Plate editor={editor} readOnly={!canEdit || !synced}>
       <div className="flex h-full min-h-0 flex-col">
         {canEdit && <FixedToolbar disabled={!synced} />}
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl px-6 py-8 sm:px-12">
-            <NoteTitle editor={editor} readOnly={!canEdit || !synced} />
-            <PlateContainer className="relative">
-              <PlateContent
-                className={cn(
-                  "min-h-[50svh] pb-[30svh] text-[15px] leading-7 outline-none [&_strong]:font-semibold",
-                  "[&_[data-slate-placeholder]]:!opacity-50",
-                  !synced && "pointer-events-none opacity-60",
-                )}
-                placeholder={canEdit ? t("Write, or press / for blocks and @ to mention someone") : undefined}
-                aria-label={t("Note")}
-              />
-            </PlateContainer>
+            {preview ? (
+              <SavedNote initial={initial} />
+            ) : null}
+            <div className={cn(preview && "hidden")}>
+              <NoteTitle editor={editor} readOnly={!canEdit || !synced} />
+              <PlateContainer className="relative">
+                <PlateContent
+                  className={cn(
+                    CONTENT_CLASS,
+                    "[&_[data-slate-placeholder]]:!opacity-50",
+                    !synced && "pointer-events-none opacity-60",
+                  )}
+                  placeholder={canEdit ? t("Write, or press / for blocks and @ to mention someone") : undefined}
+                  aria-label={t("Note")}
+                />
+              </PlateContainer>
+            </div>
           </div>
         </div>
       </div>
     </Plate>
+  )
+}
+
+const CONTENT_CLASS = "min-h-[50svh] pb-[30svh] text-[15px] leading-7 outline-none [&_strong]:font-semibold"
+const TITLE_CLASS =
+  "mb-2 w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
+
+/** The saved copy, read-only with the same plugins and components, while the live document connects. */
+function SavedNote({ initial }: { initial?: { title: string; value: Value } }) {
+  const editor = usePlateEditor({ plugins: previewPlugins, value: initial?.value }, [initial])
+  if (!initial)
+    return (
+      <div className="grid gap-3" aria-hidden>
+        <div className="bg-muted h-9 w-2/3 animate-pulse rounded-md" />
+        <div className="bg-muted h-4 w-full animate-pulse rounded" />
+        <div className="bg-muted h-4 w-5/6 animate-pulse rounded" />
+      </div>
+    )
+  return (
+    <div aria-busy>
+      <div className={cn(TITLE_CLASS, !initial.title && "text-muted-foreground/50")}>{initial.title || t("Untitled")}</div>
+      <Plate editor={editor} readOnly>
+        <PlateContainer className="relative">
+          <PlateContent className={cn(CONTENT_CLASS, "pointer-events-none")} aria-label={t("Note")} />
+        </PlateContainer>
+      </Plate>
+    </div>
   )
 }
 
@@ -249,7 +294,7 @@ function NoteTitle({ editor, readOnly }: { editor: ReturnType<typeof usePlateEdi
       maxLength={200}
       placeholder={t("Untitled")}
       aria-label={t("Title")}
-      className="mb-2 w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
+      className={TITLE_CLASS}
       onChange={(e) => {
         const next = e.target.value
         setValue(next)
