@@ -20,6 +20,9 @@ export default defineConfig({
   adapter: cloudflare({
     // Images are served as-is; turn on the Images binding when you need resizing.
     imageService: "passthrough",
+    // The AI binding is remote-only: in `astro build` (CI, no Cloudflare token) prerendering doesn't need it, so don't
+    // connect. Dev keeps it; the deployed Worker gets the real binding from wrangler.jsonc either way.
+    remoteBindings: !process.argv.includes("build"),
   }),
   // Better Auth keeps sessions in D1; Astro sessions (KV) aren't used.
   session: false,
