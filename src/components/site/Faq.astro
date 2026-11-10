@@ -14,8 +14,31 @@ const { items } = Astro.props;
           <span class="flex-1 text-balance">{item.question}</span>
           <svg class="text-muted-foreground size-4 shrink-0 transition-transform duration-300 group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
         </summary>
-        <p class="text-muted-foreground px-5 pb-5 text-[15px] leading-6 tracking-tight text-pretty">{item.answer}</p>
+        <div class="faq-answer"><p class="text-muted-foreground px-5 pb-5 text-[15px] leading-6 tracking-tight text-pretty">{item.answer}</p></div>
       </details>
     ))
   }
 </div>
+
+<style>
+  details::details-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 250ms ease, content-visibility 250ms allow-discrete;
+  }
+
+  details[open]::details-content {
+    grid-template-rows: 1fr;
+  }
+
+  .faq-answer {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    details::details-content {
+      transition: none;
+    }
+  }
+</style>
