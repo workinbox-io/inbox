@@ -1,20 +1,36 @@
 ---
+import PixelIcon from "./pixel/PixelIcon.astro";
+
 interface Props {
   class?: string;
-  /** The mailbox mark alone in the text colour (header and footer of the marketing site), instead of the app icon. */
-  mono?: boolean;
+  /** The red pixel post box (header and footer of the marketing site), instead of the app icon. */
+  pixel?: boolean;
 }
-const { class: className = "size-7", mono = false } = Astro.props;
+const { class: className = "size-7", pixel = false } = Astro.props;
+
+/**
+ * Our post box in pixels: lit from the left, a dark cap and foot, a letter with a blue stamp in the slot, a gold plate.
+ * Red on purpose: it reads on the white page and on the ink bands alike.
+ */
+const MARK = [
+  "......RRRR......",
+  "....hRRRRRRr....",
+  "...hRRRRRRRRr...",
+  "..hRRRRRRRRRRr..",
+  ".dddddddddddddd.",
+  "..hRRwwwwwsRRr..",
+  "..hRkwwwwwwkRr..",
+  "..hRRRRRRRRRRr..",
+  "..hRRRyyyyRRRr..",
+  "..hRRRyRRyRRRr..",
+  "..hRRRyyyyRRRr..",
+  "..hRRRRRRRRRRr..",
+  "..hRRRRRRRRRRr..",
+  "..hRRRRRRRRRRr..",
+  ".dddddddddddddd.",
+  "dddddddddddddddd",
+];
+const COLORS = { R: "#d6402f", h: "#ef7a63", r: "#a92c1f", d: "#7c1f16", y: "#e9b949", w: "#fefefe", s: "#2f6fd6", k: "#3a0f0a" };
 ---
 
-{
-  mono ? (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class:list={[className]}>
-      <path d="M5.5 19V8.5C5.5 4.91 8.41 2 12 2s6.5 2.91 6.5 6.5V19" />
-      <path d="M18.87 22H5.13c-.61 0-.92 0-1.06-.21-.15-.21-.05-.51.14-1.11.35-1.08.7-1.68 1.94-1.68h11.7c1.24 0 1.59.6 1.94 1.68.19.6.29.9.14 1.11-.14.21-.45.21-1.06.21Z" />
-      <path d="M10.5 11h3M4.5 8h15" />
-    </svg>
-  ) : (
-    <img src="/logo.svg" alt="" width="28" height="28" class:list={[className]} />
-  )
-}
+{pixel ? <PixelIcon rows={MARK} colors={COLORS} class={className} /> : <img src="/logo.svg" alt="" width="28" height="28" class:list={[className]} />}
