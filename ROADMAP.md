@@ -8,10 +8,14 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 
 ## Next up (2026-11-10)
 
-1. 🚧 Acceptance on production: Web Push on a real phone; a first free `<name>.workinbox.io` address (claim, verify,
-   Gmail → mailbox → reply)
+1. 🚧 Acceptance on production:
+   - Web Push on a real phone
+   - A first free `<name>.workinbox.io` address: claim, verify, Gmail → mailbox → reply
+   - The drive signed in: upload a large file and a folder, share with a member, a public link, ZIP, attach to mail
+   - The hourly SES sweep's first run (`[ses-inbound]` in the Worker logs)
 2. ⬜ Calendar (phase 3), starting with calendars, events with RRULE, week/month views and iMIP invitations in the thread
-3. ✅ Drive (phase 4): local acceptance done, production check after deploy
+3. ⬜ ChatGPT directory: submit the app (`chatgpt-app/`), then the `/chatgpt` page and the `/vs` row once OpenAI approves
+4. ⬜ Drive follow-ups: a link instead of a large attachment, resized thumbnails, copies of large folders through the queue
 
 ## Phase 0: groundwork
 
@@ -69,7 +73,12 @@ Implemented and acceptance:
 - ✅ HTML signatures: an org template (company, logo, colour) plus each mailbox's card
 - ✅ Drafts on the server (synced between devices), Drafts and Outbox as folders, AI apps' drafts land there
 - ✅ Live unread badge on Mail in the sidebar and app rail
-- ✅ ChatGPT/Claude app: MCP modules, free reading, sending only from the draft card
+- ✅ ChatGPT/Claude app: MCP modules, free reading, sending only from the draft card; plugin package ready for the
+  ChatGPT directory (`chatgpt-app/`), submission pending
+- ✅ An `.eml` for every sent message in R2 (backfilled for older ones), like received mail
+- ✅ No lost inbound mail on SES: bounces for unknown addresses, full mailboxes and mail over 25 MB (only when SPF or
+  DKIM passed); an hourly sweep re-queues mail left in S3; dead jobs logged from `inbox-jobs-dlq`
+- ✅ Layouts judged by the app's own width (rail and sidebar included), ⌘K search in the user view's top bar
 
 ## Phase 2: contacts
 
@@ -90,6 +99,8 @@ Implemented and acceptance:
 
 ## Phase 4: drive (R2)
 
+Shipped 2026-11-10 (`a340e88`, `4371c61`, `f32843c`), deployed; production acceptance pending (Next up).
+
 - ✅ Folders and files; any item shared privately, with people (view/edit) or the whole org, inherited down the tree
 - ✅ Public links with an optional password and expiry, revocable
 - ✅ Trash, deleted for good after 30 days (daily task, job `drive.purge`)
@@ -100,7 +111,11 @@ Implemented and acceptance:
 - ✅ Explorer: folder tree, table and grid with thumbnails, sorting, selection (⌘/Shift/rectangle) with bulk actions,
   drag and drop (move; upload files and whole folders), details panel, Quick look, keyboard shortcuts
 - ✅ ZIP downloads (also for public folder links), "Make a copy", stars and a Starred view
-- ⬜ Later: versions, full-text search in files, WebDAV for Synology Cloud Sync / Hyper Backup (phase 6)
+- ✅ Long work in one toast that morphs from loading to done: uploads with progress, ZIPs, copies, bulk moves, trash
+  with Undo
+- ⬜ Resized thumbnails for the grid (today the full image loads)
+- ⬜ Copies of folders over 200 items / 1 GB through the queue (today refused)
+- ⬜ Later: versions, full-text search in files
 
 ## Phase 5: hosted cloud and billing
 
@@ -115,6 +130,8 @@ Implemented and acceptance:
 ## Phase 6: external clients and more
 
 - ⬜ CardDAV and CalDAV (`/dav/*`, app passwords) for Apple, Thunderbird and DAVx⁵
+- ⬜ WebDAV for the drive (`/dav/files`, the same app passwords): Finder and Explorer, rclone, and Synology Cloud Sync /
+  Hyper Backup keeping a copy on a NAS
 - ⬜ Optional IMAP/SMTP gateway (separate container) talking to a sync API on the Worker
 - ⬜ JMAP
 - ✅ Migration from Gmail (`.mbox` / `.eml` import through the queue, Gmail labels kept)
