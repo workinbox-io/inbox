@@ -1,0 +1,51 @@
+---
+/**
+ * The team address book: /app/contacts and /app/contacts/<id>. Members get it full screen next to mail (MailLayout
+ * and the app rail); owners and admins inside the dashboard.
+ */
+import AppRail from "@/components/workspace/AppRail.astro";
+import AppTopBar from "@/components/workspace/AppTopBar.astro";
+import { NotificationCenter } from "@/components/mailbox/notification-center";
+import { ContactsApp } from "@/components/contacts/contacts-app";
+import AppLayout from "@/layouts/AppLayout.astro";
+import MailLayout from "@/layouts/MailLayout.astro";
+import { listContacts, listGroups } from "@/lib/server/contacts";
+import { canManage } from "@/lib/server/roles";
+import { workspaceView } from "@/lib/server/workspace-view";
+import { t } from "@/lib/i18n/panel";
+
+const id = Astro.params.id ?? null;
+if (id && !/^[0-9a-f-]{36}$/.test(id)) return Astro.redirect("/app/contacts");
+
+const role = Astro.locals.role ?? "member";
+const user = Astro.locals.user!;
+const orgId = Astro.locals.orgId!;
+const [list, groups] = await Promise.all([listContacts(orgId, { view: "all", offset: 0, limit: 100 }), listGroups(orgId)]);
+const userView = workspaceView(Astro.cookies, user.id, role) === "user";
+const Layout = userView ? MailLayout : AppLayout;
+---
+
+<Layout title={t("Contacts")} fullBleed>
+  {!userView && (
+    <Fragment slot="actions">
+      <NotificationCenter client:load />
+    </Fragment>
+  )}
+  <div class="flex h-full min-h-0">
+    {userView && <AppRail current="contacts" />}
+    <div class="flex min-w-0 flex-1 flex-col">
+      {userView && <AppTopBar title={t("Contacts")} />}
+      <div class="min-h-0 flex-1">
+        <ContactsApp
+          client:load
+          contacts={list.contacts}
+          hasMore={list.hasMore}
+          groups={groups}
+          selectedId={id}
+          canManage={canManage(role)}
+          account={userView ? { name: user.name, email: user.email } : undefined}
+        />
+      </div>
+    </div>
+  </div>
+</Layout>

@@ -23,6 +23,16 @@ const project = {
     updatedAt: { type: "string", format: "date-time" },
   },
 };
+const labelled = { type: "array", maxItems: 10, items: { type: "object", required: ["value"], properties: { value: { type: "string" }, label: { type: "string", maxLength: 40, description: "work, home, mobile…" } } } };
+const contactInput = {
+  type: "object",
+  properties: {
+    name: { type: "string", maxLength: 200 }, company: { type: "string", maxLength: 200 }, title: { type: "string", maxLength: 200 },
+    note: { type: "string", maxLength: 5000 }, emails: labelled, phones: labelled,
+    groupIds: { type: "array", maxItems: 50, items: { type: "string", format: "uuid" } },
+  },
+};
+
 const projectInput = {
   type: "object",
   required: ["name"],
@@ -92,6 +102,22 @@ const spec = {
         folderId: { type: ["string", "null"], format: "uuid" },
       } }), responses: { 200: { description: "Updated note" }, 409: { description: "Archived: restore it first" }, ...errors } },
       delete: { summary: "Delete an archived note for good", responses: { 200: { description: "Deleted" }, 409: { description: "Archive the note first" }, ...errors } },
+    },
+    "/contacts": {
+      get: { summary: "List or search the organization's shared address book", parameters: [
+        { name: "q", in: "query", schema: { type: "string", maxLength: 200 }, description: "Searches names, companies and e-mail addresses" },
+        { name: "view", in: "query", schema: { type: "string", enum: ["all", "recent", "directory"] }, description: "recent: written to lately; directory: the organization's own people and shared mailboxes" },
+        { name: "groupId", in: "query", schema: { type: "string", format: "uuid" } },
+        { name: "offset", in: "query", schema: { type: "integer", minimum: 0 } },
+        { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 200 } },
+      ], responses: { 200: { description: "contacts, directory and hasMore" }, ...errors } },
+      post: { summary: "Create a contact", requestBody: json(contactInput), responses: { 201: { description: "The contact" }, 409: { description: "An e-mail address already belongs to another contact" }, ...errors } },
+    },
+    "/contacts/{id}": {
+      parameters: idParam,
+      get: { summary: "Read a contact", responses: { 200: { description: "Contact" }, ...errors } },
+      patch: { summary: "Change a contact; only the fields sent change, emails and phones replace the whole list", requestBody: json(contactInput), responses: { 200: { description: "Updated contact" }, 409: { description: "An e-mail address already belongs to another contact" }, ...errors } },
+      delete: { summary: "Delete a contact", responses: { 200: { description: "Deleted" }, ...errors } },
     },
     "/projects": {
       get: { summary: "List projects", responses: { 200: { description: "Projects", ...json({ type: "object", properties: { projects: { type: "array", items: project } } }) }, ...errors } },

@@ -62,6 +62,8 @@ export interface ThreadDetail {
   thread: MailThread
   messages: MailMessage[]
   related: RelatedThread[]
+  /** The person in the team address book, if they're in it. */
+  contact?: { id: string; name: string; company: string; title: string; phones: { value: string; label?: string }[] } | null
 }
 
 export type ReplyMode = "reply" | "replyAll" | "forward"

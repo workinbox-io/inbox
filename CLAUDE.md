@@ -78,6 +78,24 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Template files changed here: `src/worker.ts` (notes WebSocket route, `NoteRoom` export), `wrangler.jsonc`
   (`NOTE_ROOM` binding and DO migration), `astro.config.mjs` (`optimizeDeps`).
 
+## Contacts (product)
+
+- One team address book per org, everyone reads and edits it (no private contacts). Tables in
+  `src/db/schema/contacts.ts`: `contacts` (emails/phones as `{ value, label? }[]` JSON), `contact_emails` (every address,
+  PK `(org, email)`: one address = one contact, used for lookups and dedupe), `contact_groups` + `contact_group_members`.
+- Logic in `lib/server/contacts.ts`, pure rules in `lib/contacts/rules.ts`, CSV (Google/Outlook) and vCard parsers and
+  exports in `lib/contacts/import.ts` (tested in `test/contacts.test.ts`). The directory (our people and shared
+  mailboxes) is read live from `mailboxes`, never copied.
+- Sources: `recordSent` runs from `persistOutboxMail` (skips own domains, no-reply addresses and automated forwards,
+  never fails a send); manual; import (the browser parses the file and POSTs 200 rows per request to stay under D1's
+  query limits; rows merge into the contact that owns any of their addresses).
+- UI `/app/contacts[/<id>]` (`components/contacts/contacts-app.tsx`, workspace kit, in `AppRail` and `config/nav.ts`).
+  Composer To/Cc ask `/api/app/contacts/suggest` (`AddressInput`'s `search` prop; a group adds all its addresses).
+  Mail's `SenderPanel` shows the contact (thread detail returns `contact`) or "Save contact".
+- API `/api/app/contacts` (+ `/[id]`, `/suggest`, `/groups`, `/import`, `/export?format=vcf|csv`), `/api/v1/contacts`
+  re-exports list/get/create/patch/delete. MCP `src/mcp/contacts.ts`.
+- Template file changed here: `components/mail/compose.tsx` (`AddressInput` `search` prop, `AddressSuggestion`).
+
 ## Marketing site and SEO/GEO (product)
 
 - Look after boat.dev in our ink (`styles/marketing.css`, scoped to `.mk` by `MarketingLayout look="paper"`; docs,

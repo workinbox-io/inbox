@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import { api } from "@/lib/api-client"
 import { tapllEvent } from "@/lib/tapll"
-import { forwardSubject, replyRecipients, withSignature } from "@/lib/admin-mail/rules"
+import { forwardSubject, replyRecipients, splitAddresses, withSignature } from "@/lib/admin-mail/rules"
 import { replySubject } from "@/lib/mail/threading"
 import { cn } from "@/lib/utils"
 import { guardLeaving } from "@/lib/panel-history"
@@ -13,9 +13,12 @@ import { DateTimePicker, type DateTimePreset } from "@/components/ui/date-time-p
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AttachmentDropZone, uploadWithProgress, useAttachments, type Attachments, type UploadFn } from "@/components/uploads/attachments"
-import { AddressInput, ComposeBody, ComposeFrame, EMAIL, FieldRow } from "@/components/mail/compose"
+import { AddressInput, ComposeBody, ComposeFrame, EMAIL, FieldRow, type AddressSuggestion } from "@/components/mail/compose"
 import { NEW_DRAFT, readDraft, writeDraft } from "./drafts"
 import type { Draft, MailMessage, MailThread, ReplyMode } from "./types"
+
+/** The team address book (/api/app/contacts/suggest) behind the To and Cc fields. */
+const searchContacts = (q: string) => api<{ suggestions: AddressSuggestion[] }>("GET", `/api/app/contacts/suggest?q=${encodeURIComponent(q)}`).then((r) => r.suggestions)
 
 const UNDO_MS = 10_000
 
@@ -193,11 +196,11 @@ function MailForm({
         </FieldRow>
       ) : null}
       <FieldRow label="To" icon={User} htmlFor="mail-to" end={ccToggle}>
-        <AddressInput id="mail-to" value={draft.to} onChange={(to) => set({ to })} suggestions={contacts} placeholder="name@company.com" autoFocus={autoFocusTo} />
+        <AddressInput id="mail-to" value={draft.to} onChange={(to) => set({ to })} suggestions={contacts} search={searchContacts} placeholder="name@company.com" autoFocus={autoFocusTo} />
       </FieldRow>
       {showCc ? (
         <FieldRow label="Cc" icon={Users} htmlFor="mail-cc">
-          <AddressInput id="mail-cc" value={draft.cc} onChange={(cc) => set({ cc })} suggestions={contacts} autoFocus={!draft.cc.length} />
+          <AddressInput id="mail-cc" value={draft.cc} onChange={(cc) => set({ cc })} suggestions={contacts} search={searchContacts} autoFocus={!draft.cc.length} />
         </FieldRow>
       ) : null}
       {showSubject ? (
@@ -385,7 +388,7 @@ export function ComposeWindow({
   React.useEffect(() => {
     if (!open) return
     const saved = readDraft(NEW_DRAFT)
-    const to = prefill?.to ? [prefill.to] : []
+    const to = splitAddresses(prefill?.to)
     setDraft(saved && mailboxes.includes(saved.from) ? { ...saved, to: [...new Set([...saved.to, ...to])] } : fresh(mailbox, to))
     setFocusKey((k) => k + 1)
     // eslint-disable-next-line react-hooks/exhaustive-deps

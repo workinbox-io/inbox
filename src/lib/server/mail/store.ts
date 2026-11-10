@@ -603,6 +603,11 @@ export async function persistOutboxMail(mailbox: Mailbox, payload: OutboxPayload
     db.insert(m).values({ id: messageId, orgId: mailbox.orgId, mailboxId: mailbox.id, threadId, uid, direction: "out", fromEmail: mailbox.address, fromName: email.fromName, to: email.to.toLowerCase(), cc: (email.cc ?? []).join(", "), subject: email.subject, text: email.text, ...stored, messageId: msgId(sentId), inReplyTo: email.headers?.["In-Reply-To"] ?? null, references: email.headers?.References ?? null, files: payload.files, storageKeys: [...payload.files.map(f => f.url.slice(ATTACHMENT_URL_PREFIX.length)), ...(stored.htmlKey ? [stored.htmlKey] : [])], size: new TextEncoder().encode(email.text).byteLength + new TextEncoder().encode(email.html).byteLength + payload.files.reduce((n, f) => n + f.size, 0), createdAt: now }).onConflictDoNothing(),
   ]);
   const [message] = await db.select().from(m).where(eq(m.id, messageId));
+  // The team address book learns who we write to; it must never fail a send that already went out.
+  if (!email.headers?.["X-WorkInbox-Forwarded"]) {
+    const { recordSent } = await import("@/lib/server/contacts");
+    await recordSent(mailbox.orgId, [email.to, ...(email.cc ?? [])]).catch(async (e) => (await import("@/lib/server/errors")).reportError("queue", e, { orgId: mailbox.orgId, where: "contacts.recordSent" }));
+  }
   return { threadId, message: message! };
 }
 

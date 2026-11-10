@@ -42,6 +42,11 @@ export const AUDIT_ACTIONS = {
   "note.restore": "Restored note",
   "note.delete": "Deleted note",
   "note_folder.change": "Changed note folders",
+  "contact.create": "Created contact",
+  "contact.update": "Changed contact",
+  "contact.delete": "Deleted contact",
+  "contact.import": "Imported contacts",
+  "contact_group.change": "Changed contact groups",
 } as const;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -1,13 +1,13 @@
 ---
 /**
- * The members' app switcher (MailLayout has no dashboard sidebar): Mail and Notes. Owners and admins switch
+ * The members' app switcher (MailLayout has no dashboard sidebar): Mail, Notes and Contacts. Owners and admins switch
  * through the dashboard sidebar instead.
  */
 import { t } from "@/lib/i18n/panel";
 import { siteConfig } from "@/config/site";
 
 interface Props {
-  current: "mail" | "notes";
+  current: "mail" | "notes" | "contacts";
 }
 const { current } = Astro.props;
 const apps = [
@@ -22,6 +22,13 @@ const apps = [
     href: "/app/notes",
     label: t("Notes"),
     icon: '<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><path d="M21.378 5.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z"/>',
+  },
+  {
+    key: "contacts",
+    href: "/app/contacts",
+    label: t("Contacts"),
+    // lucide book-user
+    icon: '<path d="M15 13a3 3 0 1 0-6 0"/><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20"/><circle cx="12" cy="8" r="2"/>',
   },
 ];
 ---

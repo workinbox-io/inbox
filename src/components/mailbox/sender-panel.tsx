@@ -1,8 +1,10 @@
 import * as React from "react"
-import { AtSign, CalendarClock, Copy, Inbox, Mail, MessagesSquare, PenSquare, Trash2, type LucideIcon } from "lucide-react"
+import { AtSign, BookUser, Building2, CalendarClock, Copy, Inbox, Mail, MessagesSquare, PenSquare, Phone, Trash2, UserPlus, type LucideIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { UserAvatar } from "@/components/app/user-avatar"
+import { api } from "@/lib/api-client"
+import { t } from "@/lib/i18n/panel"
 import { shortDate } from "./message-view"
 import { mailboxColor } from "./mail-ui"
 import type { ThreadDetail } from "./types"
@@ -12,12 +14,23 @@ export function SenderPanel({ detail, multipleMailboxes, onOpen, onCompose }: { 
   const { thread, messages, related } = detail
   const first = [thread.lastMessageAt, ...related.map((r) => r.lastMessageAt), ...messages.map((m) => m.createdAt)].sort()[0]!
   const count = related.length + 1
+  const [contact, setContact] = React.useState(detail.contact ?? null)
+  React.useEffect(() => setContact(detail.contact ?? null), [detail.contact])
+  async function saveContact() {
+    try {
+      const saved = await api<NonNullable<ThreadDetail["contact"]>>("POST", "/api/app/contacts", { name: thread.contactName ?? "", emails: [{ value: thread.contactEmail }] })
+      setContact(saved)
+      toast.success(t("Contact added"))
+    } catch (e) {
+      toast.error((e as Error).message)
+    }
+  }
   return (
     <div className="grid gap-5 px-4 py-4">
       <div className="flex items-center gap-3">
         <UserAvatar seed={thread.contactEmail} size={36} />
         <div className="grid min-w-0">
-          <span className="truncate text-[15px] font-semibold tracking-tight">{thread.contactName ?? thread.contactEmail.split("@")[0]}</span>
+          <span className="truncate text-[15px] font-semibold tracking-tight">{contact?.name || thread.contactName || thread.contactEmail.split("@")[0]}</span>
           <span className="text-muted-foreground truncate text-xs">{thread.contactEmail.split("@")[1]}</span>
         </div>
       </div>
@@ -35,6 +48,18 @@ export function SenderPanel({ detail, multipleMailboxes, onOpen, onCompose }: { 
             <Copy className="size-3.5" />
           </button>
         </Row>
+        {contact?.company || contact?.title ? (
+          <Row icon={Building2}>
+            <span className="min-w-0 truncate">{[contact.title, contact.company].filter(Boolean).join(" · ")}</span>
+          </Row>
+        ) : null}
+        {contact?.phones[0] ? (
+          <Row icon={Phone}>
+            <a className="min-w-0 truncate hover:underline" href={`tel:${contact.phones[0].value.replace(/[^\d+]/g, "")}`}>
+              {contact.phones[0].value}
+            </a>
+          </Row>
+        ) : null}
         <Row icon={MessagesSquare}>
           {count} {count === 1 ? "thread" : "threads"}
         </Row>
@@ -53,6 +78,17 @@ export function SenderPanel({ detail, multipleMailboxes, onOpen, onCompose }: { 
           >
             <PenSquare className="text-muted-foreground size-4" /> New e-mail
           </button>
+        </li>
+        <li>
+          {contact ? (
+            <a href={`/app/contacts/${contact.id}`} className="hover:bg-foreground/[0.035] flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-left font-medium">
+              <BookUser className="text-muted-foreground size-4" /> {t("Open contact")}
+            </a>
+          ) : (
+            <button type="button" onClick={saveContact} className="hover:bg-foreground/[0.035] flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-left font-medium">
+              <UserPlus className="text-muted-foreground size-4" /> {t("Save contact")}
+            </button>
+          )}
         </li>
       </ul>
 
