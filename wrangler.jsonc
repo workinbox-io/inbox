@@ -25,6 +25,9 @@
     // "self": one company on its own Cloudflare account, billing off (self-hosters set this). "cloud": workinbox.io,
     // hosted, per-person plans on (lib/server/seats.ts).
     "DEPLOY_MODE": "cloud",
+    // Contacts' pixel banners: Jev (Workers AI) picks a theme and colour per e-mail domain (lib/server/contacts-banner.ts).
+    // Optional AI Gateway id to route those calls through (logs, caching, rate limits); empty calls Workers AI directly.
+    "AI_GATEWAY_ID": "",
     // cloud: orgs get <slug>.<MAIL_BASE_DOMAIN> at once (needs a wildcard Email Routing rule). Empty: custom domains only.
     "MAIL_BASE_DOMAIN": "",
     // cloud: the orgs' own domains receive and send through Amazon SES in this region (lib/server/ses.ts, docs/ses.md);
@@ -44,6 +47,7 @@
   ],
   "r2_buckets": [{ "binding": "FILES", "bucket_name": "inbox-files" }],
   "send_email": [{ "name": "EMAIL" }],
+  "ai": { "binding": "AI" },
   // Shared notes: one object per note holds the live Yjs document (src/notes/room.ts).
   "durable_objects": { "bindings": [{ "name": "NOTE_ROOM", "class_name": "NoteRoom" }] },
   "migrations": [{ "tag": "notes-v1", "new_sqlite_classes": ["NoteRoom"] }],

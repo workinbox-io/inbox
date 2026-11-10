@@ -2,10 +2,12 @@
  * Pixel scenes for the marketing site: a scene draws on a small canvas (a few hundred pixels wide) that CSS scales up
  * with `image-rendering: pixelated`. Colours are six steps between a background and a foreground (`0` … `5`), read
  * from the page so light and dark themes both work, plus `p` for the page colour (bands dither into the page) and `w`
- * for paper white. Sprites are strings of those keys, `.` is see-through. Everything here is pure except `Pix`.
+ * for paper white, and `a` / `b` for an optional second colour and its light tint (they default to steps 4 and 2;
+ * the contact banners set them). Sprites are strings of those keys, `.` is see-through. Everything here is pure except
+ * `Pix`.
  */
 
-export type ColorKey = "0" | "1" | "2" | "3" | "4" | "5" | "p" | "w";
+export type ColorKey = "0" | "1" | "2" | "3" | "4" | "5" | "p" | "w" | "a" | "b";
 export type Palette = Record<ColorKey, string>;
 
 /** 4×4 ordered (Bayer) dither: is the pixel at x, y on at this level (0 = never, 1 = always)? */
@@ -35,7 +37,7 @@ const mix = (a: string, b: string, t: number) => {
   const to = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, "0");
   return `#${to(r1, r2)}${to(g1, g2)}${to(b1, b2)}`;
 };
-/** Six steps from `bg` to `fg`, plus the page colour and paper white. */
+/** Six steps from `bg` to `fg`, plus the page colour, paper white and the second colour (here the same as 4 and 2). */
 export const palette = (bg: string, fg: string, page: string): Palette => ({
   "0": mix(bg, fg, 0),
   "1": mix(bg, fg, 0.1),
@@ -45,6 +47,8 @@ export const palette = (bg: string, fg: string, page: string): Palette => ({
   "5": mix(bg, fg, 1),
   p: mix(page, page, 0),
   w: "#fefefe",
+  a: mix(bg, fg, 0.7),
+  b: mix(bg, fg, 0.25),
 });
 
 /** Seeded random numbers, so a scene's still frame is the same on every load. */

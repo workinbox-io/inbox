@@ -29,7 +29,7 @@ import { UserAvatar } from "@/components/app/user-avatar"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
 import { shortDate } from "@/components/mailbox/message-view"
 import { mailboxColor } from "@/components/mailbox/mail-ui"
-import { bannerSeed, PixelBanner } from "./pixel-banner"
+import { PixelBanner } from "./pixel-banner"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -715,7 +715,7 @@ function ContactPane({
         </div>
       </DetailHeader>
       <div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        <PixelBanner seed={bannerSeed(email ?? contact.name ?? contact.id)} />
+        <PixelBanner email={email ?? contact.name ?? contact.id} />
         <div className="relative mx-auto grid max-w-2xl gap-5 px-4 pb-10 md:px-8 md:pb-12">
           <Hero
             seed={email ?? contact.id}
@@ -795,7 +795,7 @@ function DirectoryPane({ entry, onBack }: { entry: DirectoryEntry; onBack: () =>
         <span className="text-muted-foreground px-2 text-xs">{t("Directory")}</span>
       </DetailHeader>
       <div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        <PixelBanner seed={bannerSeed(entry.email)} />
+        <PixelBanner email={entry.email} />
         <div className="relative mx-auto grid max-w-2xl gap-5 px-4 pb-10 md:px-8 md:pb-12">
           <Hero
             seed={entry.email}

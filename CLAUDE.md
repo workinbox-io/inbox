@@ -99,6 +99,12 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   Mail's `SenderPanel` shows the contact (thread detail returns `contact`) or "Save contact".
 - API `/api/app/contacts` (+ `/[id]`, `/[id]/threads` (latest threads from the viewer's mailboxes), `/suggest`, `/groups`, `/import`, `/export?format=vcf|csv`), `/api/v1/contacts`
   re-exports list/get/create/patch/delete. MCP `src/mcp/contacts.ts`.
+- Contact view: a pixel banner behind the avatar (`components/contacts/pixel-banner.tsx`, scenes in `banner-scenes.ts` on
+  the site's pixel kit). `/api/app/contacts/banner?email=` → `lib/server/contacts-banner.ts`: reads the domain's homepage
+  head (title, description, `theme-color`), asks Jev (`typesafe/jev`, Workers AI binding `AI`, optionally through
+  `AI_GATEWAY_ID`) for an industry theme, a brand colour and an optional second one (palette keys `a`/`b`; labels and confidence thresholds in `lib/contacts/banner.ts`),
+  caches it in `caches.default` (30 days, 1 day when unsure). Free mail never leaves the server; anything unsure or
+  failing gets a generic scene from the domain hash. New theme = label in `BANNER_THEMES` + scene in `THEMES`.
 - Template file changed here: `components/mail/compose.tsx` (`AddressInput` `search` prop, `AddressSuggestion`).
 
 ## Marketing site and SEO/GEO (product)
