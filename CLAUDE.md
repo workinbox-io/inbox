@@ -16,7 +16,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Hosted (`cloud`) custom domains go through Amazon SES, not Cloudflare (which only serves zones in our account):
   `mail_domains.provider = "ses"`, SES identity per domain, sending via `sendOrgMail` (`mail/deliver.ts`), receiving
   S3 → SNS → `/api/ses/webhook` → job `mail.inbound` → `handleOrgMail`. Setup and runbook: `docs/ses.md`,
-  `scripts/ses-setup.sh`. Self-hosted, our subdomains and older domains stay `cloudflare`.
+  `scripts/ses-setup.sh`. Self-hosted, our subdomains and older domains stay `cloudflare`. "Connect Cloudflare"
+  (`connectCloudflare`, action `domain.connectCloudflare`) adds an `ses` domain's records with a one-time API token.
 - Access: `lib/server/mail/access.ts` (`viewerMailboxes`): own personal mailbox, shared ones granted in
   `mailbox_access`, all shared ones for owners/admins. Every mail query is scoped to that list.
 - UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search

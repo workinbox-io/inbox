@@ -7,6 +7,7 @@ import {
   parseAuthResults,
   parseQuery,
   patternMatches,
+  planDnsChanges,
   requiredDnsRecords,
   senderVerdict,
   spamScore,
@@ -97,6 +98,22 @@ describe("dns", () => {
     expect(evaluateDns({ mx: ["10 inbound-smtp.eu-west-1.amazonaws.com."], txt: [], dmarc: ['"v=DMARC1; p=none"'] }, "eu-west-1")).toEqual({ mx: true, spf: false, dmarc: true, active: true });
     expect(evaluateDns({ mx: ["10 inbound-smtp.eu-central-1.amazonaws.com."], txt: [], dmarc: [] }, "eu-west-1").active).toBe(false);
     expect(evaluateDns({ mx: ["13 route1.mx.cloudflare.net."], txt: [], dmarc: [] }, "eu-west-1").active).toBe(false);
+  });
+});
+
+describe("connect Cloudflare", () => {
+  it("plans the missing records and the competing MX", () => {
+    const required = requiredDnsRecords("acme.com", { region: "eu-west-1", tokens: ["a1"] });
+    const existing = [
+      { id: "1", type: "MX", name: "acme.com", content: "aspmx.l.google.com", priority: 1 },
+      { id: "2", type: "CNAME", name: "a1._domainkey.acme.com", content: "a1.dkim.amazonses.com." },
+      { id: "3", type: "TXT", name: "_dmarc.acme.com", content: '"v=DMARC1; p=none"' },
+      { id: "4", type: "MX", name: "bounce.acme.com", content: "feedback-smtp.eu-west-1.amazonses.com", priority: 10 },
+    ];
+    const plan = planDnsChanges(existing, required);
+    expect(plan.create.map((r) => `${r.type} ${r.name}`)).toEqual(["MX acme.com", "TXT bounce.acme.com"]);
+    expect(plan.conflicts.map((r) => r.id)).toEqual(["1"]);
+    expect(planDnsChanges([...existing, { id: "5", type: "MX", name: "acme.com", content: "inbound-smtp.eu-west-1.amazonaws.com" }, { id: "6", type: "TXT", name: "bounce.acme.com", content: '"v=spf1 include:amazonses.com ~all"' }], required).create).toEqual([]);
   });
 });
 

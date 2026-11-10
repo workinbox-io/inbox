@@ -5,7 +5,7 @@
 import { env } from "cloudflare:workers";
 import { and, count, db, eq, inArray, invitation, gt, mailboxAccess, mailAliases, mailboxes, mailDomains, mailMessages, mailThreads, mailOutbox, member, user } from "@/db";
 import { ATTACHMENT_URL_PREFIX } from "@/lib/uploads";
-import { evaluateDns, isValidDomain, isValidLocalPart, mailFromDomain, normalizeDomain, requiredDnsRecords } from "@/lib/mail/rules";
+import { evaluateDns, isValidDomain, isValidLocalPart, mailFromDomain, normalizeDomain, planDnsChanges, requiredDnsRecords, type ExistingDnsRecord } from "@/lib/mail/rules";
 import { createIdentity, deleteIdentity, getIdentity, sesConfigured, sesRegion, sesTenant } from "@/lib/server/ses";
 import { HttpError } from "@/lib/server/api";
 import { requireMailPlan } from "@/lib/server/org";
@@ -97,6 +97,44 @@ export async function checkDomain(orgId: string, domainId: string) {
     .where(eq(mailDomains.id, d.id))
     .returning();
   return row!;
+}
+
+/** Cloudflare's API with the customer's token (used for one request, never stored). */
+async function cloudflare<T>(token: string, method: string, path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
+    method,
+    headers: { authorization: `Bearer ${token}`, ...(body ? { "content-type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = (await res.json().catch(() => ({}))) as { success?: boolean; result?: T; errors?: { message: string }[] };
+  if (res.status === 401 || res.status === 403) throw new HttpError(422, "Cloudflare refused the token: it needs Zone Read and DNS Edit on this domain's zone.");
+  if (!res.ok || !data.success) throw new HttpError(422, `Cloudflare: ${data.errors?.map((e) => e.message).join("; ") || `HTTP ${res.status}`}`);
+  return data.result as T;
+}
+
+/**
+ * "Connect Cloudflare": adds the domain's records to its Cloudflare zone with the admin's API token, then checks
+ * them. MX records of the current mail provider are only replaced with `replaceMx` (the admin confirms the move).
+ */
+export async function connectCloudflare(orgId: string, domainId: string, token: string, replaceMx: boolean) {
+  const d = await ownDomain(orgId, domainId);
+  if (d.provider !== "ses") throw new HttpError(422, "On your own Cloudflare account, turn on Email Routing for the domain instead.");
+  // The zone is the domain or one of its parents (mail.acme.co.uk → acme.co.uk): ask for each, longest first.
+  const labels = d.domain.split(".");
+  let zone: { id: string; name: string } | undefined;
+  for (let i = 0; !zone && i < labels.length - 1; i++)
+    [zone] = await cloudflare<{ id: string; name: string }[]>(token, "GET", `/zones?name=${labels.slice(i).join(".")}`);
+  if (!zone) throw new HttpError(422, `The token has no access to the zone of ${d.domain}. Create it for that zone.`);
+  const existing = await cloudflare<ExistingDnsRecord[]>(token, "GET", `/zones/${zone.id}/dns_records?per_page=5000`);
+  const plan = planDnsChanges(existing, requiredDnsRecords(d.domain, sesSetup(d)));
+  if (plan.conflicts.some((r) => /\.mx\.cloudflare\.net\.?$/i.test(r.content)))
+    throw new HttpError(409, `Email Routing is on for ${zone.name}. Turn it off in Cloudflare (Email → Email Routing → Settings → Disable), then connect again.`);
+  if (plan.conflicts.length && !replaceMx)
+    throw new HttpError(409, `${d.domain} receives mail at ${plan.conflicts.map((r) => r.content).join(", ")} now. Confirm replacing those MX records to move its mail to Work Inbox.`);
+  for (const r of plan.conflicts) await cloudflare(token, "DELETE", `/zones/${zone.id}/dns_records/${r.id}`);
+  for (const r of plan.create)
+    await cloudflare(token, "POST", `/zones/${zone.id}/dns_records`, { type: r.type, name: r.name, content: r.value, ttl: 1, ...(r.priority ? { priority: r.priority } : {}), ...(r.type === "CNAME" ? { proxied: false } : {}), comment: "Work Inbox" });
+  return { domain: await checkDomain(orgId, d.id), created: plan.create.length, replaced: plan.conflicts.length };
 }
 
 export async function removeDomain(orgId: string, domainId: string) {

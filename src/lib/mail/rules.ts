@@ -169,6 +169,34 @@ export function evaluateDns(answers: { mx: string[]; txt: string[]; dmarc: strin
   return { mx, spf, dmarc, active: mx };
 }
 
+/** A record as Cloudflare's DNS API lists it. */
+export interface ExistingDnsRecord {
+  id: string;
+  type: string;
+  name: string;
+  content: string;
+  priority?: number;
+}
+
+const sameName = (a: string, b: string) => a.replace(/\.$/, "").toLowerCase() === b.replace(/\.$/, "").toLowerCase();
+const sameContent = (a: string, b: string) => a.replace(/^"|"$/g, "").replace(/\.$/, "").toLowerCase() === b.replace(/\.$/, "").toLowerCase();
+
+/**
+ * What "Connect Cloudflare" must change in a zone: the required records it lacks, and the MX records on the same names
+ * that would compete with ours (the domain's current mail provider). Any existing DMARC record is kept.
+ */
+export function planDnsChanges(existing: ExistingDnsRecord[], required: DnsRecord[]) {
+  const create = required.filter((r) => {
+    if (r.purpose === "dmarc") return !existing.some((e) => e.type === "TXT" && sameName(e.name, r.name) && /^"?v=DMARC1/i.test(e.content));
+    return !existing.some((e) => e.type === r.type && sameName(e.name, r.name) && sameContent(e.content, r.value));
+  });
+  const mxNames = required.filter((r) => r.type === "MX").map((r) => r.name);
+  const conflicts = existing.filter(
+    (e) => e.type === "MX" && mxNames.some((n) => sameName(e.name, n)) && !required.some((r) => r.type === "MX" && sameName(e.name, r.name) && sameContent(e.content, r.value)),
+  );
+  return { create, conflicts };
+}
+
 /** Search operators: from:, to:, subject:, has:attachment, is:unread, is:starred; the rest is free text. */
 export function parseQuery(q: string) {
   const out = { labels: [] as string[], text: [] as string[], from: [] as string[], to: [] as string[], subject: [] as string[], hasAttachment: false, unread: false, starred: false };

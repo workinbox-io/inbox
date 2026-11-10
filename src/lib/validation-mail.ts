@@ -41,6 +41,7 @@ export const ownMailboxSchema = z.object({
 export const mailSetupSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("domain.add"), domain: z.string().trim().max(253) }),
   z.object({ action: z.literal("domain.check"), domainId: z.string().uuid() }),
+  z.object({ action: z.literal("domain.connectCloudflare"), domainId: z.string().uuid(), token: z.string().trim().min(20).max(200), replaceMx: z.boolean().default(false) }),
   z.object({ action: z.literal("domain.remove"), domainId: z.string().uuid() }),
   z.object({ action: z.literal("domain.catchAll"), domainId: z.string().uuid(), mailboxId: z.string().uuid().nullable() }),
   z.object({

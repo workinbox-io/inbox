@@ -23,6 +23,14 @@ Cloudflare (`mail_domains.provider`).
 - Virus verdict FAIL drops the mail; spam verdict FAIL sets `x-spam-flag` for our own spam score. Mail to an address
   nobody has is dropped (SES already accepted it, so nothing can be rejected).
 
+## Connect Cloudflare
+
+For an `ses` domain on Cloudflare, Settings → Mail → **Connect Cloudflare** takes an API token (Zone Read, DNS Edit;
+the link opens Cloudflare's token page with them preselected), finds the zone, adds the missing records
+(`planDnsChanges` in `lib/mail/rules.ts`) and checks the domain (`connectCloudflare` in `lib/server/mail/admin.ts`).
+The token is used for that request only. MX records of the current provider are replaced only when the admin ticks
+the box; Email Routing's own MX are locked, so the admin is told to turn Email Routing off first.
+
 ## Setting it up
 
 `scripts/ses-setup.sh` does everything with the AWS CLI (`aws login` as an admin) and wrangler, and can be run again:
@@ -42,4 +50,3 @@ DKIM `d=` the domain, Return-Path on `bounce.<domain>`), reply to it, and see th
 
 - No cron re-checks pending domains: the admin clicks Check DNS.
 - Deleting an org leaves its SES identities and tenant (unused, no cost).
-- "Connect Cloudflare" (create the records through the customer's API token) is the next step.

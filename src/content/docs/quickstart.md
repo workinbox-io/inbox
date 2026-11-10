@@ -14,11 +14,14 @@ updated: 2026-11-10
 
 Open **Settings → Mail** and add your domain, for example `yourcompany.com`. Work Inbox lists the DNS records it needs:
 
-- **MX** records pointing at Cloudflare Email Routing,
-- an **SPF** record (TXT) and a **DMARC** record (TXT on `_dmarc`).
+- an **MX** record, so mail for the domain comes to Work Inbox,
+- three **DKIM** records (CNAME) and two records on `bounce.yourcompany.com`, so mail you send is signed and delivered,
+- a **DMARC** record (TXT on `_dmarc`).
 
-If the domain is on Cloudflare, turning on **Email Routing** for it adds the MX and SPF records for you. Anywhere else,
-add them at your DNS provider. Click **Check DNS**: each record gets a tick once it's visible.
+Add them at your DNS provider. If the domain is on Cloudflare, click **Connect Cloudflare** instead: paste an API
+token with Zone Read and DNS Edit (the link creates one) and Work Inbox adds the records for you; the token is used
+once and not stored. Moving from another mail provider? Tick "Replace the current MX records". Click **Check DNS**:
+each record gets a tick once it's visible, and sending starts when the DKIM records are verified.
 
 Under **Mail to unknown addresses**, choose whether mail to an address nobody has is rejected or lands in one mailbox
 (a catch-all).

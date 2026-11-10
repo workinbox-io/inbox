@@ -75,6 +75,75 @@ export function MailSettings(props: { initial: MailSetup }) {
 
 type Act = (body: Record<string, unknown>, ok?: string) => Promise<void>
 
+/** A Cloudflare API token template with the two permissions connectCloudflare needs (Zone Read, DNS Edit). */
+const TOKEN_URL = `https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=${encodeURIComponent(
+  JSON.stringify([{ key: "zone", type: "read" }, { key: "dns", type: "edit" }]),
+)}&name=${encodeURIComponent("Work Inbox DNS")}`
+
+/** "Connect Cloudflare": the admin pastes an API token once and the domain's records are added for them. */
+function ConnectCloudflare({ domain, onDone }: { domain: { id: string; domain: string }; onDone: () => Promise<void> }) {
+  const [open, setOpen] = React.useState(false)
+  const [token, setToken] = React.useState("")
+  const [replaceMx, setReplaceMx] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [busy, setBusy] = React.useState(false)
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    try {
+      const r = (await api("POST", "/api/app/mail/settings", { action: "domain.connectCloudflare", domainId: domain.id, token, replaceMx })) as { created: number }
+      toast.success(r.created ? `Added ${r.created} DNS record${r.created === 1 ? "" : "s"} on Cloudflare` : "The records were already there")
+      setOpen(false)
+      setToken("")
+      await onDone()
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <Globe /> Connect Cloudflare
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={submit} className="grid gap-4">
+            <DialogHeader>
+              <DialogTitle>Add the records on Cloudflare</DialogTitle>
+              <DialogDescription>
+                Is {domain.domain} on Cloudflare? Paste an API token and Work Inbox adds the records for you. The token is used once and not stored.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-1.5">
+              <Label htmlFor="cf-token">API token</Label>
+              <Input id="cf-token" type="password" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} required minLength={20} />
+              <a href={TOKEN_URL} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground w-fit text-xs underline">
+                Create a token with Zone Read and DNS Edit
+              </a>
+            </div>
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox checked={replaceMx} onCheckedChange={(v) => setReplaceMx(v === true)} className="mt-0.5" />
+              <span>Replace the domain's current MX records, so its mail moves to Work Inbox</span>
+            </label>
+            {error ? <p className="text-destructive text-sm">{error}</p> : null}
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={busy || token.trim().length < 20}>
+                {busy ? "Connecting…" : "Add records"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
 function StatusBadge({ status }: { status: MailSetup["domains"][number]["status"] }) {
   const map = {
     active: ["bg-emerald-500/15 text-emerald-700 dark:text-emerald-400", "Receiving mail"],
@@ -113,6 +182,7 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
                 >
                   <RefreshCw className={cn(busy === d.id && "animate-spin")} /> Check DNS
                 </Button>
+                {d.provider === "ses" && d.status !== "active" ? <ConnectCloudflare domain={d} onDone={() => act({ action: "domain.check", domainId: d.id })} /> : null}
                 <ConfirmButton title={`Remove ${d.domain}?`} description="Only a domain without mailboxes can be removed." confirmLabel="Remove" onConfirm={() => act({ action: "domain.remove", domainId: d.id }, "Domain removed")}>
                   <Button variant="ghost" size="sm" className="text-destructive">
                     Remove

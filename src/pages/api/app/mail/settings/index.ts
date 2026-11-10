@@ -17,6 +17,11 @@ export const POST = manageHandler(async ({ orgId, request, audit }) => {
     }
     case "domain.check":
       return json(await admin.checkDomain(orgId, body.domainId));
+    case "domain.connectCloudflare": {
+      const r = await admin.connectCloudflare(orgId, body.domainId, body.token, body.replaceMx);
+      audit("mail_domain.connect_cloudflare", { target: r.domain.domain, details: { created: r.created, replaced: r.replaced } });
+      return json(r);
+    }
     case "domain.remove": {
       const d = await admin.removeDomain(orgId, body.domainId);
       audit("mail_domain.remove", { target: d.domain });
