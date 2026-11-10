@@ -3,7 +3,7 @@
  * suggestions, import/export, and contacts picked up from sent mail. Every member of the org may read and edit
  * it. The directory (our own people and shared mailboxes) is read live from `mailboxes`.
  */
-import { and, asc, contactEmails, contactGroupMembers, contactGroups, contacts, db, desc, eq, inArray, isNotNull, mailboxes, mailDomains, or, sql, user } from "@/db";
+import { and, asc, contactEmails, contactGroupMembers, contactGroups, contacts, db, desc, eq, inArray, isNotNull, isNull, mailboxes, mailDomains, mailThreads, or, sql, user } from "@/db";
 import type { BatchItem } from "drizzle-orm/batch";
 import type { ContactValue } from "@/db/schema/contacts";
 import { HttpError } from "@/lib/server/api";
@@ -182,6 +182,21 @@ export async function deleteContact(orgId: string, id: string) {
   const row = await requireContact(orgId, id);
   await db.delete(contacts).where(eq(contacts.id, id));
   return out(row);
+}
+
+/** The latest threads with a contact, from the mailboxes the viewer may open (lib/server/mail/access.ts). */
+export async function contactThreads(orgId: string, id: string, boxIds: string[]) {
+  const c = await requireContact(orgId, id);
+  const emails = c.emails.map((e) => e.value).slice(0, 10);
+  if (!emails.length || !boxIds.length) return { threads: [] };
+  const threads = await db
+    .select({ id: mailThreads.id, subject: mailThreads.subject, mailbox: mailboxes.address, unread: mailThreads.unread, lastMessageAt: mailThreads.lastMessageAt })
+    .from(mailThreads)
+    .innerJoin(mailboxes, eq(mailboxes.id, mailThreads.mailboxId))
+    .where(and(inArray(mailThreads.mailboxId, boxIds.slice(0, 80)), inArray(mailThreads.contactEmail, emails), isNull(mailThreads.trashedAt), eq(mailThreads.spam, false)))
+    .orderBy(desc(mailThreads.lastMessageAt))
+    .limit(6);
+  return { threads: threads.map((t) => ({ ...t, lastMessageAt: t.lastMessageAt.toISOString() })) };
 }
 
 // ---- Groups ----

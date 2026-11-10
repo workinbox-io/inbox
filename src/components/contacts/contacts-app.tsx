@@ -5,6 +5,7 @@
  */
 import * as React from "react"
 import {
+  AtSign,
   BookUser,
   Building2,
   Clock,
@@ -12,6 +13,7 @@ import {
   Download,
   Mail,
   Pencil,
+  PenSquare,
   Phone,
   Plus,
   SearchX,
@@ -26,6 +28,7 @@ import { EmptyState } from "@/components/app/empty-state"
 import { UserAvatar } from "@/components/app/user-avatar"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
 import { shortDate } from "@/components/mailbox/message-view"
+import { mailboxColor } from "@/components/mailbox/mail-ui"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -39,7 +42,7 @@ import { DetailHeader, IconAction } from "@/components/workspace/detail-header"
 import { ListBody, ListEmpty, ListHeader, ListPane, ListRow, ListSearch } from "@/components/workspace/list-pane"
 import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
 import { SplitView } from "@/components/workspace/split-view"
-import { Kbd, shortcutsPaused, useMediaQuery, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
+import { Kbd, shortcutsPaused, tint, useMediaQuery, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
 import { IMPORT_MAX_BYTES, parseContactsFile } from "@/lib/contacts/import"
 import { t, tp } from "@/lib/i18n/panel"
@@ -69,6 +72,10 @@ const VIEWS: { value: View; label: string; icon: typeof Users }[] = [
 const PAGE = 100
 const LABELS = ["work", "home", "mobile", "other"]
 const name = (c: Contact) => c.name || c.emails[0]?.value.split("@")[0] || c.phones[0]?.value || t("No name")
+const letterOf = (c: Contact) => {
+  const ch = name(c).normalize("NFD").charAt(0).toUpperCase()
+  return /[A-Z]/.test(ch) ? ch : "#"
+}
 const compose = (email: string) => `/app/mail?compose=1&to=${encodeURIComponent(email)}`
 const color = (c: Contact) => (c.source === "sent" && !c.name ? "#9ca3af" : WORKSPACE_COLORS[0])
 
@@ -289,6 +296,8 @@ export function ContactsApp(props: ContactsAppProps) {
   ]
 
   const group = groups.find((g) => g.id === groupId)
+  // A, B, C… headers in the alphabetical list (the server sorts by name, or the address when there's none).
+  const letters = view === "all" && !query.trim()
   const title = query ? t("Search") : group ? group.name : t(VIEWS.find((v) => v.value === view)!.label)
 
   const rail = (
@@ -388,9 +397,14 @@ export function ContactsApp(props: ContactsAppProps) {
             </Button>
           </li>
         ) : null}
-        {contacts.map((c) => (
+        {contacts.map((c, i) => (
+          <React.Fragment key={c.id}>
+          {letters && letterOf(c) !== (i ? letterOf(contacts[i - 1]!) : "") ? (
+            <li className="text-muted-foreground px-5 pt-3 pb-1 text-[11px] font-semibold tracking-wide" aria-hidden>
+              {letterOf(c)}
+            </li>
+          ) : null}
           <ListRow
-            key={c.id}
             color={color(c)}
             selected={selectedId === c.id}
             title={
@@ -405,6 +419,7 @@ export function ContactsApp(props: ContactsAppProps) {
             actions={() => contactActions(c, "list")}
             menuLabel={t("Contact actions")}
           />
+          </React.Fragment>
         ))}
         {directory.length && view !== "directory" ? <li className="text-muted-foreground px-5 pt-3 pb-1 text-xs font-medium">{t("Directory")}</li> : null}
         {directory.map((d) => (
@@ -497,12 +512,148 @@ export function ContactsApp(props: ContactsAppProps) {
   )
 }
 
-function Field({ icon: Icon, children }: { icon: typeof Mail; children: React.ReactNode }) {
+const SOURCE: Record<Contact["source"], string> = { manual: "Added by hand", import: "Imported", sent: "Added from sent mail" }
+const labelText = (label: string | undefined, fallback: string) => {
+  const s = t(label || fallback)
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`
+
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.success(t("Copied"))
+  } catch (e) {
+    toast.error((e as Error).message)
+  }
+}
+
+/** Avatar, name and what they do, over a soft tint of the app's colour. */
+function Hero({ seed, title, subtitle, children }: { seed: string; title: string; subtitle?: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <li className="flex items-start gap-3 py-1.5">
-      <Icon className="text-muted-foreground mt-0.5 size-4 shrink-0" />
-      <div className="grid min-w-0 flex-1 gap-1">{children}</div>
+    <section className="relative">
+      <div className="relative flex flex-col items-center gap-4 pt-2 text-center sm:flex-row sm:items-end sm:gap-5 sm:text-left">
+        <span className="bg-background rounded-full p-1 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+          <UserAvatar seed={seed} size={84} />
+        </span>
+        <div className="grid min-w-0 gap-1.5 pb-1">
+          <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
+          {subtitle ? <p className="text-muted-foreground flex items-center justify-center gap-1.5 text-sm sm:justify-start">{subtitle}</p> : null}
+          {children}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function QuickAction({ icon: Icon, label, href, onClick }: { icon: typeof Mail; label: string; href?: string; onClick?: () => void }) {
+  const className = "hover:bg-foreground/[0.035] focus-visible:ring-ring/50 flex flex-col items-center gap-1.5 bg-background/60 min-w-0 flex-1 rounded-xl border px-3 py-3 text-xs font-medium outline-none focus-visible:ring-[3px] sm:max-w-28"
+  const body = (
+    <>
+      <span className="flex size-8 items-center justify-center rounded-full" style={{ background: tint(WORKSPACE_COLORS[0], 14), color: WORKSPACE_COLORS[0] }}>
+        <Icon className="size-4" />
+      </span>
+      {label}
+    </>
+  )
+  return href ? (
+    <a href={href} className={className}>
+      {body}
+    </a>
+  ) : (
+    <button type="button" onClick={onClick} className={className}>
+      {body}
+    </button>
+  )
+}
+
+function Card({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="bg-card overflow-hidden rounded-xl border">
+      <header className="flex items-center gap-2 px-4 pt-3 pb-1">
+        <h2 className="text-muted-foreground text-xs font-medium">{title}</h2>
+        {action ? <div className="ml-auto">{action}</div> : null}
+      </header>
+      {children}
+    </section>
+  )
+}
+
+function DetailRow({ icon: Icon, value, label, href }: { icon: typeof Mail; value: string; label: string; href: string }) {
+  return (
+    <li className="group/row flex items-center gap-3 px-4 py-2.5">
+      <span className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
+        <Icon className="size-4" />
+      </span>
+      <div className="grid min-w-0 flex-1">
+        <a href={href} className="truncate text-sm font-medium hover:underline">
+          {value}
+        </a>
+        <span className="text-muted-foreground text-xs">{label}</span>
+      </div>
+      <button
+        type="button"
+        onClick={() => copyText(value)}
+        aria-label={t("Copy")}
+        title={t("Copy")}
+        className="text-muted-foreground hover:text-foreground hover:bg-foreground/[0.05] rounded-md p-1.5 opacity-0 group-hover/row:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
+      >
+        <Copy className="size-3.5" />
+      </button>
     </li>
+  )
+}
+
+type ContactThread = { id: string; subject: string; mailbox: string; unread: boolean; lastMessageAt: string }
+
+function Conversations({ id, email }: { id: string; email?: string }) {
+  const [threads, setThreads] = React.useState<ContactThread[] | null>(null)
+  const mounted = useMounted()
+  React.useEffect(() => {
+    api<{ threads: ContactThread[] }>("GET", `/api/app/contacts/${id}/threads`)
+      .then((r) => setThreads(r.threads))
+      .catch(() => setThreads([]))
+  }, [id])
+  return (
+    <Card
+      title={t("Conversations")}
+      action={
+        email ? (
+          <a href={compose(email)} className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs">
+            <PenSquare className="size-3" /> {t("New e-mail")}
+          </a>
+        ) : undefined
+      }
+    >
+      {threads === null ? (
+        <div className="grid gap-2 px-4 py-3">
+          <div className="bg-muted h-4 w-2/3 animate-pulse rounded" />
+          <div className="bg-muted h-4 w-1/2 animate-pulse rounded" />
+        </div>
+      ) : threads.length ? (
+        <ul className="grid gap-px px-2 pb-2">
+          {threads.map((th) => (
+            <li key={th.id}>
+              <a href={`/app/mail?t=${th.id}`} className="hover:bg-foreground/[0.035] relative grid gap-0.5 rounded-md py-2 pr-2 pl-5">
+                <span className="absolute top-2.5 bottom-2.5 left-2 w-[3px] rounded-full" style={{ background: mailboxColor(th.mailbox) }} aria-hidden />
+                <span className="flex items-center gap-2">
+                  <span className={th.unread ? "truncate text-sm font-semibold" : "truncate text-sm"}>{th.subject || t("(no subject)")}</span>
+                  <span className="text-muted-foreground ml-auto shrink-0 text-[11px] tabular-nums" suppressHydrationWarning>
+                    {mounted ? shortDate(th.lastMessageAt) : null}
+                  </span>
+                </span>
+                <span className="text-muted-foreground flex items-center gap-1 truncate text-xs">
+                  <AtSign className="size-3 shrink-0" />
+                  {th.mailbox}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-muted-foreground px-4 pt-1 pb-4 text-sm">{t("No conversations in your mailboxes yet.")}</p>
+      )}
+    </Card>
   )
 }
 
@@ -547,67 +698,88 @@ function ContactPane({
         }}
       />
     )
+  const email = contact.emails[0]?.value
+  const phone = contact.phones[0]?.value
   const inGroups = groups.filter((g) => contact.groupIds.includes(g.id))
+  const role = [contact.title, contact.company].filter(Boolean).join(" · ")
   return (
     <div className="flex h-full min-h-0 flex-col">
       <DetailHeader onBack={onBack}>
         <div className="ml-auto flex items-center gap-1">
-          {contact.emails[0] ? (
-            <IconAction label={t("Write e-mail")} onClick={() => void (location.href = compose(contact.emails[0]!.value))}>
-              <Mail />
-            </IconAction>
-          ) : null}
           <IconAction label={t("Edit")} onClick={() => setEditing(true)}>
             <Pencil />
           </IconAction>
           <ActionMenuButton actions={actions(contact)} label={t("Contact actions")} />
         </div>
       </DetailHeader>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto grid max-w-xl gap-6 px-6 py-8">
-          <div className="flex items-center gap-4">
-            <UserAvatar seed={contact.emails[0]?.value ?? contact.id} size={56} />
-            <div className="grid min-w-0">
-              <h2 className="truncate text-xl font-semibold tracking-tight">{name(contact)}</h2>
-              {contact.title || contact.company ? <p className="text-muted-foreground truncate text-sm">{[contact.title, contact.company].filter(Boolean).join(" · ")}</p> : null}
-            </div>
-          </div>
-          <ul className="grid text-sm">
-            {contact.emails.map((e) => (
-              <Field key={e.value} icon={Mail}>
-                <a className="truncate hover:underline" href={compose(e.value)}>
-                  {e.value}
-                </a>
-                {e.label ? <span className="text-muted-foreground text-xs">{t(e.label)}</span> : null}
-              </Field>
-            ))}
-            {contact.phones.map((p) => (
-              <Field key={p.value} icon={Phone}>
-                <a className="truncate hover:underline" href={`tel:${p.value.replace(/[^\d+]/g, "")}`}>
-                  {p.value}
-                </a>
-                {p.label ? <span className="text-muted-foreground text-xs">{t(p.label)}</span> : null}
-              </Field>
-            ))}
+      <div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-56" style={{ background: `linear-gradient(to bottom, ${tint(WORKSPACE_COLORS[0], 9)}, transparent)` }} aria-hidden />
+        <div className="relative mx-auto grid max-w-2xl gap-5 px-4 py-8 md:px-8 md:py-12">
+          <Hero
+            seed={email ?? contact.id}
+            title={name(contact)}
+            subtitle={
+              role ? (
+                <>
+                  {contact.company ? <Building2 className="size-3.5 shrink-0" /> : null}
+                  <span className="truncate">{role}</span>
+                </>
+              ) : undefined
+            }
+          >
             {inGroups.length ? (
-              <Field icon={Tag}>
-                <span className="flex flex-wrap gap-1">
-                  {inGroups.map((g) => (
-                    <span key={g.id} className="bg-muted rounded-full px-2 py-0.5 text-xs">
-                      {g.name}
-                    </span>
-                  ))}
-                </span>
-              </Field>
+              <span className="flex flex-wrap justify-center gap-1 pt-0.5 sm:justify-start">
+                {inGroups.map((g) => (
+                  <span key={g.id} className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
+                    <Tag className="text-muted-foreground size-3" /> {g.name}
+                  </span>
+                ))}
+              </span>
             ) : null}
-          </ul>
-          {contact.note ? <p className="text-foreground/80 text-sm whitespace-pre-wrap">{contact.note}</p> : null}
-          {contact.contactCount ? (
-            <p className="text-muted-foreground text-xs">
-              {tp(contact.contactCount, { one: "E-mailed once", other: "E-mailed {count} times" })}
-              {contact.lastContactedAt ? ` · ${t("last on {date}", { date: new Date(contact.lastContactedAt).toLocaleDateString() })}` : ""}
-            </p>
+          </Hero>
+
+          <div className="relative flex gap-2">
+            {email ? <QuickAction icon={Mail} label={t("E-mail")} href={compose(email)} /> : null}
+            {phone ? <QuickAction icon={Phone} label={t("Call")} href={telHref(phone)} /> : null}
+            {email ? <QuickAction icon={Copy} label={t("Copy e-mail")} onClick={() => copyText(email)} /> : null}
+          </div>
+
+          {contact.emails.length || contact.phones.length ? (
+            <Card title={t("Contact details")}>
+              <ul className="divide-y">
+                {contact.emails.map((e) => (
+                  <DetailRow key={e.value} icon={Mail} value={e.value} label={labelText(e.label, "e-mail")} href={compose(e.value)} />
+                ))}
+                {contact.phones.map((p) => (
+                  <DetailRow key={p.value} icon={Phone} value={p.value} label={labelText(p.label, "phone")} href={telHref(p.value)} />
+                ))}
+              </ul>
+            </Card>
           ) : null}
+
+          {contact.note ? (
+            <Card title={t("Note")}>
+              <p className="text-foreground/85 px-4 pt-1 pb-4 text-sm leading-6 whitespace-pre-wrap">{contact.note}</p>
+            </Card>
+          ) : null}
+
+          {email ? <Conversations id={contact.id} email={email} /> : null}
+
+          <p className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs sm:justify-start">
+            <span>{t(SOURCE[contact.source])}</span>
+            {contact.contactCount ? (
+              <>
+                <span aria-hidden>·</span>
+                <span>{tp(contact.contactCount, { one: "E-mailed once", other: "E-mailed {count} times" })}</span>
+              </>
+            ) : null}
+            {contact.lastContactedAt ? (
+              <>
+                <span aria-hidden>·</span>
+                <span suppressHydrationWarning>{t("last on {date}", { date: new Date(contact.lastContactedAt).toLocaleDateString() })}</span>
+              </>
+            ) : null}
+          </p>
         </div>
       </div>
     </div>
@@ -618,27 +790,31 @@ function DirectoryPane({ entry, onBack }: { entry: DirectoryEntry; onBack: () =>
   return (
     <div className="flex h-full min-h-0 flex-col">
       <DetailHeader onBack={onBack}>
-        <div className="ml-auto">
-          <IconAction label={t("Write e-mail")} onClick={() => void (location.href = compose(entry.email))}>
-            <Mail />
-          </IconAction>
-        </div>
+        <span className="text-muted-foreground px-2 text-xs">{t("Directory")}</span>
       </DetailHeader>
-      <div className="mx-auto grid w-full max-w-xl gap-6 px-6 py-8">
-        <div className="flex items-center gap-4">
-          <UserAvatar seed={entry.email} size={56} />
-          <div className="grid min-w-0">
-            <h2 className="truncate text-xl font-semibold tracking-tight">{entry.name || entry.email.split("@")[0]}</h2>
-            <p className="text-muted-foreground text-sm">{entry.kind === "shared" ? t("Shared mailbox in your organization") : t("Person in your organization")}</p>
+      <div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-56" style={{ background: `linear-gradient(to bottom, ${tint(WORKSPACE_COLORS[0], 9)}, transparent)` }} aria-hidden />
+        <div className="relative mx-auto grid max-w-2xl gap-5 px-4 py-8 md:px-8 md:py-12">
+          <Hero
+            seed={entry.email}
+            title={entry.name || entry.email.split("@")[0]!}
+            subtitle={
+              <>
+                {entry.kind === "shared" ? <Users className="size-3.5 shrink-0" /> : <Building2 className="size-3.5 shrink-0" />}
+                {entry.kind === "shared" ? t("Shared mailbox in your organization") : t("Person in your organization")}
+              </>
+            }
+          />
+          <div className="relative flex gap-2">
+            <QuickAction icon={Mail} label={t("E-mail")} href={compose(entry.email)} />
+            <QuickAction icon={Copy} label={t("Copy e-mail")} onClick={() => copyText(entry.email)} />
           </div>
+          <Card title={t("Contact details")}>
+            <ul>
+              <DetailRow icon={Mail} value={entry.email} label={entry.kind === "shared" ? t("Shared mailbox") : t("Work")} href={compose(entry.email)} />
+            </ul>
+          </Card>
         </div>
-        <ul className="grid text-sm">
-          <Field icon={Mail}>
-            <a className="truncate hover:underline" href={compose(entry.email)}>
-              {entry.email}
-            </a>
-          </Field>
-        </ul>
       </div>
     </div>
   )
