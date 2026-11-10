@@ -1,10 +1,17 @@
 # Roadmap
 
-WorkInbox (workinbox.io) is open-source mail, contacts, calendar and drive for teams, running entirely on Cloudflare
-(Workers, D1, R2, Queues, Email Routing, Email Service). Two ways to run it: self-hosted on your own Cloudflare account
+WorkInbox (workinbox.io) is open-source mail, contacts, calendar and drive for teams, running on Cloudflare
+(Workers, D1, R2, Queues, Durable Objects, Email Routing, Email Service), with Amazon SES for hosted custom domains. Two ways to run it: self-hosted on your own Cloudflare account
 (`DEPLOY_MODE=self`) or hosted multi-tenant (`DEPLOY_MODE=cloud`, Paddle plans).
 
 Status: ✅ done · 🚧 in progress · ⬜ planned
+
+## Next up (2026-11-10)
+
+1. 🚧 Acceptance on production: Web Push on a real phone; a first free `<name>.workinbox.io` address (claim, verify,
+   Gmail → mailbox → reply)
+2. ⬜ Calendar (phase 3), starting with calendars, events with RRULE, week/month views and iMIP invitations in the thread
+3. ⬜ Drive (phase 4)
 
 ## Phase 0: groundwork
 
@@ -33,18 +40,19 @@ Done:
   drafts, signatures, sandboxed HTML with remote images blocked
 - ✅ Settings → Mail for owners and admins, audit log entries
 
-Completion update (2026-11-09): implementation deployed; Gmail end-to-end check confirmed; device-push and initial cron/backfill acceptance checks remain.
+Completion update (2026-11-10): everything deployed and the Gmail end-to-end check passed; only Web Push on a real
+device is left.
 Operational instructions: [docs/phase1-operations.md](docs/phase1-operations.md).
 
 Implemented and acceptance:
 
 - ✅ End-to-end check on `notelio.pl`: Gmail → mailbox, reply back in the same Gmail thread, SPF/DKIM/DMARC pass
-- ✅ **Two experiences: admin console vs. plain mail** (like Google Workspace admin vs. Gmail). What exists today is
-  the admin view. Regular members get mail only:
+- ✅ **Two experiences: admin console vs. plain mail** (like Google Workspace admin vs. Gmail). Regular members
+  get mail only:
   - Members land on `/app/mail` in a mail-only layout: no app sidebar, no Overview/Billing/Settings; the folder rail
     holds their mailboxes (e.g. `diana@` plus shared `hello@`) and a small account menu (signature, password, sign out).
     Owners/admins keep the full app. ✅ A persisted switch for admins between mail-only and console views (mail-only by default).
-  - "Add person" in Settings → Mail creates the user, their mailbox and shared access in one step: name, address
+  - ✅ "Add person" in Settings → Mail creates the user, their mailbox and shared access in one step: name, address
     (`diana@notelio.pl`), mailboxes to share. The new address can't receive an invitation before it exists, so the
     admin gets a temporary password or a one-time sign-in link to hand over; the user signs in with
     `diana@notelio.pl` (already verified, the domain belongs to the org) and sets their own password.
@@ -91,7 +99,8 @@ Implemented and acceptance:
 
 - ✅ Plans per person (Paddle, first person free, seats synced on every mailbox change); API, MCP and audit log paid
 - ✅ Hosted custom domains through Amazon SES (send and receive), "Connect Cloudflare" adds the DNS records
-- ✅ Free `<name>.workinbox.io` address in Settings → Mail (SES, records in our zone, admin's mailbox on it)
+- 🚧 Free `<name>.workinbox.io` address in Settings → Mail (SES, records in our zone with `MAIL_ZONE_TOKEN`, the
+  admin's mailbox on it, re-checked until verified): deployed, first live claim pending
 - ✅ Bounce/complaint handling and send limits (phase 1)
 - ✅ Sending reputation (hosted): new unpaid orgs send to 50/200 recipients a day for 14 days, a ceiling of
   2,000/20,000 over any org's own limits, sending pauses on its own at ≥5% bounces or ≥0.3% complaints over 7 days
@@ -102,7 +111,7 @@ Implemented and acceptance:
 - ⬜ Optional IMAP/SMTP gateway (separate container) talking to a sync API on the Worker
 - ⬜ JMAP
 - ✅ Migration from Gmail (`.mbox` / `.eml` import through the queue, Gmail labels kept)
-- ⬜ Shared documents (Durable Objects + CRDT)
+- ✅ Shared documents (Durable Objects + CRDT): shipped as shared notes, phase 7
 
 ## Phase 7: shared notes
 
