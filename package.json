@@ -71,6 +71,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-table": "^9.3.1",
     "astro": "7.4.2",
+    "aws4fetch": "1.0.20",
     "better-auth": "^1.7.14",
     "boring-avatars": "^2.0.4",
     "class-variance-authority": "^0.7.1",

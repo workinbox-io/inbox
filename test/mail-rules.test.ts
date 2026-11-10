@@ -85,6 +85,19 @@ describe("dns", () => {
     });
     expect(evaluateDns({ mx: ["10 aspmx.l.google.com."], txt: [], dmarc: [] }).active).toBe(false);
   });
+  it("lists and checks the SES records of a hosted domain", () => {
+    const records = requiredDnsRecords("acme.com", { region: "eu-west-1", tokens: ["a1", "b2", "c3"] });
+    expect(records.filter((r) => r.purpose === "dkim").map((r) => [r.name, r.value])).toEqual([
+      ["a1._domainkey.acme.com", "a1.dkim.amazonses.com"],
+      ["b2._domainkey.acme.com", "b2.dkim.amazonses.com"],
+      ["c3._domainkey.acme.com", "c3.dkim.amazonses.com"],
+    ]);
+    expect(records.find((r) => r.purpose === "mx")).toMatchObject({ value: "inbound-smtp.eu-west-1.amazonaws.com", priority: 10 });
+    expect(records.filter((r) => r.purpose === "mailfrom").map((r) => r.name)).toEqual(["bounce.acme.com", "bounce.acme.com"]);
+    expect(evaluateDns({ mx: ["10 inbound-smtp.eu-west-1.amazonaws.com."], txt: [], dmarc: ['"v=DMARC1; p=none"'] }, "eu-west-1")).toEqual({ mx: true, spf: false, dmarc: true, active: true });
+    expect(evaluateDns({ mx: ["10 inbound-smtp.eu-central-1.amazonaws.com."], txt: [], dmarc: [] }, "eu-west-1").active).toBe(false);
+    expect(evaluateDns({ mx: ["13 route1.mx.cloudflare.net."], txt: [], dmarc: [] }, "eu-west-1").active).toBe(false);
+  });
 });
 
 describe("search", () => {

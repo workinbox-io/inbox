@@ -26,7 +26,10 @@
     // hosted, per-person plans on (lib/server/seats.ts).
     "DEPLOY_MODE": "cloud",
     // cloud: orgs get <slug>.<MAIL_BASE_DOMAIN> at once (needs a wildcard Email Routing rule). Empty: custom domains only.
-    "MAIL_BASE_DOMAIN": ""
+    "MAIL_BASE_DOMAIN": "",
+    // cloud: the orgs' own domains receive and send through Amazon SES in this region (lib/server/ses.ts, docs/ses.md);
+    // off until the AWS secrets are set. Self-hosted ignores it.
+    "AWS_SES_REGION": "eu-west-1"
   },
   // Secrets (wrangler secret put …, locally in .dev.vars): BETTER_AUTH_SECRET, PADDLE_API_KEY,
   // PADDLE_WEBHOOK_SECRET, PUBLIC_PADDLE_CLIENT_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.

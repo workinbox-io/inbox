@@ -5,7 +5,8 @@
 import { env } from "cloudflare:workers";
 import { and, count, db, eq, inArray, invitation, gt, mailboxAccess, mailAliases, mailboxes, mailDomains, mailMessages, mailThreads, mailOutbox, member, user } from "@/db";
 import { ATTACHMENT_URL_PREFIX } from "@/lib/uploads";
-import { evaluateDns, isValidDomain, isValidLocalPart, normalizeDomain, requiredDnsRecords } from "@/lib/mail/rules";
+import { evaluateDns, isValidDomain, isValidLocalPart, mailFromDomain, normalizeDomain, requiredDnsRecords } from "@/lib/mail/rules";
+import { createIdentity, deleteIdentity, getIdentity, sesConfigured, sesRegion, sesTenant } from "@/lib/server/ses";
 import { HttpError } from "@/lib/server/api";
 import { requireMailPlan } from "@/lib/server/org";
 import { seatsChanged } from "@/lib/server/seats";
@@ -34,7 +35,7 @@ export async function listMailSetup(orgId: string) {
       .where(eq(member.organizationId, orgId)),
   ]);
   return {
-    domains: domains.map((d) => ({ ...d, records: requiredDnsRecords(d.domain) })),
+    domains: domains.map((d) => ({ ...d, records: requiredDnsRecords(d.domain, sesSetup(d)) })),
     mailboxes: boxes.map((b) => {
       const owner = b.userId ? members.find((m) => m.userId === b.userId) : undefined;
       return {
@@ -49,6 +50,11 @@ export async function listMailSetup(orgId: string) {
   };
 }
 
+type DomainRow = typeof mailDomains.$inferSelect;
+
+/** SES region and DKIM tokens of a domain that receives and sends through SES. */
+const sesSetup = (d: DomainRow) => (d.provider === "ses" ? { region: sesRegion(), tokens: d.dkimTokens ?? [] } : null);
+
 async function ownDomain(orgId: string, domainId: string) {
   const [d] = await db.select().from(mailDomains).where(and(eq(mailDomains.id, domainId), eq(mailDomains.orgId, orgId)));
   if (!d) throw new HttpError(404, "Not found");
@@ -61,19 +67,33 @@ export async function addDomain(orgId: string, raw: string) {
   if (!isValidDomain(domain)) throw new HttpError(422, "Enter a domain like acme.com");
   const [taken] = await db.select({ id: mailDomains.id }).from(mailDomains).where(eq(mailDomains.domain, domain));
   if (taken) throw new HttpError(409, "This domain is already in use");
-  const [row] = await db.insert(mailDomains).values({ orgId, domain }).returning();
+  // Hosted: the org's own domain goes through SES (Cloudflare only routes and sends for zones in our account).
+  const ses = sesConfigured();
+  const dkimTokens = ses ? await createIdentity(domain, sesTenant(orgId), mailFromDomain(domain)) : null;
+  const [row] = await db.insert(mailDomains).values({ orgId, domain, provider: ses ? "ses" : "cloudflare", dkimTokens }).returning();
   // Domains already on Cloudflare usually have the records: check right away instead of waiting for a click.
   return checkDomain(orgId, row!.id).catch(() => row!);
 }
 
-/** Looks up MX, SPF and DMARC over DNS-over-HTTPS and stores what it found. */
+/** Looks up MX, SPF and DMARC over DNS-over-HTTPS (and, for SES, its DKIM and MAIL FROM verdicts) and stores them. */
 export async function checkDomain(orgId: string, domainId: string) {
   const d = await ownDomain(orgId, domainId);
-  const [mx, txt, dmarc] = await Promise.all([dohAnswers(d.domain, "MX"), dohAnswers(d.domain, "TXT"), dohAnswers(`_dmarc.${d.domain}`, "TXT")]);
-  const result = evaluateDns({ mx, txt, dmarc });
+  const ses = d.provider === "ses";
+  const [mx, txt, dmarc, identity] = await Promise.all([
+    dohAnswers(d.domain, "MX"),
+    dohAnswers(d.domain, "TXT"),
+    dohAnswers(`_dmarc.${d.domain}`, "TXT"),
+    ses ? getIdentity(d.domain) : null,
+  ]);
+  const result = evaluateDns({ mx, txt, dmarc }, ses ? sesRegion() : undefined);
+  const checks: Record<string, boolean> = ses
+    ? { mx: result.mx, dmarc: result.dmarc, dkim: identity?.DkimAttributes?.Status === "SUCCESS", mailfrom: identity?.MailFromAttributes?.MailFromDomainStatus === "SUCCESS" }
+    : { mx: result.mx, spf: result.spf, dmarc: result.dmarc };
+  // SES: receiving needs the MX, sending needs DKIM verified (the custom MAIL FROM falls back to amazonses.com).
+  const active = result.active && (!ses || checks.dkim);
   const [row] = await db
     .update(mailDomains)
-    .set({ checks: { mx: result.mx, spf: result.spf, dmarc: result.dmarc }, status: result.active ? "active" : d.status === "active" ? "failing" : "pending", checkedAt: new Date() })
+    .set({ checks, status: active ? "active" : d.status === "active" ? "failing" : "pending", checkedAt: new Date() })
     .where(eq(mailDomains.id, d.id))
     .returning();
   return row!;
@@ -83,6 +103,7 @@ export async function removeDomain(orgId: string, domainId: string) {
   const d = await ownDomain(orgId, domainId);
   const [used] = await db.select({ n: count() }).from(mailboxes).where(eq(mailboxes.domainId, d.id));
   if (used!.n) throw new HttpError(409, "Delete the domain's mailboxes first");
+  if (d.provider === "ses") await deleteIdentity(d.domain);
   await db.delete(mailDomains).where(eq(mailDomains.id, d.id));
   return d;
 }

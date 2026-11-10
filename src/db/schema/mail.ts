@@ -31,7 +31,12 @@ export const mailDomains = sqliteTable(
     domain: text("domain").notNull(),
     /** subdomain: under our own domain (works at once); custom: the org's own domain. */
     kind: text("kind", { enum: ["subdomain", "custom"] }).notNull().default("custom"),
-    /** Last DNS check: pending until MX points at Cloudflare Email Routing. */
+    /** Who receives and sends for it: Cloudflare Email Routing + Email Service (self-hosted, our own subdomains,
+     *  domains added before SES) or Amazon SES (hosted mode, the org's own domain: lib/server/ses.ts). */
+    provider: text("provider", { enum: ["cloudflare", "ses"] }).notNull().default("cloudflare"),
+    /** SES Easy DKIM tokens: the three CNAMEs the domain needs (lib/mail/rules.ts requiredDnsRecords). */
+    dkimTokens: text("dkim_tokens", { mode: "json" }).$type<string[]>(),
+    /** Last DNS check: pending until MX points at the provider (and, for SES, DKIM is verified). */
     status: text("status", { enum: ["pending", "active", "failing"] }).notNull().default("pending"),
     /** What the last check found, per record (mx, spf, dkim, dmarc). */
     checks: text("checks", { mode: "json" }).$type<Record<string, boolean>>().notNull().default({}),

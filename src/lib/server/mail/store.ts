@@ -142,7 +142,10 @@ async function threadCandidates(mailboxId: string, contact: string): Promise<Thr
 }
 
 /** Returns false when no mailbox takes the address, so email() can try the staff mailboxes or reject. */
-export async function handleOrgMail(message: ForwardableEmailMessage): Promise<boolean> {
+/** What handleOrgMail reads of a message: Email Routing's ForwardableEmailMessage, or SES's (ses-inbound.ts). */
+export type IncomingMail = Pick<ForwardableEmailMessage, "to" | "from" | "raw" | "rawSize" | "headers" | "setReject">;
+
+export async function handleOrgMail(message: IncomingMail): Promise<boolean> {
   const mailbox = await findRecipient(message.to);
   if (!mailbox) return false;
   if (message.rawSize > MAX_RAW_BYTES) {

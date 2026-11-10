@@ -115,33 +115,56 @@ export function spamScore(input: SpamInput) {
 }
 
 export interface DnsRecord {
-  /** What the record is for, shown in the setup checklist. */
-  purpose: "mx" | "spf" | "dmarc";
-  type: "MX" | "TXT";
+  /** What the record is for, shown in the setup checklist (a key of mail_domains.checks). */
+  purpose: "mx" | "spf" | "dmarc" | "dkim" | "mailfrom";
+  type: "MX" | "TXT" | "CNAME";
   name: string;
   value: string;
   priority?: number;
 }
 
+/** Amazon SES (hosted mode, the org's own domains): its region and the domain's Easy DKIM tokens. */
+export interface SesSetup {
+  region: string;
+  tokens: string[];
+}
+
+/** The custom MAIL FROM subdomain (Return-Path) of a domain sending through SES. */
+export const mailFromDomain = (domain: string) => `bounce.${domain}`;
+
+const DMARC = "v=DMARC1; p=quarantine; adkim=r; aspf=r";
+
 /**
- * Records a domain needs for Cloudflare Email Routing (receiving) and Email Service (sending, SPF).
- * DKIM records come from Cloudflare when the domain is onboarded for sending, so they are checked, not listed.
+ * Records a domain needs. Cloudflare (self-hosted, and our own subdomains): Email Routing receives, Email Service
+ * sends; its DKIM records come from Cloudflare when the domain is onboarded, so they are checked, not listed.
+ * SES (hosted, the org's own domain): SES receives (MX) and sends (Easy DKIM CNAMEs, MAIL FROM on bounce.<domain>).
  */
 /** MX priorities don't matter (Email Routing picks its own); any DMARC policy passes the check. */
-export function requiredDnsRecords(domain: string): DnsRecord[] {
+export function requiredDnsRecords(domain: string, ses?: SesSetup | null): DnsRecord[] {
+  if (ses) {
+    const bounce = mailFromDomain(domain);
+    return [
+      { purpose: "mx", type: "MX", name: domain, value: `inbound-smtp.${ses.region}.amazonaws.com`, priority: 10 },
+      ...ses.tokens.map((t): DnsRecord => ({ purpose: "dkim", type: "CNAME", name: `${t}._domainkey.${domain}`, value: `${t}.dkim.amazonses.com` })),
+      { purpose: "mailfrom", type: "MX", name: bounce, value: `feedback-smtp.${ses.region}.amazonses.com`, priority: 10 },
+      { purpose: "mailfrom", type: "TXT", name: bounce, value: "v=spf1 include:amazonses.com ~all" },
+      { purpose: "dmarc", type: "TXT", name: `_dmarc.${domain}`, value: DMARC },
+    ];
+  }
   return [
     { purpose: "mx", type: "MX", name: domain, value: "route1.mx.cloudflare.net" },
     { purpose: "mx", type: "MX", name: domain, value: "route2.mx.cloudflare.net" },
     { purpose: "mx", type: "MX", name: domain, value: "route3.mx.cloudflare.net" },
     { purpose: "spf", type: "TXT", name: domain, value: "v=spf1 include:_spf.mx.cloudflare.net ~all" },
-    { purpose: "dmarc", type: "TXT", name: `_dmarc.${domain}`, value: "v=DMARC1; p=quarantine; adkim=r; aspf=r" },
+    { purpose: "dmarc", type: "TXT", name: `_dmarc.${domain}`, value: DMARC },
   ];
 }
 
-/** What a DNS check found, from the MX and TXT answers (DNS-over-HTTPS). */
-export function evaluateDns(answers: { mx: string[]; txt: string[]; dmarc: string[] }) {
-  const mx = answers.mx.some((r) => /\.mx\.cloudflare\.net\.?$/i.test(r.trim()));
-  const spf = answers.txt.some((r) => /^"?v=spf1\b/i.test(r.trim()) && /_spf\.mx\.cloudflare\.net/i.test(r));
+/** What a DNS check found, from the MX and TXT answers (DNS-over-HTTPS). With `sesRegion`, MX must point at SES. */
+export function evaluateDns(answers: { mx: string[]; txt: string[]; dmarc: string[] }, sesRegion?: string) {
+  const mxHost = sesRegion ? new RegExp(`\\sinbound-smtp\\.${sesRegion.replace(/\W/g, "\\$&")}\\.amazonaws\\.com\\.?$`, "i") : /\.mx\.cloudflare\.net\.?$/i;
+  const mx = answers.mx.some((r) => mxHost.test(` ${r.trim()}`));
+  const spf = !sesRegion && answers.txt.some((r) => /^"?v=spf1\b/i.test(r.trim()) && /_spf\.mx\.cloudflare\.net/i.test(r));
   const dmarc = answers.dmarc.some((r) => /^"?v=DMARC1/i.test(r.trim()));
   return { mx, spf, dmarc, active: mx };
 }

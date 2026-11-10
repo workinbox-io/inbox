@@ -24,6 +24,7 @@ export interface MailSetup {
     id: string
     domain: string
     status: "pending" | "active" | "failing"
+    provider: "cloudflare" | "ses"
     checks: Record<string, boolean>
     checkedAt: string | null
     catchAllMailboxId: string | null
@@ -90,7 +91,7 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
   return (
     <SettingsSection
       title="Domains"
-      description="The domains your addresses live on. Point their MX records at Cloudflare Email Routing and add a catch-all rule that sends mail to this Worker."
+      description="The domains your addresses live on, with the DNS records each one needs."
     >
       <div className="grid gap-4">
         {setup.domains.map((d) => (
@@ -121,7 +122,9 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
             </div>
             {d.status !== "active" ? (
               <p className="text-muted-foreground text-xs">
-                Add these records at your DNS provider. On Cloudflare, turning on Email Routing for the domain adds them for you (any MX priority works).
+                {d.provider === "ses"
+                  ? "Add these records at your DNS provider, then click Check DNS. Mail arrives once the MX record is in; sending starts when the three DKIM records are verified, usually within minutes. On Cloudflare, turn Email Routing off for the domain first: it keeps its own MX records."
+                  : "Add these records at your DNS provider. On Cloudflare, turning on Email Routing for the domain adds them for you (any MX priority works)."}
               </p>
             ) : null}
             {d.status === "active" ? (

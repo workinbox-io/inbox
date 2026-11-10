@@ -4,7 +4,7 @@ import { ATTACHMENT_URL_PREFIX, attachmentUrl, safeFilename } from "@/lib/upload
 import { HttpError } from "@/lib/server/api";
 import { requireMailPlan } from "@/lib/server/org";
 import { enqueue } from "@/lib/server/queue";
-import { sendNow } from "@/lib/server/email";
+import { sendOrgMail } from "./deliver";
 import { scheduledTime, quotaDay, uniqueRecipients, validateIdempotencyKey, quotaArgs, quotaPredicates, deliverySummary } from "@/lib/mail/outbox-policy";
 import { viewerMailboxes, resolveApiKeyMailboxes, type Mailbox } from "./access";
 import { prepareMailSend, persistOutboxMail, type SendInput } from "./store";
@@ -160,7 +160,7 @@ export async function deliverOutboxJob(id: string) {
   if (!claimed) return; // A cancellation, another consumer or today's quota won the race.
   // Crossing the provider call is a one-way boundary: an exception may mean it accepted the mail.
   try {
-    const providerId = await sendNow(job.payload.email);
+    const providerId = await sendOrgMail(job.payload.email);
     await db.update(mailOutbox).set({ providerId, updatedAt: new Date() }).where(eq(mailOutbox.id, id));
     await persistOutboxMail(box!, job.payload, providerId, job.messageId!, job.threadId!);
     await db.update(mailOutbox).set({ status: "sent", error: null, updatedAt: new Date() }).where(eq(mailOutbox.id, id));

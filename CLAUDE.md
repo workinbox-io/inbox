@@ -13,6 +13,10 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   alias or the domain's catch-all (plus addressing stripped), spam score and sender rules (`lib/mail/rules.ts`), raw .eml
   in R2 under `mail-raw/<org>/<mailbox>/`, files under the org's `attachments/`. Unknown addresses fall through to the
   staff mailboxes, then are rejected.
+- Hosted (`cloud`) custom domains go through Amazon SES, not Cloudflare (which only serves zones in our account):
+  `mail_domains.provider = "ses"`, SES identity per domain, sending via `sendOrgMail` (`mail/deliver.ts`), receiving
+  S3 → SNS → `/api/ses/webhook` → job `mail.inbound` → `handleOrgMail`. Setup and runbook: `docs/ses.md`,
+  `scripts/ses-setup.sh`. Self-hosted, our subdomains and older domains stay `cloudflare`.
 - Access: `lib/server/mail/access.ts` (`viewerMailboxes`): own personal mailbox, shared ones granted in
   `mailbox_access`, all shared ones for owners/admins. Every mail query is scoped to that list.
 - UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search

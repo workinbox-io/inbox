@@ -34,6 +34,13 @@ declare namespace Cloudflare {
     VAPID_PUBLIC_KEY?: string;
     VAPID_PRIVATE_KEY?: string;
     VAPID_SUBJECT?: string;
+    /** Amazon SES for the orgs' own domains in hosted mode (lib/server/ses.ts, docs/ses.md). All four, or SES is off. */
+    AWS_SES_ACCESS_KEY_ID?: string;
+    AWS_SES_SECRET_ACCESS_KEY?: string;
+    AWS_SES_REGION?: string;
+    AWS_ACCOUNT_ID?: string;
+    /** In the SNS subscription URLs of /api/hooks/ses (?secret=…). */
+    SES_EVENTS_SECRET?: string;
   }
 }
 

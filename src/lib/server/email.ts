@@ -40,7 +40,7 @@ export async function deliverEmail(msg: EmailMessage) {
 /** Mail providers take about 25 MB per message; files beyond that are left out. */
 const MAX_ATTACHED_BYTES = 18 * 1024 * 1024;
 
-async function attachFiles(files: AttachmentInput[] | undefined) {
+export async function attachFiles(files: AttachmentInput[] | undefined) {
   const attached: { disposition: "attachment"; filename: string; type: string; content: ArrayBuffer }[] = [];
   let total = 0;
   for (const f of files ?? []) {
