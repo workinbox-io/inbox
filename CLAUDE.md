@@ -202,8 +202,8 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
 - Uploads: `POST /api/app/attachments` stores a file in R2 as `attachments/<orgId>/<random>/<safe-name>`
   (`lib/server/uploads.ts`, rules in `lib/uploads.ts`), served by `/api/files`; the composer UI is
   `components/uploads/attachments.tsx`. E-mail helpers (threading, quoted text, body text): `lib/mail/*`.
-- UI: pickers use `components/ui/segmented-control.tsx` (`PeriodTabs` wraps it); custom toasts use
-  `toastCard` from `components/ui/sonner.tsx`; small caps labels use the `eyebrow` utility.
+- UI: pickers use `components/ui/segmented-control.tsx` (`PeriodTabs` wraps it); toasts are Ding
+  (`toast` from `@yusufceng1z/ding-react`, one pill that morphs in place; `<Toaster />` in `components/ui/toaster.tsx`); small caps labels use the `eyebrow` utility.
   Animated marketing diagrams: `components/storyboard` (`defineScene()` + `<Scene />`, see its README).
   Faux product UI on marketing pages (homepage hero demo, features bento): `components/marketing/*` on the
   Stageshow kit in `components/stageshow` (see its README); stage colours read the site's variables (`look.css`).

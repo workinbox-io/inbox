@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api-client";
-import { toast } from "sonner";
+import { toast } from "@yusufceng1z/ding-react";
 
 async function currentSubscription() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return null;

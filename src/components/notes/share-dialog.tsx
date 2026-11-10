@@ -1,7 +1,7 @@
 /** Who may open a note: just the owner, chosen people (view or edit) or everyone in the organization. */
 import * as React from "react"
 import { Globe, Lock, Users, X } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

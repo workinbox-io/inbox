@@ -1,6 +1,6 @@
 import * as React from "react"
 import { CalendarClock, Check, Copy, Eye, Layers, Plus, Settings2 } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 import { ActionMenu, ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"

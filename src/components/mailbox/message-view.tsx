@@ -1,6 +1,6 @@
 import * as React from "react"
 import { CheckCheck, Copy, Download, FileCode, Forward, ImageOff, MoreHorizontal, Paperclip, Reply, ReplyAll } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import { hasQuotedHtml, hasRemoteImages, linkSegments, mailSrcDoc } from "@/lib/admin-mail/rules"
 import { formatBytes, isImageType } from "@/lib/uploads"

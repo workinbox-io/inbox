@@ -291,32 +291,35 @@
     height: 1px;
   }
 
-  /* ---- The toast, after components/ui/sonner: bottom right, above the crop ---- */
+  /* ---- The toast, after components/ui/toaster (Ding pill): bottom right, above the crop ---- */
 
   .hd-toast {
     position: absolute;
     right: 20px;
     bottom: calc(var(--bleed) + 24px);
-    gap: 8px;
-    padding: 12px 16px 12px 14px;
-    border: 1px solid var(--ss-line);
-    border-radius: 12px;
+    gap: 10px;
+    height: 44px;
+    padding: 0 18px 0 12px;
+    border: 0;
+    border-radius: 22px;
     background: var(--popover);
     color: var(--ss-text-strong);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
-    box-shadow: var(--ss-shadow-float);
+    box-shadow:
+      0 0 0 1px var(--ss-line),
+      0 4px 12px -4px rgb(0 0 0 / 0.14);
   }
 
   .hd-toast .ss-toast__icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    background: var(--ss-success);
-    color: #fff;
+    background: transparent;
+    color: var(--ss-success);
   }
 
   /* ---- The dialog, after components/ui/dialog ---- */

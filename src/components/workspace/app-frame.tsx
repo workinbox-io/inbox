@@ -3,7 +3,7 @@
  * toasts; inside the dashboard it sits flush in AppLayout's rounded content area.
  */
 import * as React from "react"
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 

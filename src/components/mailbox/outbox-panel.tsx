@@ -1,6 +1,6 @@
 import * as React from "react"
 import { AlertTriangle, ArrowLeft, CalendarClock, CheckCircle2, Loader2, MessagesSquare, Send, X } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
 import { cn } from "@/lib/utils"

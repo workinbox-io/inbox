@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Bell, ChevronLeft, Filter, Forward, HardDrive, KeyRound, LifeBuoy, PenLine, SunMoon, Tag } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
 import { authClient } from "@/lib/auth-client"

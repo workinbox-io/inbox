@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Check, ExternalLink, Users } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, priceYearly } from "@/config/plans"
 
 import type { OrgUsage } from "@/lib/server/org"

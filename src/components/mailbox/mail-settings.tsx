@@ -1,7 +1,7 @@
 import * as React from "react"
 import { SendingLimits } from "./sending-limits"
 import { AtSign, CheckCircle2, Globe, Inbox, KeyRound, Plus, RefreshCw, UserPlus, Users, XCircle } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import { StorageSettings } from "./storage-settings"
 import type { DnsRecord } from "@/lib/mail/rules"

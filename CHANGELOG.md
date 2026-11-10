@@ -3,6 +3,16 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.16.0 (2026-11-10)
+
+- Toasts moved from Sonner to Ding (`@yusufceng1z/ding-react`): one pill on screen that morphs into the next message
+  instead of a stack. `import { toast } from "@yusufceng1z/ding-react"`; same `toast.success/error/warning/info/
+  loading/promise/dismiss` calls. There is no bare `toast("…")` (use `toast.info` or `toast.loading`) and no
+  `toast.custom`. Errors and toasts with an action stay until dismissed. `components/ui/sonner.tsx` (and `toastCard`)
+  is now `components/ui/toaster.tsx`.
+- **Manual step:** in product files, replace `from "sonner"` with `from "@yusufceng1z/ding-react"` and any
+  `@/components/ui/sonner` import with `@/components/ui/toaster`, then `pnpm install`.
+
 ## v1.15.0 (2026-11-09)
 
 - `AppLayout` has an `actions` slot in the header, left of search, for a page's own controls (a view toggle,

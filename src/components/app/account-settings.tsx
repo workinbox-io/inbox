@@ -1,7 +1,7 @@
 import * as React from "react"
 import { RecoveryEmailSettings } from "@/components/mailbox/security-settings"
 import { Laptop, Smartphone } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import type { AccountData, SessionRow } from "@/lib/server/account"
 import { api } from "@/lib/api-client"
