@@ -12,7 +12,7 @@ import { reserveStorage, releaseStorageReservation, storeHtml } from "./storage"
 
 export interface SendOptions { idempotencyKey?: string; actorUserId?: string; apiKeyId?: string }
 type Outbox = typeof mailOutbox.$inferSelect;
-const visible = (job: Outbox) => ({ id: job.id, outboxId: job.id, mailboxId: job.mailboxId, sendAt: job.sendAt.getTime(), status: job.status, threadId: job.threadId ?? job.payload.threadId, subject: job.payload.email.subject, to: job.payload.email.to, cc: job.payload.email.cc ?? [], error: job.error, deliveryStatus: job.deliveryStatus, createdAt: job.createdAt.toISOString() });
+const visible = (job: Outbox) => ({ id: job.id, outboxId: job.id, mailboxId: job.mailboxId, mailbox: job.payload.email.fromEmail, sendAt: job.sendAt.getTime(), status: job.status, threadId: job.threadId ?? job.payload.threadId, subject: job.payload.email.subject, to: job.payload.email.to, cc: job.payload.email.cc ?? [], error: job.error, deliveryStatus: job.deliveryStatus, createdAt: job.createdAt.toISOString() });
 const fingerprint = async (input: unknown) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(input))))].map(x => x.toString(16).padStart(2, "0")).join("");
 async function find(id: string, boxes: Mailbox[]) {
   if (!boxes.length) throw new HttpError(404, "Not found");

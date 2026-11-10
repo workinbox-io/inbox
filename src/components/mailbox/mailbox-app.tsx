@@ -30,6 +30,7 @@ import { cleanActions, type MenuAction } from "@/components/workspace/action-men
 import { FOLDER_KEYS, Kbd, assignMailboxColors } from "./mail-ui"
 import { SnoozeDialog, ThreadView, snoozeActions, type ThreadViewHandle } from "./thread-view"
 import type { MailThread, ReplyMode, ThreadDetail, ThreadPatch } from "./types"
+import { publishUnread } from "@/lib/mail/unread-badge"
 
 const SHORTCUTS: [string, string][] = [
   ["j / k", "Next / previous thread"],
@@ -110,6 +111,8 @@ export function MailboxApp(props: MailboxAppProps) {
   const [threads, setThreads] = React.useState(props.threads)
   const [hasMore, setHasMore] = React.useState(props.hasMore)
   const [unread, setUnread] = React.useState(props.unread)
+  // The sidebar / app rail badge follows Mail's own counts, so reading a thread clears it right away.
+  React.useEffect(() => publishUnread(Object.values(unread).reduce((a, b) => a + b, 0)), [unread])
   const [loading, setLoading] = React.useState(false)
   const [selectedId, setSelectedId] = React.useState<string | null>(props.selectedId)
   const [detail, setDetail] = React.useState<ThreadDetail | null>(null)

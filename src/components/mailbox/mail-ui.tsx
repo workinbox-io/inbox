@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
+import type { MailView as MailFolder } from "./types"
 import { WORKSPACE_COLORS } from "@/components/workspace/ui"
 
 /**
@@ -32,6 +32,6 @@ export function mailboxColor(address: string) {
 }
 
 /** Two-key folder shortcuts, Gmail style: g then the letter. */
-export const FOLDER_KEYS: Partial<Record<MailFolder, string>> = { inbox: "i", starred: "s", snoozed: "b", sent: "t", archived: "e", spam: "!", trash: "#" }
+export const FOLDER_KEYS: Partial<Record<MailFolder, string>> = { inbox: "i", starred: "s", snoozed: "b", drafts: "d", sent: "t", outbox: "o", archived: "e", spam: "!", trash: "#" }
 
 

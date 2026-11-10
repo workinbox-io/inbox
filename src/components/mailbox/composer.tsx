@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users, Clock } from "lucide-react"
+import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users, Clock, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
@@ -387,6 +387,7 @@ export function ComposeWindow({
   open,
   prefill,
   draftKey = NEW_DRAFT,
+  inline = false,
   mailboxes,
   mailbox,
   contacts,
@@ -398,8 +399,10 @@ export function ComposeWindow({
   open: boolean
   /** Recipient from "New e-mail to …" in the sender panel. */
   prefill: { to?: string; nonce: number } | null
-  /** Which draft this window edits: draftKey, or one from Drafts (e.g. an AI app's "d-…"). */
+  /** Which draft this window edits: NEW_DRAFT, or one from Drafts (e.g. an AI app's "d-…"). */
   draftKey?: string
+  /** In the detail pane (a draft opened from Drafts) instead of the docked window. */
+  inline?: boolean
   mailboxes: string[]
   mailbox: string
   contacts: string[]
@@ -468,8 +471,7 @@ export function ComposeWindow({
 
   if (!open || pending) return null
   const title = draft.subject.trim() || "New e-mail"
-  return (
-    <ComposeFrame title={title} openKey={focusKey} onClose={onClose}>
+  const form = (
       <MailForm
         key={focusKey}
         draft={draft}
@@ -485,6 +487,17 @@ export function ComposeWindow({
         onSend={send}
         onDiscard={discard}
       />
-    </ComposeFrame>
+  )
+  if (!inline) return <ComposeFrame title={title} openKey={focusKey} onClose={onClose}>{form}</ComposeFrame>
+  return (
+    <section aria-label={title} className="flex h-full min-h-0 flex-col">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold">{title}</h2>
+        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close (the draft is kept)" title="Close (the draft is kept)">
+          <X />
+        </Button>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col">{form}</div>
+    </section>
   )
 }

@@ -92,3 +92,7 @@ export interface ThreadPatch {
   spam?: boolean
   snoozedUntil?: number | null
 }
+
+/** What the list can show: the server's folders plus Drafts and Outbox, which list drafts and send jobs instead of threads. */
+export type MailView = import("@/lib/mail/rules").UserMailFolder | "drafts" | "outbox"
+export const isVirtualFolder = (f: MailView): f is "drafts" | "outbox" => f === "drafts" || f === "outbox"

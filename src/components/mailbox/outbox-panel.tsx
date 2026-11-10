@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AlertTriangle, ArrowLeft, CalendarClock, CheckCircle2, Loader2, MessagesSquare, Send, X } from "lucide-react"
+import { AlertTriangle, ArrowLeft, Loader2, MessagesSquare, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
@@ -7,13 +7,14 @@ import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DateTimePicker, formatDateTime } from "@/components/ui/date-time-picker"
-import { SegmentedControl } from "@/components/ui/segmented-control"
 import { ConfirmButton } from "@/components/app/confirm-button"
-import { EmptyState } from "@/components/app/empty-state"
+import type { MailThread } from "./types"
 
 export type OutboxStatus = "pending" | "sending" | "sent" | "cancelled" | "failed" | "uncertain"
 export interface OutboxRow {
   id: string
+  /** The sending address. */
+  mailbox?: string
   subject: string
   to: string | string[]
   cc: string[]
@@ -24,9 +25,6 @@ export interface OutboxRow {
   threadId?: string
 }
 
-type Filter = "scheduled" | "sent" | "problems"
-const FILTER_OF: Record<OutboxStatus, Filter> = { pending: "scheduled", sending: "scheduled", sent: "sent", cancelled: "problems", failed: "problems", uncertain: "problems" }
-
 const STATUS: Record<OutboxStatus, { label: string; variant: "outline" | "info" | "success" | "warning" | "danger" }> = {
   pending: { label: "Scheduled", variant: "info" },
   sending: { label: "Sending", variant: "info" },
@@ -36,135 +34,100 @@ const STATUS: Record<OutboxStatus, { label: string; variant: "outline" | "info" 
   uncertain: { label: "Check delivery", variant: "warning" },
 }
 
-const EMPTY: Record<Filter, { icon: React.ReactNode; title: string; description: string }> = {
-  scheduled: { icon: <CalendarClock />, title: "Nothing scheduled", description: "Pick “Send at” in a new e-mail to send it later." },
-  sent: { icon: <Send />, title: "Nothing sent yet", description: "Mail you send shows up here with its delivery status." },
-  problems: { icon: <CheckCircle2 />, title: "No problems", description: "Failed, cancelled and uncertain sends would show up here." },
-}
-
 const recipients = (job: OutboxRow) => [...(Array.isArray(job.to) ? job.to : [job.to]), ...job.cc].filter(Boolean)
 
 /** Pending (scheduled) sends, from the list the panel loads; for a count next to "Outbox". */
 export const scheduledCount = (jobs: OutboxRow[]) => jobs.filter((j) => j.status === "pending" || j.status === "sending").length
 
-/**
- * Outgoing mail inside the mail app, in place of the thread list: scheduled sends (reschedule or
- * cancel), recent sends with their delivery status, and the ones that failed. Reloads every 10 s.
- */
-export function OutboxPanel({ onOpenThread, onBack, onJobs }: { onOpenThread: (threadId: string) => void; onBack?: () => void; onJobs?: (jobs: OutboxRow[]) => void }) {
-  const [jobs, setJobs] = React.useState<OutboxRow[] | null>(null)
-  const [filter, setFilter] = React.useState<Filter>("scheduled")
-  const [busy, setBusy] = React.useState<string | null>(null)
-  const reload = React.useCallback(async () => {
-    const res = await api<{ jobs: OutboxRow[] }>("GET", "/api/app/mail/outbox")
-    setJobs(res.jobs)
-    onJobs?.(res.jobs)
-  }, [onJobs])
-  React.useEffect(() => {
-    reload().catch((e) => toast.error((e as Error).message))
-    const timer = setInterval(() => reload().catch(() => {}), 10_000)
-    return () => clearInterval(timer)
-  }, [reload])
-
-  async function action(job: OutboxRow, method: "PATCH" | "DELETE", body?: unknown) {
-    setBusy(job.id)
-    try {
-      await api(method, `/api/app/mail/outbox/${job.id}`, body)
-      await reload()
-      toast.success(method === "DELETE" ? "Send cancelled" : "Rescheduled")
-    } catch (e) {
-      toast.error((e as Error).message)
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  const counts = { scheduled: 0, sent: 0, problems: 0 }
-  for (const j of jobs ?? []) counts[FILTER_OF[j.status]]++
-  const shown = (jobs ?? []).filter((j) => FILTER_OF[j.status] === filter)
-  // Scheduled: soonest first. The rest: newest first, as the API returns them.
-  if (filter === "scheduled") shown.sort((a, b) => a.sendAt - b.sendAt)
-
-  return (
-    <section className="@container flex h-full min-h-0 flex-col">
-      <div className="grid gap-2.5 p-3">
-        <div className="flex h-8 items-center gap-2 px-1">
-          {onBack ? (
-            <Button variant="ghost" size="icon-sm" className="-ml-1" onClick={onBack} aria-label="Back to mail">
-              <ArrowLeft />
-            </Button>
-          ) : null}
-          <h2 className="text-lg font-semibold tracking-tight">Outbox</h2>
-          <span className="text-muted-foreground truncate text-[13px]">{counts.scheduled ? `${counts.scheduled} scheduled` : "Scheduled and recent sends"}</span>
-          {jobs === null ? <Loader2 className="text-muted-foreground ml-auto size-3.5 animate-spin" /> : null}
-        </div>
-        <SegmentedControl<Filter>
-          className="self-start"
-          aria-label="Show"
-          value={filter}
-          onValueChange={setFilter}
-          options={[
-            { value: "scheduled", label: "Scheduled", count: counts.scheduled || undefined },
-            { value: "sent", label: "Sent" },
-            { value: "problems", label: "Problems", count: counts.problems || undefined },
-          ]}
-        />
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-        {jobs !== null && !shown.length ? (
-          <EmptyState variant="plain" density="compact" className="py-14" {...EMPTY[filter]} />
-        ) : (
-          <ul className="flex max-w-3xl flex-col divide-y rounded-xl border empty:hidden">
-            {shown.map((job) => (
-              <OutboxItem key={job.id} job={job} busy={busy === job.id} onAction={action} onOpenThread={onOpenThread} />
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
-  )
+/** Send jobs as list rows (the same list as threads): scheduled ones soonest first, then the rest newest first. */
+export function outboxRows(jobs: OutboxRow[], q: string, fallbackMailbox: string): MailThread[] {
+  const scheduled = (j: OutboxRow) => j.status === "pending" || j.status === "sending"
+  const needle = q.trim().toLowerCase()
+  return jobs
+    .filter((j) => !needle || [j.subject, ...recipients(j)].join(" ").toLowerCase().includes(needle))
+    .sort((a, b) => (scheduled(a) !== scheduled(b) ? (scheduled(a) ? -1 : 1) : scheduled(a) ? a.sendAt - b.sendAt : b.sendAt - a.sendAt))
+    .map((j) => {
+      const to = recipients(j)
+      return {
+        id: j.id,
+        mailbox: j.mailbox ?? fallbackMailbox,
+        subject: j.subject,
+        labels: [{ id: j.status, name: j.status === "sent" && j.deliveryStatus ? j.deliveryStatus : STATUS[j.status].label }],
+        contactEmail: to[0] ?? "—",
+        contactName: to.length > 1 ? `${to[0]} +${to.length - 1}` : null,
+        unread: false,
+        starred: false,
+        spam: false,
+        archivedAt: null,
+        trashedAt: null,
+        snoozedUntil: null,
+        lastMessageAt: new Date(j.sendAt).toISOString(),
+        snippet: j.error ?? (scheduled(j) ? `Sends ${formatDateTime(j.sendAt)}` : ""),
+      }
+    })
 }
 
-function OutboxItem({
-  job,
-  busy,
-  onAction,
-  onOpenThread,
-}: {
-  job: OutboxRow
-  busy: boolean
-  onAction: (job: OutboxRow, method: "PATCH" | "DELETE", body?: unknown) => void
-  onOpenThread: (threadId: string) => void
-}) {
+/** One send in the detail pane: who it goes to and when, its delivery status, reschedule or cancel, or its thread. */
+export function OutboxDetail({ job, onChanged, onOpenThread, onBack }: { job: OutboxRow; onChanged: () => void; onOpenThread: (threadId: string) => void; onBack?: () => void }) {
+  const [busy, setBusy] = React.useState(false)
   const status = STATUS[job.status]
   const to = recipients(job)
   const pending = job.status === "pending"
+
+  async function action(method: "PATCH" | "DELETE", body?: unknown) {
+    setBusy(true)
+    try {
+      await api(method, `/api/app/mail/outbox/${job.id}`, body)
+      toast.success(method === "DELETE" ? "Send cancelled" : "Rescheduled")
+      onChanged()
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
-    <li className="flex flex-col gap-2 p-3 @lg:flex-row @lg:items-start @lg:gap-4">
-      <div className="grid min-w-0 flex-1 gap-0.5">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-medium">{job.subject || "(No subject)"}</span>
-          {/* The tab already says "Scheduled" or "Sent"; the badge is for what it doesn't say. */}
-          {job.status !== "pending" && job.status !== "sent" ? (
-            <Badge variant={status.variant} className="shrink-0">
-              {job.status === "sending" ? <Loader2 className="animate-spin" /> : null}
-              {status.label}
-            </Badge>
-          ) : null}
-          {job.deliveryStatus && job.status === "sent" ? <span className="text-muted-foreground shrink-0 text-xs capitalize">{job.deliveryStatus}</span> : null}
-        </div>
-        <p className="text-muted-foreground truncate text-[13px]" title={to.join(", ")}>
-          To {to[0] ?? "—"}
-          {to.length > 1 ? ` +${to.length - 1}` : ""}
-        </p>
-        {!pending ? (
-          <p className="text-muted-foreground text-xs" suppressHydrationWarning>
-            {job.status === "sent" ? "Sent " : "Was due "}
-            {formatDateTime(job.sendAt)}
-          </p>
+    <section className="flex h-full min-h-0 flex-col">
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+        {onBack ? (
+          <Button variant="ghost" size="icon-sm" className="-ml-1" onClick={onBack} aria-label="Back">
+            <ArrowLeft />
+          </Button>
         ) : null}
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold">{job.subject || "(No subject)"}</h2>
+        <Badge variant={status.variant} className="shrink-0">
+          {job.status === "sending" ? <Loader2 className="animate-spin" /> : null}
+          {status.label}
+        </Badge>
+      </div>
+      <div className="grid content-start gap-4 overflow-y-auto p-4 text-sm">
+        <dl className="grid grid-cols-[5rem_1fr] gap-x-3 gap-y-1.5">
+          {job.mailbox ? (
+            <>
+              <dt className="text-muted-foreground">From</dt>
+              <dd className="min-w-0 truncate">{job.mailbox}</dd>
+            </>
+          ) : null}
+          <dt className="text-muted-foreground">To</dt>
+          <dd className="min-w-0 break-words">{(Array.isArray(job.to) ? job.to : [job.to]).join(", ") || "—"}</dd>
+          {job.cc.length ? (
+            <>
+              <dt className="text-muted-foreground">Cc</dt>
+              <dd className="min-w-0 break-words">{job.cc.join(", ")}</dd>
+            </>
+          ) : null}
+          <dt className="text-muted-foreground">{job.status === "sent" ? "Sent" : pending ? "Sends" : "Was due"}</dt>
+          <dd suppressHydrationWarning>{formatDateTime(job.sendAt)}</dd>
+          {job.deliveryStatus ? (
+            <>
+              <dt className="text-muted-foreground">Delivery</dt>
+              <dd className="capitalize">{job.deliveryStatus}</dd>
+            </>
+          ) : null}
+        </dl>
         {job.error || job.status === "uncertain" || job.status === "failed" ? (
-          <p className={cn("mt-1 flex gap-1.5 text-xs", job.status === "failed" ? "text-destructive" : "text-muted-foreground")}>
+          <p className={cn("flex gap-1.5 text-xs", job.status === "failed" ? "text-destructive" : "text-muted-foreground")}>
             <AlertTriangle className="mt-px size-3.5 shrink-0" />
             <span>
               {job.error ? `${job.error} ` : ""}
@@ -177,31 +140,32 @@ function OutboxItem({
             </span>
           </p>
         ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {pending ? (
+            <>
+              <DateTimePicker
+                value={job.sendAt}
+                confirmLabel="Reschedule"
+                disabled={busy}
+                onChange={(sendAt) => {
+                  if (sendAt && sendAt !== Math.floor(job.sendAt / 60000) * 60000) void action("PATCH", { sendAt })
+                }}
+              />
+              <ConfirmButton title="Cancel this send?" description="The e-mail is discarded and won't be sent." confirmLabel="Cancel send" onConfirm={() => action("DELETE")}>
+                <Button variant="outline" size="sm" disabled={busy}>
+                  <X /> Cancel send
+                </Button>
+              </ConfirmButton>
+            </>
+          ) : null}
+          {job.threadId ? (
+            <Button variant="outline" size="sm" onClick={() => onOpenThread(job.threadId!)}>
+              <MessagesSquare /> Open thread
+            </Button>
+          ) : null}
+        </div>
+        {to.length ? null : <p className="text-muted-foreground text-xs">No recipients.</p>}
       </div>
-      <div className="flex shrink-0 items-center gap-1">
-        {pending ? (
-          <>
-            <DateTimePicker
-              value={job.sendAt}
-              confirmLabel="Reschedule"
-              disabled={busy}
-              align="end"
-              onChange={(sendAt) => {
-                if (sendAt && sendAt !== Math.floor(job.sendAt / 60000) * 60000) onAction(job, "PATCH", { sendAt })
-              }}
-            />
-            <ConfirmButton title="Cancel this send?" description="The e-mail is discarded and won't be sent." confirmLabel="Cancel send" onConfirm={() => onAction(job, "DELETE")}>
-              <Button variant="ghost" size="icon-sm" disabled={busy} aria-label="Cancel send" title="Cancel send">
-                <X />
-              </Button>
-            </ConfirmButton>
-          </>
-        ) : job.threadId ? (
-          <Button variant="ghost" size="sm" onClick={() => onOpenThread(job.threadId!)}>
-            <MessagesSquare /> Open thread
-          </Button>
-        ) : null}
-      </div>
-    </li>
+    </section>
   )
 }

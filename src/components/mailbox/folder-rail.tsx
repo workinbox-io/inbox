@@ -1,10 +1,10 @@
 import * as React from "react"
-import { CalendarClock, Check, Copy, Eye, FilePen, Layers, Plus, Settings2 } from "lucide-react"
+import { Check, Copy, Eye, Layers, Plus, Settings2 } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { ActionMenu, ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
-import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
+import type { MailView as MailFolder } from "./types"
 import { cn } from "@/lib/utils"
 import { FOLDERS } from "./thread-list"
 import { FOLDER_KEYS, Kbd, mailboxColor } from "./mail-ui"
@@ -19,12 +19,7 @@ export function FolderRail({
   unread,
   onCompose,
   onSettings,
-  outbox,
-  onOutbox,
-  outboxCount,
-  drafts = false,
-  onDrafts,
-  draftCount = 0,
+  counts = {},
   footer,
 }: {
   mailboxes: string[]
@@ -35,15 +30,8 @@ export function FolderRail({
   unread: Record<string, number>
   onCompose: () => void
   onSettings: () => void
-  /** The outbox (scheduled and recent sends) is open instead of a folder. */
-  outbox: boolean
-  onOutbox: () => void
-  /** Scheduled sends, shown next to "Outbox". */
-  outboxCount: number
-  /** Drafts (synced, including AI apps') are open instead of a folder. */
-  drafts?: boolean
-  onDrafts?: () => void
-  draftCount?: number
+  /** Counts next to folders other than the inbox (drafts, scheduled sends). */
+  counts?: Partial<Record<MailFolder, number>>
   /** The mail-only view's account menu; the dashboard has its own in the sidebar. */
   footer?: React.ReactNode
 }) {
@@ -63,8 +51,8 @@ export function FolderRail({
 
       <ul className="grid gap-px">
         {FOLDERS.map((f) => {
-          const active = !outbox && !drafts && folder === f.id
-          const count = f.id === "inbox" ? inboxUnread : 0
+          const active = folder === f.id
+          const count = f.id === "inbox" ? inboxUnread : (counts[f.id] ?? 0)
           return (
             <li key={f.id}>
               <button
@@ -90,34 +78,6 @@ export function FolderRail({
           )
         })}
       </ul>
-      <button
-        type="button"
-        onClick={onOutbox}
-        aria-current={outbox ? "page" : undefined}
-        className={cn(
-          "focus-visible:ring-ring/50 -mt-4 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-[13px] outline-none focus-visible:ring-[3px]",
-          outbox ? "bg-foreground/[0.06] text-foreground font-medium" : "text-foreground/70 hover:bg-foreground/[0.035] hover:text-foreground",
-        )}
-      >
-        <CalendarClock className={cn("size-4 shrink-0", outbox ? "text-foreground" : "text-muted-foreground")} />
-        <span className="flex-1 text-left">Outbox</span>
-        {outboxCount ? <span className={cn("text-xs tabular-nums", outbox ? "text-foreground font-semibold" : "text-foreground/60 font-medium")} title={`${outboxCount} scheduled`}>{outboxCount}</span> : null}
-      </button>
-      {onDrafts ? (
-        <button
-          type="button"
-          onClick={onDrafts}
-          aria-current={drafts ? "page" : undefined}
-          className={cn(
-            "focus-visible:ring-ring/50 -mt-[23px] flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-[13px] outline-none focus-visible:ring-[3px]",
-            drafts ? "bg-foreground/[0.06] text-foreground font-medium" : "text-foreground/70 hover:bg-foreground/[0.035] hover:text-foreground",
-          )}
-        >
-          <FilePen className={cn("size-4 shrink-0", drafts ? "text-foreground" : "text-muted-foreground")} />
-          <span className="flex-1 text-left">Drafts</span>
-          {draftCount ? <span className={cn("text-xs tabular-nums", drafts ? "text-foreground font-semibold" : "text-foreground/60 font-medium")}>{draftCount}</span> : null}
-        </button>
-      ) : null}
 
       {mailboxes.length ? (
         <div className="grid gap-1">

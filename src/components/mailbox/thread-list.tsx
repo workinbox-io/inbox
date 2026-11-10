@@ -1,7 +1,7 @@
 import * as React from "react"
 import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, FilePen, Inbox, Loader2, Mail, MailOpen, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, Settings2, ShieldAlert, Star, Trash2, X, type LucideIcon } from "lucide-react"
 
-import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
+import type { MailView as MailFolder } from "./types"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
@@ -22,7 +22,9 @@ export const FOLDERS: { id: MailFolder; label: string; icon: LucideIcon }[] = [
   { id: "inbox", label: "Inbox", icon: Inbox },
   { id: "starred", label: "Starred", icon: Star },
   { id: "snoozed", label: "Snoozed", icon: Clock },
+  { id: "drafts", label: "Drafts", icon: FilePen },
   { id: "sent", label: "Sent", icon: Send },
+  { id: "outbox", label: "Outbox", icon: CalendarClock },
   { id: "archived", label: "Archived", icon: Archive },
   { id: "spam", label: "Spam", icon: ShieldAlert },
   { id: "trash", label: "Trash", icon: Trash2 },
@@ -34,6 +36,8 @@ const EMPTY: Record<MailFolder, { icon: LucideIcon; text: string }> = {
   spam: { icon: ShieldAlert, text: "No spam. Nice" },
   snoozed: { icon: AlarmClock, text: "Nothing snoozed" },
   sent: { icon: Send, text: "Nothing sent yet" },
+  drafts: { icon: FilePen, text: "No drafts. Unsent mail and AI apps' drafts wait here" },
+  outbox: { icon: CalendarClock, text: "Nothing scheduled or sent recently" },
   archived: { icon: Archive, text: "Nothing archived" },
   trash: { icon: Trash2, text: "The trash is empty" },
 }
@@ -61,10 +65,8 @@ export function ThreadList({
   drafts,
   onCompose,
   onSettings,
-  onOutbox,
-  outboxCount = 0,
-  onDrafts,
-  draftCount = 0,
+  counts = {},
+  bulkActions,
   rail = false,
   account,
   actionsFor,
@@ -91,12 +93,10 @@ export function ThreadList({
   drafts: Set<string>
   onCompose: () => void
   onSettings: () => void
-  /** Opens the outbox; on a phone the list header has the button (the rail has it on desktop). */
-  onOutbox: () => void
-  outboxCount?: number
-  /** Phones: Drafts next to Outbox (the folder rail has them on wider screens). */
-  onDrafts?: () => void
-  draftCount?: number
+  /** Counts next to folders other than the inbox (drafts, scheduled sends). */
+  counts?: Partial<Record<MailFolder, number>>
+  /** Replaces the thread actions of a selection (Drafts: discard; Outbox: cancel). */
+  bulkActions?: React.ReactNode
   /** Folders and mailboxes live in the rail (desktop): the list shows only the folder's name and search. */
   rail?: boolean
   /** The account menu (mail-only view on a phone), next to Compose. */
@@ -155,16 +155,6 @@ export function ThreadList({
           ) : (
             <span className="min-w-0 flex-1 truncate text-sm font-medium">{mailboxes[0]}</span>
           )}
-          <Button variant="ghost" size="icon-sm" className="relative" onClick={onOutbox} aria-label={outboxCount ? `Outbox, ${outboxCount} scheduled` : "Outbox"} title="Outbox">
-            <CalendarClock />
-            {outboxCount ? <span className="bg-foreground text-background absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums">{outboxCount}</span> : null}
-          </Button>
-          {onDrafts ? (
-            <Button variant="ghost" size="icon-sm" className="relative" onClick={onDrafts} aria-label={draftCount ? `Drafts, ${draftCount}` : "Drafts"} title="Drafts">
-              <FilePen />
-              {draftCount ? <span className="bg-foreground text-background absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums">{draftCount}</span> : null}
-            </Button>
-          ) : null}
           <Button variant="ghost" size="icon-sm" onClick={onSettings} aria-label="Settings" title="Settings">
             <Settings2 />
           </Button>
@@ -209,7 +199,9 @@ export function ThreadList({
           <div className="flex h-8 items-center gap-1">
             <Checkbox checked={allChecked ? true : "indeterminate"} onCheckedChange={() => onSelection(allChecked ? new Set() : new Set(threads.map((t) => t.id)))} aria-label="Select all" className="mx-1" />
             <span className="mr-auto text-sm font-medium">{selection.size} selected</span>
-            {folder === "trash" ? (
+            {bulkActions ? (
+              bulkActions
+            ) : folder === "trash" ? (
               <>
                 <Button variant="ghost" size="icon-sm" onClick={() => onBulk({ trashed: false, archived: false })} aria-label="Move to inbox" title="Move to inbox">
                   <RotateCcw />
@@ -254,7 +246,7 @@ export function ThreadList({
         ) : query ? (
           <p className="text-muted-foreground flex h-8 items-center gap-1.5 text-xs">
             {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Search className="size-3.5" />}
-            {loading ? "Searching…" : `${threads.length}${hasMore ? "+" : ""} ${threads.length === 1 ? "result" : "results"} in every folder but the trash`}
+            {loading ? "Searching…" : `${threads.length}${hasMore ? "+" : ""} ${threads.length === 1 ? "result" : "results"}${folder === "drafts" || folder === "outbox" ? "" : " in every folder but the trash"}`}
           </p>
         ) : rail ? null : (
           <SegmentedControl
@@ -271,7 +263,7 @@ export function ThreadList({
                   <span className={cn(folder !== f.id && "sr-only @min-[680px]:not-sr-only")}>{f.label}</span>
                 </span>
               ),
-              count: f.id === "inbox" ? totalUnread : undefined,
+              count: f.id === "inbox" ? totalUnread : counts[f.id] || undefined,
             }))}
           />
         )}
