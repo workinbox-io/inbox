@@ -5,7 +5,7 @@ import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
-import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
+import type { MailView as MailFolder } from "./types"
 import { replaceUrl } from "@/lib/panel-history"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -14,22 +14,23 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { EmptyState } from "@/components/app/empty-state"
 import { ComposeWindow, useUndoSend } from "./composer"
-import { NEW_DRAFT, syncDrafts, useDraftKeys } from "./drafts"
-import { DraftsPanel, useDraftCount } from "./drafts-panel"
+import { NEW_DRAFT, syncDrafts, useDraftKeys, writeDraft } from "./drafts"
+import { draftRows, useDraftCount } from "./drafts-panel"
 import { SenderPanel } from "./sender-panel"
 import { ThreadList } from "./thread-list"
 import { LabelActions } from "./mail-rules"
 import { MailPreferences, type PreferenceSection } from "./mail-preferences"
 import { FolderRail } from "./folder-rail"
 import { AccountMenu, type MailUser } from "./account-menu"
-import { OutboxPanel, scheduledCount, type OutboxRow } from "./outbox-panel"
+import { OutboxDetail, outboxRows, scheduledCount, type OutboxRow } from "./outbox-panel"
 import { Toaster } from "@/components/ui/toaster"
 import { AppFrame } from "@/components/workspace/app-frame"
 import { shortcutsPaused, useMediaQuery } from "@/components/workspace/ui"
 import { cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { FOLDER_KEYS, Kbd, assignMailboxColors } from "./mail-ui"
+import { FilePen, MessagesSquare, X as XIcon } from "lucide-react"
 import { SnoozeDialog, ThreadView, snoozeActions, type ThreadViewHandle } from "./thread-view"
-import type { MailThread, ReplyMode, ThreadDetail, ThreadPatch } from "./types"
+import { isVirtualFolder, type MailThread, type ReplyMode, type ThreadDetail, type ThreadPatch } from "./types"
 import { publishUnread } from "@/lib/mail/unread-badge"
 
 const SHORTCUTS: [string, string][] = [
@@ -78,35 +79,28 @@ export function MailboxApp(props: MailboxAppProps) {
   const wide = useMediaQuery("(min-width: 1280px)")
   const multiple = props.mailboxes.length > 1
   const [mailbox, setMailbox] = React.useState(multiple ? ALL_MAILBOXES : (props.mailboxes[0] ?? ""))
-  const [folder, setFolder] = React.useState<MailFolder>("inbox")
-  const [outbox, setOutbox] = React.useState(!!props.outbox)
-  const [outboxCount, setOutboxCount] = React.useState(0)
-  const onOutboxJobs = React.useCallback((jobs: OutboxRow[]) => setOutboxCount(scheduledCount(jobs)), [])
-  const refreshOutboxCount = React.useCallback(() => {
-    api<{ jobs: OutboxRow[] }>("GET", "/api/app/mail/outbox").then((r) => onOutboxJobs(r.jobs)).catch(() => {})
-  }, [onOutboxJobs])
-  React.useEffect(refreshOutboxCount, [refreshOutboxCount])
-  const [draftsOpen, setDraftsOpen] = React.useState(!!props.drafts)
-  const draftCount = useDraftCount()
+  const [folder, setFolder] = React.useState<MailFolder>(props.outbox ? "outbox" : props.drafts ? "drafts" : "inbox")
+  // Drafts and Outbox list drafts and send jobs in the same list; `item` is the open one (a draft key or a job id).
+  const virtual = isVirtualFolder(folder)
+  const [item, setItem] = React.useState<string | null>(null)
+  const [outboxJobs, setOutboxJobs] = React.useState<OutboxRow[]>([])
+  const refreshOutbox = React.useCallback(() => {
+    api<{ jobs: OutboxRow[] }>("GET", "/api/app/mail/outbox").then((r) => setOutboxJobs(r.jobs)).catch(() => {})
+  }, [])
+  React.useEffect(refreshOutbox, [refreshOutbox])
+  React.useEffect(() => {
+    if (folder !== "outbox") return
+    const timer = setInterval(refreshOutbox, 10_000)
+    return () => clearInterval(timer)
+  }, [folder, refreshOutbox])
+  const outboxCount = scheduledCount(outboxJobs)
+  const draftCount = useDraftCount(props.mailboxes)
   React.useEffect(() => {
     const url = new URL(location.href)
-    if (outbox) url.searchParams.set("pane", "outbox")
-    else if (draftsOpen) url.searchParams.set("pane", "drafts")
+    if (isVirtualFolder(folder)) url.searchParams.set("pane", folder)
     else url.searchParams.delete("pane")
     replaceUrl(url)
-  }, [outbox, draftsOpen])
-  const showOutbox = () => {
-    setDraftsOpen(false)
-    setOutbox(true)
-  }
-  const showDrafts = () => {
-    setOutbox(false)
-    setDraftsOpen(true)
-  }
-  const closePanes = () => {
-    setOutbox(false)
-    setDraftsOpen(false)
-  }
+  }, [folder])
   const [query, setQuery] = React.useState("")
   const [threads, setThreads] = React.useState(props.threads)
   const [hasMore, setHasMore] = React.useState(props.hasMore)
@@ -136,7 +130,8 @@ export function MailboxApp(props: MailboxAppProps) {
 
   const listUrl = React.useCallback(
     (before?: string) => {
-      const p = new URLSearchParams({ mailbox, folder })
+      // Drafts and Outbox aren't server folders; the inbox keeps the unread counts fresh meanwhile.
+      const p = new URLSearchParams({ mailbox, folder: isVirtualFolder(folder) ? "inbox" : folder })
       if (query.trim()) p.set("q", query.trim())
       if (before) p.set("before", String(new Date(before).getTime()))
       return `/api/app/mail/threads?${p}`
@@ -157,8 +152,10 @@ export function MailboxApp(props: MailboxAppProps) {
   React.useEffect(() => {
     if (first.current) {
       first.current = false
-      return
+      if (!virtual) return
     }
+    setSelection(new Set())
+    if (virtual) return
     setLoading(true)
     setSelection(new Set())
     const t = setTimeout(() => loadThreads().catch((e) => toast.error((e as Error).message)).finally(() => setLoading(false)), query ? 250 : 0)
@@ -222,7 +219,7 @@ export function MailboxApp(props: MailboxAppProps) {
 
   const schedule = useUndoSend((threadId) => {
     loadThreads().catch(() => {})
-    refreshOutboxCount()
+    refreshOutbox()
     if (threadId === selectedId) loadDetail(threadId).catch(() => {})
   })
 
@@ -288,11 +285,81 @@ export function MailboxApp(props: MailboxAppProps) {
   }
 
   const openCompose = (to?: string) => setCompose({ open: true, prefill: { to, nonce: Date.now() }, draftKey: NEW_DRAFT })
-  /** A draft from Drafts or an AI app's link: a reply opens its thread (which shows the draft), a new e-mail the compose window. */
-  const openDraft = (key: string, threadId: string | null) => {
-    closePanes()
-    if (threadId) setSelectedId(threadId)
-    else setCompose({ open: true, prefill: { nonce: Date.now() }, draftKey: key })
+  const goFolder = (f: MailFolder) => {
+    setFolder(f)
+    setQuery("")
+    setSelectedId(null)
+    setItem(null)
+  }
+  const isThreadKey = (key: string) => key !== NEW_DRAFT && !key.startsWith("d-")
+  /** A draft (a row in Drafts, or an AI app's link): a reply opens its thread with the draft, a new e-mail the composer in the detail pane. */
+  const openDraft = (key: string) => {
+    if (folder !== "drafts") goFolder("drafts")
+    setItem(key)
+    setSelectedId(isThreadKey(key) ? key : null)
+    // The docked window edits the same "new" draft: one editor at a time.
+    if (key === NEW_DRAFT) setCompose((c) => ({ ...c, open: false }))
+  }
+  const openItem = (id: string) => (folder === "drafts" ? openDraft(id) : setItem(id))
+  const closeItem = () => {
+    setItem(null)
+    setSelectedId(null)
+  }
+  const visibleBoxes = mailbox === ALL_MAILBOXES ? props.mailboxes : [mailbox]
+  const rows = React.useMemo(
+    () =>
+      folder === "drafts"
+        ? draftRows(drafts, visibleBoxes, query)
+        : folder === "outbox"
+          ? outboxRows(outboxJobs.filter((j) => !j.mailbox || visibleBoxes.includes(j.mailbox)), query, props.mailboxes[0] ?? "")
+          : threads,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [folder, drafts, mailbox, query, outboxJobs, threads],
+  )
+  const job = folder === "outbox" && item ? outboxJobs.find((j) => j.id === item) : undefined
+  async function cancelSends(ids: string[]) {
+    const results = await Promise.allSettled(ids.map((id) => api("DELETE", `/api/app/mail/outbox/${id}`)))
+    const failed = results.filter((r) => r.status === "rejected").length
+    if (failed) toast.error(failed === ids.length ? "Sending has already started" : `${failed} could not be cancelled: sending had started`)
+    if (failed < ids.length) toast.success(ids.length - failed > 1 ? `Sends cancelled: ${ids.length - failed}` : "Send cancelled")
+    setSelection(new Set())
+    if (item && ids.includes(item)) setItem(null)
+    refreshOutbox()
+  }
+  function discardDrafts(keys: string[]) {
+    for (const key of keys) writeDraft(key, null)
+    toast.success(keys.length > 1 ? `Drafts discarded: ${keys.length}` : "Draft discarded")
+    setSelection(new Set())
+    if (item && keys.includes(item)) closeItem()
+  }
+  /** Row menu in Drafts and Outbox, acting on the selection when the row is in it. */
+  const itemActions = (row: MailThread): MenuAction[] => {
+    const ids = selection.size > 1 && selection.has(row.id) ? [...selection] : [row.id]
+    if (folder === "drafts")
+      return cleanActions([
+        { label: "Open", icon: FilePen, onSelect: () => openDraft(row.id) },
+        { separator: true },
+        {
+          label: ids.length > 1 ? `Discard ${ids.length} drafts` : "Discard draft",
+          icon: Trash2,
+          destructive: true,
+          confirm: { title: ids.length > 1 ? `Discard ${ids.length} drafts?` : "Discard this draft?", description: "Removed on every device.", confirmLabel: "Discard" },
+          onSelect: () => discardDrafts(ids),
+        },
+      ])
+    const j = outboxJobs.find((x) => x.id === row.id)
+    return cleanActions([
+      ...(j?.threadId ? [{ label: "Open thread", icon: MessagesSquare, onSelect: () => { goFolder("sent"); setSelectedId(j.threadId!) } }] : []),
+      ...(ids.some((id) => outboxJobs.find((x) => x.id === id)?.status === "pending")
+        ? [{
+            label: ids.length > 1 ? `Cancel ${ids.length} sends` : "Cancel send",
+            icon: XIcon,
+            destructive: true,
+            confirm: { title: ids.length > 1 ? `Cancel ${ids.length} sends?` : "Cancel this send?", description: "The e-mail is discarded and won't be sent.", confirmLabel: "Cancel send" },
+            onSelect: () => cancelSends(ids.filter((id) => outboxJobs.find((x) => x.id === id)?.status === "pending")),
+          }]
+        : []),
+    ])
   }
 
   // Reply / reply all / forward from a row's menu: open the thread, then start the reply once it has loaded.
@@ -382,7 +449,7 @@ export function MailboxApp(props: MailboxAppProps) {
         const url = new URL(location.href)
         url.searchParams.delete("draft")
         replaceUrl(url)
-        openDraft(key, key === NEW_DRAFT || key.startsWith("d-") ? null : key)
+        openDraft(key)
       })
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -437,7 +504,7 @@ export function MailboxApp(props: MailboxAppProps) {
         r: () => threadRef.current?.reply("reply"),
         a: () => threadRef.current?.reply("replyAll"),
         f: () => threadRef.current?.reply("forward"),
-        Escape: () => (selection.size ? setSelection(new Set()) : setSelectedId(null)),
+        Escape: () => (selection.size ? setSelection(new Set()) : closeItem()),
       }
       // Two-key "g" shortcuts jump to a folder: g i inbox, g s starred…
       if (gPending.current) {
@@ -445,8 +512,7 @@ export function MailboxApp(props: MailboxAppProps) {
         const target = (Object.entries(FOLDER_KEYS) as [MailFolder, string][]).find(([, k]) => k === e.key)?.[0]
         if (target) {
           e.preventDefault()
-          setFolder(target)
-          setSelectedId(null)
+          goFolder(target)
           return
         }
       }
@@ -487,30 +553,27 @@ export function MailboxApp(props: MailboxAppProps) {
 
   const listPane = (
     <div className="flex h-full min-h-0 flex-col">
-    <LabelActions threadIds={selection.size ? [...selection] : selectedId ? [selectedId] : []} onApplied={() => { void loadThreads() }} onFilter={setQuery} />
+    <LabelActions threadIds={virtual ? [] : selection.size ? [...selection] : selectedId ? [selectedId] : []} onApplied={() => { void loadThreads() }} onFilter={setQuery} />
     <div className="min-h-0 flex-1">
     <ThreadList
       mailboxes={props.mailboxes}
       mailbox={mailbox}
       onMailbox={(m) => {
         setMailbox(m)
-        setSelectedId(null)
+        closeItem()
       }}
       unread={unread}
       folder={folder}
-      onFolder={(f) => {
-        setFolder(f)
-        setSelectedId(null)
-      }}
+      onFolder={goFolder}
       query={query}
       onQuery={setQuery}
       searchRef={searchRef}
-      threads={threads}
-      hasMore={hasMore}
+      threads={rows}
+      hasMore={!virtual && hasMore}
       onLoadMore={loadMore}
-      loading={loading}
-      selectedId={selectedId}
-      onOpen={setSelectedId}
+      loading={!virtual && loading}
+      selectedId={virtual ? item : selectedId}
+      onOpen={virtual ? openItem : setSelectedId}
       selection={selection}
       onSelection={setSelection}
       onBulk={(change) => patch([...selection], change)}
@@ -518,12 +581,20 @@ export function MailboxApp(props: MailboxAppProps) {
       drafts={drafts}
       onCompose={() => openCompose()}
       onSettings={() => openSettings()}
-      onOutbox={showOutbox}
-      outboxCount={outboxCount}
-      onDrafts={showDrafts}
-      draftCount={draftCount}
+      counts={{ drafts: draftCount, outbox: outboxCount }}
+      bulkActions={
+        folder === "drafts" ? (
+          <Button variant="ghost" size="icon-sm" className="text-destructive" onClick={() => discardDrafts([...selection])} aria-label="Discard drafts" title="Discard drafts">
+            <Trash2 />
+          </Button>
+        ) : folder === "outbox" ? (
+          <Button variant="ghost" size="sm" onClick={() => cancelSends([...selection].filter((id) => outboxJobs.find((x) => x.id === id)?.status === "pending"))}>
+            <XIcon /> Cancel sends
+          </Button>
+        ) : undefined
+      }
       rail={desktop}
-      actionsFor={threadActions}
+      actionsFor={virtual ? itemActions : threadActions}
       account={props.account && !desktop ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} compact /> : null}
     />
     </div></div>
@@ -531,8 +602,36 @@ export function MailboxApp(props: MailboxAppProps) {
 
   const sender = detail ? <SenderPanel detail={detail} multipleMailboxes={multiple} onOpen={setSelectedId} onCompose={openCompose} /> : null
 
+  const draftPane =
+    folder === "drafts" && item && !isThreadKey(item) ? (
+      <ComposeWindow
+        key={item}
+        inline
+        open
+        prefill={null}
+        draftKey={item}
+        mailboxes={props.mailboxes}
+        mailbox={mailbox === ALL_MAILBOXES ? props.mailboxes[0]! : mailbox}
+        contacts={contacts}
+        signatures={signatures}
+        signatureBrand={props.signatureBrand}
+        schedule={schedule}
+        onClose={closeItem}
+      />
+    ) : job ? (
+      <OutboxDetail
+        job={job}
+        onChanged={refreshOutbox}
+        onOpenThread={(threadId) => {
+          goFolder("sent")
+          setSelectedId(threadId)
+        }}
+        onBack={desktop ? undefined : closeItem}
+      />
+    ) : null
+
   const threadPane =
-    detail && selectedId ? (
+    draftPane ?? (detail && selectedId ? (
       <ThreadView
         key={detail.thread.id}
         ref={threadRef}
@@ -544,7 +643,7 @@ export function MailboxApp(props: MailboxAppProps) {
         schedule={schedule}
         onPatch={(change) => patch([detail.thread.id], change)}
         onDelete={() => remove([detail.thread.id])}
-        onBack={() => setSelectedId(null)}
+        onBack={closeItem}
         onInfo={wide ? undefined : () => setInfoOpen(true)}
       />
     ) : (
@@ -552,7 +651,7 @@ export function MailboxApp(props: MailboxAppProps) {
         <EmptyState
           variant="plain"
           icon={<Mail />}
-          title={selectedId ? "Opening…" : "No thread open"}
+          title={selectedId ? "Opening…" : folder === "drafts" ? "No draft open" : folder === "outbox" ? "No send open" : "No thread open"}
           description={
             <>
               Pick one on the left, or press <kbd className="bg-muted rounded px-1 font-mono text-xs">?</kbd> for shortcuts.
@@ -560,7 +659,7 @@ export function MailboxApp(props: MailboxAppProps) {
           }
         />
       </div>
-    )
+    ))
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -571,42 +670,19 @@ export function MailboxApp(props: MailboxAppProps) {
             mailbox={mailbox}
             onMailbox={(m) => {
               setMailbox(m)
-              setSelectedId(null)
-              closePanes()
+              closeItem()
             }}
             folder={folder}
-            onFolder={(f) => {
-              setFolder(f)
-              setQuery("")
-              setSelectedId(null)
-              closePanes()
-            }}
+            onFolder={goFolder}
             unread={unread}
             onCompose={() => openCompose()}
             onSettings={() => openSettings()}
-            outbox={outbox}
-            onOutbox={showOutbox}
-            outboxCount={outboxCount}
-            drafts={draftsOpen}
-            onDrafts={showDrafts}
-            draftCount={draftCount}
+            counts={{ drafts: draftCount, outbox: outboxCount }}
             footer={props.account ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} /> : undefined}
           />
         ) : null}
         <div className="min-w-0 flex-1">
-        {draftsOpen ? (
-          <DraftsPanel onOpen={openDraft} onBack={desktop ? undefined : () => setDraftsOpen(false)} />
-        ) : outbox ? (
-          <OutboxPanel
-            onJobs={onOutboxJobs}
-            onBack={desktop ? undefined : () => setOutbox(false)}
-            onOpenThread={(id) => {
-              setOutbox(false)
-              setFolder("sent")
-              setSelectedId(id)
-            }}
-          />
-        ) : desktop ? (
+        {desktop ? (
           <ResizablePanelGroup key={wide ? "wide" : "narrow"} orientation="horizontal">
             <ResizablePanel id="list" defaultSize={wide ? "28%" : "36%"} minSize="260px" maxSize="50%">
               {listPane}
@@ -624,7 +700,7 @@ export function MailboxApp(props: MailboxAppProps) {
               </>
             ) : null}
           </ResizablePanelGroup>
-        ) : selectedId ? (
+        ) : (virtual ? item : selectedId) ? (
           threadPane
         ) : (
           listPane
