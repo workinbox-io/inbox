@@ -23,7 +23,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 import { EmptyState } from "@/components/app/empty-state"
 import { UserAvatar } from "@/components/app/user-avatar"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"

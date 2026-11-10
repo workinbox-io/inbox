@@ -1,6 +1,6 @@
 import * as React from "react"
 import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users, Clock } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
 import { tapllEvent } from "@/lib/tapll"
@@ -67,15 +67,19 @@ export function useUndoSend(onSent: (threadId: string) => void) {
         const result = await job.run()
         const scheduled = result.sendAt > Date.now() + UNDO_MS + 1000
         let cancelled = false
-        toast(scheduled ? "Scheduled" : "Queued for sending", {
+        toast.info(scheduled ? "Scheduled" : "Queued for sending", {
           id, duration: UNDO_MS,
-          action: { label: "Undo", onClick: async () => {
-            try {
-              await api("DELETE", `/api/app/mail/outbox/${result.id}`)
-              cancelled = true
-              toast.success("Send cancelled", { id })
-              job.undo()
-            } catch (e) { toast.error((e as Error).message, { id }) }
+          // Ding's onClick is sync: returning a patch keeps the pill, so show progress and morph it when the DELETE lands.
+          action: { label: "Undo", onClick: () => {
+            void (async () => {
+              try {
+                await api("DELETE", `/api/app/mail/outbox/${result.id}`)
+                cancelled = true
+                toast.success("Send cancelled", { id })
+                job.undo()
+              } catch (e) { toast.error((e as Error).message, { id }) }
+            })()
+            return { type: "loading", title: "Cancelling…", duration: 0 }
           } },
         })
         // The server owns the timer. Leaving after this response is safe.

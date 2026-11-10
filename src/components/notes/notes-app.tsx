@@ -29,7 +29,7 @@ import {
   User,
   Users,
 } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 import { ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { EmptyState } from "@/components/app/empty-state"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"

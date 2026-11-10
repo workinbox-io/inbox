@@ -107,7 +107,7 @@ export function pickImage(editor: PlateEditor) {
       const url = await uploadImage(file, file.name)
       editor.tf.insertNodes({ type: KEYS.img, url, children: [{ text: "" }] }, { select: true })
     } catch (e) {
-      const { toast } = await import("sonner")
+      const { toast } = await import("@yusufceng1z/ding-react")
       toast.error((e as Error).message)
     }
   }

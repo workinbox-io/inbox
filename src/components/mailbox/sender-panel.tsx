@@ -1,6 +1,6 @@
 import * as React from "react"
 import { AtSign, BookUser, Building2, CalendarClock, Copy, Inbox, Mail, MessagesSquare, PenSquare, Phone, Trash2, UserPlus, type LucideIcon } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import { UserAvatar } from "@/components/app/user-avatar"
 import { api } from "@/lib/api-client"

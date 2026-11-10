@@ -3,7 +3,7 @@ import { api } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { toast } from "@yusufceng1z/ding-react";
 export function ApiKeyMailAccess({ id }: { id: string }) {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<{ mailboxes: { id: string; address: string }[]; selected: string[] }>();
