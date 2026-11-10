@@ -93,7 +93,8 @@ Implemented and acceptance:
 - ✅ Hosted custom domains through Amazon SES (send and receive), "Connect Cloudflare" adds the DNS records
 - ⬜ Instant `<org>.workinbox.io` subdomain on sign-up
 - ✅ Bounce/complaint handling and send limits (phase 1)
-- ⬜ Sending reputation for new orgs: stricter limits and a check before the first sends
+- ✅ Sending reputation (hosted): new unpaid orgs send to 50/200 recipients a day for 14 days, a ceiling of
+  2,000/20,000 over any org's own limits, sending pauses on its own at ≥5% bounces or ≥0.3% complaints over 7 days
 
 ## Phase 6: external clients and more
 

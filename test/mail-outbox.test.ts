@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
-import { scheduledTime, quotaDay, uniqueRecipients, validateIdempotencyKey, quotaPredicates, quotaArgs, deliverySummary } from "../src/lib/mail/outbox-policy";
+import { scheduledTime, quotaDay, uniqueRecipients, validateIdempotencyKey, quotaPredicates, quotaArgs, deliverySummary, sendingCaps, reputationPause, NEW_ORG_CAPS, HOSTED_CAPS, NO_CAPS, type SendingCaps } from "../src/lib/mail/outbox-policy";
 
 const now = Date.UTC(2026, 10, 9, 23, 59, 55);
 function database() {
@@ -10,10 +10,36 @@ function database() {
   db.exec(readFileSync(new URL("../migrations/0007_outbox.sql", import.meta.url), "utf8"));
   return db;
 }
-function insert(db: DatabaseSync, id: string, n: number, box = "box", org = "org", day = "2026-11-10") {
+function insert(db: DatabaseSync, id: string, n: number, box = "box", org = "org", day = "2026-11-10", caps?: SendingCaps) {
   return db.prepare(`INSERT INTO mail_outbox(id,org_id,mailbox_id,idempotency_key,fingerprint,payload,send_at,quota_day,recipient_count,created_at,updated_at)
-    SELECT ?,?,?,?,'digest','{}',?,?,?,?,? WHERE ${quotaPredicates} ON CONFLICT(org_id,idempotency_key) DO NOTHING`).run(id, org, box, id, now, day, n, now, now, ...quotaArgs(org, box, day, id, n)).changes;
+    SELECT ?,?,?,?,'digest','{}',?,?,?,?,? WHERE ${quotaPredicates} ON CONFLICT(org_id,idempotency_key) DO NOTHING`).run(id, org, box, id, now, day, n, now, now, ...quotaArgs(org, box, day, id, n, caps)).changes;
 }
+
+describe("sending reputation", () => {
+  const day = 86_400_000;
+  it("caps new unpaid hosted orgs for two weeks, then at the hosted ceiling; self-hosted is uncapped", () => {
+    expect(sendingCaps({ hosted: true, orgCreatedAt: now - day, paid: false }, now)).toMatchObject(NEW_ORG_CAPS);
+    expect(sendingCaps({ hosted: true, orgCreatedAt: now - day, paid: true }, now)).toMatchObject({ ...HOSTED_CAPS, newUntil: null });
+    expect(sendingCaps({ hosted: true, orgCreatedAt: now - 15 * day, paid: false }, now)).toMatchObject(HOSTED_CAPS);
+    expect(sendingCaps({ hosted: false, orgCreatedAt: now, paid: false }, now)).toBe(NO_CAPS);
+  });
+  it("the cap wins over a higher limit the org set itself", () => {
+    const db = database();
+    db.prepare("INSERT INTO mail_send_limits(org_id,scope_id,daily_recipients) VALUES ('org','org',100000)").run();
+    const caps = { ...NEW_ORG_CAPS, newUntil: now };
+    expect(insert(db, "a", 50, "box", "org", "2026-11-10", caps)).toBe(1);
+    expect(insert(db, "b", 1, "box", "org", "2026-11-10", caps)).toBe(0);
+    expect(insert(db, "c", 150, "box2", "org", "2026-11-10", caps)).toBe(0);
+    expect(insert(db, "d", 50, "box2", "org", "2026-11-10", caps)).toBe(1);
+  });
+  it("pauses on many bounces or complaints, not on a handful", () => {
+    expect(reputationPause({ sent: 40, bounced: 9, complained: 2 })).toBeNull();
+    expect(reputationPause({ sent: 100, bounced: 10, complained: 0 })).toBe("bounces");
+    expect(reputationPause({ sent: 1000, bounced: 30, complained: 0 })).toBeNull();
+    expect(reputationPause({ sent: 1000, bounced: 0, complained: 3 })).toBe("complaints");
+    expect(reputationPause({ sent: 5000, bounced: 0, complained: 3 })).toBeNull();
+  });
+});
 
 describe("durable mail scheduling", () => {
   it("gives ten seconds to undo and reserves the delivery day's UTC quota", () => {

@@ -1,11 +1,11 @@
 import { env } from "cloudflare:workers";
-import { and, db, desc, eq, inArray, mailOutbox, mailboxes, mailSendLimits, mailSuppressions, mailDeliveryEvents, member } from "@/db";
+import { and, db, desc, eq, inArray, mailOutbox, mailboxes, mailSendLimits, mailSuppressions, mailDeliveryEvents, member, organization } from "@/db";
 import { ATTACHMENT_URL_PREFIX, attachmentUrl, safeFilename } from "@/lib/uploads";
 import { HttpError } from "@/lib/server/api";
-import { requireMailPlan } from "@/lib/server/org";
+import { getSubscription, requireMailPlan } from "@/lib/server/org";
 import { enqueue } from "@/lib/server/queue";
 import { sendOrgMail } from "./deliver";
-import { scheduledTime, quotaDay, uniqueRecipients, validateIdempotencyKey, quotaArgs, quotaPredicates, deliverySummary } from "@/lib/mail/outbox-policy";
+import { scheduledTime, quotaDay, uniqueRecipients, validateIdempotencyKey, quotaArgs, quotaPredicates, deliverySummary, sendingCaps, reputationPause, REPUTATION_DAYS, NO_CAPS } from "@/lib/mail/outbox-policy";
 import { viewerMailboxes, resolveApiKeyMailboxes, type Mailbox } from "./access";
 import { prepareMailSend, persistOutboxMail, type SendInput } from "./store";
 import { reserveStorage, releaseStorageReservation, storeHtml } from "./storage";
@@ -53,11 +53,33 @@ async function copyQueuedFiles(payload: typeof mailOutbox.$inferSelect.payload, 
   payload.email.files = payload.files.map(({ url, filename, mediaType }) => ({ url, filename, mediaType }));
 }
 
+/** Platform caps on the org's daily recipients (lib/mail/outbox-policy.ts `sendingCaps`). */
+export async function orgSendingCaps(orgId: string) {
+  if (env.DEPLOY_MODE === "self") return NO_CAPS;
+  const [[org], sub] = await Promise.all([db.select({ createdAt: organization.createdAt }).from(organization).where(eq(organization.id, orgId)), getSubscription(orgId)]);
+  const paid = sub?.status === "active" || sub?.status === "past_due";
+  return sendingCaps({ hosted: true, orgCreatedAt: org?.createdAt.getTime() ?? 0, paid });
+}
+
+/** Bounces, complaints and sent recipients of the last REPUTATION_DAYS, and whether sending is paused for them. */
+export async function orgReputation(orgId: string) {
+  const since = Date.now() - REPUTATION_DAYS * 86_400_000;
+  const row = await env.DB.prepare(`SELECT
+      (SELECT COALESCE(SUM(recipient_count),0) FROM mail_outbox WHERE org_id=?1 AND status='sent' AND send_at>=?2) AS sent,
+      (SELECT COUNT(DISTINCT outbox_id||recipient) FROM mail_delivery_events WHERE org_id=?1 AND type='bounced' AND occurred_at>=?2) AS bounced,
+      (SELECT COUNT(DISTINCT outbox_id||recipient) FROM mail_delivery_events WHERE org_id=?1 AND type='complained' AND occurred_at>=?2) AS complained`).bind(orgId, since).first<{ sent: number; bounced: number; complained: number }>();
+  const stats = row ?? { sent: 0, bounced: 0, complained: 0 };
+  return { ...stats, paused: env.DEPLOY_MODE === "self" ? null : reputationPause(stats) };
+}
+
 export async function queueMailSend(input: SendInput, boxes: Mailbox[], fallbackName: string, options: SendOptions = {}) {
   const { mailbox, payload } = await prepareMailSend(input, boxes, fallbackName);
   // Hosted: sending is free for up to FREE_PEOPLE people, a team needs a trial or a plan; forwarding rules keep running so incoming
   // mail still reaches people.
   if (!input.automatedForward) await requireMailPlan(mailbox.orgId);
+  const { paused } = await orgReputation(mailbox.orgId);
+  if (paused) throw new HttpError(403, `Sending is paused: too many ${paused === "bounces" ? "bounced messages" : "spam complaints"} in the last ${REPUTATION_DAYS} days. It resumes on its own as they age out; check the addresses you write to or contact support.`);
+  const caps = await orgSendingCaps(mailbox.orgId);
   if (!options.actorUserId && !options.apiKeyId && !input.automatedForward) options.actorUserId = mailbox.userId ?? undefined;
   if (!options.actorUserId && !options.apiKeyId && !input.automatedForward) throw new HttpError(403, "A sending identity is required");
   let sendAt: number, key: string;
@@ -81,14 +103,14 @@ export async function queueMailSend(input: SendInput, boxes: Mailbox[], fallback
   const now = Date.now(), day = quotaDay(sendAt);
   try {
     const inserted = await env.DB.prepare(`INSERT INTO mail_outbox (id,org_id,mailbox_id,actor_user_id,api_key_id,idempotency_key,fingerprint,payload,status,send_at,quota_day,recipient_count,thread_id,message_id,created_at,updated_at)
-      SELECT ?,?,?,?,?,?,?,?,'pending',?,?,?,?,?,?,? WHERE ${quotaPredicates} ON CONFLICT(org_id,idempotency_key) DO NOTHING RETURNING id`).bind(id, mailbox.orgId, mailbox.id, options.actorUserId ?? null, options.apiKeyId ?? null, key, digest, JSON.stringify(payload), sendAt, day, recipients.length, threadId, messageId, now, now, ...quotaArgs(mailbox.orgId, mailbox.id, day, id, recipients.length)).first<{ id: string }>();
+      SELECT ?,?,?,?,?,?,?,?,'pending',?,?,?,?,?,?,? WHERE ${quotaPredicates} ON CONFLICT(org_id,idempotency_key) DO NOTHING RETURNING id`).bind(id, mailbox.orgId, mailbox.id, options.actorUserId ?? null, options.apiKeyId ?? null, key, digest, JSON.stringify(payload), sendAt, day, recipients.length, threadId, messageId, now, now, ...quotaArgs(mailbox.orgId, mailbox.id, day, id, recipients.length, caps)).first<{ id: string }>();
     if (!inserted) {
       await releaseStorageReservation(messageId);
       await discardQueuedObjects({ payload });
       const [duplicate] = await db.select().from(mailOutbox).where(and(eq(mailOutbox.orgId, mailbox.orgId), eq(mailOutbox.idempotencyKey, key)));
       if (duplicate && duplicate.fingerprint === digest) return visible(duplicate);
       if (duplicate) throw new HttpError(409, "Idempotency key already used for another request");
-      throw new HttpError(429, "Daily sending limit reached");
+      throw new HttpError(429, caps.newUntil ? `Daily sending limit reached. New organizations send to up to ${caps.organization} recipients a day for their first two weeks, or more on a paid plan.` : "Daily sending limit reached");
     }
   } catch (e) { await releaseStorageReservation(messageId); await discardQueuedObjects({ payload }); throw e; }
   // A failed enqueue does not lose accepted mail: the minute cron scans this durable table.
@@ -109,7 +131,7 @@ export async function rescheduleOutboxJob(id: string, requested: number, boxes: 
   let sendAt: number;
   try { sendAt = scheduledTime(requested); } catch (e) { throw new HttpError(422, (e as Error).message); }
   const day = quotaDay(sendAt);
-  const updated = await env.DB.prepare(`UPDATE mail_outbox SET send_at=?,quota_day=?,updated_at=? WHERE id=? AND status='pending' AND ${quotaPredicates} RETURNING id`).bind(sendAt, day, Date.now(), job.id, ...quotaArgs(job.orgId, job.mailboxId, day, job.id, job.recipientCount)).first();
+  const updated = await env.DB.prepare(`UPDATE mail_outbox SET send_at=?,quota_day=?,updated_at=? WHERE id=? AND status='pending' AND ${quotaPredicates} RETURNING id`).bind(sendAt, day, Date.now(), job.id, ...quotaArgs(job.orgId, job.mailboxId, day, job.id, job.recipientCount, await orgSendingCaps(job.orgId))).first();
   if (!updated) throw new HttpError(409, "Message is no longer pending or the target day's sending limit is reached");
   await enqueue("mail.send", { id }, { delaySeconds: Math.min(86400, Math.ceil((sendAt - Date.now()) / 1000)) }).catch(() => {});
   return getOutboxJob(id, boxes);
@@ -156,7 +178,7 @@ export async function deliverOutboxJob(id: string) {
     return;
   }
   const day = quotaDay(Date.now());
-  const claimed = await env.DB.prepare(`UPDATE mail_outbox SET status='sending',quota_day=?,updated_at=? WHERE id=? AND status='pending' AND send_at<=? AND ${quotaPredicates} RETURNING id`).bind(day, Date.now(), id, Date.now(), ...quotaArgs(job.orgId, job.mailboxId, day, id, job.recipientCount)).first();
+  const claimed = await env.DB.prepare(`UPDATE mail_outbox SET status='sending',quota_day=?,updated_at=? WHERE id=? AND status='pending' AND send_at<=? AND ${quotaPredicates} RETURNING id`).bind(day, Date.now(), id, Date.now(), ...quotaArgs(job.orgId, job.mailboxId, day, id, job.recipientCount, await orgSendingCaps(job.orgId))).first();
   if (!claimed) return; // A cancellation, another consumer or today's quota won the race.
   // Crossing the provider call is a one-way boundary: an exception may mean it accepted the mail.
   try {
