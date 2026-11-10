@@ -46,7 +46,7 @@ export const OURS: Record<RowKey, Cell> = {
   selfHost: yes("Open source; runs on your own Cloudflare account"),
   imap: no("Not yet: web app only (installable). IMAP gateway planned"),
   ai: yes("MCP server: search and read mail, notes and contacts on every plan; replies and changes on Pro and Business"),
-  suite: soon("Calendar, contacts and drive are next"),
+  suite: partial("Contacts today (a team address book); calendar and drive next"),
 };
 
 export interface Competitor {
@@ -109,7 +109,7 @@ export const COMPETITORS: Competitor[] = [
       "You need Gemini across mail, documents and meetings.",
     ],
     faq: [
-      { question: "Can Work Inbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, files and video calls, not yet: calendar, contacts and drive are on the roadmap, and Work Inbox has no video calls." },
+      { question: "Can Work Inbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, files and video calls, not yet: contacts ship as a team address book, calendar and drive are on the roadmap, and Work Inbox has no video calls." },
       { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in Work Inbox and replace its MX records with the one Work Inbox lists. New mail then arrives in Work Inbox. Old mail comes along too: upload an export (.mbox or .eml files) in Settings → Mail → Import mail." },
     ],
     sources: [
@@ -275,7 +275,7 @@ export const COMPETITORS: Competitor[] = [
     pickThemIf: [
       "You want to keep your IMAP and CalDAV apps on every device.",
       "Mail alone is what you need, from an independent vendor.",
-      "You need calendar and contacts today.",
+      "You need a calendar today.",
     ],
     faq: [],
     sources: ["https://www.fastmail.com/pricing/", "https://www.fastmail.help/hc/en-us/articles/1500000277382-Account-limits", "https://fastmail.com/dev/"],

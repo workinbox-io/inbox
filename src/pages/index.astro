@@ -3,7 +3,7 @@
  * The home page, laid out after boat.dev in our ink: an ink hero with a pixel harbour, three feature cards, the setup
  * in three steps, what a team pays next to the big suites, a pricing calculator, open source and what's next, FAQ and
  * a closing band. Pixel scenes are ours (components/site/pixel); the tour shows real screens of the app.
- * Only claim what ships; calendar, contacts, drive and IMAP stay under "Coming next".
+ * Only claim what ships; calendar, drive and IMAP stay under "Coming next".
  */
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
@@ -78,17 +78,17 @@ const shipped = [
   { icon: ICONS.mail, label: "Mail" },
   { icon: ICONS.shared, label: "Shared mailboxes" },
   { icon: ICONS.notes, label: "Live notes" },
+  { icon: ICONS.contacts, label: "Contacts" },
   { icon: ICONS.ai, label: "Claude, ChatGPT" },
 ];
 const next = [
   { icon: ICONS.calendar, label: "Calendar" },
-  { icon: ICONS.contacts, label: "Contacts" },
   { icon: ICONS.drive, label: "Drive" },
   { icon: ICONS.imap, label: "IMAP apps" },
 ];
 
 const steps = [
-  { command: "add domain acme.com", status: "acme.com: MX, DKIM and DMARC check out", text: "On Cloudflare, Connect Cloudflare adds the records with an API token; anywhere else, add them at your DNS provider." },
+  { command: "add domain acme.com", status: "acme.com: MX, DKIM and DMARC check out", text: "On Cloudflare, Connect Cloudflare adds the records with an API token; anywhere else, add them at your DNS provider. No domain yet? Start on a free yourname.workinbox.io address." },
   { command: "add people anna ben chris", status: "3 people, each with a mailbox · free up to 5", text: "Each person gets a mailbox on the domain and a temporary password to sign in with." },
   { command: "share support@ with everyone", status: "support@ shared with 3 people · mail flowing", text: "Create support@ or sales@ and pick who answers it. Shared mailboxes cost nothing." },
 ];
@@ -123,6 +123,10 @@ const faq = [
     answer: "No. If your domain is on Cloudflare, Connect Cloudflare adds the records for you with an API token. Anywhere else, add the MX, DKIM and DMARC records the setup shows and click Check DNS.",
   },
   {
+    question: "Do I need my own domain?",
+    answer: "No. Claim a free address like yourname.workinbox.io in Settings → Mail and start right away; it's set up for you in a few minutes. Add your own domain whenever you're ready.",
+  },
+  {
     question: "What does a shared mailbox cost?",
     answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}, and the first ${FREE_PEOPLE} people are free. Shared mailboxes, aliases and the catch-all are free on every plan.`,
   },
@@ -136,7 +140,7 @@ const faq = [
   },
   {
     question: "What about calendar, contacts and files?",
-    answer: "They are next. Mail and shared notes ship today; calendar, contacts and drive follow, on the same plans.",
+    answer: "Contacts ship today: one address book for the whole team, filled from the mail you send, with Google, Outlook and vCard import, and suggestions as you type. Calendar and drive are next, on the same plans.",
   },
   {
     question: "Is there a free trial?",
@@ -355,14 +359,15 @@ const jsonLd = [
         <h3 class="text-xl">Every plan includes</h3>
         <ul class="mk-sqlist mt-4 text-lg">
           <li>Unlimited shared mailboxes, aliases and a catch-all per domain.</li>
-          <li>Live shared notes for the whole team.</li>
+          <li>Live shared notes and a team address book.</li>
+          <li>Drafts on every device, signatures in your company's style.</li>
           <li>Spam filter, sender rules and search across every mailbox.</li>
           <li>Up to {FREE_PEOPLE} people free, for good.</li>
         </ul>
         <h3 class="mt-10 text-xl">Not yet</h3>
         <ul class="mk-sqlist mt-4 text-lg">
           <li>IMAP for Apple Mail, Outlook or phone apps: the web app installs on phones.</li>
-          <li>Calendar, contacts and drive: next on the same plans.</li>
+          <li>Calendar and drive: next on the same plans.</li>
         </ul>
         <p class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-lg">
           <a href="/pricing" class="mk-link">Pricing details</a>

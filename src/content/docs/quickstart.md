@@ -12,6 +12,9 @@ updated: 2026-11-10
 
 ## 2. Add your domain
 
+No domain yet? In **Settings → Mail**, claim a free address like `yourname.workinbox.io`: Work Inbox sets up its
+records for you, you get a mailbox on it, and mail works within a few minutes. You can add your own domain later.
+
 Open **Settings → Mail** and add your domain, for example `yourcompany.com`. Work Inbox lists the DNS records it needs:
 
 - an **MX** record, so mail for the domain comes to Work Inbox,
