@@ -27,7 +27,7 @@
     "DEPLOY_MODE": "cloud",
     // Contacts' pixel banners: Jev (Workers AI) picks a theme and colour per e-mail domain (lib/server/contacts-banner.ts).
     // Optional AI Gateway id to route those calls through (logs, caching, rate limits); empty calls Workers AI directly.
-    "AI_GATEWAY_ID": "",
+    "AI_GATEWAY_ID": "work-inbox",
     // cloud: orgs get <slug>.<MAIL_BASE_DOMAIN> at once (needs a wildcard Email Routing rule). Empty: custom domains only.
     "MAIL_BASE_DOMAIN": "",
     // cloud: the orgs' own domains receive and send through Amazon SES in this region (lib/server/ses.ts, docs/ses.md);
