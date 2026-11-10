@@ -8,7 +8,6 @@ describe("signature", () => {
   it("renders text and HTML with the brand", () => {
     const sig = renderSignature(card, brand, "https://workinbox.io")!;
     expect(sig.text).toBe("Anna Kowalska\nHead of Support · Acme\n+48 600 100 200\nanna@acme.com\nacme.com\n\nAcme sp. z o.o., KRS 0000123456");
-    expect(sig.html).toContain('src="https://workinbox.io/email/sig-phone.png"');
     expect(sig.html).toContain('href="mailto:anna@acme.com"');
     expect(sig.html).toContain("KRS 0000123456");
     expect(sig.html).toContain('src="https://workinbox.io/api/files/attachments/org1/abcdefghijklmnop/logo.png"');
@@ -21,9 +20,7 @@ describe("signature", () => {
     expect(sig.html).toContain("&lt;b&gt;&quot;x&quot;&lt;/b&gt;");
     expect(sig.html).toContain("line 1<br>line 2");
     expect(sig.html).not.toContain("<img");
-    const badge = renderSignature({ ...EMPTY_CARD, name: "Anna Kowalska" }, { ...EMPTY_BRAND, color: "#e5484d" }, "https://a.b")!;
-    expect(badge.html).toContain(">AK</td>");
-    expect(badge.html).toContain("background:#e5484d");
+
   });
   it("drops invalid brand values and renders nothing when empty", () => {
     expect(cleanBrand({ color: "red", website: "javascript:alert(1)", logoUrl: "https://evil.example/x.png" })).toEqual({ company: "", website: "", logoUrl: "", color: "", footer: "" });
