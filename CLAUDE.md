@@ -129,6 +129,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   apps, model-visible for API keys (`toolVisibility`). `mail_search` renders `widgets/mail-threads.tsx`;
   `mail_read_thread` returns text without quoted history, capped per message. ChatGPT directory listing and its
   marketing (`/chatgpt`, `/vs` row, llms.txt) come only after OpenAI approves the app.
+- ChatGPT directory: `chatgpt-app/` (plugin ZIP sources, demo `.mbox`, release steps in its README). OpenAI's rules:
+  explicit annotations (`persists` = saves without write scope), no internal ids in results, no upsells in tool text.
 
 ## Marketing site and SEO/GEO (product)
 
