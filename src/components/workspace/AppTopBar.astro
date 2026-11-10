@@ -1,9 +1,10 @@
 ---
 /**
- * The user view's top bar (MailLayout): the app's name and the notifications. In the dashboard the same controls
- * sit in AppLayout's header (slot "actions").
+ * The user view's top bar (MailLayout): the app's name, ⌘K (apps and "new" actions; the app switcher on phones) and
+ * the notifications. In the dashboard the same controls sit in AppLayout's header (slot "actions").
  */
 import { NotificationCenter } from "@/components/mailbox/notification-center";
+import { AppSearch } from "./app-search";
 
 interface Props {
   title: string;
@@ -11,7 +12,10 @@ interface Props {
 const { title } = Astro.props;
 ---
 
-<div class="bg-background flex shrink-0 items-center justify-end gap-2 border-b px-3 py-1">
-  <span class="mr-auto text-sm font-medium">{title}</span>
-  <NotificationCenter client:load />
+<div class="bg-background grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 border-b px-3 py-1">
+  <span class="truncate text-sm font-medium">{title}</span>
+  <AppSearch client:load />
+  <div class="flex justify-end">
+    <NotificationCenter client:load />
+  </div>
 </div>
