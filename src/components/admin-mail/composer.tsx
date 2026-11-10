@@ -60,6 +60,8 @@ export function useUndoSend(onSent: (threadId: string) => void) {
           clearTimeout(timer)
           pending.current--
           job.undo()
+          // The pill morphs into the outcome instead of vanishing, so the click visibly worked.
+          return { type: "info", title: "Not sent", description: "The draft is back in the composer.", duration: 3000 }
         },
       },
     })

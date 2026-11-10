@@ -1,4 +1,5 @@
 import { Toaster as Ding } from "@yusufceng1z/ding-react"
+import { t } from "@/lib/i18n/panel"
 import * as React from "react"
 
 /**
@@ -19,5 +20,5 @@ function useDocumentTheme(): "light" | "dark" {
 }
 
 export function Toaster() {
-  return <Ding position="bottom-right" theme={useDocumentTheme()} />
+  return <Ding position="bottom-right" theme={useDocumentTheme()} labels={{ region: t("Notifications"), dismiss: t("Dismiss notification") }} />
 }
