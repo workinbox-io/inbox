@@ -61,12 +61,15 @@ export interface ToolResult {
   [key: string]: unknown;
   content: { type: "text"; text: string }[];
   structuredContent?: Record<string, unknown>;
+  _meta?: Record<string, unknown>;
   isError?: boolean;
 }
 
-export const toolResult = (data: Record<string, unknown>): ToolResult => ({
+/** A `_meta` key in a tool's data goes to the widget only (hosts don't show result `_meta` to the model). */
+export const toolResult = ({ _meta, ...data }: Record<string, unknown>): ToolResult => ({
   content: [{ type: "text", text: JSON.stringify(data) }],
   structuredContent: data,
+  ...(_meta && typeof _meta === "object" ? { _meta: _meta as Record<string, unknown> } : {}),
 });
 
 /** Tool failures are results the model can read and explain, not protocol errors. */

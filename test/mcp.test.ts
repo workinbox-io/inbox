@@ -30,6 +30,9 @@ describe("mcp tools", () => {
 
   it("returns data as JSON text and structured content, errors as readable results", () => {
     expect(toolResult({ a: 1 })).toEqual({ content: [{ type: "text", text: '{"a":1}' }], structuredContent: { a: 1 } });
+    // _meta goes to the widget only, never into what the model reads.
+    const r = toolResult({ a: 1, _meta: { sendToken: "t" } });
+    expect(r).toEqual({ content: [{ type: "text", text: '{"a":1}' }], structuredContent: { a: 1 }, _meta: { sendToken: "t" } });
     expect(toolError("Nope")).toEqual({ content: [{ type: "text", text: "Nope" }], isError: true });
   });
 });

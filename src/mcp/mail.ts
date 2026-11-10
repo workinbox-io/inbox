@@ -1,4 +1,5 @@
 /** MCP tools for mail: the same lib/server functions as /api/app/mail, scoped to the caller's mailboxes. */
+import { env } from "cloudflare:workers";
 import { z } from "zod";
 import { HttpError } from "@/lib/server/api";
 import { defineTool, type McpContext, type McpModule } from "./define";
@@ -8,6 +9,7 @@ import { cancelOutboxJob, queueMailSend } from "@/lib/server/mail/outbox";
 import { mailSendSchema } from "@/lib/validation-mail";
 import { checkAttachments } from "@/lib/server/uploads";
 import { stripQuotedReply } from "@/lib/mail/quotes";
+import { SEND_TOKEN_TTL_MS, signSendToken, verifySendToken } from "@/lib/mail/send-token";
 import threadsWidget from "./widgets/mail-threads.tsx?widget";
 import composeWidget from "./widgets/mail-compose.tsx?widget";
 
@@ -91,6 +93,8 @@ export const mailModule: McpModule = {
           },
           mailboxes: list.map((b) => b.address),
           note: "Not sent. The person reviews the card and clicks Send.",
+          // For the card's Send button only; connected apps can't send without it.
+          ...(ctx.userId ? { _meta: { sendToken: await signSendToken({ userId: ctx.userId, orgId: ctx.orgId, exp: Date.now() + SEND_TOKEN_TTL_MS }, env.BETTER_AUTH_SECRET) } } : {}),
         };
       },
     }),
@@ -100,8 +104,17 @@ export const mailModule: McpModule = {
       scope: "write",
       openWorld: true,
       appOnly: true,
-      input: z.object({ message: mailSendSchema, threadId: threadId.optional(), idempotencyKey: z.string().min(1).max(200) }),
-      async run({ message, threadId: thread, idempotencyKey }, ctx) {
+      input: z.object({
+        message: mailSendSchema,
+        threadId: threadId.optional(),
+        idempotencyKey: z.string().min(1).max(200),
+        confirm: z.string().max(2000).optional().describe("Set by the draft card; not available to the model"),
+      }),
+      async run({ message, threadId: thread, idempotencyKey, confirm }, ctx) {
+        // API keys are scripts their owner wrote; connected apps send only through the person's click in the card.
+        if (!ctx.apiKeyId && !(await verifySendToken(confirm, ctx.userId ?? "", ctx.orgId, env.BETTER_AUTH_SECRET))) {
+          throw new HttpError(403, "AI apps can't send mail on their own. Call mail_draft: the person checks the message and clicks Send in the card.");
+        }
         const files = await checkAttachments(ctx.orgId, message.files);
         const job = await queueMailSend({ ...message, threadId: thread, files }, await boxes(ctx), "", { actorUserId: ctx.userId ?? undefined, apiKeyId: ctx.apiKeyId, idempotencyKey });
         ctx.audit("mail_send.queue", { target: job.id });
