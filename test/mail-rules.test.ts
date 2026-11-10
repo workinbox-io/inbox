@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isValidSubdomainLabel,
   baseAddress,
   evaluateDns,
   isValidDomain,
@@ -129,5 +130,13 @@ describe("search", () => {
       unread: true,
       starred: false,
     });
+  });
+});
+
+describe("free address names", () => {
+  it("takes one plain DNS label and keeps our own names", () => {
+    expect(isValidSubdomainLabel("acme")).toBe(true);
+    expect(isValidSubdomainLabel("acme-2")).toBe(true);
+    for (const bad of ["ab", "-acme", "acme-", "ac--me", "acme.co", "Acme", "a".repeat(33), "www", "mail", "bounce", "support"]) expect(isValidSubdomainLabel(bad)).toBe(false);
   });
 });

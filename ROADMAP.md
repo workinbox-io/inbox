@@ -91,7 +91,7 @@ Implemented and acceptance:
 
 - ✅ Plans per person (Paddle, first person free, seats synced on every mailbox change); API, MCP and audit log paid
 - ✅ Hosted custom domains through Amazon SES (send and receive), "Connect Cloudflare" adds the DNS records
-- ⬜ Instant `<org>.workinbox.io` subdomain on sign-up
+- ✅ Free `<name>.workinbox.io` address in Settings → Mail (SES, records in our zone, admin's mailbox on it)
 - ✅ Bounce/complaint handling and send limits (phase 1)
 - ✅ Sending reputation (hosted): new unpaid orgs send to 50/200 recipients a day for 14 days, a ceiling of
   2,000/20,000 over any org's own limits, sending pauses on its own at ≥5% bounces or ≥0.3% complaints over 7 days

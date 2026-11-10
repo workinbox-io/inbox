@@ -31,6 +31,8 @@ declare namespace Cloudflare {
     DEPLOY_MODE?: "self" | "cloud";
     /** cloud: the domain whose subdomains orgs get at once (acme.<MAIL_BASE_DOMAIN>). */
     MAIL_BASE_DOMAIN?: string;
+    /** cloud: Cloudflare API token with DNS edit on MAIL_BASE_DOMAIN's zone; writes free addresses' records. */
+    MAIL_ZONE_TOKEN?: string;
     VAPID_PUBLIC_KEY?: string;
     VAPID_PRIVATE_KEY?: string;
     VAPID_SUBJECT?: string;

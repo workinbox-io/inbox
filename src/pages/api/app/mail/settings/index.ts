@@ -1,4 +1,4 @@
-import { manageHandler, json, parseBody } from "@/lib/server/api";
+import { HttpError, manageHandler, json, parseBody } from "@/lib/server/api";
 import * as admin from "@/lib/server/mail/admin";
 import { addPerson, resetPersonPassword } from "@/lib/server/mail/people";
 import { addSenderRule } from "@/lib/server/mail/store";
@@ -7,12 +7,18 @@ import { mailSetupSchema } from "@/lib/validation-mail";
 /** Settings → Mail: domains, mailboxes, aliases and access (owners and admins). */
 export const GET = manageHandler(async ({ orgId }) => json(await admin.listMailSetup(orgId)));
 
-export const POST = manageHandler(async ({ orgId, request, audit }) => {
+export const POST = manageHandler(async ({ orgId, request, audit, locals }) => {
   const body = await parseBody(request, mailSetupSchema);
   switch (body.action) {
     case "domain.add": {
       const d = await admin.addDomain(orgId, body.domain);
       audit("mail_domain.add", { target: d.domain });
+      return json(d, 201);
+    }
+    case "domain.claimSubdomain": {
+      if (!locals.user) throw new HttpError(403, "Sign in to claim a free address");
+      const d = await admin.claimSubdomain(orgId, { id: locals.user.id, name: locals.user.name }, body.name, body.local);
+      audit("mail_domain.add", { target: d.domain, details: { kind: "subdomain" } });
       return json(d, 201);
     }
     case "domain.check":

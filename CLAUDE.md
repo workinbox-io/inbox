@@ -16,7 +16,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Hosted (`cloud`) custom domains go through Amazon SES, not Cloudflare (which only serves zones in our account):
   `mail_domains.provider = "ses"`, SES identity per domain, sending via `sendOrgMail` (`mail/deliver.ts`), receiving
   S3 → SNS → `/api/ses/webhook` → job `mail.inbound` → `handleOrgMail`. Setup and runbook: `docs/ses.md`,
-  `scripts/ses-setup.sh`. Self-hosted, our subdomains and older domains stay `cloudflare`. "Connect Cloudflare"
+  `scripts/ses-setup.sh`. Self-hosted and older domains stay `cloudflare`. Free addresses `<name>.workinbox.io`
+  (`claimSubdomain`, `kind: "subdomain"`) are SES too, records written with `MAIL_ZONE_TOKEN` (docs/ses.md). "Connect Cloudflare"
   (`connectCloudflare`, action `domain.connectCloudflare`) adds an `ses` domain's records with a one-time API token.
 - Import (Settings → Mail → Import mail, owners/admins): .mbox or .eml files (joined into one mbox in the browser)
   uploaded to R2 in 10 MB parts (`/api/app/mail/imports`), then job `mail.import` (`lib/server/mail/import.ts`, pure
@@ -157,6 +158,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   The first person is free (`FREE_PEOPLE`, `seatsFor`: quantity = people − 1, at least 1 on a paid plan). Sending mail, adding people, mailboxes and domains need an active trial or plan
   only once the org has (or would have) more than one personal mailbox (`requireMailPlan`); shared mailboxes and
   aliases don't count. Receiving and forwarding rules always keep working; API, MCP and audit log stay paid.
+  Hosted sending: new unpaid orgs capped for 14 days, a ceiling over own limits, auto-pause on bounces/complaints
+  (`sendingCaps`, `reputationPause` in `lib/mail/outbox-policy.ts`).
 - Open source under AGPL-3.0 (LICENSE), public at github.com/workinbox-io/inbox.
 - OpenSEO project "WorkInbox" (US/en) holds the keyword research and context.
 

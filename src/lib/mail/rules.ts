@@ -15,6 +15,11 @@ export const normalizeDomain = (d: string) => d.trim().toLowerCase().replace(/^@
 export const isValidDomain = (d: string) => DOMAIN.test(d);
 export const isValidLocalPart = (l: string) => LOCAL.test(l) && !l.includes("..");
 
+/** Names we keep for ourselves under MAIL_BASE_DOMAIN (and the names that may already have DNS records there). */
+const RESERVED_LABELS = new Set("www mail app api admin support help docs status blog bounce mx smtp imap pop jmap dav ns ns1 ns2 dev staging test cdn static assets noreply no-reply postmaster abuse security billing legal team teams login auth oauth mcp inbox workinbox".split(" "));
+/** A free address's name: one DNS label, 3–32 letters, digits or single dashes. */
+export const isValidSubdomainLabel = (l: string) => /^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])$/.test(l) && !l.includes("--") && !RESERVED_LABELS.has(l);
+
 export function splitAddress(address: string) {
   const a = address.trim().toLowerCase();
   const at = a.lastIndexOf("@");

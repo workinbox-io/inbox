@@ -28,8 +28,9 @@
     // Contacts' pixel banners: Jev (Workers AI) picks a theme and colour per e-mail domain (lib/server/contacts-banner.ts).
     // Optional AI Gateway id to route those calls through (logs, caching, rate limits); empty calls Workers AI directly.
     "AI_GATEWAY_ID": "work-inbox",
-    // cloud: orgs get <slug>.<MAIL_BASE_DOMAIN> at once (needs a wildcard Email Routing rule). Empty: custom domains only.
-    "MAIL_BASE_DOMAIN": "",
+    // cloud: orgs can claim <name>.<MAIL_BASE_DOMAIN> at once, on SES, with the MAIL_ZONE_TOKEN secret (DNS edit on
+    // this zone). Without SES or the token: custom domains only.
+    "MAIL_BASE_DOMAIN": "workinbox.io",
     // cloud: the orgs' own domains receive and send through Amazon SES in this region (lib/server/ses.ts, docs/ses.md);
     // off until the AWS secrets are set. Self-hosted ignores it.
     "AWS_SES_REGION": "eu-west-1"

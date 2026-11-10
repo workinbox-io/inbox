@@ -46,7 +46,20 @@ the box; Email Routing's own MX are locked, so the admin is told to turn Email R
 Test on a domain of ours: add it in Settings → Mail, add the records, Check DNS until active, send a mail (headers:
 DKIM `d=` the domain, Return-Path on `bounce.<domain>`), reply to it, and see the delivery status in the thread.
 
+## Free addresses (`<name>.workinbox.io`)
+
+Settings → Mail → "No domain yet? Start on workinbox.io" (`claimSubdomain` in `lib/server/mail/admin.ts`): one per org,
+an SES identity like any hosted domain (`kind: "subdomain"`), its MX, DKIM, MAIL FROM and DMARC records written into
+the workinbox.io zone with our own token, the admin's personal mailbox on it, then job `mail.domainCheck` re-checks
+every 2 minutes for half an hour until it's active. Names: `isValidSubdomainLabel` (`lib/mail/rules.ts`, reserved
+names included). New orgs' sending is capped anyway (`sendingCaps`, `lib/mail/outbox-policy.ts`).
+
+To turn it on: a Cloudflare API token with Zone → DNS → Edit and Zone → Zone → Read on workinbox.io only, then
+`wrangler secret put MAIL_ZONE_TOKEN`. `MAIL_BASE_DOMAIN` is a var in `wrangler.jsonc`. Each org adds ~7 records to
+the zone: watch the zone's record limit.
+
 ## Not done yet
 
-- No cron re-checks pending domains: the admin clicks Check DNS.
+- No cron re-checks pending custom domains: the admin clicks Check DNS (free addresses re-check on their own).
+- Removing a free address leaves its DNS records in our zone.
 - Deleting an org leaves its SES identities and tenant (unused, no cost).

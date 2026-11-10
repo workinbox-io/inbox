@@ -6,10 +6,11 @@ import { env } from "cloudflare:workers";
 import { and, count, db, eq, inArray, invitation, gt, mailboxAccess, mailAliases, mailboxes, mailDomains, mailMessages, mailSignatureBrands, mailThreads, mailOutbox, member, user } from "@/db";
 import { EMPTY_BRAND, cleanBrand, cleanCard, type SignatureBrand } from "@/lib/mail/signature";
 import { ATTACHMENT_URL_PREFIX } from "@/lib/uploads";
-import { evaluateDns, isValidDomain, isValidLocalPart, mailFromDomain, normalizeDomain, planDnsChanges, requiredDnsRecords, type ExistingDnsRecord } from "@/lib/mail/rules";
+import { evaluateDns, isValidDomain, isValidLocalPart, isValidSubdomainLabel, mailFromDomain, normalizeDomain, planDnsChanges, requiredDnsRecords, type ExistingDnsRecord } from "@/lib/mail/rules";
 import { createIdentity, deleteIdentity, getIdentity, sesConfigured, sesRegion, sesTenant } from "@/lib/server/ses";
 import { HttpError } from "@/lib/server/api";
 import { requireMailPlan } from "@/lib/server/org";
+import { enqueue } from "@/lib/server/queue";
 import { seatsChanged } from "@/lib/server/seats";
 
 const dohAnswers = async (name: string, type: "MX" | "TXT") => {
@@ -50,7 +51,43 @@ export async function listMailSetup(orgId: string) {
     aliases,
     members,
     signatureBrand,
+    /** Hosted: the domain free addresses live under, while the org has none yet. */
+    subdomainBase: subdomainsOn() && !domains.some((d) => d.kind === "subdomain") ? env.MAIL_BASE_DOMAIN! : null,
   };
+}
+
+/** Hosted: free addresses at <name>.<MAIL_BASE_DOMAIN>, on SES, their records written into our own zone. */
+export const subdomainsOn = () => Boolean(env.MAIL_BASE_DOMAIN && env.MAIL_ZONE_TOKEN && sesConfigured());
+
+/**
+ * Gives the org <name>.<MAIL_BASE_DOMAIN> and the caller a personal mailbox on it, so mail works before they own a
+ * domain. Verification takes a few minutes; job `mail.domainCheck` re-checks until it's active.
+ * shortcut: ~7 DNS records per org in our zone; Cloudflare caps records per zone (1,000 on Free), upgrade the zone's
+ * plan or move free addresses to a zone of their own before that.
+ */
+export async function claimSubdomain(orgId: string, owner: { id: string; name: string }, name: string, local: string) {
+  if (!subdomainsOn()) throw new HttpError(404, "Not available");
+  const label = name.trim().toLowerCase();
+  if (!isValidSubdomainLabel(label)) throw new HttpError(422, "Use 3–32 letters, digits or dashes");
+  if (!isValidLocalPart(local.trim().toLowerCase())) throw new HttpError(422, "Use letters, digits, dots, dashes or underscores");
+  const [has] = await db.select({ id: mailDomains.id }).from(mailDomains).where(and(eq(mailDomains.orgId, orgId), eq(mailDomains.kind, "subdomain")));
+  if (has) throw new HttpError(409, "Your organization already has a free address");
+  const domain = `${label}.${env.MAIL_BASE_DOMAIN}`;
+  const [taken] = await db.select({ id: mailDomains.id }).from(mailDomains).where(eq(mailDomains.domain, domain));
+  if (taken) throw new HttpError(409, "This name is taken");
+  const dkimTokens = await createIdentity(domain, sesTenant(orgId), mailFromDomain(domain));
+  const [row] = await db.insert(mailDomains).values({ orgId, domain, kind: "subdomain", provider: "ses", dkimTokens }).returning();
+  const [own] = await db.select({ id: mailboxes.id }).from(mailboxes).where(and(eq(mailboxes.orgId, orgId), eq(mailboxes.userId, owner.id), eq(mailboxes.kind, "personal")));
+  if (!own) await createMailbox(orgId, { domainId: row!.id, local, kind: "personal", userId: owner.id, displayName: owner.name });
+  const { domain: checked } = await connectCloudflare(orgId, row!.id, env.MAIL_ZONE_TOKEN!, false);
+  if (checked.status !== "active") await enqueue("mail.domainCheck", { orgId, domainId: row!.id, attempt: 1 }, { delaySeconds: 60 });
+  return checked;
+}
+
+/** Job: re-checks a domain every two minutes for half an hour, until it's active (or removed). */
+export async function recheckDomain({ orgId, domainId, attempt }: { orgId: string; domainId: string; attempt: number }) {
+  const d = await checkDomain(orgId, domainId).catch((e) => (e instanceof HttpError && e.status === 404 ? null : Promise.reject(e)));
+  if (d && d.status !== "active" && attempt < 15) await enqueue("mail.domainCheck", { orgId, domainId, attempt: attempt + 1 }, { delaySeconds: 120 });
 }
 
 type DomainRow = typeof mailDomains.$inferSelect;

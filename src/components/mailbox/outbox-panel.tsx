@@ -39,11 +39,16 @@ const recipients = (job: OutboxRow) => [...(Array.isArray(job.to) ? job.to : [jo
 /** Pending (scheduled) sends, from the list the panel loads; for a count next to "Outbox". */
 export const scheduledCount = (jobs: OutboxRow[]) => jobs.filter((j) => j.status === "pending" || j.status === "sending").length
 
+/** Sends that still need attention: delivered mail lives in Sent, cancelled ones are gone. */
+const needsAttention = (j: OutboxRow) =>
+  j.status !== "cancelled" && (j.status !== "sent" || (j.deliveryStatus !== null && j.deliveryStatus !== "delivered"))
+
 /** Send jobs as list rows (the same list as threads): scheduled ones soonest first, then the rest newest first. */
 export function outboxRows(jobs: OutboxRow[], q: string, fallbackMailbox: string): MailThread[] {
   const scheduled = (j: OutboxRow) => j.status === "pending" || j.status === "sending"
   const needle = q.trim().toLowerCase()
   return jobs
+    .filter(needsAttention)
     .filter((j) => !needle || [j.subject, ...recipients(j)].join(" ").toLowerCase().includes(needle))
     .sort((a, b) => (scheduled(a) !== scheduled(b) ? (scheduled(a) ? -1 : 1) : scheduled(a) ? a.sendAt - b.sendAt : b.sendAt - a.sendAt))
     .map((j) => {

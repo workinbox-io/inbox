@@ -28,6 +28,8 @@ export interface MailSetup {
     domain: string
     status: "pending" | "active" | "failing"
     provider: "cloudflare" | "ses"
+    /** subdomain: a free address under our domain, set up by us. */
+    kind: "subdomain" | "custom"
     checks: Record<string, boolean>
     checkedAt: string | null
     catchAllMailboxId: string | null
@@ -37,6 +39,8 @@ export interface MailSetup {
   aliases: { id: string; address: string; mailboxId: string }[]
   members: { userId: string; name: string; email: string; role: string }[]
   signatureBrand: SignatureBrand
+  /** The domain free addresses live under, while the org has none (hosted). */
+  subdomainBase: string | null
 }
 
 const NONE = "__none__"
@@ -188,7 +192,7 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
                 >
                   <RefreshCw className={cn(busy === d.id && "animate-spin")} /> Check DNS
                 </Button>
-                {d.provider === "ses" && d.status !== "active" ? <ConnectCloudflare domain={d} onDone={() => act({ action: "domain.check", domainId: d.id })} /> : null}
+                {d.provider === "ses" && d.kind !== "subdomain" && d.status !== "active" ? <ConnectCloudflare domain={d} onDone={() => act({ action: "domain.check", domainId: d.id })} /> : null}
                 <ConfirmButton title={`Remove ${d.domain}?`} description="Only a domain without mailboxes can be removed." confirmLabel="Remove" onConfirm={() => act({ action: "domain.remove", domainId: d.id }, "Domain removed")}>
                   <Button variant="ghost" size="sm" className="text-destructive">
                     Remove
@@ -196,14 +200,16 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
                 </ConfirmButton>
               </div>
             </div>
-            {d.status !== "active" ? (
+            {d.kind === "subdomain" ? (
+              d.status !== "active" ? <p className="text-muted-foreground text-xs">Work Inbox sets this address up for you. It starts working within a few minutes; click Check DNS to see.</p> : null
+            ) : d.status !== "active" ? (
               <p className="text-muted-foreground text-xs">
                 {d.provider === "ses"
                   ? "Add these records at your DNS provider, then click Check DNS. Mail arrives once the MX record is in; sending starts when the three DKIM records are verified, usually within minutes. On Cloudflare, turn Email Routing off for the domain first: it keeps its own MX records."
                   : "Add these records at your DNS provider. On Cloudflare, turning on Email Routing for the domain adds them for you (any MX priority works)."}
               </p>
             ) : null}
-            {d.status === "active" ? (
+            {d.kind === "subdomain" ? null : d.status === "active" ? (
               // Working domains keep their records out of the way; they're only needed when something breaks.
               <details className="group/dns">
                 <summary className="text-muted-foreground hover:text-foreground w-fit cursor-pointer text-xs select-none">DNS records</summary>
@@ -265,6 +271,7 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
             </div>
           </div>
         ))}
+        {setup.subdomainBase ? <FreeAddress base={setup.subdomainBase} act={act} /> : null}
         <form
           className="flex gap-2"
           onSubmit={async (e) => {
@@ -281,6 +288,48 @@ function DomainsSection({ setup, act }: { setup: MailSetup; act: Act }) {
         </form>
       </div>
     </SettingsSection>
+  )
+}
+
+/** Hosted: <name>.workinbox.io right away, with the admin's own mailbox on it, before they bring a domain. */
+function FreeAddress({ base, act }: { base: string; act: Act }) {
+  const [name, setName] = React.useState("")
+  const [local, setLocal] = React.useState("")
+  const [busy, setBusy] = React.useState(false)
+  const label = name.trim().toLowerCase() || "acme"
+  return (
+    <form
+      className="bg-surface grid gap-3 rounded-2xl px-5 py-4"
+      onSubmit={async (e) => {
+        e.preventDefault()
+        if (!name.trim() || !local.trim()) return
+        setBusy(true)
+        await act({ action: "domain.claimSubdomain", name, local }, "Free address created")
+        setBusy(false)
+      }}
+    >
+      <div className="grid gap-1">
+        <span className="font-medium">No domain yet? Start on {base}</span>
+        <span className="text-muted-foreground text-sm">
+          Get {label}.{base} for your team now and add your own domain whenever you're ready.
+        </span>
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="grid gap-1">
+          <Label htmlFor="free-local" className="text-xs">Your address</Label>
+          <Input id="free-local" value={local} onChange={(e) => setLocal(e.target.value)} placeholder="anna" className="w-36" />
+        </div>
+        <span className="text-muted-foreground pb-2">@</span>
+        <div className="grid gap-1">
+          <Label htmlFor="free-name" className="text-xs">Team name</Label>
+          <Input id="free-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="acme" className="w-40" />
+        </div>
+        <span className="text-muted-foreground pb-2">.{base}</span>
+        <Button type="submit" disabled={busy || !name.trim() || !local.trim()}>
+          Create
+        </Button>
+      </div>
+    </form>
   )
 }
 

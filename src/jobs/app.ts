@@ -7,6 +7,7 @@ import { deliverOutboxJob } from "@/lib/server/mail/outbox";
 import { receiveSesMail } from "@/lib/server/mail/ses-inbound";
 import { runImport } from "@/lib/server/mail/import";
 import { syncSeats } from "@/lib/server/seats";
+import { recheckDomain } from "@/lib/server/mail/admin";
 
 export interface AppJobs {
   "mail.send": { id: string };
@@ -15,6 +16,8 @@ export interface AppJobs {
   /** The next batch of a mail import (lib/server/mail/import.ts). */
   "mail.import": { id: string };
   "billing.seats": { orgId: string };
+  /** Re-check a new domain until it verifies (lib/server/mail/admin.ts claimSubdomain). */
+  "mail.domainCheck": { orgId: string; domainId: string; attempt: number };
 }
 
 export const appJobs: JobHandlers<AppJobs> = {
@@ -22,4 +25,5 @@ export const appJobs: JobHandlers<AppJobs> = {
   "mail.inbound": (job) => receiveSesMail(job),
   "mail.import": ({ id }) => runImport(id),
   "billing.seats": ({ orgId }) => syncSeats(orgId),
+  "mail.domainCheck": (job) => recheckDomain(job),
 };
