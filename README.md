@@ -13,10 +13,11 @@ for small teams: hosted at [workinbox.io](https://workinbox.io), or self-hosted 
 - **Shared notes**: live co-editing (Plate + Yjs on Durable Objects), checklists, tables, images, @mentions; private,
   shared with people, or with the whole team.
 - **Contacts**: one team address book filled from sent mail, CSV/vCard import and export, suggestions in the composer.
+- **Drive**: folders and files shared with people or the team, previews, public links with a password and expiry, attach from and save to mail.
 - **Importing old mail**: .mbox or .eml files (Gmail Takeout included).
 - **AI apps and API**: an MCP server for Claude, ChatGPT, Claude Code and Cursor, and a REST API.
 
-Not yet: IMAP access, mobile apps, calendar and drive (next on the roadmap).
+Not yet: IMAP access, mobile apps and calendar (next on the roadmap).
 
 ## Self-hosting
 

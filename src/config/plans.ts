@@ -12,12 +12,14 @@ export interface Plan {
   priceMonthly: number;
   /** Limits; null = unlimited. Add your own (they're checked with withinLimit). */
   members: number | null;
+  /** Drive storage per person (pooled across the org) in GB, on the hosted service; self-hosted is unlimited. */
+  driveGbPerPerson: number;
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  starter: { id: "starter", name: "Starter", priceMonthly: 100, members: null },
-  pro: { id: "pro", name: "Pro", priceMonthly: 250, members: null },
-  business: { id: "business", name: "Business", priceMonthly: 500, members: null },
+  starter: { id: "starter", name: "Starter", priceMonthly: 100, members: null, driveGbPerPerson: 10 },
+  pro: { id: "pro", name: "Pro", priceMonthly: 250, members: null, driveGbPerPerson: 30 },
+  business: { id: "business", name: "Business", priceMonthly: 500, members: null, driveGbPerPerson: 100 },
 };
 
 export const PLAN_LIST = Object.values(PLANS);
@@ -101,10 +103,11 @@ const EXTRAS: Record<PlanId, PlanFeature[]> = {
     { label: "Spam filter and sender rules" },
     { label: "Shared notes with live editing" },
     { label: "Team address book" },
+    { label: `Shared drive, ${PLANS.starter.driveGbPerPerson} GB per person` },
     { label: "Two-factor authentication" },
   ],
-  pro: [{ label: "Everything in Starter" }, { label: "REST API" }, { label: "Claude & ChatGPT connector" }, { label: "Audit log" }],
-  business: [{ label: "Everything in Pro" }, { label: "Calendar", soon: true }, { label: "SSO", soon: true }, { label: "Priority support" }],
+  pro: [{ label: "Everything in Starter" }, { label: `${PLANS.pro.driveGbPerPerson} GB of drive per person` }, { label: "REST API" }, { label: "Claude & ChatGPT connector" }, { label: "Audit log" }],
+  business: [{ label: "Everything in Pro" }, { label: `${PLANS.business.driveGbPerPerson} GB of drive per person` }, { label: "Calendar", soon: true }, { label: "SSO", soon: true }, { label: "Priority support" }],
 };
 
 /** Pricing-page lines. Every plan is per person with unlimited people, so no limit lines. */

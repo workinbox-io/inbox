@@ -17,6 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AttachmentDropZone, uploadWithProgress, useAttachments, type Attachments, type UploadFn } from "@/components/uploads/attachments"
 import { AddressInput, ComposeBody, ComposeFrame, EMAIL, FieldRow, type AddressSuggestion } from "@/components/mail/compose"
+import { AttachFromDrive } from "@/components/drive/attach-from-drive"
 import { NEW_DRAFT, readDraft, writeDraft } from "./drafts"
 import type { Draft, MailMessage, MailThread, ReplyMode } from "./types"
 
@@ -238,7 +239,14 @@ function MailForm({
         onChange={(text) => set({ text })}
         bodyClassName={bodyClassName}
         note={note}
-        footer={signatureHtml ? <SignaturePreview html={signatureHtml} on={!draft.noSignature} onChange={(on) => set({ noSignature: !on })} /> : null}
+        footer={
+          <>
+            {signatureHtml ? <SignaturePreview html={signatureHtml} on={!draft.noSignature} onChange={(on) => set({ noSignature: !on })} /> : null}
+            <div className="px-3 pb-1">
+              <AttachFromDrive attachments={attachments} />
+            </div>
+          </>
+        }
         attachments={attachments}
         disabled={disabled}
         sendLabel={draft.sendAt ? "Schedule" : "Send"}

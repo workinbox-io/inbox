@@ -121,6 +121,27 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   caches it in `caches.default` (30 days, 1 day when unsure). Free mail never leaves the server; anything unsure or
   failing gets a generic scene from the domain hash. New theme = label in `BANNER_THEMES` + scene in `THEMES`.
 
+## Drive (product)
+
+- Tables `src/db/schema/drive.ts`: `drive_items` (folders and files; `path` = `/<rootId>/…/<id>/`, so ancestors are the
+  ids in it and a subtree is a prefix; content in R2 at `r2Key` = `drive/<org>/<id>`, renames touch D1 only),
+  `drive_access`, `drive_uploads` (multipart in progress, counted in the quota), `drive_links` (public links).
+- Access: each item is judged like a note (`noteRole`), the viewer's role = the highest over the item and the folders
+  above it (`driveRole` in `lib/drive/access.ts`, pure, `test/drive.test.ts`). Queries go through `visibleItems` /
+  `requireItem` / `rolesFor` (`lib/server/drive/access.ts`). A trashed folder hides everything inside it.
+- Logic in `lib/server/drive/*`: `items.ts` (lists, move = one UPDATE of the subtree's paths, trash, share, purge),
+  `uploads.ts` (one PUT up to 10 MB, multipart above), `serve.ts` (Range, never HTML/SVG rendered: `safeServeType`),
+  `quota.ts` (`driveGbPerPerson` in `config/plans.ts` × people, unlimited self-hosted), `links.ts`, `mail.ts`.
+- Public links: `/s/<token>` (`pages/s/[token]/`), password unlock cookie signed per token for 12 h, attempts limited by
+  `AUTH_RATE_LIMIT`. Daily task `drive` empties trash after 30 days and aborts stale uploads (job `drive.purge`).
+- Mail: "Attach from Drive" (`components/drive/attach-from-drive.tsx`) fetches the file in the browser and passes it to
+  the composer's own `attachments.add` (template components untouched); "Save to Drive" on a thread's attachment
+  posts to `/api/app/drive/save-attachment`.
+- UI `/app/drive[/<folderId>]` (`?view=shared|recent|trash`, `?file=<id>`), `components/drive/drive-app.tsx` on the
+  workspace kit; `DrivePicker` for moving and attaching. Sharing uses `components/workspace/share-dialog.tsx`
+  (shared with notes) with the public links section as its children.
+- API `/api/app/drive/*`, `/api/v1/drive/items` re-exports list/get/patch/content. MCP `src/mcp/drive.ts` (read only).
+
 ## AI apps: MCP modules and the ChatGPT app (product)
 
 - `src/mcp/app.ts` lists `appModules` (`McpModule` in `define.ts`: `tools`, `widgets`, one `instructions` line appended to
@@ -155,7 +176,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   before editing, keep "pick them if" and our gaps honest). `/llms.txt` is generated from `config/plans.ts` and
   `compare.ts` (`lib/llms.ts`): update it with every shipped feature, like Luxivo's feature rollout (landing, `/vs` row,
   `llms.txt`, docs, footer).
-- Claim only what ships: no IMAP, calendar/drive are "Soon". Import is .mbox/.eml upload only (no IMAP import).
+- Claim only what ships: no IMAP, calendar is "Soon". Import is .mbox/.eml upload only (no IMAP import).
 - Billing (workinbox.io runs `DEPLOY_MODE=cloud`, PADDLE_ENV production; self-hosters set `self`): per person = personal
   mailboxes (`lib/server/seats.ts`). Checkout sells that quantity; adding/removing/converting a personal mailbox calls
   `seatsChanged` → job `billing.seats` → PATCH the Paddle subscription (prorated next period); a daily task reconciles.

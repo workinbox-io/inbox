@@ -8,5 +8,6 @@ import type { McpModule } from "./define";
 import { mailModule } from "./mail";
 import { notesModule } from "./notes";
 import { contactsModule } from "./contacts";
+import { driveModule } from "./drive";
 
-export const appModules: McpModule[] = [mailModule, notesModule, contactsModule];
+export const appModules: McpModule[] = [mailModule, notesModule, contactsModule, driveModule];

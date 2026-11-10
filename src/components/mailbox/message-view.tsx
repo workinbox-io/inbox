@@ -1,10 +1,12 @@
 import * as React from "react"
-import { CheckCheck, Copy, Download, FileCode, Forward, ImageOff, MoreHorizontal, Paperclip, Reply, ReplyAll } from "lucide-react"
+import { CheckCheck, Copy, Download, FileCode, Forward, HardDrive, ImageOff, MoreHorizontal, Paperclip, Reply, ReplyAll } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 
 import { hasQuotedHtml, hasRemoteImages, linkSegments, mailSrcDoc } from "@/lib/admin-mail/rules"
+import { api } from "@/lib/api-client"
 import { formatBytes, isImageType } from "@/lib/uploads"
 import { splitQuotedReply } from "@/lib/mail/quotes"
+import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { UserAvatar } from "@/components/app/user-avatar"
@@ -84,11 +86,20 @@ function TextBody({ text, showQuoted }: { text: string; showQuoted: boolean }) {
   )
 }
 
+async function saveToDrive(f: MailFile) {
+  try {
+    const item = await api<{ id: string; name: string }>("POST", "/api/app/drive/save-attachment", { url: f.url, filename: f.filename })
+    toast.success(t("Saved to Drive as {name}", { name: item.name }), { action: { label: t("Open"), onClick: () => void (location.href = `/app/drive?file=${item.id}`) } })
+  } catch (e) {
+    toast.error((e as Error).message)
+  }
+}
+
 function Files({ files }: { files: MailFile[] }) {
   return (
     <ul className="mt-4 flex flex-wrap gap-2">
       {files.map((f) => (
-        <li key={f.url}>
+        <li key={f.url} className="group relative">
           <a
             href={f.url}
             target="_blank"
@@ -109,6 +120,15 @@ function Files({ files }: { files: MailFile[] }) {
             </span>
             <Download className="text-muted-foreground size-3.5 shrink-0" />
           </a>
+          <button
+            type="button"
+            onClick={() => saveToDrive(f)}
+            aria-label={t("Save to Drive")}
+            title={t("Save to Drive")}
+            className="bg-background text-muted-foreground hover:text-foreground absolute -top-2 -right-2 hidden size-6 place-items-center rounded-full border shadow-sm group-focus-within:grid group-hover:grid"
+          >
+            <HardDrive className="size-3.5" />
+          </button>
         </li>
       ))}
     </ul>

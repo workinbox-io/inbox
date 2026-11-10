@@ -48,7 +48,7 @@ import { api } from "@/lib/api-client"
 import { t } from "@/lib/i18n/panel"
 import { pushUrl, replaceUrl } from "@/lib/panel-history"
 import type { Presence } from "./editor/note-editor"
-import { ShareDialog } from "./share-dialog"
+import { ShareDialog } from "@/components/workspace/share-dialog"
 import type { NoteDetail, NoteFolder, NoteSummary, NoteView, Sharing } from "./types"
 
 // Plate and Yjs load only when a note is opened (and never during SSR).
@@ -520,6 +520,9 @@ export function NotesApp(props: NotesAppProps) {
       {sharing ? (
         <ShareDialog
           note={sharing}
+          endpoint={`/api/app/notes/${sharing.id}/share`}
+          title={t("Share note")}
+          description={t("People who can open the note see changes as they happen.")}
           open
           onOpenChange={(o) => !o && setSharing(null)}
           onSaved={(n) => {

@@ -7,7 +7,7 @@ updated: 2026-11-10
 ---
 
 Connect an AI app and ask it to search your mail, read a thread, draft a reply, or find, write and update
-notes and contacts. The app talks to the MCP server at `https://workinbox.io/mcp` (self-hosted: your own address plus `/mcp`). You'll find the URL and short setup
+notes and contacts, or find and read files on the drive. The app talks to the MCP server at `https://workinbox.io/mcp` (self-hosted: your own address plus `/mcp`). You'll find the URL and short setup
 steps in **Settings → AI apps**.
 
 ## Claude

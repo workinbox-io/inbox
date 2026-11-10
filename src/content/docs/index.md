@@ -16,10 +16,12 @@ self-hosted on your own Cloudflare account.
 - **Notes**: notes your team edits together, live, shared with chosen people or the whole team.
 - **Contacts**: one address book for the team, filled from the mail you send, with Google, Outlook and vCard import and
   export, and suggestions in the composer.
+- **Drive**: folders and files shared with chosen people or the whole team (a folder's share covers everything in it),
+  previews, public links with a password and expiry, attach from the drive and save attachments to it.
 - **AI apps and API**: read and answer mail and notes from Claude or ChatGPT ([AI apps](/docs/mcp)), or over the
   [REST API](/docs/api).
 
-Calendar and drive are next. There is no IMAP access yet: mail is read and sent in the web app, which you can
+Calendar is next. There is no IMAP access yet: mail is read and sent in the web app, which you can
 install on a phone or a computer.
 
 ## Where to start

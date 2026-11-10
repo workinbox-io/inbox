@@ -1,4 +1,7 @@
-/** Who may open a note: just the owner, chosen people (view or edit) or everyone in the organization. */
+/**
+ * Who may open a note or a drive item: just the owner, chosen people (view or edit) or everyone in the organization.
+ * PUTs { sharing, teamRole, people } to `endpoint`; `children` adds a section below (the drive's public links).
+ */
 import * as React from "react"
 import { Globe, Lock, Users, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
@@ -8,12 +11,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { api } from "@/lib/api-client"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
-import { useNotePeople } from "./editor/people"
-import type { NoteDetail, Sharing } from "./types"
+import { useNotePeople } from "@/components/notes/editor/people"
+
+type Sharing = "private" | "people" | "team"
 
 type Role = "view" | "edit"
 
-export function ShareDialog({ note, open, onOpenChange, onSaved }: { note: NoteDetail; open: boolean; onOpenChange: (open: boolean) => void; onSaved: (n: NoteDetail) => void }) {
+export interface Shareable {
+  sharing: Sharing
+  teamRole: Role
+  ownerId: string | null
+  people: { userId: string; role: Role; name?: string; email?: string }[]
+}
+
+export function ShareDialog<T extends Shareable>({
+  note,
+  endpoint,
+  title,
+  description,
+  open,
+  onOpenChange,
+  onSaved,
+  children,
+}: {
+  note: T
+  endpoint: string
+  title: string
+  description: string
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSaved: (n: T) => void
+  children?: React.ReactNode
+}) {
   const everyone = useNotePeople()
   const [sharing, setSharing] = React.useState<Sharing>(note.sharing)
   const [teamRole, setTeamRole] = React.useState<Role>(note.teamRole)
@@ -38,7 +67,7 @@ export function ShareDialog({ note, open, onOpenChange, onSaved }: { note: NoteD
   async function save() {
     setSaving(true)
     try {
-      const saved = await api<NoteDetail>("PUT", `/api/app/notes/${note.id}/share`, { sharing, teamRole, people: sharing === "people" ? people : [] })
+      const saved = await api<T>("PUT", endpoint, { sharing, teamRole, people: sharing === "people" ? people : [] })
       onSaved(saved)
       onOpenChange(false)
       toast.success(t("Sharing saved"))
@@ -59,8 +88,8 @@ export function ShareDialog({ note, open, onOpenChange, onSaved }: { note: NoteD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("Share note")}</DialogTitle>
-          <DialogDescription>{t("People who can open the note see changes as they happen.")}</DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogBody className="grid gap-4">
           <div role="radiogroup" className="grid gap-1.5">
@@ -143,6 +172,7 @@ export function ShareDialog({ note, open, onOpenChange, onSaved }: { note: NoteD
               )}
             </div>
           )}
+          {children}
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

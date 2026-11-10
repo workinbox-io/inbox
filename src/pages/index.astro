@@ -3,7 +3,7 @@
  * The home page, laid out after boat.dev in our ink: an ink hero with a pixel harbour, three feature cards, the setup
  * in three steps, what a team pays next to the big suites, a pricing calculator, open source and what's next, FAQ and
  * a closing band. Pixel scenes are ours (components/site/pixel); the tour shows real screens of the app.
- * Only claim what ships; calendar, drive and IMAP stay under "Coming next".
+ * Only claim what ships; calendar and IMAP stay under "Coming next".
  */
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
@@ -79,11 +79,11 @@ const shipped = [
   { icon: ICONS.shared, label: "Shared mailboxes" },
   { icon: ICONS.notes, label: "Live notes" },
   { icon: ICONS.contacts, label: "Contacts" },
+  { icon: ICONS.drive, label: "Drive" },
   { icon: ICONS.ai, label: "Claude, ChatGPT" },
 ];
 const next = [
   { icon: ICONS.calendar, label: "Calendar" },
-  { icon: ICONS.drive, label: "Drive" },
   { icon: ICONS.imap, label: "IMAP apps" },
 ];
 
@@ -140,7 +140,7 @@ const faq = [
   },
   {
     question: "What about calendar, contacts and files?",
-    answer: "Contacts ship today: one address book for the whole team, filled from the mail you send, with Google, Outlook and vCard import, and suggestions as you type. Calendar and drive are next, on the same plans.",
+    answer: "Contacts and files ship today. Contacts: one address book for the whole team, filled from the mail you send, with Google, Outlook and vCard import, and suggestions as you type. Drive: folders and files shared with people or the whole team, previews, public links with a password, and attachments straight from and into mail. Calendar is next, on the same plans.",
   },
   {
     question: "Is there a free trial?",
@@ -359,7 +359,7 @@ const jsonLd = [
         <h3 class="text-xl">Every plan includes</h3>
         <ul class="mk-sqlist mt-4 text-lg">
           <li>Unlimited shared mailboxes, aliases and a catch-all per domain.</li>
-          <li>Live shared notes and a team address book.</li>
+          <li>Live shared notes, a team address book and a shared drive.</li>
           <li>Drafts on every device, signatures in your company's style.</li>
           <li>Spam filter, sender rules and search across every mailbox.</li>
           <li>Up to {FREE_PEOPLE} people free, for good.</li>
@@ -367,7 +367,7 @@ const jsonLd = [
         <h3 class="mt-10 text-xl">Not yet</h3>
         <ul class="mk-sqlist mt-4 text-lg">
           <li>IMAP for Apple Mail, Outlook or phone apps: the web app installs on phones.</li>
-          <li>Calendar and drive: next on the same plans.</li>
+          <li>Calendar: next on the same plans.</li>
         </ul>
         <p class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-lg">
           <a href="/pricing" class="mk-link">Pricing details</a>

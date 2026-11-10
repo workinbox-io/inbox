@@ -1,0 +1,69 @@
+---
+/**
+ * The drive: /app/drive (My drive, or ?view=shared|recent|trash), /app/drive/<folderId>, ?file=<id> opens a preview.
+ * Members get it full screen next to mail (MailLayout and the app rail); owners and admins inside the dashboard.
+ */
+import AppRail from "@/components/workspace/AppRail.astro";
+import AppTopBar from "@/components/workspace/AppTopBar.astro";
+import { NotificationCenter } from "@/components/mailbox/notification-center";
+import { DriveApp, type DriveLocation } from "@/components/drive/drive-app";
+import AppLayout from "@/layouts/AppLayout.astro";
+import MailLayout from "@/layouts/MailLayout.astro";
+import { HttpError } from "@/lib/server/api";
+import { driveViewer } from "@/lib/server/drive/access";
+import { getItem, listItems } from "@/lib/server/drive/items";
+import { driveUsage } from "@/lib/server/drive/quota";
+import { canManage } from "@/lib/server/roles";
+import { workspaceView } from "@/lib/server/workspace-view";
+import { t } from "@/lib/i18n/panel";
+
+const id = Astro.params.id ?? null;
+if (id && !/^[0-9a-f-]{36}$/.test(id)) return Astro.redirect("/app/drive");
+const viewParam = Astro.url.searchParams.get("view");
+const view = viewParam === "shared" || viewParam === "recent" || viewParam === "trash" ? viewParam : "mine";
+const fileParam = Astro.url.searchParams.get("file");
+const fileId = fileParam && /^[0-9a-f-]{36}$/.test(fileParam) ? fileParam : null;
+
+const role = Astro.locals.role ?? "member";
+const user = Astro.locals.user!;
+const viewer = driveViewer({ locals: Astro.locals, orgId: Astro.locals.orgId!, role });
+const location: DriveLocation = id ? { folder: id } : { view };
+let folder = null;
+let list;
+try {
+  [list, folder] = await Promise.all([listItems(viewer, id ? { folder: id } : { view }), id ? getItem(viewer, id) : null]);
+} catch (e) {
+  // A folder that's gone or not shared with them: back to their drive.
+  if (e instanceof HttpError && (e.status === 404 || e.status === 422)) return Astro.redirect("/app/drive");
+  throw e;
+}
+const usage = await driveUsage(viewer.orgId);
+const userView = workspaceView(Astro.cookies, user.id, role) === "user";
+const Layout = userView ? MailLayout : AppLayout;
+---
+
+<Layout title={t("Drive")} fullBleed>
+  {!userView && (
+    <Fragment slot="actions">
+      <NotificationCenter client:load />
+    </Fragment>
+  )}
+  <div class="flex h-full min-h-0">
+    {userView && <AppRail current="drive" />}
+    <div class="flex min-w-0 flex-1 flex-col">
+      {userView && <AppTopBar title={t("Drive")} />}
+      <div class="min-h-0 flex-1">
+        <DriveApp
+          client:load
+          location={location}
+          items={list.items}
+          folder={folder}
+          fileId={fileId}
+          usage={usage}
+          canManage={canManage(role)}
+          account={userView ? { name: user.name, email: user.email } : undefined}
+        />
+      </div>
+    </div>
+  </div>
+</Layout>

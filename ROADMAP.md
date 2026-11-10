@@ -11,7 +11,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 1. 🚧 Acceptance on production: Web Push on a real phone; a first free `<name>.workinbox.io` address (claim, verify,
    Gmail → mailbox → reply)
 2. ⬜ Calendar (phase 3), starting with calendars, events with RRULE, week/month views and iMIP invitations in the thread
-3. ⬜ Drive (phase 4)
+3. ✅ Drive (phase 4): local acceptance done, production check after deploy
 
 ## Phase 0: groundwork
 
@@ -90,10 +90,14 @@ Implemented and acceptance:
 
 ## Phase 4: drive (R2)
 
-- ⬜ Folders and files, sharing with people, the whole org or a public link (password, expiry), trash with cleanup
-- ⬜ Large uploads through R2 multipart; previews for images, PDF and text
-- ⬜ Mail integration: attach from drive, save an attachment to drive, link instead of a large attachment
-- ⬜ Storage quota per org; MCP: `drive_search`, `drive_read`
+- ✅ Folders and files; any item shared privately, with people (view/edit) or the whole org, inherited down the tree
+- ✅ Public links with an optional password and expiry, revocable
+- ✅ Trash, deleted for good after 30 days (daily task, job `drive.purge`)
+- ✅ Large uploads through R2 multipart (10 MB parts, up to 5 GB); previews for images, PDF, text, video (Range) and audio
+- ✅ Mail integration: attach from drive, save an attachment to drive
+- ⬜ A link instead of a large attachment
+- ✅ Storage quota per org (GB per person on the plan, pooled; unlimited self-hosted); MCP: `drive_search`, `drive_read`
+- ⬜ Later: versions, full-text search in files, folder upload, WebDAV for Synology Cloud Sync / Hyper Backup (phase 6)
 
 ## Phase 5: hosted cloud and billing
 

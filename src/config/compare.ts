@@ -45,8 +45,8 @@ export const OURS: Record<RowKey, Cell> = {
   notes: yes("Shared notes with live editing, checklists, tables, @mentions"),
   selfHost: yes("Open source; runs on your own Cloudflare account"),
   imap: no("Not yet: web app only (installable). IMAP gateway planned"),
-  ai: yes("MCP server: search and read mail, notes and contacts on every plan; replies and changes on Pro and Business"),
-  suite: partial("Contacts today (a team address book); calendar and drive next"),
+  ai: yes("MCP server: search and read mail, notes, contacts and drive files on every plan; replies and changes on Pro and Business"),
+  suite: partial("Contacts (a team address book) and a shared drive today; calendar next"),
 };
 
 export interface Competitor {
@@ -109,7 +109,7 @@ export const COMPETITORS: Competitor[] = [
       "You need Gemini across mail, documents and meetings.",
     ],
     faq: [
-      { question: "Can Work Inbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, files and video calls, not yet: contacts ship as a team address book, calendar and drive are on the roadmap, and Work Inbox has no video calls." },
+      { question: "Can Work Inbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, office documents and video calls, not yet: contacts ship as a team address book and files as a shared drive, calendar is on the roadmap, and Work Inbox has no Docs/Sheets editors or video calls." },
       { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in Work Inbox and replace its MX records with the one Work Inbox lists. New mail then arrives in Work Inbox. Old mail comes along too: upload an export (.mbox or .eml files) in Settings → Mail → Import mail." },
     ],
     sources: [
