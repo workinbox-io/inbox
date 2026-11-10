@@ -35,10 +35,17 @@ async function entriesFor(tops: DriveItem[]) {
   return out;
 }
 
-export async function zipResponse(tops: DriveItem[], filename: string) {
+/** What a ZIP of `tops` holds, within the limits (throws 422 otherwise). The browser asks first (?check=1) to show it. */
+export async function zipPlan(tops: DriveItem[]) {
   const list = await entriesFor(tops);
+  const bytes = list.reduce((n, e) => n + e.item.size, 0);
   if (list.length > ZIP_MAX_ENTRIES) throw new HttpError(422, "Too many files for one ZIP");
-  if (list.reduce((n, e) => n + e.item.size, 0) > ZIP_MAX_BYTES) throw new HttpError(422, "ZIP downloads can be up to 4 GB; pick fewer files");
+  if (bytes > ZIP_MAX_BYTES) throw new HttpError(422, "ZIP downloads can be up to 4 GB; pick fewer files");
+  return { list, files: list.filter((e) => e.item.kind === "file").length, bytes };
+}
+
+export async function zipResponse(tops: DriveItem[], filename: string) {
+  const { list } = await zipPlan(tops);
   const paths = uniquePaths(list.map((e) => e.path));
   const entries: ZipEntry[] = list.map((e, i) => ({
     name: paths[i]!,

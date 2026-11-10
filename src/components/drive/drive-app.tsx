@@ -20,8 +20,9 @@ import { ShareDialog } from "@/components/workspace/share-dialog"
 import { shortcutsPaused, useAppLayout } from "@/components/workspace/ui"
 import { clickSelect, moveFocus, sortItems, type Selection } from "@/lib/drive/explorer"
 import { api } from "@/lib/api-client"
-import { t } from "@/lib/i18n/panel"
+import { t, tp } from "@/lib/i18n/panel"
 import { pushUrl, replaceUrl } from "@/lib/panel-history"
+import { formatBytes } from "@/lib/uploads"
 import { cn } from "@/lib/utils"
 import { DetailsPanel, QuickLook } from "./details"
 import { DrivePicker } from "./drive-picker"
@@ -31,6 +32,7 @@ import { PublicLinks } from "./links"
 import { contentUrl, download, isFileDrag, readPrefs, writePrefs, zipUrl, type DrivePrefs } from "./shared"
 import { Toolbar, type Crumb } from "./toolbar"
 import type { DriveDetail, DriveSummary, DriveUsage, DriveView } from "./types"
+import { runTask, task } from "./task"
 import { uploadToDrive } from "./upload"
 import { createFolders, dropEntries, inputEntries, type PickedFile } from "./upload-folder"
 import { useMarquee } from "./use-marquee"
@@ -68,13 +70,6 @@ function readUrl(): { loc: DriveLocation; fileId: string | null } {
   return { loc: folder ? { folder } : { view: view && view in VIEW_LABELS ? view : "mine" }, fileId: params.get("file") }
 }
 
-interface Upload {
-  key: string
-  name: string
-  progress: number
-  error?: string
-}
-
 const none = (): Selection => ({ ids: new Set(), anchor: null })
 
 export function DriveApp(props: DriveAppProps) {
@@ -84,7 +79,6 @@ export function DriveApp(props: DriveAppProps) {
   const [query, setQuery] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [usage, setUsage] = React.useState(props.usage)
-  const [uploads, setUploads] = React.useState<Upload[]>([])
   const [prefs, setPrefsState] = React.useState<DrivePrefs>(DEFAULT_PREFS)
   const [sel, setSel] = React.useState<Selection>(() => ({ ids: new Set(props.fileId ? [props.fileId] : []), anchor: props.fileId }))
   const [focusId, setFocusId] = React.useState<string | null>(props.fileId)
@@ -204,30 +198,44 @@ export function DriveApp(props: DriveAppProps) {
   const uploadFiles = React.useCallback(
     async (files: PickedFile[], folders: string[][], dest: string | null) => {
       if (!files.length && !folders.length) return
+      const place = dest && folder?.id === dest ? folder.name : t("My drive")
+      const label = files.length === 1 ? t("Uploading {name}…", { name: files[0]!.file.name }) : t("Uploading {count} files to {place}…", { count: files.length, place })
+      const job = task(folders.length ? t("Creating folders…") : label, { progress: true })
       let where: (dirs: string[]) => string | null = () => dest
       try {
         if (folders.length) where = await createFolders(folders, dest)
       } catch (e) {
-        return void toast.error((e as Error).message)
+        return job.fail((e as Error).message)
       }
       if (folders.length) changed()
-      if (!dest && loc.view !== "mine" && !loc.folder) toast.info(t("Uploading to My drive"))
-      await Promise.all(
-        files.map(async ({ file, dirs }) => {
-          const key = crypto.randomUUID()
-          setUploads((u) => [...u, { key, name: file.name, progress: 0 }])
+      job.progress(0, label)
+      // Bytes sent per file, so the bar shows the whole batch; three files at a time.
+      const total = files.reduce((n, f) => n + f.file.size, 0) || 1
+      const sent = new Map<File, number>()
+      const errors: string[] = []
+      const queue = [...files]
+      const worker = async () => {
+        for (let next = queue.shift(); next; next = queue.shift()) {
+          const { file, dirs } = next
           try {
-            await uploadToDrive(file, where(dirs), (progress) => setUploads((u) => u.map((x) => (x.key === key ? { ...x, progress } : x))))
-            setUploads((u) => u.filter((x) => x.key !== key))
+            await uploadToDrive(file, where(dirs), (fraction) => {
+              sent.set(file, fraction * file.size)
+              job.progress([...sent.values()].reduce((a, b) => a + b, 0) / total)
+            })
           } catch (e) {
-            setUploads((u) => u.map((x) => (x.key === key ? { ...x, error: (e as Error).message } : x)))
+            errors.push(`${file.name}: ${(e as Error).message}`)
           }
-        }),
-      )
+          sent.set(file, file.size)
+        }
+      }
+      await Promise.all([worker(), worker(), worker()])
+      const ok = files.length - errors.length
+      if (!errors.length) job.done(files.length === 1 ? t("Uploaded {name}", { name: files[0]!.file.name }) : t("Uploaded {count} files to {place}", { count: files.length, place }))
+      else job.fail(ok ? t("{ok} of {count} files uploaded", { ok, count: files.length }) : t("Upload failed"), errors.slice(0, 3).join(" · "))
       changed(folders.length > 0)
       refreshUsage()
     },
-    [changed, loc, refreshUsage],
+    [changed, folder, refreshUsage],
   )
 
   const dropFiles = React.useCallback(
@@ -240,12 +248,19 @@ export function DriveApp(props: DriveAppProps) {
   // ——— Actions ———
 
   async function batch(ids: string[], action: BatchAction, parentId?: string | null) {
+    const quiet = action === "star" || action === "unstar"
+    const name = ids.length === 1 ? (items.find((i) => i.id === ids[0])?.name ?? t("1 item")) : t("{count} items", { count: ids.length })
+    const working = { move: "Moving {name}…", trash: "Moving {name} to the trash…", restore: "Restoring {name}…", delete: "Deleting {name} for good…" } as const
+    const finished = { move: "Moved {name}", trash: "Moved {name} to the trash", restore: "Restored {name}", delete: "Deleted {name} for good" } as const
+    const job = quiet ? null : task(t(working[action as keyof typeof working], { name }))
     try {
       const { done, failed } = await api<{ done: string[]; failed: { id: string; error: string }[] }>("POST", "/api/app/drive/batch", { ids, action, parentId })
-      if (failed.length) toast.error(done.length ? t("{done} done, {failed} not: {error}", { done: done.length, failed: failed.length, error: failed[0]!.error }) : failed[0]!.error)
-      else if (action !== "star" && action !== "unstar") {
-        const labels = { move: "Moved", trash: "Moved to the trash", restore: "Restored", delete: "Deleted for good" } as const
-        toast.success(done.length > 1 ? t("{label}: {count} items", { label: t(labels[action]), count: done.length }) : t(labels[action]))
+      if (failed.length) {
+        const msg = done.length ? t("{done} done, {failed} not", { done: done.length, failed: failed.length }) : failed[0]!.error
+        if (job) job.fail(msg, done.length ? failed[0]!.error : undefined)
+        else toast.error(msg)
+      } else if (job) {
+        job.done(t(finished[action as keyof typeof finished], { name }), action === "trash" ? { action: { label: t("Undo"), onClick: () => void batch(done, "restore") } } : {})
       }
       if (action === "star" || action === "unstar") {
         setItems((l) => l.map((i) => (done.includes(i.id) ? { ...i, starred: action === "star" } : i)))
@@ -256,19 +271,20 @@ export function DriveApp(props: DriveAppProps) {
         if (action === "delete") setTimeout(refreshUsage, 2000)
       }
     } catch (e) {
-      toast.error((e as Error).message)
+      if (job) job.fail((e as Error).message)
+      else toast.error((e as Error).message)
     }
   }
 
   async function copyOf(item: DriveSummary) {
-    try {
-      const copy = await api<DriveDetail>("POST", `/api/app/drive/items/${item.id}/copy`, {})
-      toast.success(t("Copied as {name}", { name: copy.name }))
-      changed(item.kind === "folder")
-      refreshUsage()
-    } catch (e) {
-      toast.error((e as Error).message)
-    }
+    const copy = await runTask(
+      t("Copying {name}…", { name: item.name }),
+      () => api<DriveDetail>("POST", `/api/app/drive/items/${item.id}/copy`, {}),
+      (c) => t("Copied as {name}", { name: c.name }),
+    )
+    if (!copy) return
+    changed(item.kind === "folder")
+    refreshUsage()
   }
 
   async function saveName(name: string) {
@@ -290,14 +306,10 @@ export function DriveApp(props: DriveAppProps) {
   }
 
   async function emptyTrash() {
-    try {
-      await api("DELETE", "/api/app/drive/trash")
-      setItems([])
-      toast.success(t("Trash emptied"))
-      setTimeout(refreshUsage, 2000)
-    } catch (e) {
-      toast.error((e as Error).message)
-    }
+    const done = await runTask(t("Emptying the trash…"), () => api("DELETE", "/api/app/drive/trash"), () => t("Trash emptied"))
+    if (done === undefined) return
+    setItems([])
+    setTimeout(refreshUsage, 2000)
   }
 
   async function openShare(id: string) {
@@ -308,9 +320,19 @@ export function DriveApp(props: DriveAppProps) {
     }
   }
 
-  const downloadItems = (list: DriveSummary[]) => {
-    if (list.length === 1 && list[0]!.kind === "file") download(contentUrl(list[0]!.id, true))
-    else if (list.length) download(zipUrl(list.map((i) => i.id)))
+  /** One file: the browser's own download. Several, or a folder: a ZIP, checked first so errors show here, not as a page. */
+  const downloadItems = async (list: DriveSummary[]) => {
+    if (list.length === 1 && list[0]!.kind === "file") return download(contentUrl(list[0]!.id, true))
+    if (!list.length) return
+    const ids = list.map((i) => i.id)
+    const job = task(t("Preparing ZIP…"))
+    try {
+      const { files, bytes } = await api<{ files: number; bytes: number }>("GET", `${zipUrl(ids)}&check=1`)
+      download(zipUrl(ids))
+      job.done(t("Downloading ZIP"), { description: `${tp(files, { one: "{count} file", other: "{count} files" }, { count: files })}, ${formatBytes(bytes)}` })
+    } catch (e) {
+      job.fail((e as Error).message)
+    }
   }
 
   const open = (item: DriveSummary) => {
@@ -599,24 +621,6 @@ export function DriveApp(props: DriveAppProps) {
             </>
           }
         />
-        {uploads.length ? (
-          <ul className="mx-4 mt-2 grid gap-1" aria-label={t("Uploads")}>
-            {uploads.map((u) => (
-              <li key={u.key} className="bg-muted/60 relative overflow-hidden rounded-md px-3 py-1.5 text-xs">
-                {!u.error ? <span className="bg-primary/15 absolute inset-y-0 left-0 transition-[width]" style={{ width: `${Math.round(u.progress * 100)}%` }} aria-hidden /> : null}
-                <span className="relative flex items-center gap-2">
-                  <span className="min-w-0 flex-1 truncate">{u.name}</span>
-                  {u.error ? <span className="text-destructive truncate">{u.error}</span> : <span className="tabular-nums">{Math.round(u.progress * 100)}%</span>}
-                  {u.error ? (
-                    <button type="button" aria-label={t("Dismiss")} onClick={() => setUploads((l) => l.filter((x) => x.key !== u.key))}>
-                      <X className="size-3.5" />
-                    </button>
-                  ) : null}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
         <ActionMenu actions={backgroundActions}>
           <div
             ref={scroller}

@@ -4,8 +4,8 @@
  * drive items move there, files from the computer upload there.
  */
 import * as React from "react"
-import { ChevronRight, Clock, Folder, FolderOpen, FolderPlus, FolderUp, HardDrive, Star, Trash2, Upload, Users } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ChevronDown, ChevronRight, Clock, Folder, FolderOpen, FolderPlus, FolderUp, HardDrive, Plus, Star, Trash2, Upload, Users } from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Kbd } from "@/components/workspace/ui"
 import { Rail, RailItem, RailList } from "@/components/workspace/rail"
 import { api } from "@/lib/api-client"
@@ -136,11 +136,6 @@ export function FolderTree({
   return (
     <Rail
       label={t("Drive")}
-      hint={
-        <>
-          <Kbd>C</Kbd> {t("New folder")} <Kbd>U</Kbd> {t("Upload")}
-        </>
-      }
       footer={
         <>
           {usageBar}
@@ -148,31 +143,33 @@ export function FolderTree({
         </>
       }
     >
-      <div className="grid gap-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="bg-background hover:bg-foreground/[0.03] focus-visible:ring-ring/50 flex h-8 shrink-0 items-center gap-2 rounded-md border px-2.5 text-[13px] font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] outline-none focus-visible:ring-[3px]"
-            >
-              <Upload className="text-muted-foreground size-4" />
-              {t("Upload")}
-              <Kbd className="ml-auto">U</Kbd>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuItem onSelect={onUploadFiles}>
-              <Upload /> {t("Upload files")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={onUploadFolder}>
-              <FolderUp /> {t("Upload folder")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <RailList>
-          <RailItem icon={FolderPlus} label={t("New folder")} active={false} onClick={onNewFolder} />
-        </RailList>
-      </div>
+      {/* One "New" action, like "New e-mail" and "New note" in the other apps; its menu lists the keys. */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="bg-background hover:bg-foreground/[0.03] focus-visible:ring-ring/50 flex h-8 shrink-0 items-center gap-2 rounded-md border px-2.5 text-[13px] font-medium shadow-[0_1px_2px_rgba(0,0,0,0.05)] outline-none focus-visible:ring-[3px]"
+          >
+            <Plus className="text-muted-foreground size-4" />
+            {t("New")}
+            <ChevronDown className="text-muted-foreground ml-auto size-3.5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-52">
+          <DropdownMenuItem onSelect={onNewFolder}>
+            <FolderPlus /> {t("New folder")}
+            <Kbd className="ml-auto">C</Kbd>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={onUploadFiles}>
+            <Upload /> {t("Upload files")}
+            <Kbd className="ml-auto">U</Kbd>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onUploadFolder}>
+            <FolderUp /> {t("Upload folder")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <ul className="grid gap-px" role="tree" aria-label={t("Folders")}>
         {(["mine", "shared"] as const).map((root) => (
           <TreeNode
@@ -241,29 +238,32 @@ function TreeNode({
       <div
         {...target.props}
         className={cn(
-          "group/node flex h-7 items-center gap-1 rounded-md pr-2 text-[13px]",
+          "group/node flex h-7 items-center rounded-md pr-1 text-[13px]",
           active ? "bg-foreground/[0.06] text-foreground font-medium" : "text-foreground/70 hover:bg-foreground/[0.035] hover:text-foreground",
           target.over && "bg-primary/10 ring-primary/40 ring-1",
         )}
-        style={{ paddingLeft: 4 + depth * 12 }}
       >
-        <button
-          type="button"
-          aria-label={open ? t("Collapse") : t("Expand")}
-          onClick={() => onToggle(id)}
-          className={cn("text-muted-foreground hover:text-foreground grid size-4 shrink-0 place-items-center rounded-sm", leaf && "invisible")}
-        >
-          <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} />
-        </button>
+        {/* Same padding and gap as RailItem, so icons line up with Starred, Recent and Trash; subfolders step in. */}
         <button
           type="button"
           onClick={() => onNavigate(id === "mine" || id === "shared" ? { view: id } : { folder: id })}
-          className="focus-visible:ring-ring/50 flex min-w-0 flex-1 items-center gap-2 rounded-sm outline-none focus-visible:ring-[3px]"
+          className="focus-visible:ring-ring/50 flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-md outline-none focus-visible:ring-[3px]"
+          style={{ paddingLeft: 8 + depth * 14 }}
           title={label}
         >
           <NodeIcon className={cn("size-4 shrink-0", active ? "text-foreground" : "text-muted-foreground")} />
           <span className="truncate">{label}</span>
         </button>
+        {leaf ? null : (
+          <button
+            type="button"
+            aria-label={open ? t("Collapse") : t("Expand")}
+            onClick={() => onToggle(id)}
+            className="text-muted-foreground hover:text-foreground hover:bg-foreground/[0.06] grid size-5 shrink-0 place-items-center rounded-sm"
+          >
+            <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} />
+          </button>
+        )}
       </div>
       {open && kids?.length ? (
         <ul role="group" className="grid gap-px">

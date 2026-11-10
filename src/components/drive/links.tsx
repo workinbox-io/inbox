@@ -20,7 +20,8 @@ export function PublicLinks({ itemId }: { itemId: string }) {
   React.useEffect(() => {
     api<{ links: DriveLinkView[] }>("GET", `/api/app/drive/items/${itemId}/links`)
       .then((r) => setLinks(r.links))
-      .catch((e) => toast.error((e as Error).message))
+      // Quietly: the item may have just gone to the trash, and a toast here would replace the one with Undo.
+      .catch(() => setLinks([]))
   }, [itemId])
 
   async function create() {

@@ -3,6 +3,7 @@ import { CheckCheck, Copy, Download, FileCode, Forward, HardDrive, ImageOff, Mor
 import { toast } from "@yusufceng1z/ding-react"
 
 import { hasQuotedHtml, hasRemoteImages, linkSegments, mailSrcDoc } from "@/lib/admin-mail/rules"
+import { task } from "@/components/drive/task"
 import { api } from "@/lib/api-client"
 import { formatBytes, isImageType } from "@/lib/uploads"
 import { splitQuotedReply } from "@/lib/mail/quotes"
@@ -87,11 +88,12 @@ function TextBody({ text, showQuoted }: { text: string; showQuoted: boolean }) {
 }
 
 async function saveToDrive(f: MailFile) {
+  const job = task(t("Saving {name} to Drive…", { name: f.filename }))
   try {
     const item = await api<{ id: string; name: string }>("POST", "/api/app/drive/save-attachment", { url: f.url, filename: f.filename })
-    toast.success(t("Saved to Drive as {name}", { name: item.name }), { action: { label: t("Open"), onClick: () => void (location.href = `/app/drive?file=${item.id}`) } })
+    job.done(t("Saved to Drive as {name}", { name: item.name }), { action: { label: t("Open"), onClick: () => void (location.href = `/app/drive?file=${item.id}`) } })
   } catch (e) {
-    toast.error((e as Error).message)
+    job.fail((e as Error).message)
   }
 }
 
