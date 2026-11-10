@@ -22,6 +22,8 @@ describe("signature", () => {
     expect(sig.html).not.toContain("logo.png");
     expect(sig.html).toContain("border-radius:20px");
     expect(renderSignature({ ...card, photoUrl: "https://evil.example/me.jpg" }, brand, "https://workinbox.io")!.html).toContain("logo.png");
+    const square = renderSignature({ ...card, photoUrl: photo, photoRound: false }, brand, "https://workinbox.io")!.html;
+    expect(square).toContain("border-radius:8px;object-fit:contain");
   });
   it("escapes values and keeps note lines", () => {
     const sig = renderSignature({ ...EMPTY_CARD, name: '<b>"x"</b>', note: "line 1\nline 2" }, EMPTY_BRAND, "https://a.b")!;

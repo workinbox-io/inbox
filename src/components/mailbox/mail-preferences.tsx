@@ -199,7 +199,7 @@ function MailboxPicker({ mailboxes, value, onChange }: { mailboxes: string[]; va
 }
 
 /** A photo of the person, or their own logo, for the signature (an upload; round in the signature). */
-function SignaturePhoto({ url, hasOrgLogo, onChange }: { url: string; hasOrgLogo: boolean; onChange: (url: string) => void }) {
+function SignaturePhoto({ url, round, hasOrgLogo, onChange, onRound }: { url: string; round: boolean; hasOrgLogo: boolean; onChange: (url: string) => void; onRound: (round: boolean) => void }) {
   const input = React.useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = React.useState(false)
   async function pick(file: File | undefined) {
@@ -217,7 +217,7 @@ function SignaturePhoto({ url, hasOrgLogo, onChange }: { url: string; hasOrgLogo
   }
   return (
     <div className="flex items-center gap-3">
-      {url ? <img src={url} alt="" className="size-12 rounded-full border object-cover" /> : <div className="bg-muted size-12 rounded-full border border-dashed" />}
+      {url ? <img src={url} alt="" className={cn("size-12 border", round ? "rounded-full object-cover" : "rounded-lg object-contain")} /> : <div className="bg-muted size-12 rounded-full border border-dashed" />}
       <div className="grid gap-1">
         <div className="flex items-center gap-2">
           <input ref={input} type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden onChange={(e) => void pick(e.target.files?.[0])} />
@@ -230,6 +230,11 @@ function SignaturePhoto({ url, hasOrgLogo, onChange }: { url: string; hasOrgLogo
             </Button>
           ) : null}
         </div>
+        {url ? (
+          <label className="flex w-fit items-center gap-1.5 text-xs">
+            <Checkbox checked={round} onCheckedChange={(v) => onRound(v === true)} /> Crop to a circle
+          </label>
+        ) : null}
         <p className="text-muted-foreground text-xs">{hasOrgLogo ? "Shown instead of your organization's logo." : "Shown next to your name."}</p>
       </div>
     </div>
@@ -239,7 +244,7 @@ function SignaturePhoto({ url, hasOrgLogo, onChange }: { url: string; hasOrgLogo
 /** The mailbox's signature: a few fields and free lines, shown under the org's template (logo, company, colour). */
 function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: string; signatures: Signatures; brand: SignatureBrand; onSaved: (s: Signatures) => void }) {
   const current = signatures[mailbox]
-  const saved = { name: current?.card?.name ?? "", role: current?.card?.role ?? "", phone: current?.card?.phone ?? "", photoUrl: current?.card?.photoUrl ?? "", note: current?.signature ?? "" }
+  const saved = { name: current?.card?.name ?? "", role: current?.card?.role ?? "", phone: current?.card?.phone ?? "", photoUrl: current?.card?.photoUrl ?? "", photoRound: current?.card?.photoRound !== false, note: current?.signature ?? "" }
   const [form, setForm] = React.useState(saved)
   const [saving, setSaving] = React.useState(false)
   const changed = JSON.stringify(form) !== JSON.stringify(saved)
@@ -247,7 +252,7 @@ function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: st
   async function save() {
     setSaving(true)
     try {
-      const card = { name: form.name, role: form.role, phone: form.phone, photoUrl: form.photoUrl }
+      const card = { name: form.name, role: form.role, phone: form.phone, photoUrl: form.photoUrl, photoRound: form.photoRound }
       await api("PUT", "/api/app/mail/mailboxes", { mailbox, signature: form.note, signatureCard: card })
       onSaved({ ...signatures, [mailbox]: { ...current, signature: form.note, card } })
       toast.success("Signature saved")
@@ -265,7 +270,13 @@ function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: st
   )
   return (
     <div className="grid gap-5">
-      <SignaturePhoto url={form.photoUrl} hasOrgLogo={!!brand.logoUrl} onChange={(photoUrl) => setForm({ ...form, photoUrl })} />
+      <SignaturePhoto
+        url={form.photoUrl}
+        round={form.photoRound}
+        hasOrgLogo={!!brand.logoUrl}
+        onChange={(photoUrl) => setForm({ ...form, photoUrl })}
+        onRound={(photoRound) => setForm({ ...form, photoRound })}
+      />
       <FieldGroup className="grid gap-4 sm:grid-cols-2">
         {field("name", "Name", current?.name || "Anna Kowalska")}
         {field("role", "Role", "Head of Support")}

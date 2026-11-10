@@ -36,7 +36,7 @@ export const mailDeleteSchema = z.object({ ids });
 export const ownMailboxSchema = z.object({
   mailbox: z.string().trim().toLowerCase(),
   signature: z.string().max(2000).optional(),
-  signatureCard: z.object({ name: z.string().max(100), role: z.string().max(100), phone: z.string().max(40), photoUrl: z.string().max(300) }).partial().optional(),
+  signatureCard: z.object({ name: z.string().max(100), role: z.string().max(100), phone: z.string().max(40), photoUrl: z.string().max(300), photoRound: z.boolean() }).partial().optional(),
   displayName: z.string().trim().max(100).optional(),
 });
 

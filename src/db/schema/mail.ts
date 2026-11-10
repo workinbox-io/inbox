@@ -65,7 +65,7 @@ export const mailboxes = sqliteTable(
     displayName: text("display_name").notNull().default(""),
     signature: text("signature").notNull().default(""),
     /** The signature's fields (lib/mail/signature.ts); `signature` above is its free note lines. */
-    signatureCard: text("signature_card", { mode: "json" }).$type<{ name: string; role: string; phone: string; photoUrl?: string }>(),
+    signatureCard: text("signature_card", { mode: "json" }).$type<{ name: string; role: string; phone: string; photoUrl?: string; photoRound?: boolean }>(),
     uidValidity: integer("uid_validity").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
     uidNext: integer("uid_next").notNull().default(1),
     modseq: integer("modseq").notNull().default(1),

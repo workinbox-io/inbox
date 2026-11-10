@@ -15,6 +15,8 @@ export interface SignatureCard {
   email?: string;
   /** The person's photo or their own logo (an upload); shown instead of the org's logo. */
   photoUrl?: string;
+  /** Crop the photo to a circle (default); false keeps its shape in a rounded square, for a logo. */
+  photoRound?: boolean;
 }
 
 export interface SignatureBrand {
@@ -69,6 +71,7 @@ export function cleanCard(c: Partial<SignatureCard>): SignatureCard {
     note: (c.note ?? "").trim().slice(0, 2000),
     email: (c.email ?? "").trim().slice(0, 254),
     photoUrl: logoPath(c.photoUrl ?? ""),
+    photoRound: c.photoRound !== false,
   };
 }
 
@@ -96,10 +99,11 @@ export function renderSignature(card: SignatureCard, brand: SignatureBrand, appU
   const text = [person, b.footer].filter(Boolean).join("\n\n");
 
   const link = b.color ? `color:${b.color}` : "color:inherit;text-decoration:underline";
-  // The person's own picture (a round photo) wins over the org's logo (a rounded square).
+  // The person's own picture wins over the org's logo. A round photo is cropped to a circle; a logo keeps its shape.
   const picture = c.photoUrl || b.logoUrl;
+  const round = !!c.photoUrl && c.photoRound;
   const logo = picture
-    ? `<td valign="middle" style="padding-right:12px"><img src="${esc(appUrl ? new URL(picture, appUrl).href : picture)}" alt="${esc(c.photoUrl ? c.name : b.company)}" width="40" height="40" style="display:block;width:40px;height:40px;border-radius:${c.photoUrl ? "20px" : "8px"};object-fit:${c.photoUrl ? "cover" : "contain"};border:0"></td>`
+    ? `<td valign="middle" style="padding-right:12px"><img src="${esc(appUrl ? new URL(picture, appUrl).href : picture)}" alt="${esc(c.photoUrl ? c.name : b.company)}" width="40" height="40" style="display:block;width:40px;height:40px;border-radius:${round ? "20px" : "8px"};object-fit:${round ? "cover" : "contain"};border:0"></td>`
     : "";
   const head = [
     c.name && `<div style="font-size:14px;font-weight:600">${esc(c.name)}</div>`,
@@ -125,11 +129,11 @@ export function renderSignature(card: SignatureCard, brand: SignatureBrand, appU
 export interface MailboxSignature {
   signature: string;
   name?: string;
-  card?: { name: string; role: string; phone: string; photoUrl?: string } | null;
+  card?: { name: string; role: string; phone: string; photoUrl?: string; photoRound?: boolean } | null;
 }
 
 /** The HTML a mailbox sends as its signature, for previews (the logo URL stays relative, same on server and page). */
 export function signaturePreview(s: MailboxSignature | undefined, brand: SignatureBrand, email = "") {
   if (!s) return null;
-  return renderSignature({ name: s.card?.name || s.name || "", role: s.card?.role ?? "", phone: s.card?.phone ?? "", note: s.signature, email, photoUrl: s.card?.photoUrl }, brand, "")?.html ?? null;
+  return renderSignature({ name: s.card?.name || s.name || "", role: s.card?.role ?? "", phone: s.card?.phone ?? "", note: s.signature, email, photoUrl: s.card?.photoUrl, photoRound: s.card?.photoRound }, brand, "")?.html ?? null;
 }
