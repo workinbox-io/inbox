@@ -6,6 +6,7 @@
  * Ready for an IMAP gateway later: each mailbox hands out increasing UIDs (uidNext, uidValidity)
  * and bumps modseq on every change, so a client can sync only what changed.
  */
+import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createdAt, id, organization, time, updatedAt, user } from "./core";
 
@@ -166,7 +167,7 @@ export const mailMessages = sqliteTable(
     inReplyTo: text("in_reply_to"),
     references: text("references"),
     files: text("files", { mode: "json" }).$type<MailFileRef[]>().notNull().default([]),
-    /** The original .eml in R2 (incoming mail), for "Show original", export and IMAP. */
+    /** The .eml in R2, for "Show original", export, backup and IMAP. Sent mail gets one a minute later (mail/raw.ts). */
     rawKey: text("raw_key"),
     size: integer("size").notNull().default(0),
     /** Why the spam check flagged it, if it did. */
@@ -177,6 +178,8 @@ export const mailMessages = sqliteTable(
     index("mail_messages_thread_idx").on(t.threadId, t.createdAt),
     uniqueIndex("mail_messages_message_id_idx").on(t.mailboxId, t.messageId),
     uniqueIndex("mail_messages_uid_idx").on(t.mailboxId, t.uid),
+    // Stays near-empty: only sent mail still waiting for its .eml.
+    index("mail_messages_no_raw_idx").on(t.createdAt).where(sql`${t.rawKey} is null`),
   ],
 );
 

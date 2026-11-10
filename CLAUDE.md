@@ -12,7 +12,9 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Incoming: `email()` in `src/worker.ts` calls `handleOrgMail` (hooked in `src/app-worker.ts`) (`lib/server/mail/store.ts`) first: address → mailbox,
   alias or the domain's catch-all (plus addressing stripped), spam score and sender rules (`lib/mail/rules.ts`), raw .eml
   in R2 under `mail-raw/<org>/<mailbox>/`, files under the org's `attachments/`. Unknown addresses fall through to the
-  staff mailboxes, then are rejected.
+  staff mailboxes, then are rejected. Sent mail gets its .eml a minute later: the every-minute cron rebuilds it from
+  the stored message (`backfillSentRaw`, `lib/server/mail/raw.ts`, MIME builder `lib/mail/mime.ts`), so every message
+  has a `raw_key` for "Show original", export and backup.
 - Hosted (`cloud`) custom domains go through Amazon SES, not Cloudflare (which only serves zones in our account):
   `mail_domains.provider = "ses"`, SES identity per domain, sending via `sendOrgMail` (`mail/deliver.ts`), receiving
   S3 → SNS → `/api/ses/webhook` → job `mail.inbound` → `handleOrgMail`. Setup and runbook: `docs/ses.md`,

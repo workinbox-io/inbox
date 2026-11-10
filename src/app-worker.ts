@@ -4,6 +4,7 @@
  */
 import { handleOrgMail, wakeDueSnoozed } from "@/lib/server/mail/store";
 import { backfillMailBodies } from "@/lib/server/mail/storage";
+import { backfillSentRaw } from "@/lib/server/mail/raw";
 import { recoverOutbox, handleDeliveryEvent } from "@/lib/server/mail/outbox";
 import { noteSync } from "@/lib/server/notes/sync";
 import { reportError } from "@/lib/server/errors";
@@ -36,5 +37,5 @@ export default {
       }
     },
   },
-  crons: { "* * * * *": { wakeDueSnoozed, recoverOutbox, backfillMailBodies } },
+  crons: { "* * * * *": { wakeDueSnoozed, recoverOutbox, backfillMailBodies, backfillSentRaw } },
 } satisfies AppWorker as AppWorker;
