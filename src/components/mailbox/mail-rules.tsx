@@ -3,12 +3,14 @@ import { toast } from "sonner"
 import { api } from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
+import { cn } from "@/lib/utils"
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Filter, Plus, Tag, X } from "lucide-react"
+import { Archive, AtSign, ChevronLeft, Filter, Forward, Plus, RefreshCw, Send, Tag, Trash2, X } from "lucide-react"
 import { EmptyState } from "@/components/app/empty-state"
+import { PrefHeading, PrefList, PrefRow } from "./pref-ui"
 import type { FilterCondition, FilterActions } from "@/db/schema/mail-storage"
 
 type Label = { id: string; mailboxId: string; name: string }
@@ -62,24 +64,37 @@ export function useMailboxRules(address: string) {
 export type MailboxRules = ReturnType<typeof useMailboxRules>
 
 function Loading() {
-  return <p className="text-muted-foreground text-sm">Loading…</p>
+  return (
+    <div className="flex flex-col gap-2" aria-busy="true">
+      <div className="bg-muted h-9 animate-pulse rounded-lg" />
+      <div className="bg-muted/60 h-24 animate-pulse rounded-xl" />
+    </div>
+  )
 }
+
+const gib = (bytes: number) => bytes / 1024 ** 3
+/** 340 MB, 2.4 GB: mail sizes people read at a glance. */
+const size = (bytes: number) => (bytes > 0 && bytes < 1024 ** 2 ? "< 1 MB" : bytes < 1024 ** 3 ? `${Math.round(bytes / 1024 ** 2)} MB` : `${gib(bytes).toFixed(gib(bytes) < 10 ? 1 : 0)} GB`)
 
 export function StorageSection({ rules: { box } }: { rules: MailboxRules }) {
   if (!box) return <Loading />
   const used = box.storage?.usedBytes ?? 0
   const quota = box.storage?.quotaBytes ?? 10 * 1024 ** 3
   const pct = Math.min(100, (used / quota) * 100)
+  const level = pct >= 95 ? "bg-destructive" : pct >= 80 ? "bg-amber-500" : "bg-foreground"
   return (
-    <div className="flex flex-col gap-3">
-      <div className="bg-muted h-2 overflow-hidden rounded-full">
-        <div className="bg-foreground h-full rounded-full" style={{ width: `${Math.max(pct, 1)}%` }} />
+    <div className="flex flex-col gap-4 rounded-xl border p-5">
+      <div className="flex items-end justify-between gap-3">
+        <p>
+          <span className="text-2xl font-medium tabular-nums">{size(used)}</span>
+          <span className="text-muted-foreground text-sm"> of {size(quota)}</span>
+        </p>
+        <span className="text-muted-foreground text-sm tabular-nums">{pct < 1 && used > 0 ? "< 1" : Math.round(pct)}%</span>
       </div>
-      <p className="text-sm">
-        <span className="font-medium tabular-nums">{(used / 1024 ** 3).toFixed(2)} GiB</span>
-        <span className="text-muted-foreground"> of {(quota / 1024 ** 3).toFixed(1)} GiB used</span>
-      </p>
-      <p className="text-muted-foreground text-sm">Empty the trash and spam folders to free space.</p>
+      <div className="bg-muted h-1.5 overflow-hidden rounded-full" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label="Storage used">
+        <div className={cn("h-full rounded-full", level)} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-muted-foreground text-xs">Messages, originals and attachments count. Empty the trash and spam folders to free space; your admin can raise the limit.</p>
     </div>
   )
 }
@@ -89,16 +104,8 @@ export function LabelsSection({ rules: { box, labels, busy, run } }: { rules: Ma
   if (!box) return <Loading />
   return (
     <div className="flex flex-col gap-4">
-      {labels.length ? (
-        <div className="divide-y rounded-lg border">
-          {labels.map((label) => (
-            <LabelEditor key={label.id} label={label} busy={busy} onSave={(value) => run(() => api("POST", "/api/app/mail/labels", { ...label, name: value }))} onDelete={() => run(() => api("DELETE", `/api/app/mail/labels?id=${label.id}`))} />
-          ))}
-        </div>
-      ) : (
-        <EmptyState variant="plain" density="compact" className="rounded-lg border border-dashed" icon={<Tag />} title="No labels yet" description="Add one below, then apply it from the thread list or a filter." />
-      )}
       <form
+        className="flex gap-2"
         onSubmit={(e) => {
           e.preventDefault()
           run(async () => {
@@ -107,18 +114,76 @@ export function LabelsSection({ rules: { box, labels, busy, run } }: { rules: Ma
           })
         }}
       >
-        <Field>
-          <FieldLabel htmlFor="new-label">New label</FieldLabel>
-          <div className="flex gap-2">
-            <Input id="new-label" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} required />
-            <Button disabled={busy || !name.trim()} type="submit" variant="outline">
-              Add
-            </Button>
-          </div>
-        </Field>
+        <Input aria-label="New label" placeholder="New label, e.g. Invoices" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} required />
+        <Button disabled={busy || !name.trim()} type="submit" variant="outline">
+          <Plus /> Add label
+        </Button>
       </form>
+      {labels.length ? (
+        <PrefList>
+          {labels.map((label) => (
+            <LabelEditor key={label.id} label={label} busy={busy} onSave={(value) => run(() => api("POST", "/api/app/mail/labels", { ...label, name: value }))} onDelete={() => run(() => api("DELETE", `/api/app/mail/labels?id=${label.id}`))} />
+          ))}
+        </PrefList>
+      ) : (
+        <EmptyState variant="plain" density="compact" className="rounded-xl border border-dashed" icon={<Tag />} title="No labels yet" description="Apply them from the thread list or let a filter do it." />
+      )}
     </div>
   )
+}
+
+function LabelEditor({ label, busy, onSave, onDelete }: { label: Label; busy: boolean; onSave: (name: string) => void; onDelete: () => void }) {
+  const [value, setValue] = React.useState(label.name)
+  React.useEffect(() => setValue(label.name), [label.name])
+  const changed = value.trim() !== label.name && !!value.trim()
+  return (
+    <form
+      className="flex items-center gap-2 py-1.5 pr-1.5 pl-3.5"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (changed) onSave(value.trim())
+      }}
+    >
+      <Tag className="text-muted-foreground size-4 shrink-0" />
+      <Input
+        aria-label={`Rename ${label.name}`}
+        className="hover:border-input focus-visible:border-ring h-8 border-transparent bg-transparent px-2 shadow-none dark:bg-transparent"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => e.key === "Escape" && value !== label.name && (e.stopPropagation(), setValue(label.name))}
+        maxLength={80}
+      />
+      {changed ? (
+        <Button type="submit" size="sm" disabled={busy}>
+          Rename
+        </Button>
+      ) : null}
+      <Button type="button" variant="ghost" size="icon-sm" aria-label={`Delete ${label.name}`} disabled={busy} onClick={onDelete} className="text-muted-foreground hover:text-destructive">
+        <Trash2 />
+      </Button>
+    </form>
+  )
+}
+
+const FIELD_LABELS: Record<FilterCondition["field"], string> = {
+  from: "From contains",
+  to: "To / Cc contains",
+  subject: "Subject contains",
+  text: "Body contains",
+  attachment: "Has attachment",
+}
+
+/** "From contains acme.com · Has attachment" → "Label Invoices, skip the inbox". */
+function describeRule(rule: Rule, labels: Label[], targets: Target[]) {
+  const when = rule.conditions
+    .map((c) => (c.field === "attachment" ? (c.value === "false" ? "No attachment" : "Has attachment") : `${FIELD_LABELS[c.field]} “${c.value}”`))
+    .join(" and ")
+  const then = [
+    rule.actions.labelId ? `label ${labels.find((l) => l.id === rule.actions.labelId)?.name ?? "(deleted)"}` : null,
+    rule.actions.archive ? "skip the inbox" : null,
+    rule.actions.forwardTargetId ? `forward to ${targets.find((t) => t.id === rule.actions.forwardTargetId)?.address ?? "(removed)"}` : null,
+  ].filter(Boolean)
+  return `${when} → ${then.length ? then.join(", ") : "nothing yet"}`
 }
 
 export function FiltersSection({ rules: { box, labels, rules, targets, busy, run } }: { rules: MailboxRules }) {
@@ -126,115 +191,133 @@ export function FiltersSection({ rules: { box, labels, rules, targets, busy, run
   const [editing, setEditing] = React.useState(false)
   React.useEffect(() => setEditing(false), [box?.id])
   if (!box) return <Loading />
-  if (editing)
-    return (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          run(async () => {
-            await api("POST", "/api/app/mail/filters", { ...draft, mailboxId: box.id })
-            setEditing(false)
-          })
-        }}
-      >
-        <FieldGroup>
-          <div className="grid gap-4 sm:grid-cols-[1fr_7rem]">
-            <Field>
-              <FieldLabel htmlFor="filter-name">Name</FieldLabel>
-              <Input id="filter-name" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} required maxLength={80} />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="filter-priority">Priority</FieldLabel>
-              <Input id="filter-priority" type="number" min={0} max={10000} value={draft.position} onChange={(e) => setDraft({ ...draft, position: Number(e.target.value) })} />
-            </Field>
-          </div>
-          <Field orientation="horizontal">
-            <Checkbox id="filter-enabled" checked={draft.enabled} onCheckedChange={(v) => setDraft({ ...draft, enabled: v === true })} />
-            <FieldLabel htmlFor="filter-enabled">Enabled</FieldLabel>
-          </Field>
-          <Separator />
-          <Field>
-            <FieldLabel>When every condition matches</FieldLabel>
-            <div className="flex flex-col gap-2">
-              {draft.conditions.map((condition, i) => (
-                <div key={i} className="flex gap-2">
-                  <Choice
-                    value={condition.field}
-                    label={`Condition ${i + 1} field`}
-                    onChange={(value) => setDraft({ ...draft, conditions: draft.conditions.map((c, n) => (n === i ? { field: value as FilterCondition["field"], value: value === "attachment" ? "true" : "" } : c)) })}
-                    options={[
-                      { value: "from", label: "From contains" },
-                      { value: "to", label: "To / CC contains" },
-                      { value: "subject", label: "Subject contains" },
-                      { value: "text", label: "Body contains" },
-                      { value: "attachment", label: "Has attachment" },
-                    ]}
-                  />
-                  {condition.field === "attachment" ? (
-                    <Choice value={condition.value} label="Attachment present" onChange={(value) => setDraft({ ...draft, conditions: draft.conditions.map((c, n) => (n === i ? { ...c, value } : c)) })} options={[{ value: "true", label: "Yes" }, { value: "false", label: "No" }]} />
-                  ) : (
-                    <Input aria-label={`Condition ${i + 1} value`} value={condition.value} required onChange={(e) => setDraft({ ...draft, conditions: draft.conditions.map((c, n) => (n === i ? { ...c, value: e.target.value } : c)) })} />
-                  )}
-                  <Button variant="ghost" size="icon" type="button" aria-label="Remove condition" disabled={draft.conditions.length === 1} onClick={() => setDraft({ ...draft, conditions: draft.conditions.filter((_, n) => n !== i) })}>
-                    <X />
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" size="sm" className="self-start" disabled={draft.conditions.length >= 10} onClick={() => setDraft({ ...draft, conditions: [...draft.conditions, { field: "from", value: "" }] })}>
-                <Plus /> Add condition
-              </Button>
-            </div>
-          </Field>
-          <Separator />
-          <Field>
-            <FieldLabel>Apply label</FieldLabel>
-            <Choice value={draft.actions.labelId ?? NONE} label="Filter label" onChange={(value) => setDraft({ ...draft, actions: { ...draft.actions, labelId: value === NONE ? undefined : value } })} options={[{ value: NONE, label: "No label" }, ...labels.map((l) => ({ value: l.id, label: l.name }))]} />
-          </Field>
-          <Field>
-            <FieldLabel>Forward to</FieldLabel>
-            <Choice value={draft.actions.forwardTargetId ?? NONE} label="Forwarding destination" onChange={(value) => setDraft({ ...draft, actions: { ...draft.actions, forwardTargetId: value === NONE ? undefined : value } })} options={[{ value: NONE, label: "Do not forward" }, ...targets.filter((t) => t.verifiedAt).map((t) => ({ value: t.id, label: t.address }))]} />
-            <FieldDescription>Only confirmed addresses (see Forwarding) are listed.</FieldDescription>
-          </Field>
-          <Field orientation="horizontal">
-            <Checkbox id="filter-archive" checked={!!draft.actions.archive} onCheckedChange={(v) => setDraft({ ...draft, actions: { ...draft.actions, archive: v === true } })} />
-            <FieldLabel htmlFor="filter-archive">Skip the inbox (archive)</FieldLabel>
-          </Field>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={busy}>
-              Save filter
-            </Button>
-          </div>
-        </FieldGroup>
-      </form>
-    )
+  if (editing) return <FilterEditor draft={draft} setDraft={setDraft} labels={labels} targets={targets} busy={busy} onCancel={() => setEditing(false)} onSave={() => run(async () => { await api("POST", "/api/app/mail/filters", { ...draft, mailboxId: box.id }); setEditing(false) })} />
+  const add = () => {
+    // New filters go last, after the ones already there.
+    setDraft({ ...emptyRule(), position: rules.length ? Math.max(...rules.map((r) => r.position)) + 1 : 0 })
+    setEditing(true)
+  }
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
+      <PrefHeading
+        action={
+          <Button variant="outline" size="sm" onClick={add}>
+            <Plus /> Add filter
+          </Button>
+        }
+      >
+        {rules.length ? `${rules.length} ${rules.length === 1 ? "filter" : "filters"}, top to bottom` : "Filters"}
+      </PrefHeading>
       {rules.length ? (
-        <div className="divide-y rounded-lg border">
+        <PrefList>
           {rules.map((rule) => (
-            <div key={rule.id} className="flex items-center gap-2 py-1.5 pr-1.5 pl-3">
-              <span className="text-muted-foreground w-6 text-xs tabular-nums">{rule.position}</span>
-              <span className="min-w-0 flex-1 truncate text-sm">{rule.name}</span>
-              {rule.enabled ? null : <span className="text-muted-foreground text-xs">Paused</span>}
-              <Button size="sm" variant="ghost" onClick={() => { setDraft(rule); setEditing(true) }}>
-                Edit
+            <PrefRow
+              key={rule.id}
+              title={<span className={cn(!rule.enabled && "text-muted-foreground")}>{rule.name}</span>}
+              description={describeRule(rule, labels, targets)}
+              onClick={() => {
+                setDraft(rule)
+                setEditing(true)
+              }}
+            >
+              <Switch checked={rule.enabled} disabled={busy} aria-label={rule.enabled ? `Pause ${rule.name}` : `Turn on ${rule.name}`} onCheckedChange={(enabled) => run(() => api("POST", "/api/app/mail/filters", { ...rule, enabled, mailboxId: box.id }))} />
+              <Button variant="ghost" size="icon-sm" aria-label={`Delete ${rule.name}`} disabled={busy} className="text-muted-foreground hover:text-destructive" onClick={() => run(() => api("DELETE", `/api/app/mail/filters?id=${rule.id}`))}>
+                <Trash2 />
               </Button>
-              <Button size="sm" variant="ghost" disabled={busy} onClick={() => run(() => api("DELETE", `/api/app/mail/filters?id=${rule.id}`))}>
-                Delete
+            </PrefRow>
+          ))}
+        </PrefList>
+      ) : (
+        <EmptyState variant="plain" density="compact" className="rounded-xl border border-dashed" icon={<Filter />} title="No filters yet" description="Label, archive or forward new mail automatically." />
+      )}
+    </div>
+  )
+}
+
+type Draft = ReturnType<typeof emptyRule> & { id?: string }
+
+function FilterEditor({ draft, setDraft, labels, targets, busy, onCancel, onSave }: { draft: Draft; setDraft: (d: Draft) => void; labels: Label[]; targets: Target[]; busy: boolean; onCancel: () => void; onSave: () => void }) {
+  const confirmed = targets.filter((t) => t.verifiedAt)
+  const setCondition = (i: number, c: FilterCondition) => setDraft({ ...draft, conditions: draft.conditions.map((x, n) => (n === i ? c : x)) })
+  return (
+    <form
+      className="flex flex-col gap-6"
+      onSubmit={(e) => {
+        e.preventDefault()
+        onSave()
+      }}
+    >
+      <Button type="button" variant="ghost" size="sm" className="text-muted-foreground -ml-2 self-start" onClick={onCancel}>
+        <ChevronLeft /> All filters
+      </Button>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="filter-name">Name</FieldLabel>
+          <Input id="filter-name" autoFocus={!draft.id} placeholder="Invoices from suppliers" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} required maxLength={80} />
+        </Field>
+      </FieldGroup>
+
+      <section className="flex flex-col gap-2">
+        <PrefHeading>When every condition matches</PrefHeading>
+        <div className="flex flex-col gap-2 rounded-xl border p-3">
+          {draft.conditions.map((condition, i) => (
+            <div key={i} className="grid grid-cols-[minmax(0,11rem)_minmax(0,1fr)_auto] gap-2">
+              <Choice
+                value={condition.field}
+                label={`Condition ${i + 1} field`}
+                onChange={(value) => setCondition(i, { field: value as FilterCondition["field"], value: value === "attachment" ? "true" : "" })}
+                options={Object.entries(FIELD_LABELS).map(([value, label]) => ({ value, label: value === "attachment" ? "Attachment" : label }))}
+              />
+              {condition.field === "attachment" ? (
+                <Choice value={condition.value} label="Attachment present" onChange={(value) => setCondition(i, { ...condition, value })} options={[{ value: "true", label: "Has one" }, { value: "false", label: "Has none" }]} />
+              ) : (
+                <Input aria-label={`Condition ${i + 1} value`} placeholder={condition.field === "from" ? "acme.com" : condition.field === "to" ? "billing@" : "invoice"} value={condition.value} required onChange={(e) => setCondition(i, { ...condition, value: e.target.value })} />
+              )}
+              <Button variant="ghost" size="icon" type="button" aria-label="Remove condition" className="text-muted-foreground" disabled={draft.conditions.length === 1} onClick={() => setDraft({ ...draft, conditions: draft.conditions.filter((_, n) => n !== i) })}>
+                <X />
               </Button>
             </div>
           ))}
+          <Button type="button" variant="ghost" size="sm" className="text-muted-foreground self-start" disabled={draft.conditions.length >= 10} onClick={() => setDraft({ ...draft, conditions: [...draft.conditions, { field: "from", value: "" }] })}>
+            <Plus /> Add condition
+          </Button>
         </div>
-      ) : (
-        <EmptyState variant="plain" density="compact" className="rounded-lg border border-dashed" icon={<Filter />} title="No filters yet" description="Label, archive or forward new mail automatically." />
-      )}
-      <Button variant="outline" size="sm" className="self-start" onClick={() => { setDraft(emptyRule()); setEditing(true) }}>
-        <Plus /> Add filter
-      </Button>
-    </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <PrefHeading>Then</PrefHeading>
+        <PrefList>
+          <PrefRow icon={Tag} title="Apply a label">
+            <div className="w-48">
+              <Choice value={draft.actions.labelId ?? NONE} label="Filter label" onChange={(value) => setDraft({ ...draft, actions: { ...draft.actions, labelId: value === NONE ? undefined : value } })} options={[{ value: NONE, label: labels.length ? "No label" : "No labels yet" }, ...labels.map((l) => ({ value: l.id, label: l.name }))]} />
+            </div>
+          </PrefRow>
+          <PrefRow icon={Archive} title="Skip the inbox" description="Archive it right away.">
+            <Switch checked={!!draft.actions.archive} aria-label="Skip the inbox" onCheckedChange={(v) => setDraft({ ...draft, actions: { ...draft.actions, archive: v } })} />
+          </PrefRow>
+          <PrefRow icon={Forward} title="Forward a copy" description={confirmed.length ? undefined : "Confirm an address under Forwarding first."}>
+            <div className="w-48">
+              <Choice value={draft.actions.forwardTargetId ?? NONE} label="Forwarding destination" onChange={(value) => setDraft({ ...draft, actions: { ...draft.actions, forwardTargetId: value === NONE ? undefined : value } })} options={[{ value: NONE, label: "Don't forward" }, ...confirmed.map((t) => ({ value: t.id, label: t.address }))]} />
+            </div>
+          </PrefRow>
+        </PrefList>
+      </section>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+        <label className="flex items-center gap-2 text-sm">
+          <Switch checked={draft.enabled} onCheckedChange={(enabled) => setDraft({ ...draft, enabled })} />
+          {draft.enabled ? "On" : "Paused"}
+        </label>
+        <div className="flex gap-2">
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={busy} disabled={busy || !draft.name.trim()}>
+            {draft.id ? "Save filter" : "Create filter"}
+          </Button>
+        </div>
+      </div>
+    </form>
   )
 }
 
@@ -243,16 +326,6 @@ export function ForwardingSection({ rules: { box, targets, busy, run, refresh } 
   if (!box) return <Loading />
   return (
     <div className="flex flex-col gap-4">
-      {targets.length ? (
-        <div className="divide-y rounded-lg border">
-          {targets.map((t) => (
-            <div key={t.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-              <span className="truncate">{t.address}</span>
-              <span className={t.verifiedAt ? "text-xs" : "text-muted-foreground text-xs"}>{t.verifiedAt ? "Confirmed" : "Awaiting confirmation"}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -264,27 +337,37 @@ export function ForwardingSection({ rules: { box, targets, busy, run, refresh } 
         }}
       >
         <Field>
-          <FieldLabel htmlFor="forward-address">Add a forwarding address</FieldLabel>
           <div className="flex gap-2">
-            <Input id="forward-address" type="email" value={target} onChange={(e) => setTarget(e.target.value)} required />
+            <Input aria-label="Forwarding address" type="email" placeholder="name@example.com" value={target} onChange={(e) => setTarget(e.target.value)} required />
             <Button type="submit" variant="outline" disabled={busy || !target}>
-              Send confirmation
+              <Send /> Send confirmation
             </Button>
           </div>
-          <FieldDescription>The recipient must confirm before a filter can forward mail to it. Spam is never forwarded.</FieldDescription>
+          <FieldDescription>We e-mail the address a link. Once its owner confirms, a filter can forward to it. Spam is never forwarded.</FieldDescription>
         </Field>
       </form>
-      {targets.some((t) => !t.verifiedAt) ? (
-        <Button variant="ghost" size="sm" className="self-start" onClick={() => run(refresh)} disabled={busy}>
-          Refresh confirmations
-        </Button>
-      ) : null}
+      {targets.length ? (
+        <PrefList>
+          {targets.map((t) => (
+            <PrefRow key={t.id} icon={AtSign} title={t.address}>
+              {t.verifiedAt ? (
+                <Badge variant="success">Confirmed</Badge>
+              ) : (
+                <>
+                  <Badge variant="warning">Waiting for confirmation</Badge>
+                  <Button variant="ghost" size="icon-sm" aria-label="Check again" className="text-muted-foreground" disabled={busy} onClick={() => run(refresh)}>
+                    <RefreshCw className={cn(busy && "animate-spin")} />
+                  </Button>
+                </>
+              )}
+            </PrefRow>
+          ))}
+        </PrefList>
+      ) : (
+        <EmptyState variant="plain" density="compact" className="rounded-xl border border-dashed" icon={<Forward />} title="No forwarding addresses" description="Add one above, then pick it in a filter." />
+      )}
     </div>
   )
-}
-function LabelEditor({label,busy,onSave,onDelete}:{label:Label;busy:boolean;onSave:(name:string)=>void;onDelete:()=>void}){
-  const [value,setValue]=React.useState(label.name)
-  return <div className="flex items-center gap-1 p-1.5"><Input aria-label={`Label ${label.name}`} className="h-8 border-transparent shadow-none hover:border-input focus-visible:border-ring" value={value} onChange={e=>setValue(e.target.value)} maxLength={80}/>{value!==label.name?<Button variant="outline" size="sm" disabled={busy||!value.trim()} onClick={()=>onSave(value)}>Rename</Button>:null}<Button variant="ghost" size="sm" disabled={busy} onClick={onDelete}>Delete</Button></div>
 }
 export function LabelActions({threadIds,onApplied,onFilter}:{threadIds:string[];onApplied:()=>void;onFilter:(q:string)=>void}){
   const [labels,setLabels]=React.useState<Label[]>([])

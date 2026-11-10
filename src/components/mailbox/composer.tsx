@@ -201,7 +201,7 @@ function MailForm({
       ) : null}
       <FieldRow label="Send at" icon={Clock} htmlFor="mail-send-at">
         <DateTimePicker value={draft.sendAt} onChange={(sendAt) => set({ sendAt })} presets={sendPresets()} placeholder="Now" confirmLabel="Schedule" clearLabel="Send now instead" className="h-7 border-transparent px-2 shadow-none" />
-        <span className="text-muted-foreground text-xs">{draft.sendAt ? "Your local time" : "10 seconds to undo"}</span>
+        {draft.sendAt ? <span className="text-muted-foreground text-xs">Your local time</span> : null}
       </FieldRow>
       <ComposeBody
         bodyRef={body}

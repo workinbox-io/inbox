@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
+import { MailCheck, ShieldCheck } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
+import { PrefList, PrefRow } from "./pref-ui"
 
 export function RequiredPasswordChange() {
  const [error, setError] = React.useState("")
@@ -36,34 +40,55 @@ export function RequiredPasswordChange() {
 }
 
 export function RecoveryEmailSettings() {
- const [state, setState] = React.useState<{ email: string | null; pending: string | null }>({ email: null, pending: null })
+ const [state, setState] = React.useState<{ email: string | null; pending: string | null } | null>(null)
  const [pending, setPending] = React.useState(false)
- const refresh = () => api<typeof state>("GET", "/api/app/account/recovery").then(setState)
+ const [editing, setEditing] = React.useState(false)
+ const refresh = () => api<{ email: string | null; pending: string | null }>("GET", "/api/app/account/recovery").then(setState)
  React.useEffect(() => { void refresh().catch(e => toast.error(e.message)) }, [])
- return <form className="flex flex-col gap-3" onSubmit={async e => {
-  e.preventDefault()
-  const form = new FormData(e.currentTarget)
-  setPending(true)
-  try {
-   await api("POST", "/api/app/account/recovery", { action: "set", email: form.get("email"), password: form.get("password") })
-   await refresh()
-   toast.success("Verification sent. Open the link in your private inbox.")
-  } catch (e) { toast.error((e as Error).message) } finally { setPending(false) }
- }}>
-  <p className="text-muted-foreground text-sm">{state.email ? `Verified recovery address: ${state.email}` : "Add a private address to recover your account if you cannot open your work mailbox."}{state.pending ? ` Verification pending: ${state.pending}.` : ""}</p>
-  <Label htmlFor="recovery-email">Private email</Label><Input id="recovery-email" name="email" type="email" autoComplete="email" required />
-  <Label htmlFor="recovery-password">Current password</Label><Input id="recovery-password" name="password" type="password" autoComplete="current-password" required />
-  <div className="flex gap-2">
-   <Button type="submit" disabled={pending}>Verify address</Button>
-   {state.email || state.pending ? <Button type="button" variant="outline" disabled={pending} onClick={async e => {
-    const form = e.currentTarget.form!
-    const password = String(new FormData(form).get("password"))
-    setPending(true)
-    try { await api("POST", "/api/app/account/recovery", { action: "remove", password }); await refresh(); toast.success("Recovery address removed") }
-    catch(e) { toast.error((e as Error).message) } finally { setPending(false) }
-   }}>Remove</Button> : null}
-  </div>
- </form>
+ const hasAny = !!(state?.email || state?.pending)
+ const showForm = editing || (state !== null && !hasAny)
+ return <div className="flex flex-col gap-6">
+  {hasAny ? <PrefList>
+   {state?.email ? <PrefRow icon={ShieldCheck} title={state.email} description="Verified recovery address"><Badge variant="success">Verified</Badge></PrefRow> : null}
+   {state?.pending ? <PrefRow icon={MailCheck} title={state.pending} description="Open the link we sent to this address."><Badge variant="warning">Waiting for verification</Badge></PrefRow> : null}
+  </PrefList> : null}
+  {hasAny && !showForm ? <Button variant="outline" size="sm" className="self-start" onClick={() => setEditing(true)}>Change or remove</Button> : null}
+  {showForm ? <form className="max-w-md" onSubmit={async e => {
+   e.preventDefault()
+   const form = new FormData(e.currentTarget)
+   setPending(true)
+   try {
+    await api("POST", "/api/app/account/recovery", { action: "set", email: form.get("email"), password: form.get("password") })
+    await refresh()
+    setEditing(false)
+    toast.success("Verification sent. Open the link in your private inbox.")
+   } catch (e) { toast.error((e as Error).message) } finally { setPending(false) }
+  }}>
+   <FieldGroup>
+    <Field>
+     <FieldLabel htmlFor="recovery-email">Private e-mail</FieldLabel>
+     <Input id="recovery-email" name="email" type="email" autoComplete="email" placeholder="you@gmail.com" required />
+     <FieldDescription>Not your work address: the point is reaching you when that one doesn't work.</FieldDescription>
+    </Field>
+    <Field>
+     <FieldLabel htmlFor="recovery-password">Current password</FieldLabel>
+     <Input id="recovery-password" name="password" type="password" autoComplete="current-password" required />
+    </Field>
+    <div className="flex flex-wrap justify-end gap-2">
+     {hasAny ? <Button type="button" variant="ghost" className="text-destructive mr-auto" disabled={pending} onClick={async e => {
+      const form = e.currentTarget.form!
+      const password = String(new FormData(form).get("password"))
+      if (!password) return toast.error("Enter your current password to remove it.")
+      setPending(true)
+      try { await api("POST", "/api/app/account/recovery", { action: "remove", password }); await refresh(); setEditing(false); toast.success("Recovery address removed") }
+      catch(e) { toast.error((e as Error).message) } finally { setPending(false) }
+     }}>Remove</Button> : null}
+     {editing ? <Button type="button" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button> : null}
+     <Button type="submit" loading={pending} disabled={pending}>Send verification</Button>
+    </div>
+   </FieldGroup>
+  </form> : null}
+ </div>
 }
 
 export function VerifyRecoveryEmail({ token }: { token: string }) {

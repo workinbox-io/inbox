@@ -17,6 +17,7 @@ import { FiltersSection, ForwardingSection, LabelsSection, StorageSection, useMa
 import { mailboxColor } from "./mail-ui"
 import { PushControl } from "./push-control"
 import { RecoveryEmailSettings } from "./security-settings"
+import { PrefList, PrefRow } from "./pref-ui"
 
 export type PreferenceSection = "signature" | "labels" | "filters" | "forwarding" | "storage" | "notifications" | "appearance" | "password" | "recovery"
 
@@ -34,16 +35,16 @@ interface SectionDef {
 const MAILBOX_SECTIONS: SectionDef[] = [
   { id: "signature", label: "Signature", icon: PenLine, perMailbox: true, description: "Goes under new e-mails, replies and forwards. You can still edit it in each message." },
   { id: "labels", label: "Labels", icon: Tag, perMailbox: true, description: "Group threads your own way. Apply them from the list or with a filter." },
-  { id: "filters", label: "Filters", icon: Filter, perMailbox: true, description: "Run in priority order on new mail. Every condition must match." },
+  { id: "filters", label: "Filters", icon: Filter, perMailbox: true, description: "Run top to bottom on every new message. A filter acts when all its conditions match." },
   { id: "forwarding", label: "Forwarding", icon: Forward, perMailbox: true, description: "Addresses a filter may forward mail to, once their owner confirms." },
   { id: "storage", label: "Storage", icon: HardDrive, perMailbox: true, description: "How much of the mailbox's space is in use." },
 ]
 const GENERAL_SECTIONS: SectionDef[] = [
-  { id: "notifications", label: "Notifications", icon: Bell, description: "Get a notification on this device when new mail arrives." },
-  { id: "appearance", label: "Appearance", icon: SunMoon, description: "Light, dark, or follow your system." },
+  { id: "notifications", label: "Notifications", icon: Bell, description: "Hear about new mail while Mail isn't open." },
+  { id: "appearance", label: "Appearance", icon: SunMoon, description: "How Mail looks on this device." },
 ]
 const ACCOUNT_SECTIONS: SectionDef[] = [
-  { id: "password", label: "Password", icon: KeyRound, description: "Got a temporary one from your admin? Pick your own here. At least 10 characters." },
+  { id: "password", label: "Password", icon: KeyRound, description: "Got a temporary one from your admin? Pick your own here." },
   { id: "recovery", label: "Recovery email", icon: LifeBuoy, description: "Recover your account through a verified private address if you can't open your work mailbox." },
 ]
 
@@ -128,25 +129,24 @@ export function MailPreferences({
           </nav>
 
           <main className={cn("min-w-0 flex-1 flex-col md:flex", showNav ? "hidden" : "flex")}>
-            <header className="flex min-h-14 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b py-2 pr-12 pl-3 md:pl-6">
-              <Button variant="ghost" size="icon-sm" className="md:hidden" aria-label="All settings" onClick={() => setShowNav(true)}>
+            <header className="flex shrink-0 flex-wrap items-start gap-x-3 gap-y-2.5 border-b py-3.5 pr-12 pl-3 md:pl-6">
+              <Button variant="ghost" size="icon-sm" className="mt-0.5 md:hidden" aria-label="All settings" onClick={() => setShowNav(true)}>
                 <ChevronLeft />
               </Button>
-              <h2 className="text-[15px] font-medium">{current.label}</h2>
-              {current.perMailbox && mailboxes.length > 1 ? <MailboxPicker mailboxes={mailboxes} value={mailbox} onChange={setMailbox} /> : null}
+              <div className="grid min-w-0 flex-1 basis-48 gap-1">
+                <h2 className="text-[15px] leading-6 font-medium">{current.label}</h2>
+                <p className="text-muted-foreground text-[13px] leading-snug text-pretty">{current.description}</p>
+              </div>
+              {current.perMailbox ? <MailboxPicker mailboxes={mailboxes} value={mailbox} onChange={setMailbox} /> : null}
             </header>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6">
-              <div className="flex max-w-xl flex-col gap-5">
-                <p className="text-muted-foreground text-sm">
-                  {current.description}
-                  {current.perMailbox && mailboxes.length === 1 ? <> For {mailbox}.</> : null}
-                </p>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-6">
+              <div className="mx-auto flex max-w-2xl flex-col gap-6">
                 {current.id === "signature" ? <SignatureSection key={mailbox} mailbox={mailbox} signatures={signatures} onSaved={onSignatures} /> : null}
                 {current.id === "labels" ? <LabelsSection rules={rules} /> : null}
                 {current.id === "filters" ? <FiltersSection rules={rules} /> : null}
                 {current.id === "forwarding" ? <ForwardingSection rules={rules} /> : null}
                 {current.id === "storage" ? <StorageSection rules={rules} /> : null}
-                {current.id === "notifications" ? <div><PushControl variant="outline" /></div> : null}
+                {current.id === "notifications" ? <NotificationsSection /> : null}
                 {current.id === "appearance" ? <AppearanceSection /> : null}
                 {current.id === "password" ? <PasswordForm onDone={() => onOpenChange(false)} /> : null}
                 {current.id === "recovery" ? <RecoveryEmailSettings /> : null}
@@ -160,16 +160,31 @@ export function MailPreferences({
 }
 
 function MailboxPicker({ mailboxes, value, onChange }: { mailboxes: string[]; value: string; onChange: (m: string) => void }) {
+  const dot = (m: string) => <span className="size-2 shrink-0 rounded-full" style={{ background: mailboxColor(m) }} />
+  if (mailboxes.length < 2)
+    return (
+      <span className="text-muted-foreground flex h-8 shrink-0 items-center gap-2 text-[13px] max-md:hidden">
+        {dot(value)}
+        {value}
+      </span>
+    )
+  // One width for every mailbox (fits the longest address, up to 16rem), so switching doesn't resize the trigger.
+  const longest = Math.max(...mailboxes.map((m) => m.length))
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger size="sm" className="ml-auto max-w-64" aria-label="Mailbox">
+      <SelectTrigger
+        size="sm"
+        className="shrink-0 max-md:w-full! md:w-(--picker-w) *:data-[slot=select-value]:min-w-0"
+        style={{ "--picker-w": `min(16rem, calc(${longest}ch + 3.25rem))` } as React.CSSProperties}
+        aria-label="Mailbox"
+      >
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent align="end">
         {mailboxes.map((m) => (
           <SelectItem key={m} value={m}>
-            <span className="size-2 shrink-0 rounded-full" style={{ background: mailboxColor(m) }} />
-            {m}
+            {dot(m)}
+            <span className="truncate">{m}</span>
           </SelectItem>
         ))}
       </SelectContent>
@@ -194,39 +209,64 @@ function SignatureSection({ mailbox, signatures, onSaved }: { mailbox: string; s
     }
   }
   return (
-    <div className="flex flex-col gap-3">
-      <Textarea aria-label="Signature" value={text} onChange={(e) => setText(e.target.value)} rows={6} placeholder={"Anna Kowalska\nAcme · acme.com"} />
-      <div className="flex justify-end gap-2">
-        {text !== saved ? (
-          <Button variant="ghost" onClick={() => setText(saved)}>
-            Discard
+    <div className="overflow-hidden rounded-xl border focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
+      <Textarea
+        aria-label="Signature"
+        className="min-h-44 rounded-none border-0 font-[inherit] shadow-none focus-visible:ring-0 dark:bg-transparent"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && text !== saved) save()
+        }}
+        placeholder={"Anna Kowalska\nAcme · acme.com"}
+      />
+      <div className="bg-muted/40 flex items-center justify-between gap-3 border-t px-3 py-2">
+        <p className="text-muted-foreground text-xs">{text === saved ? (saved ? "Saved" : "No signature") : "Unsaved changes"}</p>
+        <div className="flex gap-2">
+          {text !== saved ? (
+            <Button variant="ghost" size="sm" onClick={() => setText(saved)}>
+              Discard
+            </Button>
+          ) : null}
+          <Button size="sm" onClick={save} loading={saving} disabled={saving || text === saved}>
+            Save
           </Button>
-        ) : null}
-        <Button onClick={save} loading={saving} disabled={saving || text === saved}>
-          Save
-        </Button>
+        </div>
       </div>
     </div>
+  )
+}
+
+function NotificationsSection() {
+  return (
+    <PrefList>
+      <PrefRow icon={Bell} title="New mail on this device" description="Your browser asks for permission the first time.">
+        <PushControl variant="outline" stateful />
+      </PrefRow>
+    </PrefList>
   )
 }
 
 function AppearanceSection() {
   const [mode, setMode] = React.useState<ThemeMode>(() => (document.documentElement.dataset.themeMode as ThemeMode) ?? "system")
   return (
-    <SegmentedControl<ThemeMode>
-      aria-label="Theme"
-      className="self-start"
-      value={mode}
-      onValueChange={(m) => {
-        setMode(m)
-        window.setThemeMode(m)
-      }}
-      options={[
-        { value: "system", label: "System" },
-        { value: "light", label: "Light" },
-        { value: "dark", label: "Dark" },
-      ]}
-    />
+    <PrefList>
+      <PrefRow icon={SunMoon} title="Theme" description={mode === "system" ? "Follows your system setting." : undefined}>
+        <SegmentedControl<ThemeMode>
+          aria-label="Theme"
+          value={mode}
+          onValueChange={(m) => {
+            setMode(m)
+            window.setThemeMode(m)
+          }}
+          options={[
+            { value: "system", label: "System" },
+            { value: "light", label: "Light" },
+            { value: "dark", label: "Dark" },
+          ]}
+        />
+      </PrefRow>
+    </PrefList>
   )
 }
 
@@ -237,7 +277,7 @@ function PasswordForm({ onDone }: { onDone: () => void }) {
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   return (
-    <form
+    <form className="max-w-md"
       onSubmit={async (e) => {
         e.preventDefault()
         setPending(true)
