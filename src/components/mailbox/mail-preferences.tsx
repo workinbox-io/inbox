@@ -240,7 +240,7 @@ function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: st
       <div className="grid gap-1.5">
         <span className="text-muted-foreground text-xs">Preview</span>
         {preview ? (
-          <SignatureHtml html={preview} framed />
+          <SignatureHtml html={preview} />
         ) : (
           <p className="text-muted-foreground text-sm">No signature yet.</p>
         )}

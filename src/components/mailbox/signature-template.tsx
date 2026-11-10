@@ -109,7 +109,7 @@ export function SignatureTemplate({ initial, onSaved }: { initial: SignatureBran
         </div>
         <div className="grid gap-1.5">
           <span className="text-muted-foreground text-xs">Preview with a sample person</span>
-          {preview ? <SignatureHtml html={preview} framed /> : null}
+          {preview ? <SignatureHtml html={preview} /> : null}
         </div>
         <div className="flex justify-end gap-2">
           {changed ? (
