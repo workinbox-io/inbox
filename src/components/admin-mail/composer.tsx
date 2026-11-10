@@ -1,6 +1,6 @@
 import * as React from "react"
 import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import { siteConfig } from "@/config/site"
 import { api } from "@/lib/api-client"
@@ -52,7 +52,7 @@ export function useUndoSend(onSent: (threadId: string) => void) {
         pending.current--
       }
     }, UNDO_MS)
-    const id = toast("Sending…", {
+    const id = toast.loading("Sending…", {
       duration: UNDO_MS,
       action: {
         label: "Undo",
