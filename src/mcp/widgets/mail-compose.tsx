@@ -27,6 +27,7 @@ const textOf = (result: { content?: { type: string; text?: string }[] }) =>
 function ComposeWidget() {
   const [draft, setDraft] = React.useState<Draft | null>(null)
   const [mailboxes, setMailboxes] = React.useState<string[]>([])
+  const [draftKey, setDraftKey] = React.useState<string | null>(null)
   const [status, setStatus] = React.useState<Status>({ kind: "editing" })
   const [error, setError] = React.useState<string | null>(null)
   // One key per card: a double click or a retry after a lost response never sends twice.
@@ -38,8 +39,9 @@ function ComposeWidget() {
     capabilities: {},
     onAppCreated: (app) => {
       app.ontoolresult = (result) => {
-        const data = result.structuredContent as { draft?: Draft; mailboxes?: string[] } | undefined
+        const data = result.structuredContent as { draft?: Draft; mailboxes?: string[]; draftKey?: string | null } | undefined
         if (data?.draft) setDraft(data.draft)
+        if (data?.draftKey) setDraftKey(data.draftKey)
         if (data?.mailboxes) setMailboxes(data.mailboxes)
         const token = (result._meta as { sendToken?: unknown } | undefined)?.sendToken
         if (typeof token === "string") sendToken.current = token
@@ -73,7 +75,7 @@ function ComposeWidget() {
         ...(draft.threadId ? {} : { subject: draft.subject }),
         text: draft.text,
       }
-      const res = await app.callServerTool({ name: "mail_send", arguments: { message, threadId: draft.threadId ?? undefined, idempotencyKey: key.current, confirm: sendToken.current } })
+      const res = await app.callServerTool({ name: "mail_send", arguments: { message, threadId: draft.threadId ?? undefined, idempotencyKey: key.current, confirm: sendToken.current, draftKey: draftKey ?? undefined } })
       if (res.isError) {
         setError(textOf(res))
         return setStatus({ kind: "editing" })

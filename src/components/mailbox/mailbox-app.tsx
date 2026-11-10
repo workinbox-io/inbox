@@ -14,7 +14,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { EmptyState } from "@/components/app/empty-state"
 import { ComposeWindow, useUndoSend } from "./composer"
-import { useDraftKeys } from "./drafts"
+import { NEW_DRAFT, syncDrafts, useDraftKeys } from "./drafts"
+import { DraftsPanel, useDraftCount } from "./drafts-panel"
 import { SenderPanel } from "./sender-panel"
 import { ThreadList } from "./thread-list"
 import { LabelActions } from "./mail-rules"
@@ -64,6 +65,8 @@ export interface MailboxAppProps {
   account?: MailUser
   /** Open the outbox (scheduled and recent sends) instead of a folder: `/app/mail?pane=outbox`. */
   outbox?: boolean
+  /** Open Drafts instead of a folder: `/app/mail?pane=drafts`. `?draft=<key>` (AI apps' links) opens one. */
+  drafts?: boolean
 }
 
 /** The member's mailboxes, laid out like a mail app: folders and threads, the open thread, and who it's with. */
@@ -82,12 +85,27 @@ export function MailboxApp(props: MailboxAppProps) {
     api<{ jobs: OutboxRow[] }>("GET", "/api/app/mail/outbox").then((r) => onOutboxJobs(r.jobs)).catch(() => {})
   }, [onOutboxJobs])
   React.useEffect(refreshOutboxCount, [refreshOutboxCount])
+  const [draftsOpen, setDraftsOpen] = React.useState(!!props.drafts)
+  const draftCount = useDraftCount()
   React.useEffect(() => {
     const url = new URL(location.href)
     if (outbox) url.searchParams.set("pane", "outbox")
+    else if (draftsOpen) url.searchParams.set("pane", "drafts")
     else url.searchParams.delete("pane")
     replaceUrl(url)
-  }, [outbox])
+  }, [outbox, draftsOpen])
+  const showOutbox = () => {
+    setDraftsOpen(false)
+    setOutbox(true)
+  }
+  const showDrafts = () => {
+    setOutbox(false)
+    setDraftsOpen(true)
+  }
+  const closePanes = () => {
+    setOutbox(false)
+    setDraftsOpen(false)
+  }
   const [query, setQuery] = React.useState("")
   const [threads, setThreads] = React.useState(props.threads)
   const [hasMore, setHasMore] = React.useState(props.hasMore)
@@ -97,7 +115,7 @@ export function MailboxApp(props: MailboxAppProps) {
   const [detail, setDetail] = React.useState<ThreadDetail | null>(null)
   const [selection, setSelection] = React.useState<Set<string>>(() => new Set())
   const [signatures, setSignatures] = React.useState(props.signatures)
-  const [compose, setCompose] = React.useState<{ open: boolean; prefill: { to?: string; nonce: number } | null }>({ open: false, prefill: null })
+  const [compose, setCompose] = React.useState<{ open: boolean; prefill: { to?: string; nonce: number } | null; draftKey?: string }>({ open: false, prefill: null })
   const [infoOpen, setInfoOpen] = React.useState(false)
   const [helpOpen, setHelpOpen] = React.useState(false)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
@@ -266,7 +284,13 @@ export function MailboxApp(props: MailboxAppProps) {
     }
   }
 
-  const openCompose = (to?: string) => setCompose({ open: true, prefill: { to, nonce: Date.now() } })
+  const openCompose = (to?: string) => setCompose({ open: true, prefill: { to, nonce: Date.now() }, draftKey: NEW_DRAFT })
+  /** A draft from Drafts or an AI app's link: a reply opens its thread (which shows the draft), a new e-mail the compose window. */
+  const openDraft = (key: string, threadId: string | null) => {
+    closePanes()
+    if (threadId) setSelectedId(threadId)
+    else setCompose({ open: true, prefill: { nonce: Date.now() }, draftKey: key })
+  }
 
   // Reply / reply all / forward from a row's menu: open the thread, then start the reply once it has loaded.
   const pendingReply = React.useRef<{ id: string; mode: ReplyMode } | null>(null)
@@ -347,6 +371,17 @@ export function MailboxApp(props: MailboxAppProps) {
   React.useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     if (p.get("compose") === "1" && props.mailboxes.length) openCompose(p.get("to") ?? undefined)
+    // Drafts follow the person across devices; an AI app's link (?draft=) opens its draft once it's here.
+    const key = p.get("draft")
+    syncDrafts()
+      .then(() => {
+        if (!key) return
+        const url = new URL(location.href)
+        url.searchParams.delete("draft")
+        replaceUrl(url)
+        openDraft(key, key === NEW_DRAFT || key.startsWith("d-") ? null : key)
+      })
+      .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -480,8 +515,10 @@ export function MailboxApp(props: MailboxAppProps) {
       drafts={drafts}
       onCompose={() => openCompose()}
       onSettings={() => openSettings()}
-      onOutbox={() => setOutbox(true)}
+      onOutbox={showOutbox}
       outboxCount={outboxCount}
+      onDrafts={showDrafts}
+      draftCount={draftCount}
       rail={desktop}
       actionsFor={threadActions}
       account={props.account && !desktop ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} compact /> : null}
@@ -532,26 +569,31 @@ export function MailboxApp(props: MailboxAppProps) {
             onMailbox={(m) => {
               setMailbox(m)
               setSelectedId(null)
-              setOutbox(false)
+              closePanes()
             }}
             folder={folder}
             onFolder={(f) => {
               setFolder(f)
               setQuery("")
               setSelectedId(null)
-              setOutbox(false)
+              closePanes()
             }}
             unread={unread}
             onCompose={() => openCompose()}
             onSettings={() => openSettings()}
             outbox={outbox}
-            onOutbox={() => setOutbox(true)}
+            onOutbox={showOutbox}
             outboxCount={outboxCount}
+            drafts={draftsOpen}
+            onDrafts={showDrafts}
+            draftCount={draftCount}
             footer={props.account ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} /> : undefined}
           />
         ) : null}
         <div className="min-w-0 flex-1">
-        {outbox ? (
+        {draftsOpen ? (
+          <DraftsPanel onOpen={openDraft} onBack={desktop ? undefined : () => setDraftsOpen(false)} />
+        ) : outbox ? (
           <OutboxPanel
             onJobs={onOutboxJobs}
             onBack={desktop ? undefined : () => setOutbox(false)}
@@ -598,6 +640,7 @@ export function MailboxApp(props: MailboxAppProps) {
       <ComposeWindow
         open={compose.open}
         prefill={compose.prefill}
+        draftKey={compose.draftKey}
         mailboxes={props.mailboxes}
         mailbox={mailbox === ALL_MAILBOXES ? props.mailboxes[0]! : mailbox}
         contacts={contacts}

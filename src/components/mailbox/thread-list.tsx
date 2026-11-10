@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, Inbox, Loader2, MailOpen, Mail, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, Settings2, ShieldAlert, Star, Trash2, X, type LucideIcon } from "lucide-react"
+import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, FilePen, Inbox, Loader2, Mail, MailOpen, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, Settings2, ShieldAlert, Star, Trash2, X, type LucideIcon } from "lucide-react"
 
 import type { UserMailFolder as MailFolder } from "@/lib/mail/rules"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
@@ -63,6 +63,8 @@ export function ThreadList({
   onSettings,
   onOutbox,
   outboxCount = 0,
+  onDrafts,
+  draftCount = 0,
   rail = false,
   account,
   actionsFor,
@@ -92,6 +94,9 @@ export function ThreadList({
   /** Opens the outbox; on a phone the list header has the button (the rail has it on desktop). */
   onOutbox: () => void
   outboxCount?: number
+  /** Phones: Drafts next to Outbox (the folder rail has them on wider screens). */
+  onDrafts?: () => void
+  draftCount?: number
   /** Folders and mailboxes live in the rail (desktop): the list shows only the folder's name and search. */
   rail?: boolean
   /** The account menu (mail-only view on a phone), next to Compose. */
@@ -154,6 +159,12 @@ export function ThreadList({
             <CalendarClock />
             {outboxCount ? <span className="bg-foreground text-background absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums">{outboxCount}</span> : null}
           </Button>
+          {onDrafts ? (
+            <Button variant="ghost" size="icon-sm" className="relative" onClick={onDrafts} aria-label={draftCount ? `Drafts, ${draftCount}` : "Drafts"} title="Drafts">
+              <FilePen />
+              {draftCount ? <span className="bg-foreground text-background absolute -top-1 -right-1 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[10px] font-semibold tabular-nums">{draftCount}</span> : null}
+            </Button>
+          ) : null}
           <Button variant="ghost" size="icon-sm" onClick={onSettings} aria-label="Settings" title="Settings">
             <Settings2 />
           </Button>

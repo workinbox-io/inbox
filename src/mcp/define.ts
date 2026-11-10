@@ -20,6 +20,8 @@ export interface McpContext {
   /** Null for API keys. */
   userId: string | null;
   apiKeyId?: string;
+  /** The connected app, e.g. "ChatGPT", or the API key's name. */
+  via?: string;
   /** Notes a change for the audit log; it's written only if the tool succeeds. */
   audit: (action: AuditAction, note?: McpAuditNote) => void;
 }

@@ -77,3 +77,17 @@ export const mailSetupSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("alias.remove"), aliasId: z.string().uuid() }),
   z.object({ action: z.literal("sender.add"), pattern: z.string().trim().toLowerCase().min(3).max(254), rule: z.enum(["block", "allow"]) }),
 ]);
+
+/** A draft's key: a thread id (reply), "new" (the composer's e-mail) or "d-<uuid>" (other new ones). */
+export const mailDraftKey = z.string().regex(/^(new|d-[0-9a-f-]{36}|[0-9a-f-]{36})$/, "Invalid draft");
+
+export const mailDraftSchema = z.object({
+  mode: z.enum(["new", "reply", "replyAll", "forward"]),
+  from: z.string().trim().toLowerCase().max(254),
+  to: z.array(z.string().trim().max(254)).max(50).default([]),
+  cc: z.array(z.string().trim().max(254)).max(50).default([]),
+  subject: z.string().max(300).default(""),
+  text: z.string().max(50_000).default(""),
+  messageId: z.string().uuid().optional(),
+  noSignature: z.boolean().optional(),
+});

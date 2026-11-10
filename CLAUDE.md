@@ -26,6 +26,10 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `mail_signature_brands`) plus each mailbox's card (`mailboxes.signature_card`: name, role, phone; `signature` = its
   free lines). `lib/mail/signature.ts` renders text + e-mail-safe HTML; `prepareMailSend` appends it unless
   `signature: false` (composer checkbox) or an automated forward. The composer only previews it (ComposeBody `footer`).
+- Drafts: per person on the server (`mail_drafts`, key = thread id for a reply, `new`, or `d-<uuid>`;
+  `lib/server/mail/drafts.ts`, `/api/app/mail/drafts[/key]`). The browser keeps a copy for instant reads and syncs it
+  (`components/mailbox/drafts.ts`: debounced PUT/DELETE, `syncDrafts()` on load, newest wins). Drafts pane in the rail
+  (`drafts-panel.tsx`, `?pane=drafts`); `?draft=<key>` opens one. AI apps' `mail_draft` lands there (`source: "ai"`).
 - Access: `lib/server/mail/access.ts` (`viewerMailboxes`): own personal mailbox, shared ones granted in
   `mailbox_access`, all shared ones for owners/admins. Every mail query is scoped to that list.
 - UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search

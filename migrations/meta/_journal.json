@@ -113,6 +113,13 @@
       "when": 1794324784952,
       "tag": "0015_mail_signatures",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1794326577643,
+      "tag": "0016_mail_drafts",
+      "breakpoints": true
     }
   ]
 }

@@ -236,3 +236,43 @@ export const mailSignatureBrands = sqliteTable("mail_signature_brands", {
   color: text("color").notNull().default(""),
   updatedAt: updatedAt(),
 });
+
+/** What a draft holds: the composer's fields (components/mailbox/types.ts `Draft`, minus send state). */
+export interface MailDraftPayload {
+  mode: "new" | "reply" | "replyAll" | "forward";
+  from: string;
+  to: string[];
+  cc: string[];
+  subject: string;
+  text: string;
+  messageId?: string;
+  noSignature?: boolean;
+}
+
+/**
+ * Drafts, per person: `key` is the thread id for a reply, "new" for the composer's open e-mail, or
+ * "d-<uuid>" for other new ones (e.g. written by an AI app). The browser keeps a copy for instant reads
+ * (components/mailbox/drafts.ts); the newest `updatedAt` wins.
+ */
+export const mailDrafts = sqliteTable(
+  "mail_drafts",
+  {
+    orgId: orgRef(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    mailboxId: text("mailbox_id")
+      .notNull()
+      .references(() => mailboxes.id, { onDelete: "cascade" }),
+    threadId: text("thread_id").references(() => mailThreads.id, { onDelete: "cascade" }),
+    payload: text("payload", { mode: "json" }).$type<MailDraftPayload>().notNull(),
+    /** "app" (typed in Work Inbox) or "ai" (an AI app's mail_draft). */
+    source: text("source").notNull().default("app"),
+    /** The AI app, e.g. "ChatGPT", for "Drafted in ChatGPT". */
+    via: text("via"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [primaryKey({ columns: [t.orgId, t.userId, t.key] }), index("mail_drafts_user_idx").on(t.userId, t.updatedAt)],
+);

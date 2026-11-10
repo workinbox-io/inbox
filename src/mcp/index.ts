@@ -45,6 +45,7 @@ async function runTool(name: string, tool: ToolDef, args: unknown, p: McpPrincip
       role: p.role,
       userId: p.userId,
       apiKeyId: p.apiKeyId,
+      via: p.via,
       audit: (action, note = {}) => void notes.push({ action, ...note }),
     });
     for (const n of notes) {

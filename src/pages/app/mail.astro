@@ -58,6 +58,7 @@ const user = Astro.locals.user!;
     canManage={manager}
     account={!mailOnly ? undefined : { name: user.name, email: user.email }}
     outbox={Astro.url.searchParams.get("pane") === "outbox"}
+    drafts={Astro.url.searchParams.get("pane") === "drafts"}
   />
   </div>
   </div>

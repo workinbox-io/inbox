@@ -386,6 +386,7 @@ export function InlineComposer({
 export function ComposeWindow({
   open,
   prefill,
+  draftKey = NEW_DRAFT,
   mailboxes,
   mailbox,
   contacts,
@@ -397,6 +398,8 @@ export function ComposeWindow({
   open: boolean
   /** Recipient from "New e-mail to …" in the sender panel. */
   prefill: { to?: string; nonce: number } | null
+  /** Which draft this window edits: draftKey, or one from Drafts (e.g. an AI app's "d-…"). */
+  draftKey?: string
   mailboxes: string[]
   mailbox: string
   contacts: string[]
@@ -416,12 +419,12 @@ export function ComposeWindow({
 
   React.useEffect(() => {
     if (!open) return
-    const saved = readDraft(NEW_DRAFT)
+    const saved = readDraft(draftKey)
     const to = splitAddresses(prefill?.to)
     setDraft(saved && mailboxes.includes(saved.from) ? { ...saved, to: [...new Set([...saved.to, ...to])] } : fresh(mailbox, to))
     setFocusKey((k) => k + 1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, prefill?.nonce])
+  }, [open, prefill?.nonce, draftKey])
 
   const touched = React.useRef(false)
   const set = (patch: Partial<Draft>) => {
@@ -430,12 +433,12 @@ export function ComposeWindow({
   }
   // Saved once something was typed, so opening and closing an empty window leaves no draft.
   React.useEffect(() => {
-    if (touched.current) writeDraft(NEW_DRAFT, draft)
+    if (touched.current) writeDraft(draftKey, draft)
   }, [draft])
 
   function discard() {
     touched.current = false
-    writeDraft(NEW_DRAFT, null)
+    writeDraft(draftKey, null)
     attachments.clear()
     setDraft(fresh(mailbox))
     onClose()
@@ -454,7 +457,7 @@ export function ComposeWindow({
       failed: () => setPending(false),
       done: () => {
         touched.current = false
-        writeDraft(NEW_DRAFT, null)
+        writeDraft(draftKey, null)
         attachments.clear()
         setPending(false)
         setDraft(fresh(mailbox))
