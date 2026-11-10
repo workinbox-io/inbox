@@ -107,6 +107,18 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   failing gets a generic scene from the domain hash. New theme = label in `BANNER_THEMES` + scene in `THEMES`.
 - Template file changed here: `components/mail/compose.tsx` (`AddressInput` `search` prop, `AddressSuggestion`).
 
+## AI apps: MCP modules and the ChatGPT app (product)
+
+- `src/mcp/app.ts` lists `appModules` (`McpModule` in `define.ts`: `tools`, `widgets`, one `instructions` line appended to
+  the server's). A new app (files, calendar…) = `src/mcp/<app>.ts` exporting a module + an entry there. The template's
+  projects tools/widget are not served.
+- Reading is free on every plan; tools with `scope: "write"` need `mcpAccess` (Pro), checked per call (`needsPlan`).
+- Mail never leaves on the model's word: `mail_draft` (read) returns the draft card widget (`widgets/mail-compose.tsx`),
+  whose Send/Undo call `mail_send`/`mail_cancel_send`. Those are `appOnly`: MCP Apps `visibility: ["app"]` for OAuth
+  apps, model-visible for API keys (`toolVisibility`). `mail_search` renders `widgets/mail-threads.tsx`;
+  `mail_read_thread` returns text without quoted history, capped per message. ChatGPT directory listing and its
+  marketing (`/chatgpt`, `/vs` row, llms.txt) come only after OpenAI approves the app.
+
 ## Marketing site and SEO/GEO (product)
 
 - Look after boat.dev in our ink (`styles/marketing.css`, scoped to `.mk` by `MarketingLayout look="paper"`; docs,

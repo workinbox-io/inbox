@@ -56,7 +56,7 @@ export type BillingInterval = "month" | "year";
 /** Paid features that only some plans include: the cheapest plan with each one. */
 const FEATURE_PLAN = {
   apiAccess: "pro",
-  /** The MCP server (/mcp) that Claude, ChatGPT and other AI apps connect to. */
+  /** Changes through the MCP server (/mcp) from Claude, ChatGPT and other AI apps; reading is free. */
   mcpAccess: "pro",
   auditLog: "pro",
 } as const satisfies Record<string, PlanId>;
@@ -65,7 +65,7 @@ export type Feature = keyof typeof FEATURE_PLAN;
 
 export const FEATURE_LABELS: Record<Feature, string> = {
   apiAccess: "API access",
-  mcpAccess: "Connecting AI apps",
+  mcpAccess: "Changes from AI apps",
   auditLog: "The audit log",
 };
 

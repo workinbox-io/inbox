@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createNote, getNote, listNotes, updateNote } from "@/lib/server/notes/notes";
 import type { NotesViewer } from "@/lib/server/notes/access";
 import { noteCreateSchema, noteListSchema } from "@/lib/validation-notes";
-import { defineTool, type McpContext, type Tools } from "./define";
+import { defineTool, type McpContext, type McpModule, type Tools } from "./define";
 
 /** Connected apps act as the user; API keys see team notes only. */
 const viewer = (ctx: McpContext): NotesViewer => ({ orgId: ctx.orgId, role: ctx.role, userId: ctx.userId ?? "" });
@@ -78,4 +78,10 @@ export const notesTools: Tools = {
       return { id: note.id, title: note.title, archived: note.archived };
     },
   }),
+};
+
+export const notesModule: McpModule = {
+  name: "notes",
+  instructions: "Notes: shared team notes in markdown; notes_search, then notes_get for the full text. Private notes stay private to their owner.",
+  tools: notesTools,
 };

@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { createContact, getContact, listContacts, updateContact } from "@/lib/server/contacts";
 import { contactListSchema, contactSchema } from "@/lib/validation-contacts";
-import { defineTool, type Tools } from "./define";
+import { defineTool, type McpModule, type Tools } from "./define";
 
 const contactId = z.string().uuid().describe("Contact id from contacts_search");
 const fields = contactSchema.omit({ groupIds: true });
@@ -50,4 +50,10 @@ export const contactsTools: Tools = {
       return contact;
     },
   }),
+};
+
+export const contactsModule: McpModule = {
+  name: "contacts",
+  instructions: "Contacts: the organization's shared address book; search before creating, since one address belongs to one contact.",
+  tools: contactsTools,
 };

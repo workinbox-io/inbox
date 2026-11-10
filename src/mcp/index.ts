@@ -11,13 +11,13 @@ import { recordAudit, type AuditActor } from "@/lib/server/audit";
 import { reportError } from "@/lib/server/errors";
 import { requireFeature } from "@/lib/server/org";
 import type { OrgRole } from "@/lib/server/roles";
-import { appTools, appWidgets } from "./app";
+import { appModules } from "./app";
 import { coreTools } from "./core";
-import { canUseTool, toolError, toolResult, type McpAuditNote, type ToolDef, type ToolResult, type Tools } from "./define";
+import { canUseTool, needsPlan, toolError, toolResult, toolVisibility, type McpAuditNote, type ToolDef, type ToolResult, type Tools } from "./define";
 import type { AuditAction } from "@/config/audit";
 
-export const TOOLS: Tools = { ...coreTools, ...appTools };
-export const WIDGETS = appWidgets;
+export const TOOLS: Tools = Object.assign({ ...coreTools }, ...appModules.map((m) => m.tools));
+export const WIDGETS: Record<string, { title: string; html: string }> = Object.assign({}, ...appModules.map((m) => m.widgets ?? {}));
 
 /** The caller of one /mcp request, resolved by lib/server/mcp.ts. */
 export interface McpPrincipal {
@@ -38,8 +38,8 @@ const widgetUri = (name: string) => `ui://widgets/${name}.html`;
 async function runTool(name: string, tool: ToolDef, args: unknown, p: McpPrincipal): Promise<ToolResult> {
   const notes: (McpAuditNote & { action: AuditAction })[] = [];
   try {
-    // Checked per call rather than at connect time, so the model can tell the user what to upgrade.
-    await requireFeature(p.orgId, "mcpAccess");
+    // Reading is free. Changes are checked per call rather than at connect time, so the model can tell the user what to upgrade.
+    if (needsPlan(tool)) await requireFeature(p.orgId, "mcpAccess");
     const data = await tool.run((args ?? {}) as never, {
       orgId: p.orgId,
       role: p.role,
@@ -62,7 +62,10 @@ export function buildMcpServer(p: McpPrincipal) {
   const server = new McpServer(
     { name: siteConfig.name, version: "1.0.0" },
     {
-      instructions: `${siteConfig.name}: ${siteConfig.description} Every tool works inside one organization, the one the user connected; call get_organization to see which and what its plan allows.`,
+      instructions: [
+        `${siteConfig.name}: ${siteConfig.description} Every tool works inside one organization, the one the user connected; call get_organization to see which and what its plan allows. Reading is free; changes need a paid plan.`,
+        ...appModules.map((m) => m.instructions),
+      ].join("\n"),
     },
   );
   const scopes = new Set(p.scopes);
@@ -72,6 +75,7 @@ export function buildMcpServer(p: McpPrincipal) {
     if (!canUseTool(tool, scopes, p.role)) continue;
     const widget = tool.widget && WIDGETS[tool.widget] ? tool.widget : null;
     if (widget) widgets.add(widget);
+    const ui = { ...(widget ? { resourceUri: widgetUri(widget) } : {}), ...(tool.appOnly ? { visibility: toolVisibility(tool, Boolean(p.apiKeyId)) } : {}) };
     server.registerTool(
       name,
       {
@@ -82,10 +86,10 @@ export function buildMcpServer(p: McpPrincipal) {
           title: tool.title,
           readOnlyHint: (tool.scope ?? "read") === "read",
           destructiveHint: Boolean(tool.destructive),
-          openWorldHint: false,
+          openWorldHint: Boolean(tool.openWorld),
         },
         // MCP Apps: the host renders this widget with the tool's structuredContent.
-        _meta: widget ? { ui: { resourceUri: widgetUri(widget) }, [RESOURCE_URI_META_KEY]: widgetUri(widget) } : undefined,
+        _meta: Object.keys(ui).length ? { ui, ...(widget ? { [RESOURCE_URI_META_KEY]: widgetUri(widget) } : {}) } : undefined,
       },
       (args: unknown) => runTool(name, tool, args, p),
     );

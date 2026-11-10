@@ -45,7 +45,7 @@ export const OURS: Record<RowKey, Cell> = {
   notes: yes("Shared notes with live editing, checklists, tables, @mentions"),
   selfHost: yes("Open source; runs on your own Cloudflare account"),
   imap: no("Not yet: web app only (installable). IMAP gateway planned"),
-  ai: yes("MCP server on Pro and Business: search, read and answer mail and notes"),
+  ai: yes("MCP server: search and read mail, notes and contacts on every plan; replies and changes on Pro and Business"),
   suite: soon("Calendar, contacts and drive are next"),
 };
 

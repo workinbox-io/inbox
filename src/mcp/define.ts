@@ -38,6 +38,13 @@ export interface ToolDef<S extends InputSchema | undefined = InputSchema | undef
   manage?: boolean;
   /** Deletes or overwrites data; clients ask the user before calling it. */
   destructive?: boolean;
+  /** Reaches outside the organization (sends mail to the world). */
+  openWorld?: boolean;
+  /**
+   * Connected apps (OAuth) only let their widgets call it, so a person has to click; the model can't call it
+   * on its own, even when a received mail asks it to. API keys (scripts, CLIs) keep calling it directly.
+   */
+  appOnly?: boolean;
   /** Name of a widget in WIDGETS (mcp/index.ts) that renders the result in Claude and ChatGPT. */
   widget?: string;
   /** Returns the result as an object: the model reads it as JSON, widgets get it as structuredContent. */
@@ -64,6 +71,22 @@ export const toolResult = (data: Record<string, unknown>): ToolResult => ({
 
 /** Tool failures are results the model can read and explain, not protocol errors. */
 export const toolError = (message: string): ToolResult => ({ content: [{ type: "text", text: message }], isError: true });
+
+/** An app area (mail, notes, contacts…): its tools, widgets and one line for the model. Listed in ./app.ts. */
+export interface McpModule {
+  name: string;
+  /** Appended to the server's instructions, e.g. "Mail: …". */
+  instructions: string;
+  tools: Tools;
+  widgets?: Record<string, { title: string; html: string }>;
+}
+
+/** Reading is free; changes from AI apps need the mcpAccess plan feature. */
+export const needsPlan = (tool: Pick<ToolDef, "scope">) => (tool.scope ?? "read") === "write";
+
+/** MCP Apps tool visibility: app-only tools stay hidden from the model of OAuth-connected apps. */
+export const toolVisibility = (tool: Pick<ToolDef, "appOnly">, apiKey: boolean): ("model" | "app")[] =>
+  tool.appOnly && !apiKey ? ["app"] : ["model", "app"];
 
 /** True when a caller with these scopes and role may see and call the tool. */
 export function canUseTool(tool: Pick<ToolDef, "scope" | "manage">, scopes: ReadonlySet<string>, role: OrgRole) {

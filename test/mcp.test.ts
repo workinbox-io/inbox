@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canUseTool, toolError, toolResult } from "@/mcp/define";
+import { canUseTool, needsPlan, toolError, toolResult, toolVisibility } from "@/mcp/define";
 
 describe("mcp tools", () => {
   const scopes = (...s: string[]) => new Set(s);
@@ -14,6 +14,18 @@ describe("mcp tools", () => {
   it("keeps manage tools for owners and admins", () => {
     expect(canUseTool({ manage: true }, scopes("read"), "member")).toBe(false);
     expect(canUseTool({ manage: true }, scopes("read"), "admin")).toBe(true);
+  });
+
+  it("lets every plan read and needs a plan for changes", () => {
+    expect(needsPlan({})).toBe(false);
+    expect(needsPlan({ scope: "read" })).toBe(false);
+    expect(needsPlan({ scope: "write" })).toBe(true);
+  });
+
+  it("hides app-only tools from the model of connected apps, not from API keys", () => {
+    expect(toolVisibility({ appOnly: true }, false)).toEqual(["app"]);
+    expect(toolVisibility({ appOnly: true }, true)).toEqual(["model", "app"]);
+    expect(toolVisibility({}, false)).toEqual(["model", "app"]);
   });
 
   it("returns data as JSON text and structured content, errors as readable results", () => {
