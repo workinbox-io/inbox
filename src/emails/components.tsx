@@ -64,8 +64,8 @@ export function EmailLayout({ preview, children, footer }: { preview: string; ch
         >
           <Row className="email-header" style={{ margin: "0 0 20px", padding: "0 4px" }}>
             <Column style={{ width: "35px", verticalAlign: "middle" }}>
-              {/* Absolute PNG: many clients don't load SVG or relative URLs. */}
-              <Img src={appUrl("/email/logo.png")} width="26" height="26" alt="" style={{ display: "block" }} />
+              {/* Absolute PNG: many clients don't load SVG or relative URLs. 48 px file (public/email/logo.png) shown at 24 px. */}
+              <Img src={appUrl("/email/logo.png")} width="24" height="24" alt="" style={{ display: "block", imageRendering: "pixelated" }} />
             </Column>
             <Column style={{ verticalAlign: "middle" }}>
               <Text

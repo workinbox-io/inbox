@@ -4,6 +4,7 @@
  * through the dashboard sidebar instead.
  */
 import { t } from "@/lib/i18n/panel";
+import { siteConfig } from "@/config/site";
 
 interface Props {
   current: "mail" | "notes";
@@ -26,6 +27,9 @@ const apps = [
 ---
 
 <nav aria-label={t("Applications")} class="hidden w-14 shrink-0 flex-col items-center gap-1 border-r py-3 sm:flex">
+  <a href="/app/mail" aria-label={siteConfig.name} title={siteConfig.name} class="mb-2 flex size-9 items-center justify-center">
+    <img src="/logo.svg" alt="" width="32" height="32" class="size-8" />
+  </a>
   {
     apps.map((app) => (
       <a
