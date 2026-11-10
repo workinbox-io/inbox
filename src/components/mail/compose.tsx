@@ -131,6 +131,8 @@ export function AddressInput({
             <li key={s.label + s.emails.join(",")}>
               <button
                 type="button"
+                // Out of the Tab order: Tab leaves the field (Enter picks the first suggestion).
+                tabIndex={-1}
                 // mousedown: before the input's blur turns the half-typed text into a chip.
                 onMouseDown={(e) => {
                   e.preventDefault()

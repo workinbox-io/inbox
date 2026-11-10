@@ -161,15 +161,19 @@ function MailForm({
   const [showCc, setShowCc] = React.useState(draft.cc.length > 0)
   const body = React.useRef<HTMLTextAreaElement>(null)
   const disabled = !draft.to.length || attachments.uploading || (!draft.text.trim() && draft.mode !== "forward")
-  // Start typing above the signature; again whenever the shortcut asks (r / a / f with the reply open).
+  // Start in the body when the form opens, and again whenever the shortcut asks (r / a / f with the reply open). Not
+  // when a recipient is added: that flips autoFocusTo and would pull a Tab from the To field into the body.
+  const focusTo = React.useRef(autoFocusTo)
+  focusTo.current = autoFocusTo
   React.useEffect(() => {
-    if (autoFocusTo || !body.current) return
+    if (focusTo.current || !body.current) return
     body.current.focus()
     body.current.setSelectionRange(0, 0)
     body.current.scrollTop = 0
-  }, [autoFocusTo, focusSignal])
+  }, [focusSignal])
   const ccToggle = showCc ? null : (
-    <button type="button" onClick={() => setShowCc(true)} className="text-muted-foreground hover:text-foreground flex items-center gap-0.5 text-sm">
+    // Out of the Tab order, like Gmail: Tab goes from To straight to Subject.
+    <button type="button" tabIndex={-1} onClick={() => setShowCc(true)} className="text-muted-foreground hover:text-foreground flex items-center gap-0.5 text-sm">
       <Plus className="size-3.5" /> Cc
     </button>
   )
