@@ -12,9 +12,11 @@ for small teams: hosted at [workinbox.io](https://workinbox.io), or self-hosted 
   rules, search operators (`from:`, `has:attachment`, `is:unread`…) and keyboard shortcuts.
 - **Shared notes**: live co-editing (Plate + Yjs on Durable Objects), checklists, tables, images, @mentions; private,
   shared with people, or with the whole team.
+- **Contacts**: one team address book filled from sent mail, CSV/vCard import and export, suggestions in the composer.
+- **Importing old mail**: .mbox or .eml files (Gmail Takeout included).
 - **AI apps and API**: an MCP server for Claude, ChatGPT, Claude Code and Cursor, and a REST API.
 
-Not yet: IMAP access, mobile apps, importing old mail, calendar, contacts and drive (next on the roadmap).
+Not yet: IMAP access, mobile apps, calendar and drive (next on the roadmap).
 
 ## Self-hosting
 
@@ -46,7 +48,7 @@ src/
   jobs/          index.ts (template jobs) · app.ts, app-cron.ts (YOUR jobs and daily tasks)
   mcp/           MCP tools: core.ts (template) · app.ts (YOUR tools and widgets) · widgets/*.tsx
   lib/server/    domain logic: auth, org, billing, paddle, api-keys, audit, errors, analytics, oauth, mcp,
-                 email, uploads, admin-mail, projects (example)
+                 email, uploads, admin-mail, mail/, notes/, contacts
   lib/           pure modules shared with tests: validation, uploads, mail/ (threading, quotes), admin-mail/ (rules)
   pages/         marketing (prerendered), /app (dashboard), /api/app (session), /api/v1 (API keys), /mcp, /oauth
   components/    ui/ (shadcn + dashboardcn), app/ (dashboard), site/ (marketing), auth/, docs/,
@@ -55,10 +57,6 @@ src/
   content/docs/  docs as Markdown
   worker.ts      Worker entry: Astro + queue consumer + cron + incoming e-mail
 ```
-
-`projects` is a complete example resource: table, domain logic with a plan limit, routes for the
-dashboard and the API, MCP tools with a widget, a dashboard page, audit entries and a queue job. Copy it for your first real
-resource, then delete it.
 
 Marketing pages can show an animated diagram of how the product works: describe a scene with
 `defineScene()` and render it with `<Scene />` (`src/components/storyboard`, start from

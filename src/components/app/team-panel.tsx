@@ -74,7 +74,7 @@ const reloadPage = async () => window.location.reload()
 
 const ROLE_HINT: Record<Role, string> = {
   admin: "Manages the team, billing and API keys.",
-  member: "Works on projects.",
+  member: "Uses mail, notes and contacts.",
 }
 
 export function TeamPanel(props: TeamPanelProps) {
@@ -219,7 +219,7 @@ export function TeamPanel(props: TeamPanelProps) {
       </SettingsSection>
 
       {orgs.length > 1 ? (
-        <SettingsSection title="Your organizations" description="You belong to more than one. Switch to see its projects and billing.">
+        <SettingsSection title="Your organizations" description="You belong to more than one. Switch to see its mail and billing.">
           <ul className="bg-surface divide-border/60 divide-y rounded-2xl">
             {orgs.map((o) => (
               <li key={o.id} className="flex items-center gap-3 px-5 py-3 text-sm">

@@ -1,4 +1,4 @@
-import { ArrowRight, CreditCard, FolderKanban, Users } from "lucide-react"
+import { ArrowRight, CreditCard, Users } from "lucide-react"
 
 import type { AuditRow } from "@/lib/server/audit"
 import { AUDIT_ACTIONS, type AuditAction } from "@/config/audit"
@@ -15,10 +15,9 @@ const actionText = (action: string) => {
 
 interface OverviewProps {
   userName: string
-  plan: { name: string; projects: number | null; members: number | null }
+  plan: { name: string; members: number | null }
   status: string
   trialDaysLeft: number | null
-  projects: number
   members: number
   recent: AuditRow[] | null
 }
@@ -32,8 +31,8 @@ export function OverviewPanel(props: OverviewProps) {
         description="Here's what's happening in your organization."
         actions={
           <Button asChild>
-            <a href="/app/projects?new=1">
-              New project <ArrowRight />
+            <a href="/app/mail">
+              Open mail <ArrowRight />
             </a>
           </Button>
         }
@@ -57,7 +56,6 @@ export function OverviewPanel(props: OverviewProps) {
         <SectionLabel>{props.plan.name} plan</SectionLabel>
         <TickKpiCard
           metrics={[
-            { label: "Projects", icon: <FolderKanban />, value: props.projects, max: props.plan.projects },
             { label: "Team members", icon: <Users />, value: props.members, max: props.plan.members },
           ].map((m) => ({ ...m, color: usageColor(m.value, m.max) }))}
         />

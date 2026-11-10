@@ -124,8 +124,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 ## AI apps: MCP modules and the ChatGPT app (product)
 
 - `src/mcp/app.ts` lists `appModules` (`McpModule` in `define.ts`: `tools`, `widgets`, one `instructions` line appended to
-  the server's). A new app (files, calendar…) = `src/mcp/<app>.ts` exporting a module + an entry there. The template's
-  projects tools/widget are not served.
+  the server's). A new app (files, calendar…) = `src/mcp/<app>.ts` exporting a module + an entry there.
 - Reading is free on every plan; tools with `scope: "write"` need `mcpAccess` (Pro), checked per call (`needsPlan`).
 - Mail never leaves on the model's word: `mail_draft` (read) returns the draft card widget (`widgets/mail-compose.tsx`),
   whose Send/Undo call `mail_send`/`mail_cancel_send`. Those are `appOnly`: MCP Apps `visibility: ["app"]` for OAuth
@@ -196,8 +195,9 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
   `src/jobs`) and `scheduled()` (daily tasks in `src/jobs/cron.ts`).
 - Bindings and secrets: `import { env } from "cloudflare:workers"`. Types come from
   `worker-configuration.d.ts` (generated, `pnpm cf-types`) plus secrets declared in `src/env.d.ts`.
-- Domain logic lives in `src/lib/server`; API routes and pages call it. `projects.ts` is the
-  example resource showing the full pattern (limit check, audit, queue job, API route).
+- Domain logic lives in `src/lib/server`; API routes and pages call it. `contacts.ts` shows the full pattern (audit,
+  API route, `/api/v1` re-export, MCP module). The template's `projects` example is deleted here: on `template:update`
+  resolve modify/delete conflicts on its files with `git rm`.
 - API routes wrap logic in `handler()`/`manageHandler()` (`lib/server/api.ts`): throw `HttpError`,
   validate with `parseBody(request, schema)` (schemas in `lib/validation.ts`), call `audit()`.
 - `src/middleware.ts` guards `/app` and `/api/app` (session) and `/api/v1` (API keys, rate limit,

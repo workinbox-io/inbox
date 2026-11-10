@@ -127,6 +127,13 @@
       "when": 1794339319145,
       "tag": "0017_signature_footer",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1794340431265,
+      "tag": "0018_regular_energizer",
+      "breakpoints": true
     }
   ]
 }

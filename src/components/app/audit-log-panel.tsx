@@ -93,7 +93,7 @@ export function AuditLogPanel(props: { initial: Page }) {
             })}
           </ul>
         ) : (
-          <p className="text-muted-foreground text-sm">Nothing yet. Changes to projects, API keys and the team show up here.</p>
+          <p className="text-muted-foreground text-sm">Nothing yet. Changes to mail settings, API keys and the team show up here.</p>
         )}
         <div className="flex gap-2">
           {page.nextCursor ? (

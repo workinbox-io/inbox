@@ -14,9 +14,9 @@ export const coreTools: Tools = {
       return {
         organization: { id: orgId, name: org?.name ?? "" },
         role,
-        plan: { id: usage.plan.id, name: usage.plan.name, limits: { projects: usage.plan.projects, members: usage.plan.members } },
+        plan: { id: usage.plan.id, name: usage.plan.name, limits: { members: usage.plan.members } },
         subscription: { status: sub?.status ?? "none", trialEndsAt: sub?.trialEndsAt?.toISOString() ?? null },
-        usage: { projects: usage.projects, members: usage.members },
+        usage: { people: usage.people, members: usage.members },
       };
     },
   }),

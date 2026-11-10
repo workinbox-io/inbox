@@ -45,13 +45,3 @@ export const apiKeySchema = z.object({
   role: z.enum(["admin", "member"]),
 });
 
-// ---------------------------------------------------------------------------
-// Example resource: projects. Replace with your product's schemas.
-// ---------------------------------------------------------------------------
-
-export const projectSchema = z.object({
-  name: z.string().trim().min(1, "Enter a name").max(80, "Up to 80 characters"),
-  description: z.string().trim().max(500, "Up to 500 characters").default(""),
-});
-
-export type ProjectInput = z.output<typeof projectSchema>;

@@ -112,7 +112,7 @@ export function ApiKeysPanel(props: { keys: ApiKeyRow[] }) {
             </DialogHeader>
             <CopyField label="API key" value={created.key} secret />
             <pre className="bg-muted overflow-x-auto rounded-md p-3 font-mono text-xs">
-              {`curl ${window.location.origin}/api/v1/projects \\\n  -H "Authorization: Bearer ${created.key.slice(0, 10)}…"`}
+              {`curl ${window.location.origin}/api/v1/contacts \\\n  -H "Authorization: Bearer ${created.key.slice(0, 10)}…"`}
             </pre>
           </DialogContent>
         </Dialog>

@@ -16,7 +16,6 @@ import {
   ne,
   orgBillingDetails,
   organization,
-  projects,
   session,
   subscriptions,
   user,
@@ -105,15 +104,14 @@ export async function requireFeature(orgId: string, feature: Feature) {
 
 /** What the org uses of its plan limits (Billing page). Add your product's counts here. */
 export async function getOrgUsage(orgId: string) {
-  const [sub, [p], [m], people] = await Promise.all([
+  const [sub, [m], people] = await Promise.all([
     getSubscription(orgId),
-    db.select({ n: count() }).from(projects).where(eq(projects.orgId, orgId)),
     db.select({ n: count() }).from(member).where(eq(member.organizationId, orgId)),
     peopleCount(orgId),
   ]);
   /** `people`: personal mailboxes. `seats`: people billed for (beyond the free ones, at least MIN_SEATS), the subscription's
    *  quantity. */
-  return { plan: planById(sub?.plan), projects: p?.n ?? 0, members: m?.n ?? 0, people, seats: seatsFor(people) };
+  return { plan: planById(sub?.plan), members: m?.n ?? 0, people, seats: seatsFor(people) };
 }
 
 export type OrgUsage = Awaited<ReturnType<typeof getOrgUsage>>;
@@ -226,7 +224,7 @@ const hasLiveSubscription = (sub: { paddleSubscriptionId: string | null; status:
 
 /**
  * Cancels the subscription first (if Paddle refuses, nothing is taken apart yet), then deletes the
- * org; members, keys, invitations, projects and the audit log go with it (on delete cascade).
+ * org; members, keys, invitations, mail and the audit log go with it (on delete cascade).
  */
 export async function deleteOrganization(orgId: string) {
   const sub = await getSubscription(orgId);

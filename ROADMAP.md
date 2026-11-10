@@ -12,9 +12,12 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ Production deploy: Worker `inbox`, D1 `inbox`, R2 `inbox-files`, queue `inbox-jobs`, daily cron
 - ✅ System mail through Email Service (DKIM/SPF/DMARC)
 - ✅ First customer domain wired up: `notelio.pl` (Email Routing catch-all → Worker, Email Sending on)
-- ⬜ `LICENSE` (AGPL-3.0) and a self-hosting guide in the README
-- ⬜ Upstream to the template: the product mail hook in `src/worker.ts` and the Mail tab in `settings-nav.tsx`
-- ⬜ Remove the template's `projects` example
+- ✅ `LICENSE` (AGPL-3.0) and a self-hosting guide (README, `/docs/self-host`)
+- ⬜ Upstream to the template (in the saas-template repo): the org mail hook and notes WebSocket route in
+  `src/worker.ts`, the Mail tab in `settings-nav.tsx`, `ComposeBody` `footer` and `AddressInput` `search` in
+  `components/mail/compose.tsx`; template bugs: hardcoded "Luxivo" sender in `admin-mail/composer.tsx`, `luxivo:`
+  storage keys in `admin-mail/drafts.ts`
+- ✅ Remove the template's `projects` example
 - ✅ App on its own domain: https://workinbox.io, system mail from `noreply@workinbox.io`
 - ✅ Brand: WorkInbox, icon: a robot peeking into a mailbox
 
@@ -57,13 +60,18 @@ Implemented and acceptance:
 - ✅ Collapse the app sidebar on the mail page, so there's one left column like Cron
 - ✅ Public API `/api/v1/mail/*` and MCP tools `mail_search`, `mail_read_thread`, `mail_send`
 - ✅ Bounce and complaint handling; send limits per mailbox and org
+- ✅ HTML signatures: an org template (company, logo, colour) plus each mailbox's card
+- ✅ Drafts on the server (synced between devices), Drafts and Outbox as folders, AI apps' drafts land there
+- ✅ Live unread badge on Mail in the sidebar and app rail
+- ✅ ChatGPT/Claude app: MCP modules, free reading, sending only from the draft card
 
 ## Phase 2: contacts
 
-- ⬜ Personal and shared contacts (emails, phones, notes); the org directory built from members and shared mailboxes
-- ⬜ "Other contacts" collected from sent mail; autocomplete in the composer
-- ⬜ Import/export vCard and CSV (Google Contacts export)
-- ⬜ `/app/contacts`, MCP tools
+- ✅ One team address book (emails, phones, notes, groups; no private contacts by design); the directory read live from
+  members and shared mailboxes
+- ✅ Contacts collected from sent mail; suggestions in the composer, groups add all their addresses
+- ✅ Import/export vCard and CSV (Google Contacts, Outlook)
+- ✅ `/app/contacts`, API, MCP tools, pixel banners with brand colours (Jev)
 
 ## Phase 3: calendar
 
@@ -83,17 +91,18 @@ Implemented and acceptance:
 
 ## Phase 5: hosted cloud and billing
 
-- ⬜ Plans: mailboxes, storage and domains per plan; paid features (custom domain, shared mailboxes, API/MCP)
-- ⬜ Instant `<org>.inbox.app` subdomain on sign-up; custom domain wizard (zone added through the Cloudflare API,
-  status refreshed by cron)
-- ⬜ Sending reputation: limits for new orgs, verification before sending, bounce/complaint reports
+- ✅ Plans per person (Paddle, first person free, seats synced on every mailbox change); API, MCP and audit log paid
+- ✅ Hosted custom domains through Amazon SES (send and receive), "Connect Cloudflare" adds the DNS records
+- ⬜ Instant `<org>.workinbox.io` subdomain on sign-up
+- ✅ Bounce/complaint handling and send limits (phase 1)
+- ⬜ Sending reputation for new orgs: stricter limits and a check before the first sends
 
 ## Phase 6: external clients and more
 
 - ⬜ CardDAV and CalDAV (`/dav/*`, app passwords) for Apple, Thunderbird and DAVx⁵
 - ⬜ Optional IMAP/SMTP gateway (separate container) talking to a sync API on the Worker
 - ⬜ JMAP
-- ⬜ Migration from Gmail (`.mbox` / `.eml` import through the queue)
+- ✅ Migration from Gmail (`.mbox` / `.eml` import through the queue, Gmail labels kept)
 - ⬜ Shared documents (Durable Objects + CRDT)
 
 ## Phase 7: shared notes

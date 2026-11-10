@@ -46,7 +46,7 @@ export function OrgProfileSection({ id, name: initialName, canManage }: { id: st
   }
 
   return (
-    <SettingsSection id="organization" title="Organization" description="The workspace your projects, team and billing belong to.">
+    <SettingsSection id="organization" title="Organization" description="The workspace your mail, team and billing belong to.">
       <div className="grid max-w-xl gap-4">
         {canManage ? (
           <form onSubmit={save} className="grid gap-2">
@@ -217,7 +217,7 @@ export function OrgDangerZone({ orgId, orgName, role, others }: DangerZoneProps)
                 Transfer
               </Button>
             </Row>
-            <Row title="Delete organization" text="Deletes every project, API key and the team. Cancels the subscription.">
+            <Row title="Delete organization" text="Deletes all mail, API keys and the team. Cancels the subscription.">
               <Button variant="destructive" size="sm" onClick={() => setDialog("delete")}>
                 Delete
               </Button>
@@ -268,7 +268,7 @@ function LeaveDialog({ orgId, orgName, onClose }: { orgId: string; orgName: stri
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Leave {orgName}?</DialogTitle>
-          <DialogDescription>You lose access to its projects and settings right away. Your account stays.</DialogDescription>
+          <DialogDescription>You lose access to its mail and settings right away. Your account stays.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
@@ -365,7 +365,7 @@ function DeleteOrgDialog({ orgName, onClose }: { orgName: string; onClose: () =>
           <DialogHeader>
             <DialogTitle>Delete {orgName}?</DialogTitle>
             <DialogDescription>
-              Every project, API key and audit log entry is deleted right away. The subscription is cancelled now, and nobody can
+              All mail, API keys and audit log entries are deleted right away. The subscription is cancelled now, and nobody can
               sign in to this organization any more. This can't be undone.
             </DialogDescription>
           </DialogHeader>

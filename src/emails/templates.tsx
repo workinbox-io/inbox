@@ -99,16 +99,15 @@ export function welcome({ name, trialDays }: { name: string; trialDays: number }
       >
         Welcome to {siteConfig.name}.
       </EmailHeading>
-      {/* Replace with your product's first steps. */}
       <DetailRows
         items={[
-          { label: "1. Create a project", value: "It takes a few seconds" },
-          { label: "2. Invite your team", value: "Settings → Organization" },
-          { label: "3. Connect the API", value: "Settings → API keys" },
+          { label: "1. Add your domain", value: "Settings → Mail" },
+          { label: "2. Add your team", value: "Settings → Mail → Add person" },
+          { label: "3. Open your inbox", value: "Mail" },
         ]}
       />
       <Section style={{ margin: "0 0 20px" }}>
-        <EmailButton href={appUrl("/app/projects")}>Create your first project</EmailButton>
+        <EmailButton href={appUrl("/app/settings/mail")}>Add your domain</EmailButton>
         <EmailButton href={appUrl("/docs/quickstart")} variant="secondary">
           Read the quickstart
         </EmailButton>

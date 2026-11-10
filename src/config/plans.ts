@@ -11,14 +11,13 @@ export interface Plan {
    *  Shared mailboxes and aliases cost nothing. The Paddle quantity is `seatsFor(people)`. */
   priceMonthly: number;
   /** Limits; null = unlimited. Add your own (they're checked with withinLimit). */
-  projects: number | null;
   members: number | null;
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  starter: { id: "starter", name: "Starter", priceMonthly: 100, projects: null, members: null },
-  pro: { id: "pro", name: "Pro", priceMonthly: 250, projects: null, members: null },
-  business: { id: "business", name: "Business", priceMonthly: 500, projects: null, members: null },
+  starter: { id: "starter", name: "Starter", priceMonthly: 100, members: null },
+  pro: { id: "pro", name: "Pro", priceMonthly: 250, members: null },
+  business: { id: "business", name: "Business", priceMonthly: 500, members: null },
 };
 
 export const PLAN_LIST = Object.values(PLANS);
@@ -80,7 +79,7 @@ export function featureUpsell(feature: Feature) {
   return `${FEATURE_LABELS[feature]} is available on the ${list}.`;
 }
 
-export type LimitKind = "projects" | "members";
+export type LimitKind = "members";
 
 /** True when adding `delta` to `used` stays within the plan limit. */
 export function withinLimit(plan: Plan, kind: LimitKind, used: number, delta = 1) {

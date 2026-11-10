@@ -1,5 +1,5 @@
 /**
- * Your product's queue jobs. Enqueue with `enqueue("project.created", { projectId })`.
+ * Your product's queue jobs. Enqueue with `enqueue("mail.send", { id })`.
  * The template never edits this file.
  */
 import type { JobHandlers } from ".";
@@ -15,7 +15,6 @@ export interface AppJobs {
   /** The next batch of a mail import (lib/server/mail/import.ts). */
   "mail.import": { id: string };
   "billing.seats": { orgId: string };
-  "project.created": { projectId: string };
 }
 
 export const appJobs: JobHandlers<AppJobs> = {
@@ -23,8 +22,4 @@ export const appJobs: JobHandlers<AppJobs> = {
   "mail.inbound": (job) => receiveSesMail(job),
   "mail.import": ({ id }) => runImport(id),
   "billing.seats": ({ orgId }) => syncSeats(orgId),
-  "project.created": async ({ projectId }) => {
-    // Example: provision something, call a webhook, send a follow-up e-mail…
-    console.log(`[jobs] project ${projectId} created`);
-  },
 };

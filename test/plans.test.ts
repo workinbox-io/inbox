@@ -8,10 +8,10 @@ describe("plans", () => {
 
   it("checks limits, with null as unlimited", () => {
     // WorkInbox plans have no limits (per-person pricing): check the rule on a plan with one.
-    const limited = { ...PLANS.starter, projects: 3 };
-    expect(withinLimit(limited, "projects", 2)).toBe(true);
-    expect(withinLimit(limited, "projects", 3)).toBe(false);
-    expect(withinLimit(PLANS.business, "projects", 10_000)).toBe(true);
+    const limited = { ...PLANS.starter, members: 3 };
+    expect(withinLimit(limited, "members", 2)).toBe(true);
+    expect(withinLimit(limited, "members", 3)).toBe(false);
+    expect(withinLimit(PLANS.business, "members", 10_000)).toBe(true);
   });
 
   it("gates features by the cheapest plan that has them", () => {

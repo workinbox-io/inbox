@@ -23,7 +23,6 @@ const trialDaysLeft = sub?.trialEndsAt ? Math.ceil((sub.trialEndsAt.getTime() - 
     plan={usage.plan}
     status={sub?.status ?? "trialing"}
     trialDaysLeft={trialDaysLeft}
-    projects={usage.projects}
     members={usage.members}
     recent={audit?.rows ?? null}
   />
