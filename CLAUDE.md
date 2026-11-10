@@ -124,7 +124,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   The first person is free (`FREE_PEOPLE`, `seatsFor`: quantity = people − 1, at least 1 on a paid plan). Sending mail, adding people, mailboxes and domains need an active trial or plan
   only once the org has (or would have) more than one personal mailbox (`requireMailPlan`); shared mailboxes and
   aliases don't count. Receiving and forwarding rules always keep working; API, MCP and audit log stay paid.
-- Open source under AGPL-3.0 (LICENSE), public at github.com/jakub-kalamarz/inbox.
+- Open source under AGPL-3.0 (LICENSE), public at github.com/workinbox-io/inbox.
 - OpenSEO project "WorkInbox" (US/en) holds the keyword research and context.
 
 ## Template
@@ -145,10 +145,10 @@ pnpm db:migrate          # apply migrations to local D1
 ```
 
 Deploy (production, workinbox.io): either GitHub Actions → "Deploy" (`.github/workflows/deploy.yml`, manual only:
-`gh workflow run deploy.yml --ref main -R jakub-kalamarz/inbox`; secrets `CLOUDFLARE_API_TOKEN` and
+`gh workflow run deploy.yml --ref main -R workinbox-io/inbox`; secrets `CLOUDFLARE_API_TOKEN` and
 `CLOUDFLARE_ACCOUNT_ID` in the repo's `production` environment) or locally `pnpm run deploy` (needs `wrangler login`).
 Both build, apply D1 migrations remotely, `wrangler deploy` and ping IndexNow. CI (`ci.yml`) only
-typechecks, tests and builds on every push and PR. `gh` needs `-R jakub-kalamarz/inbox` (two remotes).
+typechecks, tests and builds on every push and PR. `gh` needs `-R workinbox-io/inbox` (two remotes).
 
 E-mails in dev are printed to the dev server log (`astro dev logs`), including verification links.
 Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=17+3+*+*+*"`.

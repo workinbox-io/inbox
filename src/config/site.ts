@@ -16,7 +16,7 @@ export const siteConfig = {
   name: "Work Inbox",
   description: "Open-source team email on your own domain: personal and shared mailboxes, aliases, catch-all and shared notes, on Cloudflare.",
   /** The public code, linked from the self-hosting docs and the footer. */
-  repoUrl: "https://github.com/jakub-kalamarz/inbox",
+  repoUrl: "https://github.com/workinbox-io/inbox",
   /** Production URL, used for canonical links and the sitemap (astro.config.mjs reads it too). */
   url: "https://workinbox.io",
   supportEmail: "support@workinbox.io",

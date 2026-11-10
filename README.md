@@ -23,7 +23,7 @@ Service), every feature on, no billing. Step by step: [workinbox.io/docs/self-ho
 (source: `src/content/docs/self-host.md`).
 
 ```sh
-git clone https://github.com/jakub-kalamarz/inbox.git workinbox && cd workinbox
+git clone https://github.com/workinbox-io/inbox.git workinbox && cd workinbox
 pnpm install && pnpm setup     # creates D1, R2 and the queues
 # set "DEPLOY_MODE": "self" in wrangler.jsonc (billing off, every feature on)
 pnpm deploy                    # build, migrate, deploy

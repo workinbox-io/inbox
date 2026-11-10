@@ -18,7 +18,7 @@ notes stay there, and you pay Cloudflare for what you use. Every feature is on; 
 ## 1. Get the code
 
 ```sh
-git clone https://github.com/jakub-kalamarz/inbox.git workinbox
+git clone https://github.com/workinbox-io/inbox.git workinbox
 cd workinbox
 pnpm install
 ```
