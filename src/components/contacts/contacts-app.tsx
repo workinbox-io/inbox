@@ -29,6 +29,7 @@ import { UserAvatar } from "@/components/app/user-avatar"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
 import { shortDate } from "@/components/mailbox/message-view"
 import { mailboxColor } from "@/components/mailbox/mail-ui"
+import { bannerSeed, PixelBanner } from "./pixel-banner"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -528,15 +529,16 @@ async function copyText(text: string) {
   }
 }
 
-/** Avatar, name and what they do, over a soft tint of the app's colour. */
+/** Avatar (overlapping the pixel banner), name and what they do. */
 function Hero({ seed, title, subtitle, children }: { seed: string; title: string; subtitle?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <section className="relative">
-      <div className="relative flex flex-col items-center gap-4 pt-2 text-center sm:flex-row sm:items-end sm:gap-5 sm:text-left">
-        <span className="bg-background rounded-full p-1 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
+      <div className="relative flex flex-col items-center gap-3 text-center sm:flex-row sm:items-start sm:gap-5 sm:text-left">
+        {/* Overlaps the pixel banner above. */}
+        <span className="bg-background -mt-12 flex shrink-0 rounded-full p-1 shadow-sm ring-1 ring-black/5 md:-mt-14 dark:ring-white/10">
           <UserAvatar seed={seed} size={84} />
         </span>
-        <div className="grid min-w-0 gap-1.5 pb-1">
+        <div className="grid min-w-0 gap-1.5 sm:pt-3">
           <h1 className="truncate text-2xl font-semibold tracking-tight">{title}</h1>
           {subtitle ? <p className="text-muted-foreground flex items-center justify-center gap-1.5 text-sm sm:justify-start">{subtitle}</p> : null}
           {children}
@@ -713,8 +715,8 @@ function ContactPane({
         </div>
       </DetailHeader>
       <div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-56" style={{ background: `linear-gradient(to bottom, ${tint(WORKSPACE_COLORS[0], 9)}, transparent)` }} aria-hidden />
-        <div className="relative mx-auto grid max-w-2xl gap-5 px-4 py-8 md:px-8 md:py-12">
+        <PixelBanner seed={bannerSeed(email ?? contact.name ?? contact.id)} />
+        <div className="relative mx-auto grid max-w-2xl gap-5 px-4 pb-10 md:px-8 md:pb-12">
           <Hero
             seed={email ?? contact.id}
             title={name(contact)}
@@ -793,8 +795,8 @@ function DirectoryPane({ entry, onBack }: { entry: DirectoryEntry; onBack: () =>
         <span className="text-muted-foreground px-2 text-xs">{t("Directory")}</span>
       </DetailHeader>
       <div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-56" style={{ background: `linear-gradient(to bottom, ${tint(WORKSPACE_COLORS[0], 9)}, transparent)` }} aria-hidden />
-        <div className="relative mx-auto grid max-w-2xl gap-5 px-4 py-8 md:px-8 md:py-12">
+        <PixelBanner seed={bannerSeed(entry.email)} />
+        <div className="relative mx-auto grid max-w-2xl gap-5 px-4 pb-10 md:px-8 md:pb-12">
           <Hero
             seed={entry.email}
             title={entry.name || entry.email.split("@")[0]!}
