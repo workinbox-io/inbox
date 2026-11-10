@@ -40,3 +40,11 @@ the ones they're given. Replies go out from the shared address.
 
 Open **Mail** and press `c`, or click **New e-mail**. Pick the mailbox to send from, write, and send. Incoming mail for
 the domain now arrives in the right mailbox.
+
+## 6. Bring your old mail
+
+Export it from the old provider: Google Takeout (choose Mail) gives an `.mbox` file; Outlook, Zoho and most others
+export messages as `.eml` files. In **Settings → Mail → Import mail**, pick the mailbox and the file (or all the
+`.eml` files at once). The upload runs in the browser, the import in the background: messages arrive read, with their
+original dates and threads, your sent mail as sent. From Gmail, what was in the inbox stays in the inbox, the rest is
+archived, spam and trash are left out. Importing the same file again adds nothing twice.

@@ -128,7 +128,7 @@ const faq = [
   },
   {
     question: "Can I bring my old mail from Gmail or Outlook?",
-    answer: "Importing old mail isn't built yet. Point your MX records at Work Inbox and new mail arrives here; keep the old account as an archive for now.",
+    answer: "Yes. Export it (Google Takeout gives an .mbox file; Outlook, Zoho and most others export .eml files) and upload it in Settings → Mail → Import mail. It arrives read, with its dates and threads; Gmail's inbox stays in the inbox and the rest is archived.",
   },
   {
     question: "Where is my mail stored?",
@@ -362,7 +362,6 @@ const jsonLd = [
         <h3 class="mt-10 text-xl">Not yet</h3>
         <ul class="mk-sqlist mt-4 text-lg">
           <li>IMAP for Apple Mail, Outlook or phone apps: the web app installs on phones.</li>
-          <li>Importing old mail from Gmail or Outlook.</li>
           <li>Calendar, contacts and drive: next on the same plans.</li>
         </ul>
         <p class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-lg">

@@ -145,7 +145,16 @@ async function threadCandidates(mailboxId: string, contact: string): Promise<Thr
 /** What handleOrgMail reads of a message: Email Routing's ForwardableEmailMessage, or SES's (ses-inbound.ts). */
 export type IncomingMail = Pick<ForwardableEmailMessage, "to" | "from" | "raw" | "rawSize" | "headers" | "setReject">;
 
-export async function handleOrgMail(message: IncomingMail): Promise<boolean> {
+/** Old mail brought in by an import (import.ts): read, dated from its header, filed as sent when it's from the
+ *  mailbox, no rules, notifications or push. `archived`: it wasn't in the inbox where it came from. */
+export interface ImportedMail {
+  date: Date;
+  archived: boolean;
+  /** Set by handleOrgMail when the mailbox already had the message. */
+  duplicate?: boolean;
+}
+
+export async function handleOrgMail(message: IncomingMail, imported?: ImportedMail): Promise<boolean> {
   const mailbox = await findRecipient(message.to);
   if (!mailbox) return false;
   if (message.rawSize > MAX_RAW_BYTES) {
@@ -161,7 +170,8 @@ export async function handleOrgMail(message: IncomingMail): Promise<boolean> {
   const [from] = addrs(parsed.from);
   const fromEmail = (from?.address ?? message.from).toLowerCase();
   const fromName = senderName(from?.name, fromEmail);
-  const contact = addrs(parsed.replyTo)[0]?.address.toLowerCase() ?? fromEmail;
+  const sent = !!imported && fromEmail === mailbox.address;
+  const contact = sent ? (addrs(parsed.to)[0]?.address.toLowerCase() ?? fromEmail) : (addrs(parsed.replyTo)[0]?.address.toLowerCase() ?? fromEmail);
   const subject = (parsed.subject ?? "").replace(/\s+/g, " ").trim().slice(0, 300);
   const text = mailBodyText(parsed).slice(0, MAX_TEXT_CHARS);
 
@@ -177,8 +187,13 @@ export async function handleOrgMail(message: IncomingMail): Promise<boolean> {
     text,
     fromEmail,
   });
-  const spam = verdict === "block" || (verdict !== "allow" && scored.spam);
+  // Imported mail was filtered where it came from.
+  const spam = !imported && (verdict === "block" || (verdict !== "allow" && scored.spam));
   const reasons = verdict === "block" ? ["Blocked sender"] : verdict === "allow" ? [] : scored.reasons;
+  if (dupe && imported) {
+    imported.duplicate = true;
+    return true;
+  }
   if (dupe) {
     await applyMailFilters(mailbox, dupe.id, message.headers, spam);
     const { recordMailNotifications } = await import("./notifications");
@@ -207,12 +222,18 @@ export async function handleOrgMail(message: IncomingMail): Promise<boolean> {
   await resizeStorageReservation(storedMessageId, raw.byteLength + byteLength(text) + byteLength(html) + stored.reduce((n,f)=>n+f.size,0));
   const files = stored.filter((f) => !f.inline).map(({ url, filename, mediaType, size }) => ({ url, filename, mediaType, size }));
 
-  const now = new Date();
+  const now = imported?.date ?? new Date();
   const { uid, modseq } = await nextUid(mailbox.id);
   // Bounces and auto-replies join a thread but never open one in the inbox on their own.
   const automated = isAutomatedMail(message.headers);
   let threadId = matchThread({ subject, inReplyTo: parsed.inReplyTo, references: parsed.references }, await threadCandidates(mailbox.id, contact));
-  if (threadId) {
+  if (threadId && imported) {
+    // An older message must not move the thread back in time; one that was in the inbox brings the thread there.
+    await db
+      .update(t)
+      .set({ lastMessageAt: sql`max(${t.lastMessageAt}, ${now.getTime()})`, modseq, ...(imported.archived ? {} : { archivedAt: null }) })
+      .where(eq(t.id, threadId));
+  } else if (threadId) {
     await db
       .update(t)
       .set(spam ? { lastMessageAt: now, modseq } : { unread: true, archivedAt: null, trashedAt: null, snoozedUntil: null, lastMessageAt: now, modseq })
@@ -226,8 +247,9 @@ export async function handleOrgMail(message: IncomingMail): Promise<boolean> {
         subject,
         contactEmail: contact,
         contactName: contact === fromEmail ? fromName : null,
-        unread: !automated || spam,
+        unread: !imported && (!automated || spam),
         spam,
+        archivedAt: imported?.archived ? now : null,
         lastMessageAt: now,
         modseq,
       })
@@ -242,7 +264,7 @@ export async function handleOrgMail(message: IncomingMail): Promise<boolean> {
       threadId,
       uid,
       id: storedMessageId,
-      direction: "in",
+      direction: sent ? "out" : "in",
       fromEmail,
       fromName,
       to: addressList(parsed.to),
@@ -267,7 +289,7 @@ export async function handleOrgMail(message: IncomingMail): Promise<boolean> {
     await env.FILES.delete(createdKeys);
     await releaseStorageReservation(storedMessageId);
   }
-  else {
+  else if (!imported) {
     await applyMailFilters(mailbox, storedMessageId, message.headers, spam);
     const { recordMailNotifications } = await import("./notifications");
     await recordMailNotifications(mailbox.orgId, mailbox.id, storedMessageId, threadId);

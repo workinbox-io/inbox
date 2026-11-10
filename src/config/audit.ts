@@ -27,6 +27,7 @@ export const AUDIT_ACTIONS = {
   "mail_domain.add": "Added mail domain",
   "mail_domain.remove": "Removed mail domain",
   "mail_domain.connect_cloudflare": "Added DNS records through Cloudflare",
+  "mail_import.start": "Started a mail import",
   "mail_domain.catch_all": "Changed catch-all mailbox",
   "mail_person.add": "Added a person with a mailbox",
   "mail_person.reset_password": "Reset a mail password",

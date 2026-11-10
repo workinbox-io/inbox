@@ -193,3 +193,32 @@ export const mailSenderRules = sqliteTable(
   },
   (t) => [index("mail_sender_rules_org_idx").on(t.orgId)],
 );
+
+/**
+ * An import of old mail into one mailbox (lib/server/mail/import.ts): the file is uploaded to R2 in parts under
+ * `imports/<org>/<id>`, then the job `mail.import` reads it from `offset` in batches until it's done.
+ */
+export const mailImports = sqliteTable(
+  "mail_imports",
+  {
+    id: id(),
+    orgId: orgRef(),
+    mailboxId: text("mailbox_id")
+      .notNull()
+      .references(() => mailboxes.id, { onDelete: "cascade" }),
+    filename: text("filename").notNull(),
+    size: integer("size").notNull(),
+    /** R2 multipart upload, while uploading. */
+    uploadId: text("upload_id"),
+    status: text("status", { enum: ["uploading", "queued", "running", "done", "failed"] }).notNull().default("uploading"),
+    /** Bytes of the file already read. */
+    offset: integer("offset").notNull().default(0),
+    imported: integer("imported").notNull().default(0),
+    /** Already there, too large, spam or trash. */
+    skipped: integer("skipped").notNull().default(0),
+    error: text("error"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("mail_imports_org_idx").on(t.orgId)],
+);

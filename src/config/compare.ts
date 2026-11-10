@@ -110,7 +110,7 @@ export const COMPETITORS: Competitor[] = [
     ],
     faq: [
       { question: "Can Work Inbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, files and video calls, not yet: calendar, contacts and drive are on the roadmap, and Work Inbox has no video calls." },
-      { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in Work Inbox and replace its MX records with the one Work Inbox lists. New mail then arrives in Work Inbox. Importing old mail isn't built yet." },
+      { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in Work Inbox and replace its MX records with the one Work Inbox lists. New mail then arrives in Work Inbox. Old mail comes along too: upload an export (.mbox or .eml files) in Settings → Mail → Import mail." },
     ],
     sources: [
       "https://workspace.google.com/pricing",
@@ -201,7 +201,7 @@ export const COMPETITORS: Competitor[] = [
     faq: [
       { question: "What does Zoho Mail's free plan include?", answer: "Up to five people on one domain, 5 GB each, the web and mobile apps, without IMAP, POP or ActiveSync. From the sixth person every user moves to a paid plan. Work Inbox is free for five people too, with unlimited shared mailboxes, aliases, a catch-all and shared notes." },
       { question: "How much is Zoho Mail?", answer: "Mail Lite is $1 a person a month (5 GB) or $1.25 (10 GB), Mail Premium $4, both billed yearly only. Workplace Standard is $3 a month yearly or $4 monthly, Professional $6 or $7. Work Inbox Starter is €1 a person billed monthly, the first five people free, at least five billed." },
-      { question: "Can I move from Zoho Mail to Work Inbox?", answer: "Yes: add your domain in Work Inbox and point its MX records at the new records Work Inbox lists. New mail then arrives in Work Inbox. Importing old mail isn't built yet." },
+      { question: "Can I move from Zoho Mail to Work Inbox?", answer: "Yes: add your domain in Work Inbox and point its MX records at the new records Work Inbox lists. New mail then arrives in Work Inbox. Old mail comes along too: upload an export (.mbox or .eml files) in Settings → Mail → Import mail." },
     ],
     sources: [
       "https://www.zoho.com/workplace/pricing.html",

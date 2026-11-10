@@ -4,6 +4,7 @@ import { AtSign, CheckCircle2, Globe, Inbox, KeyRound, Plus, RefreshCw, UserPlus
 import { toast } from "@yusufceng1z/ding-react"
 
 import { StorageSettings } from "./storage-settings"
+import { MailImport } from "./mail-import"
 import type { DnsRecord } from "@/lib/mail/rules"
 import { api } from "@/lib/api-client"
 import { tapllEvent } from "@/lib/tapll"
@@ -69,6 +70,7 @@ export function MailSettings(props: { initial: MailSetup }) {
       <MailboxesSection setup={setup} act={act} refresh={refresh} />
       <AliasesSection setup={setup} act={act} />
       <StorageSettings mailboxes={setup.mailboxes} />
+      <MailImport mailboxes={setup.mailboxes} />
     </div>
   )
 }

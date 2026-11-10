@@ -18,6 +18,10 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   S3 → SNS → `/api/ses/webhook` → job `mail.inbound` → `handleOrgMail`. Setup and runbook: `docs/ses.md`,
   `scripts/ses-setup.sh`. Self-hosted, our subdomains and older domains stay `cloudflare`. "Connect Cloudflare"
   (`connectCloudflare`, action `domain.connectCloudflare`) adds an `ses` domain's records with a one-time API token.
+- Import (Settings → Mail → Import mail, owners/admins): .mbox or .eml files (joined into one mbox in the browser)
+  uploaded to R2 in 10 MB parts (`/api/app/mail/imports`), then job `mail.import` (`lib/server/mail/import.ts`, pure
+  parser `lib/mail/mbox.ts`) feeds batches of 40 to `handleOrgMail(…, imported)`: read, dated from the header, sent
+  when from the mailbox, Gmail labels place it, no rules or notifications, duplicates skipped by Message-ID.
 - Access: `lib/server/mail/access.ts` (`viewerMailboxes`): own personal mailbox, shared ones granted in
   `mailbox_access`, all shared ones for owners/admins. Every mail query is scoped to that list.
 - UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search
@@ -140,7 +144,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   before editing, keep "pick them if" and our gaps honest). `/llms.txt` is generated from `config/plans.ts` and
   `compare.ts` (`lib/llms.ts`): update it with every shipped feature, like Luxivo's feature rollout (landing, `/vs` row,
   `llms.txt`, docs, footer).
-- Claim only what ships: no IMAP, no import, calendar/contacts/drive are "Soon".
+- Claim only what ships: no IMAP, calendar/drive are "Soon". Import is .mbox/.eml upload only (no IMAP import).
 - Billing (workinbox.io runs `DEPLOY_MODE=cloud`, PADDLE_ENV production; self-hosters set `self`): per person = personal
   mailboxes (`lib/server/seats.ts`). Checkout sells that quantity; adding/removing/converting a personal mailbox calls
   `seatsChanged` → job `billing.seats` → PATCH the Paddle subscription (prorated next period); a daily task reconciles.
