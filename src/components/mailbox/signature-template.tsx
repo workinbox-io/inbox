@@ -8,6 +8,7 @@ import { isImageType } from "@/lib/uploads"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { SettingsSection } from "@/components/app/settings-section"
 import { uploadWithProgress } from "@/components/uploads/attachments"
 
@@ -48,7 +49,7 @@ export function SignatureTemplate({ initial, onSaved }: { initial: SignatureBran
       setSaving(false)
     }
   }
-  const preview = signaturePreview(SAMPLE, brand)
+  const preview = signaturePreview(SAMPLE, brand, "anna@" + (brand.website.replace(/^https?:\/\//, "").split("/")[0] || "acme.com"))
   return (
     <SettingsSection
       title="Signature template"
@@ -92,6 +93,18 @@ export function SignatureTemplate({ initial, onSaved }: { initial: SignatureBran
               ) : null}
             </div>
           </div>
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="brand-footer">Footer</Label>
+          <Textarea
+            id="brand-footer"
+            className="min-h-20 text-xs"
+            value={brand.footer}
+            maxLength={1000}
+            placeholder={"Acme sp. z o.o., ul. Prosta 1, 00-001 Warszawa · KRS 0000123456 · NIP 1234567890\nThis message may be confidential. If it reached you by mistake, please tell the sender and delete it."}
+            onChange={(e) => set({ footer: e.target.value })}
+          />
+          <p className="text-muted-foreground text-xs">Small print under everyone's signature: company details, a confidentiality notice.</p>
         </div>
         <div className="grid gap-1.5">
           <span className="text-muted-foreground text-xs">Preview with a sample person</span>

@@ -143,7 +143,7 @@ export async function connectCloudflare(orgId: string, domainId: string, token: 
 /** The org's signature template (company, website, logo, colour), empty until an admin sets it. */
 export async function getSignatureBrand(orgId: string): Promise<SignatureBrand> {
   const [row] = await db.select().from(mailSignatureBrands).where(eq(mailSignatureBrands.orgId, orgId));
-  return row ? { company: row.company, website: row.website, logoUrl: row.logoUrl, color: row.color } : EMPTY_BRAND;
+  return row ? { company: row.company, website: row.website, logoUrl: row.logoUrl, color: row.color, footer: row.footer } : EMPTY_BRAND;
 }
 
 export async function setSignatureBrand(orgId: string, brand: Partial<SignatureBrand>) {

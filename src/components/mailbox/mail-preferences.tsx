@@ -202,7 +202,7 @@ function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: st
   const [form, setForm] = React.useState(saved)
   const [saving, setSaving] = React.useState(false)
   const changed = JSON.stringify(form) !== JSON.stringify(saved)
-  const preview = signaturePreview({ signature: form.note, name: current?.name, card: form }, brand)
+  const preview = signaturePreview({ signature: form.note, name: current?.name, card: form }, brand, mailbox)
   async function save() {
     setSaving(true)
     try {

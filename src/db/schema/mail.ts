@@ -234,6 +234,8 @@ export const mailSignatureBrands = sqliteTable("mail_signature_brands", {
   website: text("website").notNull().default(""),
   logoUrl: text("logo_url").notNull().default(""),
   color: text("color").notNull().default(""),
+  /** Small print under every signature: company details, a confidentiality notice. */
+  footer: text("footer").notNull().default(""),
   updatedAt: updatedAt(),
 });
 

@@ -1,0 +1,1 @@
+ALTER TABLE `mail_signature_brands` ADD `footer` text DEFAULT '' NOT NULL;

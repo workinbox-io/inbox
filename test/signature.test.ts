@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { EMPTY_BRAND, EMPTY_CARD, cleanBrand, renderSignature, websiteUrl } from "../src/lib/mail/signature";
 
-const card = { name: "Anna Kowalska", role: "Head of Support", phone: "+48 600 100 200", note: "" };
-const brand = { company: "Acme", website: "acme.com", logoUrl: "/api/files/attachments/org1/abcdefghijklmnop/logo.png", color: "#E5484D" };
+const card = { name: "Anna Kowalska", role: "Head of Support", phone: "+48 600 100 200", note: "", email: "anna@acme.com" };
+const brand = { company: "Acme", website: "acme.com", logoUrl: "/api/files/attachments/org1/abcdefghijklmnop/logo.png", color: "#E5484D", footer: "Acme sp. z o.o., KRS 0000123456" };
 
 describe("signature", () => {
   it("renders text and HTML with the brand", () => {
     const sig = renderSignature(card, brand, "https://workinbox.io")!;
-    expect(sig.text).toBe("Anna Kowalska\nHead of Support · Acme\n+48 600 100 200\nacme.com");
+    expect(sig.text).toBe("Anna Kowalska\nHead of Support · Acme\n+48 600 100 200\nanna@acme.com\nacme.com\n\nAcme sp. z o.o., KRS 0000123456");
+    expect(sig.html).toContain('src="https://workinbox.io/email/sig-phone.png"');
+    expect(sig.html).toContain('href="mailto:anna@acme.com"');
+    expect(sig.html).toContain("KRS 0000123456");
     expect(sig.html).toContain('src="https://workinbox.io/api/files/attachments/org1/abcdefghijklmnop/logo.png"');
     expect(sig.html).toContain('href="https://acme.com/"');
     expect(sig.html).toContain('href="tel:+48600100200"');
@@ -23,10 +26,11 @@ describe("signature", () => {
     expect(badge.html).toContain("background:#e5484d");
   });
   it("drops invalid brand values and renders nothing when empty", () => {
-    expect(cleanBrand({ color: "red", website: "javascript:alert(1)", logoUrl: "https://evil.example/x.png" })).toEqual({ company: "", website: "", logoUrl: "", color: "" });
+    expect(cleanBrand({ color: "red", website: "javascript:alert(1)", logoUrl: "https://evil.example/x.png" })).toEqual({ company: "", website: "", logoUrl: "", color: "", footer: "" });
     expect(websiteUrl("http://acme.com/team")).toBe("http://acme.com/team");
     expect(websiteUrl("localhost")).toBe("");
     expect(renderSignature(EMPTY_CARD, { ...EMPTY_BRAND, color: "#000000" }, "https://a.b")).toBeNull();
     expect(renderSignature(EMPTY_CARD, { ...EMPTY_BRAND, company: "Acme" }, "https://a.b")!.text).toBe("Acme");
+    expect(renderSignature(EMPTY_CARD, { ...EMPTY_BRAND, footer: "Confidential" }, "https://a.b")!.text).toBe("Confidential");
   });
 });

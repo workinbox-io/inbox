@@ -481,7 +481,7 @@ export function ComposeWindow({
         senderNames={Object.fromEntries(Object.entries(signatures).map(([m, s]) => [m, s.name ?? ""]))}
         showSubject
         autoFocusTo={!draft.to.length}
-        signatureHtml={signaturePreview(signatures[draft.from], signatureBrand)}
+        signatureHtml={signaturePreview(signatures[draft.from], signatureBrand, draft.from)}
         onSend={send}
         onDiscard={discard}
       />

@@ -537,7 +537,7 @@ export function MailboxApp(props: MailboxAppProps) {
         mailboxes={props.mailboxes}
         multipleMailboxes={multiple}
         contacts={contacts}
-        signatureHtml={signaturePreview(signatures[detail.thread.mailbox], props.signatureBrand)}
+        signatureHtml={signaturePreview(signatures[detail.thread.mailbox], props.signatureBrand, detail.thread.mailbox)}
         schedule={schedule}
         onPatch={(change) => patch([detail.thread.id], change)}
         onDelete={() => remove([detail.thread.id])}
