@@ -1,9 +1,15 @@
 {
-  "id": "/app/mail", "name": "WorkInbox", "short_name": "WorkInbox",
+  "id": "/app/mail", "name": "Work Inbox", "short_name": "Work Inbox",
+  "description": "Your team's email on your own domain, with shared mailboxes and notes.",
   "start_url": "/app/mail", "scope": "/app/", "display": "standalone",
-  "background_color": "#000000", "theme_color": "#ffffff",
+  "background_color": "#141414", "theme_color": "#ffffff",
   "icons": [
-    { "src": "/mail-icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/mail-icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/mail-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/mail-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/mail-icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/mail-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "/marketing/mail-thread.webp", "sizes": "2880x1800", "type": "image/webp", "form_factor": "wide", "label": "The inbox with an open message" }
   ]
 }

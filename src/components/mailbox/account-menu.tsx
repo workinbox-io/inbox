@@ -1,7 +1,8 @@
 import * as React from "react"
-import { ChevronsUpDown, KeyRound, LayoutDashboard, LogOut, Monitor, Moon, PenLine, Settings, Sun } from "lucide-react"
+import { ChevronsUpDown, Download, KeyRound, LayoutDashboard, LogOut, Monitor, Moon, PenLine, Settings, Sun } from "lucide-react"
 
 import { authClient } from "@/lib/auth-client"
+import { tapllEvent } from "@/lib/tapll"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { PreferenceSection } from "./mail-preferences"
 import { UserAvatar } from "@/components/app/user-avatar"
@@ -9,6 +10,31 @@ import { UserAvatar } from "@/components/app/user-avatar"
 export interface MailUser {
   name: string
   email: string
+}
+
+/** Chrome's and Edge's install prompt (beforeinstallprompt). It fires once, early, so it's caught at module load. */
+type InstallPrompt = Event & { prompt(): Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> }
+let installPrompt: InstallPrompt | null = null
+const installListeners = new Set<() => void>()
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault()
+    installPrompt = e as InstallPrompt
+    installListeners.forEach((l) => l())
+  })
+  window.addEventListener("appinstalled", () => {
+    installPrompt = null
+    installListeners.forEach((l) => l())
+  })
+}
+
+/** The pending install prompt, or null when the browser has none (already installed, Safari, Firefox). */
+function useInstallPrompt() {
+  return React.useSyncExternalStore(
+    (l) => (installListeners.add(l), () => installListeners.delete(l)),
+    () => installPrompt,
+    () => null,
+  )
 }
 
 /** Owners and admins: switch between the user view and the admin dashboard, staying in the same app. */
@@ -21,6 +47,7 @@ export function switchView(to: "user" | "admin") {
  * `compact` is the avatar alone, for the phone layout's list header.
  */
 export function AccountMenu({ user, onSettings, compact = false, canManage = false }: { user: MailUser; onSettings?: (section?: PreferenceSection) => void; compact?: boolean; canManage?: boolean }) {
+  const install = useInstallPrompt()
   return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -78,6 +105,17 @@ export function AccountMenu({ user, onSettings, compact = false, canManage = fal
             <Moon className="hidden in-data-[theme-mode=dark]:block" />
             Theme
           </DropdownMenuItem>
+          {install ? (
+            <DropdownMenuItem
+              onSelect={async () => {
+                tapllEvent("app_install_started")
+                await install.prompt()
+                tapllEvent((await install.userChoice).outcome === "accepted" ? "app_installed" : "app_install_dismissed")
+              }}
+            >
+              <Download /> Install app
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={async () => {

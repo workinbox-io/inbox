@@ -14,6 +14,9 @@ export const TAPLL_EVENTS = {
   checkout_started: ["checkout", "start"],
   checkout_completed: ["checkout", "success"],
   checkout_failed: ["checkout", "failure"],
+  app_install_started: ["app_install", "start"],
+  app_installed: ["app_install", "success"],
+  app_install_dismissed: ["app_install", "failure"],
 } as const;
 
 export function tapllEvent(event: keyof typeof TAPLL_EVENTS, properties?: Record<string, string | number | boolean>) {

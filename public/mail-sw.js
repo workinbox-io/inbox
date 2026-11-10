@@ -11,7 +11,7 @@ self.addEventListener("push", event => {
       const query = new URLSearchParams({ threadId: data.threadId || "", userId: data.userId || "" });
       const response = await fetch("/api/app/mail/push?" + query, { credentials: "include", cache: "no-store" });
       if (!response.ok || !(await response.json()).allowed) return;
-      await self.registration.showNotification("New mail", { body: "Open WorkInbox to read your message.", icon: "/mail-icon-192.png", tag: "workinbox-mail", data: { url } });
+      await self.registration.showNotification("New mail", { body: "Open Work Inbox to read your message.", icon: "/mail-icon-192.png", tag: "workinbox-mail", data: { url } });
     } catch {}
   })());
 });

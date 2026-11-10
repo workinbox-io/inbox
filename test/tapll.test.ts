@@ -11,7 +11,7 @@ it("sends the approved event roles through the pre-load command queue", () => {
     tapllEvent(event as keyof typeof TAPLL_EVENTS, { reason: "request_failed" });
     expect(calls.at(-1)).toEqual(["track", event, { reason: "request_failed" }, { feature, role }]);
   }
-  expect(calls).toHaveLength(15);
+  expect(calls).toHaveLength(18);
 });
 
 it("does not interrupt actions when analytics is absent or throws", () => {
