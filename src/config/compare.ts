@@ -4,6 +4,9 @@
  * changing a page. Keep "pick them if" honest, and keep our gaps (no IMAP, no calendar yet) in the table: a comparison
  * that hides the other side's strengths, or ours' weaknesses, doesn't convert and doesn't get cited.
  */
+import { FREE_PEOPLE, MIN_SEATS, PLAN_LIST, PLANS, amount } from "./plans";
+
+const eur = (cents: number) => `€${amount(cents)}`;
 
 /** How a product covers a row: included, limited, missing, coming, or just a fact ("info"). */
 export type CellStatus = "yes" | "partial" | "no" | "soon" | "info";
@@ -33,8 +36,10 @@ export const ROW_LABELS: Record<RowKey, string> = {
 
 /** Our side of every table. */
 export const OURS: Record<RowKey, Cell> = {
-  price: info("€3 / €6 / €10 a month (Starter, Pro, Business), first person free; self-hosted free"),
-  trial: yes("Free for one person; 14-day trial for teams, no card. Self-hosting free for good"),
+  price: info(
+    `${PLAN_LIST.map((p) => eur(p.priceMonthly)).join(" / ")} a month (${PLAN_LIST.map((p) => p.name).join(", ")}), billed monthly; first ${FREE_PEOPLE} people free, at least ${MIN_SEATS} billed; self-hosted free`,
+  ),
+  trial: yes(`Free for up to ${FREE_PEOPLE} people; 14-day trial for teams, no card. Self-hosting free for good`),
   shared: yes("Unlimited on every plan, no licence per mailbox"),
   aliases: yes("Unlimited aliases, catch-all per domain, plus addressing"),
   notes: yes("Shared notes with live editing, checklists, tables, @mentions"),
@@ -95,7 +100,7 @@ export const COMPETITORS: Competitor[] = [
     },
     whyUs: [
       "Shared mailboxes are real mailboxes, free on every plan, not Groups set up as an inbox.",
-      "Free for one person, then from €3 a person, or free on your own Cloudflare account.",
+      `Free for up to ${FREE_PEOPLE} people, then from ${eur(PLANS.starter.priceMonthly)} a person, or free on your own Cloudflare account.`,
       "Open source: you can read the code that handles your mail.",
     ],
     pickThemIf: [
@@ -140,7 +145,7 @@ export const COMPETITORS: Competitor[] = [
       suite: yes("Outlook calendar and contacts, OneDrive, Teams"),
     },
     whyUs: [
-      "No annual commitment needed, and prices from €3 a person.",
+      `No annual commitment needed, free for up to ${FREE_PEOPLE} people, then from ${eur(PLANS.starter.priceMonthly)} a person.`,
       "Shared mailboxes with no size or member caps to plan around.",
       "Open source and self-hostable on Cloudflare.",
     ],
@@ -164,8 +169,8 @@ export const COMPETITORS: Competitor[] = [
     logo: "/logos/zoho-mail.png",
     tagline: "A Zoho Mail alternative you can self-host",
     intro:
-      "Zoho Mail and Zoho Workplace are the budget choice, with a free plan for five people. Work Inbox is priced close to Workplace, adds live shared notes in the same app, and can run on your own Cloudflare account.",
-    checked: CHECKED,
+      `Zoho Mail and Zoho Workplace are the budget choice, with a free plan for five people. Work Inbox is free for five people too, with shared mailboxes, aliases and live notes in the free plan, then ${eur(PLANS.starter.priceMonthly)} a person billed monthly, and can run on your own Cloudflare account.`,
+    checked: "2026-11-10",
     entry: { plan: "Mail Lite", usd: 1 },
     theirPricing: [
       "Mail Free: up to 5 people and one domain, 5 GB each, no IMAP",
@@ -184,16 +189,20 @@ export const COMPETITORS: Competitor[] = [
       suite: yes("Calendar, contacts, WorkDrive, Meeting, Cliq"),
     },
     whyUs: [
+      `Free for ${FREE_PEOPLE} like Zoho Mail Free, with shared mailboxes, aliases and notes included; then ${eur(PLANS.starter.priceMonthly)} a person, billed monthly, no yearly commitment.`,
       "Open source, and free on your own Cloudflare account.",
-      "Unlimited aliases and shared mailboxes.",
       "Mail and live notes in one app with one search.",
     ],
     pickThemIf: [
-      "Price is what matters most: Zoho is free for up to five people.",
       "You want a whole suite (drive, chat, meetings) from one vendor today.",
-      "You need IMAP or mobile apps now.",
+      "You need IMAP or mobile apps now (on Zoho's paid plans).",
+      "You pay yearly anyway and only need mail: Mail Lite at $1 a person is cheaper for big teams.",
     ],
-    faq: [],
+    faq: [
+      { question: "What does Zoho Mail's free plan include?", answer: "Up to five people on one domain, 5 GB each, the web and mobile apps, without IMAP, POP or ActiveSync. From the sixth person every user moves to a paid plan. Work Inbox is free for five people too, with unlimited shared mailboxes, aliases, a catch-all and shared notes." },
+      { question: "How much is Zoho Mail?", answer: "Mail Lite is $1 a person a month (5 GB) or $1.25 (10 GB), Mail Premium $4, both billed yearly only. Workplace Standard is $3 a month yearly or $4 monthly, Professional $6 or $7. Work Inbox Starter is €1 a person billed monthly, the first five people free, at least five billed." },
+      { question: "Can I move from Zoho Mail to Work Inbox?", answer: "Yes: add your domain in Work Inbox and point its MX records at the new records Work Inbox lists. New mail then arrives in Work Inbox. Importing old mail isn't built yet." },
+    ],
     sources: [
       "https://www.zoho.com/workplace/pricing.html",
       "https://www.zoho.com/mail/zohomail-pricing.html",
@@ -297,7 +306,7 @@ export const COMPETITORS: Competitor[] = [
     whyUs: [
       "Mail included: no separate mail server to install and keep running.",
       "Runs on Cloudflare's network, not on a server you patch.",
-      "Hosted plans for teams of any size, from one person.",
+      `Hosted plans for teams of any size, free for up to ${FREE_PEOPLE} people.`,
     ],
     pickThemIf: [
       "You need files, calendar and office documents on your own servers.",

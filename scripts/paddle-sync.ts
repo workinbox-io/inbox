@@ -1,7 +1,7 @@
 // Creates one Paddle Product per plan with monthly + yearly Prices tagged `custom_data: { product, plan, interval }`.
 // A Price whose amount changed is archived and replaced, so existing subscribers keep their price.
 // Usage: pnpm paddle:sync   (reads PADDLE_API_KEY and PADDLE_ENV from .dev.vars)
-import { CURRENCY, PADDLE_PRODUCT, PLAN_LIST, priceYearly } from "../src/config/plans.ts";
+import { CURRENCY, MIN_SEATS, PADDLE_PRODUCT, PLAN_LIST, priceYearly } from "../src/config/plans.ts";
 import { siteConfig } from "../src/config/site.ts";
 
 const base = process.env.PADDLE_ENV === "production" ? "https://api.paddle.com" : "https://sandbox-api.paddle.com";
@@ -46,8 +46,8 @@ for (const plan of PLAN_LIST) {
       billing_cycle: { interval, frequency: 1 },
       // Prices are quoted without VAT; Paddle adds it at checkout.
       tax_mode: "external",
-      // Per person: the quantity is the org's personal mailboxes (lib/server/seats.ts sets it).
-      quantity: { minimum: 1, maximum: 10000 },
+      // Per person: the quantity is seatsFor(people) (config/plans.ts), never below MIN_SEATS.
+      quantity: { minimum: MIN_SEATS, maximum: 10000 },
       custom_data: { product: PADDLE_PRODUCT, plan: plan.id, interval },
     });
     if (existing) await paddle("PATCH", `/prices/${existing.id}`, { status: "archived" });

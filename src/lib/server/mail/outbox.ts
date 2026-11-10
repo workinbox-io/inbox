@@ -55,7 +55,7 @@ async function copyQueuedFiles(payload: typeof mailOutbox.$inferSelect.payload, 
 
 export async function queueMailSend(input: SendInput, boxes: Mailbox[], fallbackName: string, options: SendOptions = {}) {
   const { mailbox, payload } = await prepareMailSend(input, boxes, fallbackName);
-  // Hosted: sending is free for one person, a team needs a trial or a plan; forwarding rules keep running so incoming
+  // Hosted: sending is free for up to FREE_PEOPLE people, a team needs a trial or a plan; forwarding rules keep running so incoming
   // mail still reaches people.
   if (!input.automatedForward) await requireMailPlan(mailbox.orgId);
   if (!options.actorUserId && !options.apiKeyId && !input.automatedForward) options.actorUserId = mailbox.userId ?? undefined;

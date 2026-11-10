@@ -1,7 +1,7 @@
 import * as React from "react"
 import { Check, ExternalLink, Users } from "lucide-react"
 import { toast } from "sonner"
-import { CURRENCY, PLAN_LIST, priceYearly } from "@/config/plans"
+import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, priceYearly } from "@/config/plans"
 
 import type { OrgUsage } from "@/lib/server/org"
 import { api } from "@/lib/api-client"
@@ -114,15 +114,15 @@ export function BillingPanel(props: BillingPanelProps) {
           <div className="text-right">
             <div className="text-5xl font-medium tracking-tight tabular-nums">{money(usage.plan.priceMonthly * usage.seats)}</div>
             <div className="text-muted-foreground text-sm">
-              {money(usage.plan.priceMonthly)} × {usage.seats} {usage.seats === 1 ? "person" : "people"}
-              {usage.people > 1 ? " (the first person is free)" : ""}
+              {money(usage.plan.priceMonthly)} × {usage.seats} people
+              {usage.seats === MIN_SEATS ? ` (covers up to ${FREE_PEOPLE + MIN_SEATS} people)` : ` (the first ${FREE_PEOPLE} are free)`}
               {status === "trialing" && usage.plan.priceMonthly > 0 ? " a month after the trial" : " a month"}
             </div>
           </div>
         </div>
         <TickKpiCard
           metrics={[
-            { label: "People (personal mailboxes, the first is free)", icon: <Users />, value: usage.people, max: null },
+            { label: `People (personal mailboxes, the first ${FREE_PEOPLE} are free)`, icon: <Users />, value: usage.people, max: null },
             { label: "People billed", icon: <Users />, value: usage.seats, max: null },
             { label: "Team members", icon: <Users />, value: usage.members, max: usage.plan.members },
           ].map((m) => ({ ...m, color: usageColor(m.value, m.max) }))}
@@ -134,7 +134,7 @@ export function BillingPanel(props: BillingPanelProps) {
           <CardHeader className="pb-4">
             <CardTitle>Choose a plan</CardTitle>
             <CardDescription>
-              Prices in {CURRENCY} per person (personal mailbox), excluding VAT. Shared mailboxes and aliases are free.
+              Prices in {CURRENCY} per person (personal mailbox), excluding VAT, at least {MIN_SEATS} billed. Shared mailboxes and aliases are free.
             </CardDescription>
             <CardAction>
               <PeriodTabs
@@ -154,7 +154,7 @@ export function BillingPanel(props: BillingPanelProps) {
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="pl-7">Plan</TableHead>
                   <TableHead className="text-right">Per person</TableHead>
-                  <TableHead className="text-right">For {usage.seats} billed {usage.seats === 1 ? "person" : "people"}</TableHead>
+                  <TableHead className="text-right">For {usage.seats} billed people</TableHead>
                   <TableHead className="w-40 pr-7" />
                 </TableRow>
               </TableHeader>

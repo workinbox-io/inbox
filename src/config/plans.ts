@@ -8,8 +8,7 @@ export interface Plan {
   id: PlanId;
   name: string;
   /** Monthly price per person (a personal mailbox) in EUR cents. Yearly = 10× monthly (2 months free).
-   *  Shared mailboxes and aliases cost nothing. Paddle checkout still sells quantity 1: per-person billing
-   *  (quantity = people on the org's domains) is the next billing change. */
+   *  Shared mailboxes and aliases cost nothing. The Paddle quantity is `seatsFor(people)`. */
   priceMonthly: number;
   /** Limits; null = unlimited. Add your own (they're checked with withinLimit). */
   projects: number | null;
@@ -17,9 +16,9 @@ export interface Plan {
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  starter: { id: "starter", name: "Starter", priceMonthly: 300, projects: null, members: null },
-  pro: { id: "pro", name: "Pro", priceMonthly: 600, projects: null, members: null },
-  business: { id: "business", name: "Business", priceMonthly: 1000, projects: null, members: null },
+  starter: { id: "starter", name: "Starter", priceMonthly: 100, projects: null, members: null },
+  pro: { id: "pro", name: "Pro", priceMonthly: 250, projects: null, members: null },
+  business: { id: "business", name: "Business", priceMonthly: 500, projects: null, members: null },
 };
 
 export const PLAN_LIST = Object.values(PLANS);
@@ -32,7 +31,14 @@ export const PADDLE_PRODUCT = "workinbox";
 export const TRIAL_DAYS = 14;
 /** Free tier: an org with this many people (personal mailboxes) or fewer uses mail without a plan, after the trial
  *  too. Shared mailboxes and aliases don't count; paid features (API, MCP, audit log) still need a plan. */
-export const FREE_PEOPLE = 1;
+export const FREE_PEOPLE = 5;
+/** Every plan charges for at least this many seats (Starter: €5 a month covers up to FREE_PEOPLE + MIN_SEATS people),
+ *  so Paddle's per-transaction fee doesn't eat a one-euro charge. */
+export const MIN_SEATS = 5;
+
+/** Seats a plan charges for: people beyond the free ones, at least MIN_SEATS (also when a smaller org buys a plan
+ *  for its paid features: API, MCP, audit log). The Paddle subscription's quantity. */
+export const seatsFor = (people: number) => Math.max(MIN_SEATS, people - FREE_PEOPLE);
 /** New organizations start a trial of this plan, without a card. */
 export const TRIAL_PLAN: PlanId = "pro";
 export const POPULAR_PLAN: PlanId = "pro";
@@ -41,6 +47,9 @@ export const POPULAR_PLAN: PlanId = "pro";
 export const planById = (id: string | null | undefined): Plan => PLANS[id as PlanId] ?? PLANS.starter;
 
 export const priceYearly = (plan: Plan) => plan.priceMonthly * 10;
+
+/** 100 → "1", 250 → "2.50": a price in cents for text. */
+export const amount = (cents: number) => (cents / 100).toFixed(cents % 100 ? 2 : 0);
 
 export type BillingInterval = "month" | "year";
 
@@ -103,7 +112,7 @@ export function planFeatures(plan: Plan): PlanFeature[] {
   return EXTRAS[plan.id];
 }
 
-/** "€3 per person a month": the unit shown next to every price. */
+/** "€1 per person a month": the unit shown next to every price. */
 export const PRICE_UNIT = "per person / month";
-/** Shown with every price: the free first person (FREE_PEOPLE). */
-export const FREE_NOTE = "First person free";
+/** Shown with every price: the free people (FREE_PEOPLE). */
+export const FREE_NOTE = `Free for up to ${FREE_PEOPLE} people`;

@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { FREE_PEOPLE, TRIAL_DAYS, TRIAL_PLAN, featureUpsell, hasFeature, planById, type Feature } from "@/config/plans";
+import { FREE_PEOPLE, TRIAL_DAYS, seatsFor, TRIAL_PLAN, featureUpsell, hasFeature, planById, type Feature } from "@/config/plans";
 import type { BillingDetails } from "@/lib/validation";
 import {
   and,
@@ -24,7 +24,7 @@ import {
 import { HttpError } from "./api";
 import { subscriptionUsable } from "./billing";
 import { cancelSubscription } from "./paddle";
-import { peopleCount, seatsFor } from "./seats";
+import { peopleCount } from "./seats";
 
 export class OrgError extends Error {
   constructor(message: string) {
@@ -91,8 +91,8 @@ export async function requireMailPlan(orgId: string, addingPeople = 0) {
   throw new HttpError(
     402,
     sub?.status === "trialing" || !sub
-      ? "Your trial has ended. One person is free; choose a plan to add more people or keep mailing as a team."
-      : "Your subscription is inactive. One person is free; choose a plan to add more people or keep mailing as a team.",
+      ? `Your trial has ended. Up to ${FREE_PEOPLE} people are free; choose a plan to add more people or keep mailing as a team.`
+      : `Your subscription is inactive. Up to ${FREE_PEOPLE} people are free; choose a plan to add more people or keep mailing as a team.`,
   );
 }
 
@@ -111,7 +111,7 @@ export async function getOrgUsage(orgId: string) {
     db.select({ n: count() }).from(member).where(eq(member.organizationId, orgId)),
     peopleCount(orgId),
   ]);
-  /** `people`: personal mailboxes. `seats`: people billed for (the first is free, at least one), the subscription's
+  /** `people`: personal mailboxes. `seats`: people billed for (beyond the free ones, at least MIN_SEATS), the subscription's
    *  quantity. */
   return { plan: planById(sub?.plan), projects: p?.n ?? 0, members: m?.n ?? 0, people, seats: seatsFor(people) };
 }

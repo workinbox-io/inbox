@@ -3,12 +3,12 @@ title: Quickstart
 description: From sign-up to mail on your own domain.
 section: Getting started
 order: 2
-updated: 2026-11-09
+updated: 2026-11-10
 ---
 
 ## 1. Create an account
 
-[Sign up](/signup) with your email or Google. Every hosted account starts with a free trial, no card needed, and one person stays free after it.
+[Sign up](/signup) with your email or Google. Every hosted account starts with a free trial, no card needed, and up to five people stay free after it.
 
 ## 2. Add your domain
 

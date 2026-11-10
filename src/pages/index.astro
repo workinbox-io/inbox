@@ -14,7 +14,7 @@ import PixelIcon from "@/components/site/pixel/PixelIcon.astro";
 import CommandBox from "@/components/site/CommandBox.astro";
 import ClosingBand from "@/components/site/ClosingBand.astro";
 import { COMPETITORS } from "@/config/compare";
-import { CURRENCY, FREE_PEOPLE, PLAN_LIST, PLANS, TRIAL_DAYS, hasFeature, priceYearly } from "@/config/plans";
+import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, PLANS, TRIAL_DAYS, hasFeature, priceYearly, seatsFor } from "@/config/plans";
 import { organizationJsonLd, siteConfig } from "@/config/site";
 
 export const prerender = true;
@@ -89,7 +89,7 @@ const next = [
 
 const steps = [
   { command: "add domain acme.com", status: "acme.com: MX, SPF and DMARC check out", text: "Turn on Cloudflare Email Routing, or add the MX, SPF and DMARC records at your DNS provider." },
-  { command: "add people anna ben chris", status: "3 people, each with a mailbox · first one free", text: "Each person gets a mailbox on the domain and a temporary password to sign in with." },
+  { command: "add people anna ben chris", status: "3 people, each with a mailbox · free up to 5", text: "Each person gets a mailbox on the domain and a temporary password to sign in with." },
   { command: "share support@ with everyone", status: "support@ shared with 3 people · mail flowing", text: "Create support@ or sales@ and pick who answers it. Shared mailboxes cost nothing." },
 ];
 
@@ -99,7 +99,7 @@ const money = (amount: number, currency: string) =>
 /** What a team of ten pays a month on each entry plan: ours from config/plans.ts, theirs from config/compare.ts. */
 const TEAM = 10;
 const race = [
-  { name: siteConfig.name, plan: PLANS.starter.name, amount: ((TEAM - FREE_PEOPLE) * PLANS.starter.priceMonthly) / 100, currency: CURRENCY, ours: true, href: "/pricing" },
+  { name: siteConfig.name, plan: PLANS.starter.name, amount: (seatsFor(TEAM) * PLANS.starter.priceMonthly) / 100, currency: CURRENCY, ours: true, href: "/pricing" },
   ...COMPETITORS.flatMap((c) => (c.entry ? [{ name: c.name, plan: c.entry.plan, amount: Math.round(TEAM * c.entry.usd * 100) / 100, currency: "USD", ours: false, href: `/vs/${c.slug}` }] : [])),
 ].sort((a, b) => a.amount - b.amount);
 const raceMax = Math.max(...race.map((r) => r.amount));
@@ -124,7 +124,7 @@ const faq = [
   },
   {
     question: "What does a shared mailbox cost?",
-    answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}, and the first person is free. Shared mailboxes, aliases and the catch-all are free on every plan.`,
+    answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}, and the first ${FREE_PEOPLE} people are free. Shared mailboxes, aliases and the catch-all are free on every plan.`,
   },
   {
     question: "Can I bring my old mail from Gmail or Outlook?",
@@ -140,7 +140,7 @@ const faq = [
   },
   {
     question: "Is there a free trial?",
-    answer: `Yes. Every hosted account starts with a ${TRIAL_DAYS}-day trial, no card needed, and one person stays free after it. Self-hosting is free for good.`,
+    answer: `Yes. Every hosted account starts with a ${TRIAL_DAYS}-day trial, no card needed, and up to ${FREE_PEOPLE} people stay free after it. Self-hosting is free for good.`,
   },
 ];
 
@@ -173,7 +173,7 @@ const jsonLd = [
     <div class="mk-wrap pt-10 sm:pt-16">
       <h1 class="mk-h1 max-w-4xl">Your team's email,<br /> on your own domain</h1>
       <p class="mk-lead mt-6 max-w-2xl">
-        Personal and shared mailboxes, aliases and notes your team writes together. Free for one person, then from
+        Personal and shared mailboxes, aliases and notes your team writes together. Free for up to {FREE_PEOPLE} people, then from
         €{lowest} per person a month, or free on your own Cloudflare account.
       </p>
       <div class="mt-9 flex flex-wrap items-center gap-3">
@@ -212,7 +212,7 @@ const jsonLd = [
   <!-- Setup: a step widget next to a scene that fills as the steps run. -->
   <section id="setup" class="mk-wrap scroll-mt-20 pb-16 sm:pb-24">
     <h2 class="mk-h2">Set up in minutes, pay per person</h2>
-    <p class="mk-lead mt-3">Add the domain, add your people, share support@. The first person is free.</p>
+    <p class="mk-lead mt-3">Add the domain, add your people, share support@. Free for up to {FREE_PEOPLE} people.</p>
     <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12" data-setup={JSON.stringify(steps)}>
       <div class="flex min-h-64 flex-col bg-(--mk-grey) p-6 sm:p-8">
         <p class="mk-cap" data-setup-count>Step 1 of {steps.length}</p>
@@ -281,8 +281,8 @@ const jsonLd = [
       <div>
         <h2 class="mk-h2">What a team of {TEAM} pays</h2>
         <p class="mk-lead mt-4">
-          A month on each entry plan with your own domain, billed yearly where that is the only option. Our first person is
-          free; prices as each vendor lists them on {checked}, € and $ not converted.
+          A month on each entry plan with your own domain, billed yearly where that is the only option. Our first {FREE_PEOPLE} people
+          are free; prices as each vendor lists them on {checked}, € and $ not converted.
         </p>
         <button type="button" class="mk-btn mk-btn-ghost mt-8" data-race-replay>▶ Replay</button>
         <p class="mt-5"><a href="/vs" class="mk-link">Full comparisons, with sources</a></p>
@@ -309,8 +309,8 @@ const jsonLd = [
   <!-- Pricing: toggles and the price they make. -->
   <section id="pricing" class="mk-wrap mk-section scroll-mt-16">
     <h2 class="mk-h2">Pay per person</h2>
-    <p class="mk-lead mt-3">First person free, {TRIAL_DAYS}-day trial, no card. Prices exclude VAT.</p>
-    <div class="mt-12 grid gap-12 lg:grid-cols-2 lg:gap-16" data-calc data-free={FREE_PEOPLE} data-plans={JSON.stringify(plans)}>
+    <p class="mk-lead mt-3">Free for up to {FREE_PEOPLE} people, then at least {MIN_SEATS} billed. {TRIAL_DAYS}-day trial, no card. Prices exclude VAT.</p>
+    <div class="mt-12 grid gap-12 lg:grid-cols-2 lg:gap-16" data-calc data-free={FREE_PEOPLE} data-min={MIN_SEATS} data-plans={JSON.stringify(plans)}>
       <div>
         <dl class="grid grid-cols-[6.5rem_1fr] items-center gap-x-4 gap-y-3 text-sm">
           <dt>People</dt>
@@ -328,10 +328,10 @@ const jsonLd = [
           </dd>
         </dl>
         <p class="mt-10 flex items-baseline gap-2" aria-live="polite">
-          <span class="font-[family-name:var(--mk-font-display)] text-6xl font-medium tracking-tight tabular-nums sm:text-7xl" data-calc-total>€27</span>
+          <span class="font-[family-name:var(--mk-font-display)] text-6xl font-medium tracking-tight tabular-nums sm:text-7xl" data-calc-total>€5</span>
           <span class="text-lg" data-calc-unit>/ month</span>
         </p>
-        <p class="mk-cap mt-2" data-calc-formula>(10 − 1 free) × €3 = €27</p>
+        <p class="mk-cap mt-2" data-calc-formula>(10 − 5 free) × €1 = €5</p>
 
         <p class="mk-cap mt-10">work inbox plans</p>
         <table class="mk-frame mt-2 w-full font-[family-name:var(--mk-font-mono)] text-sm">
@@ -357,7 +357,7 @@ const jsonLd = [
           <li>Unlimited shared mailboxes, aliases and a catch-all per domain.</li>
           <li>Live shared notes for the whole team.</li>
           <li>Spam filter, sender rules and search across every mailbox.</li>
-          <li>The first person free, for good.</li>
+          <li>Up to {FREE_PEOPLE} people free, for good.</li>
         </ul>
         <h3 class="mt-10 text-xl">Not yet</h3>
         <ul class="mk-sqlist mt-4 text-lg">
@@ -522,11 +522,12 @@ const jsonLd = [
     race.querySelector("[data-race-replay]")!.addEventListener("click", run);
   }
 
-  // Pricing calculator: people × plan × billing, the first person free.
+  // Pricing calculator: people × plan × billing, FREE_PEOPLE free, at least MIN_SEATS billed (seatsFor).
   const calc = document.querySelector<HTMLElement>("[data-calc]");
   if (calc) {
     const plans: { id: string; name: string; monthly: number; yearly: number }[] = JSON.parse(calc.dataset.plans!);
     const free = Number(calc.dataset.free);
+    const min = Number(calc.dataset.min);
     const eur = (n: number) => new Intl.NumberFormat("en", { style: "currency", currency: "EUR", maximumFractionDigits: Number.isInteger(n) ? 0 : 2 }).format(n);
     const value = (key: string) => calc.querySelector<HTMLElement>(`[data-calc-key="${key}"] [aria-pressed="true"]`)!.dataset.value!;
     const render = () => {
@@ -534,12 +535,16 @@ const jsonLd = [
       const plan = plans.find((p) => p.id === value("plan"))!;
       const yearly = value("billing") === "year";
       const each = yearly ? plan.yearly : plan.monthly;
-      const paid = Math.max(0, people - free);
+      const paid = people <= free ? 0 : Math.max(min, people - free);
       const total = paid * each;
       calc.querySelector("[data-calc-total]")!.textContent = eur(total);
       calc.querySelector("[data-calc-unit]")!.textContent = yearly ? "/ year" : "/ month";
       calc.querySelector("[data-calc-formula]")!.textContent =
-        paid === 0 ? `${people} person, free for good · paid features need a plan` : `(${people} − ${free} free) × ${eur(each)} = ${eur(total)}`;
+        paid === 0
+          ? `${people} ${people === 1 ? "person" : "people"}, free for good · paid features need a plan`
+          : people - free < min
+            ? `${people} people: at least ${min} billed × ${eur(each)} = ${eur(total)}`
+            : `(${people} − ${free} free) × ${eur(each)} = ${eur(total)}`;
       for (const row of calc.querySelectorAll<HTMLElement>("[data-calc-row]")) row.classList.toggle("is-on", row.dataset.calcRow === plan.id);
     };
     for (const group of calc.querySelectorAll<HTMLElement>("[data-calc-key]")) {

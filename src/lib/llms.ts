@@ -1,5 +1,5 @@
 import { COMPETITORS } from "@/config/compare";
-import { CURRENCY, PLAN_LIST, TRIAL_DAYS, planFeatures } from "@/config/plans";
+import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, PLANS, TRIAL_DAYS, amount, planFeatures } from "@/config/plans";
 import { siteConfig } from "@/config/site";
 import { SECTIONS, docHref, getDocs, type DocEntry } from "@/lib/docs";
 
@@ -16,7 +16,7 @@ export async function llmsTxt(site: URL) {
   const url = (path: string) => new URL(path, site).href;
   const link = (href: string, title: string, note?: string) => `- [${title}](${url(href)})${note ? `: ${note}` : ""}`;
   const plans = PLAN_LIST.map(
-    (p) => `- ${p.name}: ${p.priceMonthly / 100} ${CURRENCY} per person (personal mailbox) a month: ${planFeatures(p).map((f) => (f.soon ? `${f.label} (coming)` : f.label)).join(", ")}`,
+    (p) => `- ${p.name}: ${amount(p.priceMonthly)} ${CURRENCY} per person (personal mailbox) a month: ${planFeatures(p).map((f) => (f.soon ? `${f.label} (coming)` : f.label)).join(", ")}`,
   );
   const docs = await getDocs();
 
@@ -34,7 +34,7 @@ export async function llmsTxt(site: URL) {
     "- Not available yet: IMAP/SMTP access for Outlook, Apple Mail or Thunderbird, and native mobile apps (the web app can be installed on phones and computers); importing old mail from Gmail or Outlook.",
     `- Self-hosting: open source (${siteConfig.repoUrl}), runs on the company's own Cloudflare account (Workers, D1, R2, Queues, Email Routing and Email Service), every feature, no fee to Work Inbox. Messages are stored in D1, each original .eml and attachments in R2.`,
     ...plans,
-    `- The first person is free on every plan: one person uses Work Inbox for free (personal mailbox, shared mailboxes, aliases and notes), and a team of five pays for four. A plan is needed from the second person and for the API, MCP and audit log. Shared mailboxes and aliases are free on every plan. Prices exclude VAT. Yearly billing gives two months free. ${TRIAL_DAYS}-day free trial, no card needed.`,
+    `- Up to ${FREE_PEOPLE} people are free on every plan: a team of five uses Work Inbox for free (a personal mailbox each, shared mailboxes, aliases and notes). From the ${FREE_PEOPLE + 1}th person a plan is needed, billing the people beyond the free ones with a minimum of ${MIN_SEATS} (Starter: €${(MIN_SEATS * PLANS.starter.priceMonthly) / 100} a month covers up to ${FREE_PEOPLE + MIN_SEATS} people). The API, MCP and audit log need Pro or Business. Shared mailboxes and aliases are free on every plan. Prices exclude VAT. Yearly billing gives two months free. ${TRIAL_DAYS}-day free trial, no card needed.`,
     "- REST API with an OpenAPI 3.1 spec (Pro and Business). MCP server at /mcp for Claude, ChatGPT, Claude Code and Cursor (Pro and Business): search, read and answer mail, search, read, create and update notes. OAuth sign-in, changes audited.",
     "",
     "## Product",

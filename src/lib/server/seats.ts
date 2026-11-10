@@ -1,12 +1,12 @@
 import { env } from "cloudflare:workers";
-import { FREE_PEOPLE } from "@/config/plans";
+import { seatsFor } from "@/config/plans";
 import { and, count, db, eq, inArray, mailboxes, subscriptions } from "@/db";
 import { paddleFetch, planItem, type PaddleSubscription } from "./paddle";
 import { enqueue } from "./queue";
 
 /**
  * Per-person billing (config/plans.ts): a Paddle subscription's quantity is the org's personal mailboxes. Shared
- * mailboxes and aliases are free, and so is the first person (FREE_PEOPLE). Whatever adds, removes or converts a personal mailbox calls `seatsChanged`; the
+ * mailboxes and aliases are free, and so are the first FREE_PEOPLE, with at least MIN_SEATS billed (seatsFor). Whatever adds, removes or converts a personal mailbox calls `seatsChanged`; the
  * job (jobs/app.ts) and the daily reconcile (jobs/app-cron.ts) bring Paddle in line, so a missed update heals itself.
  */
 
@@ -15,10 +15,6 @@ export async function peopleCount(orgId: string) {
   const [row] = await db.select({ n: count() }).from(mailboxes).where(and(eq(mailboxes.orgId, orgId), eq(mailboxes.kind, "personal")));
   return row?.n ?? 0;
 }
-
-/** Seats a plan charges for: people minus the free ones. At least one, since Paddle needs a quantity and a plan
- *  bought for one person pays for its paid features (API, MCP, audit log). */
-export const seatsFor = (people: number) => Math.max(1, people - FREE_PEOPLE);
 
 export async function billableSeats(orgId: string) {
   return seatsFor(await peopleCount(orgId));

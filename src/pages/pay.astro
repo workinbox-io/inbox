@@ -46,7 +46,7 @@ if (txnId?.startsWith("txn_")) {
       const amount = Number(txn.details?.line_items.find((l) => l.price_id === item.price.id)?.totals.subtotal ?? 0);
       if (typeof data.plan === "string" && data.plan in PLANS) {
         plan = PLANS[data.plan as PlanId];
-        lines.unshift({ priceId: item.price.id, label: `${plan.name} plan`, quantity: 1, amount });
+        lines.unshift({ priceId: item.price.id, label: `${plan.name} plan`, quantity: item.quantity, amount });
       } else {
         lines.push({ priceId: item.price.id, label: item.price.name ?? item.price.description, quantity: item.quantity, amount });
       }

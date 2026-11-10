@@ -34,14 +34,14 @@ describe("self-host access", () => {
   state.subscription = { plan: "pro", usable: true };
   expect((await requireFeature("org", "mcpAccess")).id).toBe("pro");
  });
- it("keeps mail free for one person without a plan", async () => {
+ it("keeps mail free for up to five people without a plan", async () => {
   state.mode = "cloud";
   state.subscription = { plan: "pro", usable: false };
   await expect(requireMailPlan("org", 1)).resolves.toBeUndefined();
-  state.people = 1;
+  state.people = 5;
   await expect(requireMailPlan("org")).resolves.toBeUndefined();
-  await expect(requireMailPlan("org", 1)).rejects.toThrow("One person is free");
-  state.people = 2;
+  await expect(requireMailPlan("org", 1)).rejects.toThrow("Up to 5 people are free");
+  state.people = 6;
   await expect(requireMailPlan("org")).rejects.toThrow("choose a plan");
   state.subscription = { plan: "starter", usable: true };
   await expect(requireMailPlan("org", 1)).resolves.toBeUndefined();
