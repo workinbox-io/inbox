@@ -2,7 +2,6 @@
 // A Price whose amount changed is archived and replaced, so existing subscribers keep their price.
 // Usage: pnpm paddle:sync   (reads PADDLE_API_KEY and PADDLE_ENV from .dev.vars)
 import { CURRENCY, MIN_SEATS, PADDLE_PRODUCT, PLAN_LIST, priceYearly } from "../src/config/plans.ts";
-import { siteConfig } from "../src/config/site.ts";
 
 const base = process.env.PADDLE_ENV === "production" ? "https://api.paddle.com" : "https://sandbox-api.paddle.com";
 
@@ -27,7 +26,7 @@ const prices = await paddle<Price[]>("GET", "/prices?status=active&per_page=200"
 for (const plan of PLAN_LIST) {
   const product =
     products.find((p) => p.custom_data?.product === PADDLE_PRODUCT && p.custom_data?.plan === plan.id) ??
-    (await paddle<Product>("POST", "/products", { name: `${siteConfig.name} ${plan.name}`, tax_category: "saas", custom_data: { product: PADDLE_PRODUCT, plan: plan.id } }));
+    (await paddle<Product>("POST", "/products", { name: `Work Inbox ${plan.name}`, tax_category: "saas", custom_data: { product: PADDLE_PRODUCT, plan: plan.id } }));
 
   for (const [interval, amount] of [
     ["month", plan.priceMonthly],
