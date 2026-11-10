@@ -1,6 +1,6 @@
 ---
 /**
- * A Safari window on macOS around a screenshot or a mock: traffic lights, back and forward, the address with a lock,
+ * A browser window around a screenshot or a mock, flat and square for the boat.dev look: window squares, back and forward, the address with a lock,
  * share, new tab and tabs (`data-url` lets a page swap the address, like the homepage tour). `fixed` keeps a 16:10 page (screenshots at 1440x900), off for mocks with their own height.
  */
 import { ChevronLeft, ChevronRight, Copy, Lock, PanelLeft, Plus, RotateCw, Share } from "lucide-react";
@@ -38,22 +38,19 @@ const { url, class: className, fixed = true } = Astro.props;
 </div>
 
 <style>
+  /* Flat and square with a 1px frame, like the rest of the marketing site. */
   .win {
     overflow: hidden;
-    border-radius: 12px;
     background: var(--card);
-    box-shadow:
-      0 0 0 0.5px rgb(0 0 0 / 0.35),
-      0 1px 0 0 rgb(255 255 255 / 0.5) inset,
-      0 22px 70px -12px rgb(0 0 0 / 0.35),
-      0 50px 100px -40px var(--mk-shadow, rgb(0 0 0 / 0.25));
+    border: 1px solid var(--mk-frame, var(--border));
   }
   .win-bar {
     display: flex;
     align-items: center;
     gap: 1rem;
-    height: 3.25rem;
+    height: 2.75rem;
     padding: 0 1rem;
+    font-family: var(--mk-font-mono, inherit);
     color: color-mix(in srgb, var(--foreground) 55%, transparent);
     background: color-mix(in srgb, var(--foreground) 4%, var(--card));
     border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
@@ -64,17 +61,9 @@ const { url, class: className, fixed = true } = Astro.props;
     gap: 0.5rem;
   }
   .win-lights i {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 50%;
-    background: #ff5f57;
-    box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.18);
-  }
-  .win-lights i:nth-child(2) {
-    background: #febc2e;
-  }
-  .win-lights i:nth-child(3) {
-    background: #28c840;
+    width: 0.6rem;
+    height: 0.6rem;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 35%, transparent);
   }
   .win-tools {
     flex-shrink: 0;
@@ -90,10 +79,9 @@ const { url, class: className, fixed = true } = Astro.props;
     gap: 0.4rem;
     min-width: 0;
     max-width: 32rem;
-    height: 2rem;
+    height: 1.9rem;
     margin: 0 auto;
     padding: 0 2rem;
-    border-radius: 0.5rem;
     font-size: 0.8rem;
     color: color-mix(in srgb, var(--foreground) 75%, transparent);
     background: color-mix(in srgb, var(--foreground) 6%, var(--card));

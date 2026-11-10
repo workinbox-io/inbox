@@ -1,8 +1,20 @@
 ---
 interface Props {
   class?: string;
+  /** The mailbox mark alone in the text colour (header and footer of the marketing site), instead of the app icon. */
+  mono?: boolean;
 }
-const { class: className = "size-7" } = Astro.props;
+const { class: className = "size-7", mono = false } = Astro.props;
 ---
 
-<img src="/logo.svg" alt="" width="28" height="28" class:list={[className]} />
+{
+  mono ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class:list={[className]}>
+      <path d="M5.5 19V8.5C5.5 4.91 8.41 2 12 2s6.5 2.91 6.5 6.5V19" />
+      <path d="M18.87 22H5.13c-.61 0-.92 0-1.06-.21-.15-.21-.05-.51.14-1.11.35-1.08.7-1.68 1.94-1.68h11.7c1.24 0 1.59.6 1.94 1.68.19.6.29.9.14 1.11-.14.21-.45.21-1.06.21Z" />
+      <path d="M10.5 11h3M4.5 8h15" />
+    </svg>
+  ) : (
+    <img src="/logo.svg" alt="" width="28" height="28" class:list={[className]} />
+  )
+}

@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter-tight";
+@import "@fontsource-variable/figtree";
+@import "@fontsource-variable/funnel-display";
 @import "@fontsource-variable/geist-mono";
 @import "./typeset.css";
 
@@ -10,8 +11,8 @@
 @theme inline {
   --breakpoint-3xl: 1600px;
   --breakpoint-4xl: 2000px;
-  --font-sans: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Funnel Display Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, monospace;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -183,6 +184,7 @@
   }
   h1, h2, h3, h4 {
     @apply tracking-tight;
+    font-family: var(--font-heading);
     font-weight: 500;
   }
   [data-slot="layout"] {

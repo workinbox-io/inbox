@@ -1,0 +1,13 @@
+---
+/** The opening ink band of a marketing page (use with MarketingLayout `ink`): left-aligned content over a strip of the harbour. */
+import PixelScene from "./pixel/PixelScene.astro";
+---
+
+<section class="mk-band mk-under-header">
+  <div class="mk-wrap pt-10 sm:pt-16">
+    <slot />
+  </div>
+  <div class="mt-10 h-[clamp(9rem,18vw,15rem)] bg-(--mk-bg) sm:mt-14">
+    <PixelScene scene="hero" cover class="object-bottom" />
+  </div>
+</section>

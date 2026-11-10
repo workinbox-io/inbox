@@ -1,0 +1,28 @@
+---
+/** The closing ink band of every marketing page, flowing into the footer: a title, the command box, buttons, the pier. */
+import CommandBox from "./CommandBox.astro";
+import PixelScene from "./pixel/PixelScene.astro";
+
+interface Props {
+  title?: string;
+  text?: string;
+}
+const { title = "Bring your domain", text = "Your team's mail on it this afternoon." } = Astro.props;
+---
+
+<section class="mk-band">
+  <div class="mk-wrap grid items-center gap-10 pt-20 sm:pt-28 lg:grid-cols-2">
+    <div>
+      <h2 class="mk-h2">{title}</h2>
+      <p class="mk-lead mt-3">{text}</p>
+    </div>
+    <div>
+      <CommandBox />
+      <div class="mt-4 flex flex-wrap gap-3">
+        <a href="/signup" class="mk-btn">Start free</a>
+        <a href="/docs" class="mk-btn mk-btn-ghost">Read the docs</a>
+      </div>
+    </div>
+  </div>
+  <div class="mt-10"><PixelScene scene="cta" /></div>
+</section>

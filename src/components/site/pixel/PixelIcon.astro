@@ -1,0 +1,17 @@
+---
+/** A pixel icon drawn as SVG squares at build time (no script), in the text colour; `2` and `3` are lighter tones. */
+import { sprite } from "./pixel";
+
+interface Props {
+  rows: string[];
+  class?: string;
+}
+const { rows, class: className = "size-16" } = Astro.props;
+const s = sprite(rows);
+const opacity: Record<string, number> = { "5": 1, "4": 0.8, "3": 0.55, "2": 0.3 };
+const cells = s.cells.flatMap((c, i) => (c ? [{ x: i % s.w, y: Math.floor(i / s.w), o: opacity[c] ?? 1 }] : []));
+---
+
+<svg viewBox={`0 0 ${s.w} ${s.h}`} shape-rendering="crispEdges" fill="currentColor" aria-hidden="true" class:list={[className]}>
+  {cells.map((c) => <rect x={c.x} y={c.y} width="1" height="1" fill-opacity={c.o} />)}
+</svg>

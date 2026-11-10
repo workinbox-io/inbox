@@ -80,12 +80,15 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 
 ## Marketing site and SEO/GEO (product)
 
-- Modelled on Luxivo (`../support-chat`): the same look system (`styles/marketing.css`, scoped to `.mk` by
-  `MarketingLayout look="paper"`; docs, legal and error pages use `look="plain"`), GSAP motion
-  (`scripts/marketing-motion.ts`: `data-split`, `data-reveal`, `data-magnetic`) and craft components
-  (`components/site/craft/*`, `BrowserFrame`, `ComparisonTable`). Look: paper and ink (no brand colour, no glows),
-  Instrument Serif headlines with italic soft-ink emphasis, light and dark themes; app screens swap with the theme
-  (`components/site/Shot.astro`: `<name>.webp` / `<name>-dark.webp`). No eyebrow pills above headlines. Competitor
+- Look after boat.dev in our ink (`styles/marketing.css`, scoped to `.mk` by `MarketingLayout look="paper"`; docs,
+  legal and error pages use `look="plain"`): white page, full-bleed ink bands (`.mk-band`: hero via `PageHero` +
+  `MarketingLayout ink` for the see-through header, `ClosingBand`, footer with a tmux-style status bar), a grey band
+  (`.mk-band-grey`), square corners (a global rule in `.mk`, `rounded-full` and `.mk-light` exempt), 1px frames, no
+  shadows. Funnel Display headlines (`mk-h1/h2/h3`, `<em>` = soft ink, not italic), Inter text, IBM Plex Mono captions,
+  tabs and tables (`mk-cap`, `mk-seg`, `mk-cmd` via `CommandBox`). Pictures: our own pixel scenes on canvas
+  (`components/site/pixel`: `scenes.ts`, `PixelScene`, `PixelIcon`; never copy boat.dev's art) and real app screens
+  (`components/site/Shot.astro`: `<name>.webp` / `<name>-dark.webp`). `data-reveal` from `scripts/marketing-motion.ts`.
+  No eyebrow pills above headlines. Competitor
   icons in `public/logos/<slug>.png` (`logo` in `config/compare.ts`), used in /vs, tables and the Compare menu.
   The brand is written "Work Inbox" (`siteConfig.name`); the domain stays workinbox.io.
 - Screens on the site are the real app: `pnpm shots [--seed] [name]` (`scripts/marketing-shots.ts`, needs `pnpm dev`)
@@ -122,6 +125,12 @@ pnpm build
 pnpm db:generate         # drizzle-kit: SQL migration from src/db/schema changes
 pnpm db:migrate          # apply migrations to local D1
 ```
+
+Deploy (production, workinbox.io): either GitHub Actions → "Deploy" (`.github/workflows/deploy.yml`, manual only:
+`gh workflow run deploy.yml --ref main -R jakub-kalamarz/inbox`; secrets `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` in the repo's `production` environment) or locally `pnpm run deploy` (needs `wrangler login`).
+Both build, apply D1 migrations remotely, `wrangler deploy` and ping IndexNow. CI (`ci.yml`) only
+typechecks, tests and builds on every push and PR. `gh` needs `-R jakub-kalamarz/inbox` (two remotes).
 
 E-mails in dev are printed to the dev server log (`astro dev logs`), including verification links.
 Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=17+3+*+*+*"`.

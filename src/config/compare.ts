@@ -56,6 +56,8 @@ export interface Competitor {
   checked: string;
   /** Their plans in one line each, as their page shows them. */
   theirPricing: string[];
+  /** Their cheapest plan with a custom domain, in US dollars a person a month on annual billing (home page chart). */
+  entry?: { plan: string; usd: number };
   rows: Record<RowKey, Cell>;
   whyUs: string[];
   pickThemIf: string[];
@@ -74,6 +76,7 @@ export const COMPETITORS: Competitor[] = [
     intro:
       "Google Workspace is the default for team email with Docs and Meet around it. Work Inbox does less (mail and shared notes today) for a lower price per person, with free shared mailboxes and the option to run it on your own Cloudflare account.",
     checked: CHECKED,
+    entry: { plan: "Business Starter", usd: 7 },
     theirPricing: [
       "Business Starter: $7 a person a month on an annual plan, $8.40 flexible; 30 GB pooled storage",
       "Business Standard: $14 annual, $16.80 flexible; 2 TB",
@@ -119,6 +122,7 @@ export const COMPETITORS: Competitor[] = [
     intro:
       "Microsoft 365 Business bundles Exchange mail with Office, Teams and device management. Work Inbox covers team mail and shared notes in the browser, at a lower price per person, and can run on your own Cloudflare account.",
     checked: CHECKED,
+    entry: { plan: "Business Basic", usd: 7 },
     theirPricing: [
       "Business Basic: $7 a person a month, annual commitment (was $6 before 1 July 2026)",
       "Business Standard: $14 (was $12.50)",
@@ -162,6 +166,7 @@ export const COMPETITORS: Competitor[] = [
     intro:
       "Zoho Mail and Zoho Workplace are the budget choice, with a free plan for five people. Work Inbox is priced close to Workplace, adds live shared notes in the same app, and can run on your own Cloudflare account.",
     checked: CHECKED,
+    entry: { plan: "Mail Lite", usd: 1 },
     theirPricing: [
       "Mail Free: up to 5 people and one domain, 5 GB each, no IMAP",
       "Mail Lite: $1 to $1.25 a person a month, annual only; Mail Premium: $4, annual only",
@@ -204,6 +209,7 @@ export const COMPETITORS: Competitor[] = [
     intro:
       "Proton for Business puts end-to-end encryption first. Work Inbox puts teamwork first: shared mailboxes that several people answer, live shared notes, and the option to run everything on your own Cloudflare account.",
     checked: CHECKED,
+    entry: { plan: "Mail Essentials", usd: 6.99 },
     theirPricing: [
       "Mail Essentials: $6.99 a person a month, annual; 15 GB, 3 domains, 10 addresses each",
       "Workspace Standard: $8.99 intro price for new customers until 30 November 2026, then a higher regular price; 1 TB, 15 domains",

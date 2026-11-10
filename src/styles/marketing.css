@@ -1,39 +1,49 @@
-@import "@fontsource/instrument-serif/400.css";
-@import "@fontsource/instrument-serif/400-italic.css";
+@import "@fontsource-variable/funnel-display";
+@import "@fontsource-variable/inter";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 
 /*
- * Marketing look, ported from Luxivo's (support-chat, styles/marketing.css) and made WorkInbox's: paper and ink, no
- * brand colour (styles/brand.css), Instrument Serif headlines over Inter Tight. Emphasis in a headline is the serif
- * italic in a lighter ink. Everything is scoped to .mk (MarketingLayout's wrapper), so /app keeps the app tokens.
- * Dark mode (html.dark) turns the paper into ink; `.mk-light` inside it (screens of the app, a mail client) keeps the
- * light tokens. Colour only shows up in the product's own data (mailbox dots), as in the app.
+ * Marketing look, after boat.dev's layout with WorkInbox's ink instead of their blue: white page, full-bleed ink bands
+ * (hero, closing call to action, footer), a light-grey band, square corners and 1px frames, no shadows. Funnel Display
+ * headlines, Inter text, IBM Plex Mono for captions, tabs, tables and numbers. Pictures are our own pixel scenes
+ * (components/site/pixel) and real screens of the app. Everything is scoped to .mk (MarketingLayout's wrapper), so /app
+ * keeps the app tokens. Dark mode (html.dark) turns the page to ink; `.mk-light` keeps screens of the app light.
  */
 
-.font-display {
-  font-family: "Instrument Serif", ui-serif, Georgia, serif;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-}
-
 body:has(.mk) {
-  background: #f6f6f3;
+  background: #fefefe;
 }
 .dark body:has(.mk) {
-  background: #111111;
+  background: #0b0b0b;
 }
 
 .mk,
 .dark .mk .light {
-  --mk-bg: #f6f6f3;
-  --mk-paper-2: #ededea;
-  --mk-ink: #1a1a1a;
-  --mk-accent: #1a1a1a;
-  --mk-accent-2: #333333;
-  --mk-on-accent: #ffffff;
-  /* The accent as text and lines: here the ink itself. */
-  --mk-accent-ink: #1a1a1a;
-  /* Headline emphasis and the muted half of section headings. */
+  --mk-font-display: "Funnel Display Variable", ui-sans-serif, system-ui, sans-serif;
+  --mk-font-text: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --mk-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Neutrals and the ink scale (boat's accent role). */
+  --mk-n1: #fefefe;
+  --mk-n2: #f2f2f2;
+  --mk-n3: #e0e0e0;
+  --mk-n4: #c4c4c4;
+  --mk-n5: #9e9e9e;
+  --mk-n6: #767676;
+  --mk-n7: #4d4d4d;
+  --mk-bg: var(--mk-n1);
+  --mk-grey: #f3f3f1;
+  --mk-ink: #141414;
+  --mk-band: #141414;
+  --mk-band-2: #232323;
+  --mk-on-band: #fefefe;
+  --mk-frame: #c9c9c5;
+  --mk-accent: #141414;
+  --mk-accent-2: #3a3a38;
+  --mk-on-accent: #fefefe;
+  --mk-accent-ink: #141414;
   --mk-soft-ink: #8a8a86;
+  --mk-paper-2: var(--mk-grey);
   --background: var(--mk-bg);
   --foreground: var(--mk-ink);
   --ink: var(--mk-ink);
@@ -41,18 +51,21 @@ body:has(.mk) {
   --card-foreground: var(--mk-ink);
   --popover: #ffffff;
   --popover-foreground: var(--mk-ink);
-  --secondary: var(--mk-paper-2);
-  --muted-foreground: #62625f;
+  --secondary: var(--mk-grey);
+  --muted-foreground: var(--mk-n7);
   --surface: #ffffff;
-  --border: rgb(26 26 26 / 0.1);
-  --accent: rgb(26 26 26 / 0.05);
+  --border: var(--mk-n3);
+  --accent: rgb(20 20 20 / 0.05);
   --code: #141414;
   --primary: var(--mk-accent);
   --primary-foreground: var(--mk-on-accent);
-  --mk-shadow: rgb(26 26 26 / 0.32);
-  --mk-dot: rgb(26 26 26 / 0.13);
+  --ring: var(--mk-ink);
+  --radius: 0px;
+  --mk-shadow: transparent;
+  --mk-dot: rgb(20 20 20 / 0.13);
   color-scheme: light;
   color: var(--foreground);
+  font-family: var(--mk-font-text);
 }
 .mk {
   background: var(--mk-bg);
@@ -60,41 +73,43 @@ body:has(.mk) {
 }
 
 .dark .mk {
-  --mk-bg: #111111;
-  --mk-paper-2: #1a1a1a;
+  --mk-bg: #0b0b0b;
+  --mk-grey: #151515;
   --mk-ink: #ececea;
-  --mk-accent: #f2f2f0;
+  --mk-band: #1a1a1a;
+  --mk-band-2: #2a2a2a;
+  --mk-frame: #3a3a3a;
+  --mk-accent: #ececea;
   --mk-accent-2: #ffffff;
-  --mk-on-accent: #111111;
-  --mk-accent-ink: #f2f2f0;
+  --mk-on-accent: #0b0b0b;
+  --mk-accent-ink: #ececea;
   --mk-soft-ink: #8d8d89;
   --background: var(--mk-bg);
   --foreground: var(--mk-ink);
   --ink: var(--mk-ink);
-  --card: #181818;
+  --card: #141414;
   --card-foreground: var(--mk-ink);
-  --popover: #1c1c1c;
+  --popover: #1a1a1a;
   --popover-foreground: var(--mk-ink);
-  --secondary: var(--mk-paper-2);
+  --secondary: var(--mk-grey);
   --muted-foreground: #a5a5a1;
-  --surface: #181818;
-  --border: rgb(236 236 234 / 0.12);
+  --surface: #141414;
+  --border: #2a2a2a;
   --accent: rgb(236 236 234 / 0.06);
   --code: #0c0c0c;
-  --mk-shadow: rgb(0 0 0 / 0.6);
   --mk-dot: rgb(236 236 234 / 0.11);
   color-scheme: dark;
 }
 
 @layer base {
   .mk :is(h1, h2, h3) {
-    font-family: "Instrument Serif", ui-serif, Georgia, serif;
-    font-weight: 400;
-    letter-spacing: -0.01em;
+    font-family: var(--mk-font-display);
+    font-weight: 500;
+    letter-spacing: -0.025em;
     line-height: 1.08;
   }
   .mk :is(h1, h2, h3) em {
-    font-style: italic;
+    font-style: normal;
     color: var(--mk-soft-ink);
   }
   /* Product UI on the page keeps the app's font for headings. */
@@ -103,6 +118,191 @@ body:has(.mk) {
     letter-spacing: normal;
     line-height: inherit;
   }
+  .mk :is(code, kbd, pre) {
+    font-family: var(--mk-font-mono);
+  }
+}
+
+/* Square corners everywhere, like boat.dev; dots and avatars (rounded-full) and screens of the app keep theirs. */
+.mk *:not(.mk-light, .mk-light *, .rounded-full, .mk-round) {
+  border-radius: 0 !important;
+}
+
+/* ---------- Type ---------- */
+.mk-h1 {
+  font-size: clamp(2.5rem, 5.6vw, 5rem);
+  line-height: 1.04;
+  text-wrap: balance;
+}
+.mk-h2 {
+  font-size: clamp(2rem, 3.6vw, 3.25rem);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+.mk-h3 {
+  font-size: clamp(1.4rem, 1.9vw, 1.6rem);
+  line-height: 1.2;
+}
+.mk-lead {
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+.mk-mono {
+  font-family: var(--mk-font-mono);
+}
+.mk-cap {
+  font-family: var(--mk-font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+.mk-link {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  transition: opacity 0.15s;
+}
+.mk-link:hover {
+  opacity: 0.7;
+}
+
+/* ---------- Bands: full-bleed sections ---------- */
+.mk-band {
+  --foreground: var(--mk-on-band);
+  --muted-foreground: rgb(254 254 254 / 0.62);
+  --border: rgb(254 254 254 / 0.16);
+  --accent: rgb(254 254 254 / 0.07);
+  --mk-frame: rgb(254 254 254 / 0.25);
+  --mk-soft-ink: rgb(254 254 254 / 0.5);
+  --mk-accent: var(--mk-on-band);
+  --mk-accent-2: #ffffff;
+  --mk-on-accent: #141414;
+  --mk-accent-ink: var(--mk-on-band);
+  --ring: var(--mk-on-band);
+  color: var(--foreground);
+  background: var(--mk-band);
+}
+.mk-band-grey {
+  background: var(--mk-grey);
+}
+/* Content column: boat's 96px gutters on desktop. */
+.mk-wrap {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 6.6vw, 6rem);
+}
+.mk-section {
+  padding-block: clamp(4rem, 9vw, 8rem);
+}
+
+/* ---------- Frames, toggles, lists ---------- */
+.mk-frame {
+  border: 1px solid var(--mk-frame);
+}
+.mk-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.mk-seg button {
+  padding: 0.4rem 0.75rem;
+  font-family: var(--mk-font-mono);
+  font-size: 0.875rem;
+  color: var(--foreground);
+  background: var(--mk-grey);
+  transition: background-color 0.15s, color 0.15s;
+}
+.mk-band-grey .mk-seg button {
+  background: var(--mk-bg);
+}
+.mk-seg button:hover {
+  background: color-mix(in srgb, var(--mk-accent) 12%, var(--mk-grey));
+}
+.mk-seg button:is([aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]) {
+  color: var(--mk-on-accent);
+  background: var(--mk-accent);
+}
+.mk-seg button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.mk-sqlist {
+  display: grid;
+  gap: 0.5rem;
+}
+.mk-sqlist li {
+  position: relative;
+  padding-left: 1.5rem;
+  line-height: 1.6;
+}
+.mk-sqlist li::before {
+  content: "";
+  position: absolute;
+  left: 0.1rem;
+  top: 0.55em;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--mk-accent);
+}
+/* A dotted leader line between a label and a value. */
+.mk-dots {
+  background-image: radial-gradient(circle, var(--mk-frame) 1px, transparent 1.3px);
+  background-size: 8px 8px;
+  background-position: 0 50%;
+  background-repeat: repeat-x;
+}
+
+/* ---------- Command box: tabs over a mono line with copy (hero and closing band) ---------- */
+.mk-cmd {
+  width: min(100%, 35rem);
+  font-family: var(--mk-font-mono);
+  font-size: 0.875rem;
+}
+.mk-cmd [role="tablist"] {
+  display: flex;
+}
+.mk-cmd [role="tab"] {
+  padding: 0.55rem 0.8rem;
+  color: var(--muted-foreground);
+  transition: color 0.15s;
+}
+.mk-cmd [role="tab"]:hover {
+  color: var(--foreground);
+}
+.mk-cmd [role="tab"][aria-selected="true"] {
+  color: var(--foreground);
+  background: var(--mk-band-2);
+}
+.mk-cmd [role="tab"]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+.mk-cmd-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3rem;
+  padding: 0.6rem 1rem;
+  background: var(--mk-band-2);
+}
+.mk-cmd-line > span:first-child {
+  min-width: 0;
+  flex: 1;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.mk-cmd-line button,
+.mk-cmd-line a {
+  color: var(--muted-foreground);
+  transition: color 0.15s;
+}
+.mk-cmd-line button:hover,
+.mk-cmd-line a:hover {
+  color: var(--foreground);
 }
 
 /* Screens of the app keep their real (light) look inside the page. */
@@ -125,84 +325,27 @@ body:has(.mk) {
   --input: color-mix(in srgb, #1a1a1a 13%, transparent);
   --surface: #f7f7f7;
   --primary: #1a1a1a;
+  --radius: 0.625rem;
   background: #fff;
   color: #1a1a1a;
+  font-family: var(--font-sans);
 }
 
-/* A little paper grain on the page background (under the content, so screenshots stay crisp). */
-.mk-grain::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.045;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.dark .mk-grain::after {
-  opacity: 0.06;
-  mix-blend-mode: screen;
-}
 
-/* ---------- Hero ---------- */
-.hero-title {
-  font-size: clamp(2.6rem, 5.4vw, 4.9rem);
-  line-height: 1.05;
-  text-wrap: balance;
-}
-/* Hero lines come into focus (blur to sharp) rather than rising, like the rotating line beside them. */
-.hero-fade {
-  /* Release the filter/transform layer when finished: Safari clips descendant shadows
-     to its bounds if the completed blur animation keeps filling forwards. */
-  animation: focus-in 1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-  animation-delay: var(--d, 400ms);
-}
-@keyframes focus-in {
-  from {
-    opacity: 0;
-    filter: blur(10px);
-    transform: scale(0.985);
-  }
-  to {
-    opacity: 1;
-    filter: none;
-    transform: none;
-  }
-}
-
-.demo-frame {
-  height: 600px;
-  width: min(100%, 390px);
-}
-
-/* ---------- Shapes and buttons ---------- */
-.blob {
-  position: absolute;
-  pointer-events: none;
-  will-change: transform;
-}
-
+/* ---------- Buttons: square, flat ---------- */
 .mk-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
-  height: 2.9rem;
-  padding: 0 1.4rem;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.95rem;
+  height: 3rem;
+  padding: 0 1.5rem;
+  font-weight: 500;
+  font-size: 1rem;
   white-space: nowrap;
   color: var(--mk-on-accent);
   background: var(--mk-accent);
-  box-shadow:
-    inset 0 -2px 0 rgb(0 0 0 / 0.12),
-    0 1px 2px rgb(0 0 0 / 0.12);
-  transition:
-    background-color 0.2s,
-    box-shadow 0.2s;
-  will-change: transform;
+  transition: background-color 0.15s, color 0.15s;
 }
 .mk-btn:hover {
   background: var(--mk-accent-2);
@@ -210,551 +353,35 @@ body:has(.mk) {
 .mk-btn:active {
   opacity: 0.9;
 }
-/* The header's size: fits the bar when it shrinks on scroll. */
+.mk-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* The header's size. */
 .mk-btn-sm {
   gap: 0.4rem;
-  height: 2.35rem;
-  padding: 0 1.05rem;
-  font-size: 0.875rem;
+  height: 2.5rem;
+  padding: 0 1.1rem;
+  font-size: 0.9375rem;
 }
 .mk-btn-ghost {
   color: var(--foreground);
   background: transparent;
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--foreground) 22%, transparent);
+  box-shadow: inset 0 0 0 1px var(--mk-frame);
 }
 .mk-btn-ghost:hover {
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
-}
-
-/* ---------- Code card: stays dark, like a terminal on the desk ---------- */
-.code-card {
-  --foreground: #f3f5f2;
-  color: var(--foreground);
-  border-radius: 1.1rem;
-  background: #121614;
-  box-shadow: 0 24px 50px -28px rgb(23 26 24 / 0.55);
-}
-/* On the ink page the terminal needs an edge to stand out. */
-.dark .code-card {
-  background: #0c0e0d;
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.08),
-    0 24px 50px -28px rgb(0 0 0 / 0.7);
+  background: var(--accent);
 }
 
 /* ---------- Cards ---------- */
 .mk .price-card {
-  border-radius: 1.25rem;
   background: var(--card);
-  box-shadow:
-    0 0 0 1px var(--border),
-    0 18px 40px -30px var(--mk-shadow);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 .mk .price-card[data-popular="true"] {
-  box-shadow:
-    0 0 0 1.5px var(--mk-accent-ink),
-    0 22px 50px -30px color-mix(in srgb, var(--mk-accent-ink) 45%, transparent);
+  box-shadow: inset 0 0 0 1px var(--mk-accent-ink);
 }
 
-/* ---------- Scroll reveal fallback: visible without JS ---------- */
-.js-split-hidden {
-  visibility: hidden;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-fade {
-    animation: none;
-  }
-  .mk .price-card {
-    transition: none;
-  }
-}
-
-/* ---------- Hero (centered) ---------- */
-/* Faint ruled lines behind the headline, like writing paper, fading to the edges. */
-.dot-grid {
-  position: absolute;
-  inset: -2rem 0 auto;
-  height: 30rem;
-  pointer-events: none;
-  background-image: radial-gradient(var(--mk-dot) 1px, transparent 1px);
-  background-size: 24px 24px;
-  mask-image: radial-gradient(ellipse 55% 60% at 50% 35%, #000 15%, transparent 72%);
-}
-/* The rotating second line: all items share one grid cell, the current one is sharp, the rest blurred out. */
-.rotator {
-  display: grid;
-  justify-items: center;
-  font-style: italic;
-  color: var(--mk-accent-ink);
-}
-.rotator-item {
-  grid-area: 1 / 1;
-  white-space: nowrap;
-  opacity: 0;
-  filter: blur(14px);
-  transform: translateY(0.25em) scale(0.98);
-  transition:
-    opacity 0.6s ease,
-    filter 0.6s ease,
-    transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.rotator-item.is-on {
-  opacity: 1;
-  filter: none;
-  transform: none;
-}
-
-/* ---------- Product tour ---------- */
-.tour-tabs {
-  position: relative;
-  isolation: isolate;
-  display: inline-flex;
-  gap: 0.25rem;
-  padding: 0.3rem;
-  border-radius: 999px;
-  background: var(--card);
-  box-shadow: 0 0 0 1px var(--border);
-  max-width: 100%;
-  overflow-x: auto;
-}
-.tour-tabs::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0 auto auto 0;
-  width: var(--tour-pill-width, 0px);
-  height: var(--tour-pill-height, 0px);
-  transform: translate(var(--tour-pill-x, 0px), var(--tour-pill-y, 0px));
-  border-radius: 999px;
-  background: var(--mk-accent);
-  pointer-events: none;
-}
-.tour-tabs[data-pill-ready]::before {
-  transition:
-    transform 360ms cubic-bezier(0.22, 1, 0.36, 1),
-    width 360ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 360ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.tour-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.45rem 0.95rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  white-space: nowrap;
-  color: color-mix(in srgb, var(--foreground) 60%, transparent);
-  transition:
-    color 0.2s,
-    background-color 0.2s;
-}
-.tour-tab:hover {
-  color: var(--foreground);
-}
-.tour-tab:is([aria-selected="true"], [aria-pressed="true"]) {
-  color: var(--mk-on-accent);
-  background: var(--mk-accent);
-}
-.tour-tabs[data-pill-ready] .tour-tab:is([aria-selected="true"], [aria-pressed="true"]) {
-  background: transparent;
-}
-.tour-tab:focus-visible {
-  outline: 2px solid var(--foreground);
-  outline-offset: -3px;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tour-tabs[data-pill-ready]::before {
-    transition: none;
-  }
-}
-/* Pricing: monthly/yearly switch, same pill as the tour tabs. */
-.billing-switch {
-  display: inline-flex;
-  gap: 0.25rem;
-  padding: 0.3rem;
-  border-radius: 999px;
-  background: var(--card);
-  box-shadow: 0 0 0 1px var(--border);
-}
-.billing-switch button {
-  padding: 0.45rem 1rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  white-space: nowrap;
-  color: color-mix(in srgb, var(--foreground) 60%, transparent);
-  transition:
-    color 0.2s,
-    background-color 0.2s;
-}
-.billing-switch button:hover {
-  color: var(--foreground);
-}
-.billing-switch button[aria-checked="true"] {
-  color: var(--mk-on-accent);
-  background: var(--mk-accent);
-}
-.browser {
-  overflow: hidden;
-  border-radius: 1.1rem;
-  background: var(--card);
-  box-shadow:
-    0 50px 100px -40px var(--mk-shadow),
-    0 0 0 1px var(--border);
-}
-.browser-body {
-  aspect-ratio: 16 / 10;
-}
-.browser-body img {
-  height: 100%;
-  object-fit: cover;
-  object-position: top left;
-}
-/* The phone stands on a panel as wide as the editor screenshot above, cut off at the bottom edge. */
-.phone-stage {
-  display: flex;
-  justify-content: center;
-  height: clamp(26rem, 48vw, 36rem);
-  overflow: hidden;
-  border-radius: 1.25rem;
-  padding-top: clamp(2rem, 4vw, 3.5rem);
-  background:
-    radial-gradient(ellipse 60% 70% at 50% 100%, rgb(255 255 255 / 0.5), transparent 70%),
-    var(--mk-paper-2);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-.phone-stage .phone {
-  align-self: start;
-}
-
-/* A phone frame for the mobile screenshot. */
-.phone {
-  width: min(100%, 330px);
-  border-radius: 2.8rem;
-  padding: 0.55rem;
-  background: #171a18;
-  box-shadow:
-    0 50px 90px -40px rgb(23 26 24 / 0.55),
-    inset 0 0 0 1px rgb(255 255 255 / 0.08);
-}
-.phone img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 2.3rem;
-}
-
-/* ---------- Install: three ways in ---------- */
-.install-ways {
-  display: grid;
-  gap: 1rem;
-}
-@media (min-width: 1024px) {
-  .install-ways {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .install-ways .bento-card {
-    min-height: 25rem;
-  }
-}
-.mk .install-ways h3 {
-  display: block;
-  font-size: 1.35rem;
-}
-/* The card's sample (code, plugins, prompt) sits at the bottom, at least 1.5rem below the text. */
-.install-ways .bento-card > :last-child {
-  margin-top: auto;
-}
-.install-ways .bento-card > p {
-  margin-bottom: 1.5rem;
-}
-.install-num {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--mk-accent-ink);
-}
-.install-app {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  border-radius: 0.9rem;
-  padding: 0.7rem 0.85rem;
-  background: var(--mk-bg);
-  box-shadow: inset 0 0 0 1px var(--border);
-  transition: box-shadow 0.2s;
-}
-.install-app:hover {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mk-accent-ink) 45%, transparent);
-}
-.install-prompt {
-  border-radius: 1rem;
-  padding: 1rem 1.1rem;
-  background: var(--mk-bg);
-  box-shadow: inset 0 0 0 1px var(--border);
-  mask-image: linear-gradient(#000 70%, transparent);
-}
-.install-facts {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.6rem 1.8rem;
-  font-size: 0.95rem;
-  color: color-mix(in srgb, var(--foreground) 75%, transparent);
-}
-.install-facts li {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-/* Long lines wrap again on narrow screens, where every item takes two lines anyway. */
-@media (max-width: 640px) {
-  .rotator-item {
-    white-space: normal;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rotator-item {
-    transition: none;
-  }
-}
-
-.mail-client {
-  display: grid;
-  grid-template-columns: 11.5rem 19rem minmax(0, 1fr);
-  height: 100%;
-  text-align: left;
-  font-size: 0.8rem;
-  color: #1c1917;
-  background: #fff;
-}
-/* Folders, like a webmail's left rail. */
-.mail-nav {
-  display: grid;
-  align-content: start;
-  gap: 0.1rem;
-  padding: 0.9rem 0.6rem;
-  background: #f6f7f9;
-}
-.mail-compose {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: fit-content;
-  margin: 0 0 0.8rem 0.2rem;
-  padding: 0.6rem 1rem;
-  border-radius: 0.9rem;
-  font-weight: 600;
-  background: #dfe8f5;
-}
-.mail-folder {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: 999px;
-  color: #44403c;
-}
-.mail-folder.is-on {
-  font-weight: 600;
-  color: #0b2a55;
-  background: #d3e3fd;
-}
-.mail-folder b {
-  margin-left: auto;
-  font-size: 0.72rem;
-}
-.mail-nav-label {
-  margin: 0.9rem 0 0.3rem 0.7rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #78716c;
-}
-.mail-list {
-  overflow: hidden;
-  border-right: 1px solid #ececea;
-}
-.mail-search {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.75rem;
-  padding: 0.55rem 0.8rem;
-  border-radius: 999px;
-  color: #78716c;
-  background: #f1f3f4;
-}
-.mail-row {
-  display: flex;
-  gap: 0.65rem;
-  padding: 0.75rem 0.9rem;
-  border-bottom: 1px solid #f0efed;
-  color: #78716c;
-}
-.mail-row.is-open {
-  background: #eef4fe;
-  box-shadow: inset 3px 0 0 #3b82f6;
-}
-.mail-row.is-unread .mail-row-subject,
-.mail-row.is-open .mail-row-subject {
-  font-weight: 600;
-  color: #1c1917;
-}
-.mail-row-main {
-  display: grid;
-  min-width: 0;
-  flex: 1;
-  gap: 0.1rem;
-}
-.mail-row-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  color: #1c1917;
-}
-.mail-row-top span {
-  font-size: 0.72rem;
-  color: #a8a29e;
-}
-.mail-row-subject,
-.mail-row-snippet {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mail-row-snippet {
-  font-size: 0.75rem;
-  color: #a8a29e;
-}
-/* A sender's avatar: their logo on white, or an initial on their color. */
-.mail-ava {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  overflow: hidden;
-  border-radius: 999px;
-  font-weight: 700;
-  color: #fff;
-  background: #a8a29e;
-}
-.mail-ava:has(img) {
-  background: #fff;
-  box-shadow: inset 0 0 0 1px #e7e5e4;
-}
-.mail-ava img {
-  width: 78%;
-  height: auto;
-}
-.mail-read {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-.mail-tools {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  padding: 0.85rem 1.5rem;
-  color: #78716c;
-}
-.mail-head {
-  padding: 0.2rem 1.5rem 0.9rem;
-}
-.mail-subject {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 1.2rem;
-  font-weight: 500;
-}
-.mail-tag {
-  padding: 0.1rem 0.45rem;
-  border-radius: 0.3rem;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: #44403c;
-  background: #e7e5e4;
-}
-.mail-from {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-top: 0.9rem;
-  font-size: 0.85rem;
-}
-.mail-address,
-.mail-time {
-  font-size: 0.75rem;
-  color: #a8a29e;
-}
-.mail-time {
-  margin-left: auto;
-}
-.mail-frame {
-  flex: 1;
-  width: 100%;
-  min-height: 0;
-  border: 0;
-  background: #fff;
-}
-.mail-actions {
-  display: flex;
-  gap: 0.6rem;
-  padding: 0.8rem 1.5rem 1rem;
-}
-.mail-actions span {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.45rem 1rem;
-  border-radius: 999px;
-  font-weight: 500;
-  color: #44403c;
-  box-shadow: inset 0 0 0 1px #d6d3d1;
-}
-/* The folders go first when the window is narrow (sized by its frame, not the viewport), then the list. */
-.mail-wrap {
-  height: 100%;
-  container-type: inline-size;
-}
-@container (max-width: 1050px) {
-  .mail-client {
-    grid-template-columns: 17rem minmax(0, 1fr);
-  }
-  .mail-nav {
-    display: none;
-  }
-}
-@container (max-width: 640px) {
-  .mail-client {
-    grid-template-columns: 1fr;
-  }
-  .mail-list {
-    display: none;
-  }
-}
-@media (max-width: 720px) {
-  .fake-shop {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  .fake-shop-corner {
-    justify-items: end;
-  }
-  .mail-client {
-    grid-template-columns: 1fr;
-    height: 620px;
-  }
-  .mail-list {
-    display: none;
-  }
-}
 /* ---------- Craft: hairlines, stages and diagrams instead of cards (components/site/craft) ---------- */
 
 /* ---------- Stage: a tinted band that holds a product scene ---------- */
@@ -763,10 +390,7 @@ body:has(.mk) {
   overflow: hidden;
   border-radius: 1.5rem;
   padding: clamp(1.5rem, 4vw, 3.5rem);
-  background:
-    radial-gradient(ellipse 55% 60% at 70% 110%, rgb(255 255 255 / 0.55), transparent 70%),
-    var(--mk-paper-2);
-  box-shadow: inset 0 0 0 1px var(--border);
+  background: var(--mk-grey);
 }
 .stage-bleed-right {
   padding-right: 0;
@@ -780,29 +404,6 @@ body:has(.mk) {
 .stage-bleed-bottom > .stage-inner {
   margin-bottom: -4rem;
 }
-/* A window inside a stage: the app's own surface, nothing more. */
-.stage-window {
-  overflow: hidden;
-  border-radius: 1rem;
-  background: var(--card);
-  box-shadow:
-    0 0 0 1px var(--border),
-    0 40px 80px -40px var(--mk-shadow);
-}
-.stage-window-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.65rem 1rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border-bottom: 1px solid var(--border);
-}
-.stage-window-bar span {
-  color: var(--muted-foreground);
-  font-weight: 500;
-}
-
 /* ---------- Ledger: features split by hairlines ---------- */
 .ledger {
   display: grid;
@@ -870,40 +471,6 @@ a.ledger-item:hover {
   font-size: 0.95rem;
   line-height: 1.55;
   color: var(--muted-foreground);
-}
-/* Figures first: a picture area of one height, then larger, darker words. */
-.ledger-fig {
-  position: relative;
-  display: grid;
-  place-items: center;
-  height: 15rem;
-  margin: -1.9rem -1.6rem 1.6rem;
-  padding: 2.4rem 1.8rem 1.6rem;
-  background: color-mix(in srgb, var(--mk-paper-2) 70%, var(--mk-bg));
-  border-bottom: 1px solid var(--border);
-}
-.ledger-fig > div {
-  width: 100%;
-}
-.ledger-fig-label {
-  position: absolute;
-  left: 1rem;
-  top: 0.8rem;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  color: var(--muted-foreground);
-}
-.ledger-figures .ledger-top {
-  display: none;
-}
-.mk .ledger-figures .ledger-item h3 {
-  margin-top: 0;
-  font-size: 1.3rem;
-}
-.ledger-figures .ledger-item p {
-  font-size: 1.02rem;
-  color: color-mix(in srgb, var(--foreground) 72%, transparent);
 }
 .ledger-fragment {
   margin-top: auto;
@@ -1057,94 +624,8 @@ a.ledger-item:hover {
 }
 
 
-/* On ink, the stage's white glow would read as fog: keep only a hint of it. */
-.dark .mk .stage {
-  background:
-    radial-gradient(ellipse 55% 60% at 70% 110%, rgb(255 255 255 / 0.05), transparent 70%),
-    var(--mk-paper-2);
-}
-.dark .mk .phone-stage {
-  background:
-    radial-gradient(ellipse 60% 70% at 50% 100%, rgb(255 255 255 / 0.05), transparent 70%),
-    var(--mk-paper-2);
-}
-
-/* ---------- Closing CTA: ink on the paper page, the app peeking out of the corner ---------- */
-.cta-ink {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  border-radius: 1.75rem;
-  color: #f2f2f0;
-  background:
-    radial-gradient(ellipse 60% 80% at 100% 100%, rgb(255 255 255 / 0.07), transparent 65%),
-    #121212;
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.06),
-    0 50px 90px -50px rgb(0 0 0 / 0.55);
-}
-/* Faint dots behind the words, fading out towards the screen. */
-.cta-ink::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px);
-  background-size: 22px 22px;
-  mask-image: radial-gradient(ellipse 55% 75% at 20% 40%, #000, transparent 75%);
-}
-.dark .mk .cta-ink {
-  background:
-    radial-gradient(ellipse 60% 80% at 100% 100%, rgb(255 255 255 / 0.06), transparent 65%),
-    #1a1a1a;
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1);
-}
-.mk .cta-ink h2 {
-  color: #f4f4f2;
-}
-.mk .cta-ink h2 em {
-  color: rgb(244 244 242 / 0.5);
-}
-.cta-ink .mk-btn {
-  color: #121212;
-  background: #f4f4f2;
-}
-.cta-ink .mk-btn:hover {
-  background: #ffffff;
-}
-.cta-ink .mk-btn-ghost {
-  color: #f4f4f2;
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.22);
-}
-.cta-ink .mk-btn-ghost:hover {
-  background: rgb(255 255 255 / 0.06);
-}
-/* The app window runs off the card's right and bottom edges. */
-.cta-peek {
-  position: relative;
-  align-self: end;
-  height: 100%;
-  min-height: 16rem;
-  margin-left: 1.75rem;
-}
-.cta-peek img {
-  position: absolute;
-  top: 3.5rem;
-  left: 0;
-  width: 150%;
-  max-width: none;
-  border-radius: 0.9rem 0 0 0;
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.1),
-    -30px 30px 80px -20px rgb(0 0 0 / 0.7);
-}
-@media (max-width: 1023px) {
-  .cta-peek {
-    height: 18rem;
-  }
-  .cta-peek img {
-    top: 0;
-    width: 160%;
-  }
+/* An ink band that starts under the see-through header (MarketingLayout `ink`). */
+.mk-under-header {
+  margin-top: calc(-1 * var(--header-height));
+  padding-top: var(--header-height);
 }

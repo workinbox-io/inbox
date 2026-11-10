@@ -1,20 +1,21 @@
 ---
-/** One soft surface, each question a native <details> row. */
+/** Questions as native <details> rows between hairlines, a mono + / − in front. */
 interface Props {
   items: { question: string; answer: string }[];
 }
 const { items } = Astro.props;
 ---
 
-<div class="bg-surface text-card-foreground divide-border/60 divide-y overflow-hidden rounded-[28px]">
+<div class="border-t border-(--border)">
   {
-    items.map((item, index) => (
-      <details name="faq" open={index === 0} class="group">
-        <summary class="focus-visible:bg-muted/25 flex min-h-[54px] w-full cursor-pointer list-none items-center gap-4 px-5 py-3 text-left text-base tracking-tight outline-none transition-colors [&::-webkit-details-marker]:hidden">
-          <span class="flex-1 text-balance">{item.question}</span>
-          <svg class="text-muted-foreground size-4 shrink-0 transition-transform duration-300 group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+    items.map((item, i) => (
+      <details name="faq" open={i === 0} class="group border-b border-(--border)">
+        <summary class="flex cursor-pointer list-none items-start gap-4 py-5 text-lg outline-none focus-visible:underline [&::-webkit-details-marker]:hidden">
+          <span class="mk-mono w-4 shrink-0 text-(--muted-foreground) group-open:hidden" aria-hidden="true">+</span>
+          <span class="mk-mono hidden w-4 shrink-0 text-(--muted-foreground) group-open:inline" aria-hidden="true">−</span>
+          <span class="flex-1 font-medium text-balance">{item.question}</span>
         </summary>
-        <p class="text-muted-foreground px-5 pb-5 text-[15px] leading-6 tracking-tight text-pretty">{item.answer}</p>
+        <p class="pb-6 pl-8 leading-7 text-pretty text-(--muted-foreground)">{item.answer}</p>
       </details>
     ))
   }

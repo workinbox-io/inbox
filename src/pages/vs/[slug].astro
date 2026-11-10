@@ -2,6 +2,8 @@
 /** Work Inbox vs one competitor, from config/compare.ts. */
 import { ArrowRight, Check } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import PageHero from "@/components/site/PageHero.astro";
+import ClosingBand from "@/components/site/ClosingBand.astro";
 import ComparisonTable from "@/components/site/ComparisonTable.astro";
 import Faq from "@/components/site/Faq.astro";
 import { COMPETITORS, type Competitor } from "@/config/compare";
@@ -32,17 +34,17 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout title={`${siteConfig.name} vs ${c.name}`} description={`${c.intro.split(". ")[0]}. Prices, shared mailboxes, self-hosting and what each does better, checked ${checked}.`} jsonLd={jsonLd}>
-  <div class="mx-auto flex w-full max-w-[1120px] flex-1 flex-col px-5 pb-8 sm:px-10">
-    <nav class="flex items-center gap-2 pt-10 text-sm text-foreground/60"><a href="/vs" class="hover:text-foreground">Compare</a> / <img src={c.logo} alt="" width="16" height="16" class="size-4 rounded bg-white object-contain" /> {c.name}</nav>
-    <header class="pt-8">
-      <h1 class="hero-title max-w-4xl text-[clamp(2.3rem,4.6vw,4rem)]">{c.tagline}</h1>
-      <p class="mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65">{c.intro}</p>
-      <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-        <a href="/signup" class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
-        <span class="text-sm text-foreground/60">{TRIAL_DAYS} days, no card. Or self-host for free.</span>
-      </div>
-    </header>
+<MarketingLayout title={`${siteConfig.name} vs ${c.name}`} description={`${c.intro.split(". ")[0]}. Prices, shared mailboxes, self-hosting and what each does better, checked ${checked}.`} jsonLd={jsonLd} ink>
+  <PageHero>
+    <nav class="mk-cap flex items-center gap-2"><a href="/vs" class="hover:text-(--foreground)">Compare</a> / <img src={c.logo} alt="" width="16" height="16" class="size-4 bg-white object-contain" /> {c.name}</nav>
+    <h1 class="mk-h1 mt-6 max-w-4xl">{c.tagline}</h1>
+    <p class="mk-lead mt-6 max-w-2xl">{c.intro}</p>
+    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <a href="/signup" class="mk-btn">Start free <ArrowRight className="size-5" /></a>
+      <span class="mk-cap">{TRIAL_DAYS} days, no card. Or self-host for free.</span>
+    </div>
+  </PageHero>
+  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
 
     <section class="pt-16">
       <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Side by side</h2>
@@ -83,8 +85,9 @@ const jsonLd = [
     <section class="pt-16">
       <h2 class="text-xl">Other comparisons</h2>
       <div class="mt-4 flex flex-wrap gap-2">
-        {others.map((o) => <a href={`/vs/${o.slug}`} class="inline-flex items-center gap-2 rounded-full border border-(--border) py-1.5 pr-4 pl-2 text-sm hover:bg-(--accent)"><img src={o.logo} alt="" width="20" height="20" loading="lazy" class="size-5 rounded-full bg-white object-contain p-0.5" />vs {o.name}</a>)}
+        {others.map((o) => <a href={`/vs/${o.slug}`} class="inline-flex items-center gap-2 border border-(--border) py-1.5 pr-4 pl-2 text-sm hover:bg-(--accent)"><img src={o.logo} alt="" width="20" height="20" loading="lazy" class="size-5 bg-white object-contain p-0.5" />vs {o.name}</a>)}
       </div>
     </section>
   </div>
+  <ClosingBand />
 </MarketingLayout>

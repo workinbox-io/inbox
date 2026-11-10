@@ -6,6 +6,8 @@
  */
 import { ArrowRight, Check, Minus } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import PageHero from "@/components/site/PageHero.astro";
+import ClosingBand from "@/components/site/ClosingBand.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import Shot from "@/components/site/Shot.astro";
 import ComparisonTable from "@/components/site/ComparisonTable.astro";
@@ -65,19 +67,19 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout title="Google Workspace alternative for team email" description="An open-source Google Workspace alternative: team email on your own domain with free shared mailboxes and live notes, from €3 a person or self-hosted. What you keep, what you give up, what five people cost." jsonLd={jsonLd}>
-  <div class="mx-auto flex w-full max-w-[1120px] flex-1 flex-col px-5 pb-8 sm:px-10">
-    <header class="pt-14 text-center sm:pt-20">
-      <h1 class="hero-title mx-auto max-w-4xl">Leave Google, <em>keep your addresses.</em></h1>
-      <p class="mx-auto mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65">
-        Work Inbox is open-source team email on your own domain, with free shared mailboxes and notes your team writes
-        together. It does less than Google Workspace, costs less, and can run on your own Cloudflare account.
-      </p>
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-        <a href="/signup" class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
-        <a href="/docs/self-host" class="underline underline-offset-4">Self-host on Cloudflare</a>
-      </div>
-    </header>
+<MarketingLayout title="Google Workspace alternative for team email" description="An open-source Google Workspace alternative: team email on your own domain with free shared mailboxes and live notes, from €3 a person or self-hosted. What you keep, what you give up, what five people cost." jsonLd={jsonLd} ink>
+  <PageHero>
+    <h1 class="mk-h1 max-w-4xl">Leave Google, <em>keep your addresses.</em></h1>
+    <p class="mk-lead mt-6 max-w-2xl">
+      Work Inbox is open-source team email on your own domain, with free shared mailboxes and notes your team writes
+      together. It does less than Google Workspace, costs less, and can run on your own Cloudflare account.
+    </p>
+    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <a href="/signup" class="mk-btn">Start free <ArrowRight className="size-5" /></a>
+      <a href="/docs/self-host" class="mk-link">Self-host on Cloudflare</a>
+    </div>
+  </PageHero>
+  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
 
     <div class="mt-14"><Stage><BrowserFrame url="workinbox.io/app/mail"><Shot name="mail-thread" alt="Work Inbox mail with an open message" eager /></BrowserFrame></Stage></div>
 
@@ -125,4 +127,5 @@ const jsonLd = [
       <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
     </section>
   </div>
+  <ClosingBand />
 </MarketingLayout>

@@ -1,9 +1,13 @@
 ---
 import { ArrowRight, Menu } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
 import { siteConfig, type NavItem, type NavLink } from "@/config/site";
 import Logo from "./Logo.astro";
 
+interface Props {
+  /** The page opens with an ink band: the header is see-through over it until the page scrolls. */
+  ink?: boolean;
+}
+const { ink = false } = Astro.props;
 const path = Astro.url.pathname;
 const isActive = (href: string) => !href.includes("#") && (path === href || path.startsWith(`${href}/`));
 const nav: NavItem[] = siteConfig.navItems;
@@ -26,19 +30,14 @@ const summary =
 <header
   id="site-header"
   data-scrolled="false"
-  class="group sticky top-0 z-50 h-14 w-full sm:h-16"
+  data-ink={ink ? "true" : undefined}
+  class="mk-header group sticky top-0 z-50 h-14 w-full sm:h-16"
 >
-  <div
-    class="relative mx-auto flex h-14 w-full max-w-[1280px] items-center justify-between rounded-full border border-transparent px-5 transition-[max-width,height,margin,padding,background-color,border-color] duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[scrolled=true]:mt-3 group-data-[scrolled=true]:h-12 group-data-[scrolled=true]:max-w-[calc(100%-1.5rem)] group-data-[scrolled=true]:border-border group-data-[scrolled=true]:bg-background/75 group-data-[scrolled=true]:px-2 group-data-[scrolled=true]:backdrop-blur-xl group-data-[scrolled=true]:backdrop-saturate-150 sm:h-16 sm:px-10 sm:group-data-[scrolled=true]:h-13 sm:group-data-[scrolled=true]:max-w-4xl sm:group-data-[scrolled=true]:px-3"
-  >
-    <span
-      aria-hidden="true"
-      class="glass-noise pointer-events-none absolute inset-0 rounded-full opacity-0 mix-blend-overlay transition-opacity duration-700 group-data-[scrolled=true]:opacity-100"
-    ></span>
+  <div class="mk-wrap relative flex h-14 items-center justify-between sm:h-16">
     <div class="relative z-10 flex items-center gap-7">
-      <a href="/" class="flex items-center gap-1.5 transition-transform active:scale-95" aria-label={siteConfig.name}>
-        <Logo />
-        <span class="text-base font-medium tracking-tight">{siteConfig.name}</span>
+      <a href="/" class="flex items-center gap-2" aria-label={siteConfig.name}>
+        <Logo mono class="size-7" />
+        <span class="font-[family-name:var(--mk-font-display)] text-[1.2rem] font-medium tracking-[-0.03em] whitespace-nowrap sm:text-[1.45rem]">{siteConfig.name}</span>
       </a>
       <nav data-desktop-nav aria-label="Main" class="hidden items-center gap-5 lg:flex">
         {
@@ -113,10 +112,10 @@ const summary =
       <a
         href="/signup"
         data-auth-cta
-        class={buttonVariants() + " whitespace-nowrap"}
+        class="mk-btn mk-btn-sm max-sm:px-3"
       >
-        <span data-auth-label>Start free trial</span>
-        <ArrowRight className="size-4" />
+        <span data-auth-label>Start free</span>
+        <ArrowRight className="size-4 max-sm:hidden" />
       </a>
       <button
         type="button"
@@ -229,6 +228,33 @@ const summary =
 </script>
 
 <style>
+  /* A plain bar: the page colour with a hairline once scrolled; over an ink band it is see-through and light. */
+  .mk-header {
+    background: color-mix(in srgb, var(--mk-bg) 92%, transparent);
+    backdrop-filter: blur(12px);
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+  .mk-header[data-scrolled="true"] {
+    box-shadow: 0 1px 0 var(--border);
+  }
+  .mk-header[data-ink][data-scrolled="false"] {
+    --foreground: #fefefe;
+    --muted-foreground: rgb(254 254 254 / 0.72);
+    --accent: rgb(254 254 254 / 0.08);
+    --mk-accent: #fefefe;
+    --mk-accent-2: #ffffff;
+    --mk-on-accent: #141414;
+    color: var(--foreground);
+    background: transparent;
+    backdrop-filter: none;
+  }
+  /* Menus open on the page colour, not the band's. */
+  .mk-header :is(.mega-viewport, [data-mobile-panel]) {
+    --foreground: var(--mk-ink);
+    --muted-foreground: color-mix(in srgb, var(--mk-ink) 65%, transparent);
+    --accent: color-mix(in srgb, var(--mk-ink) 6%, transparent);
+    color: var(--foreground);
+  }
   .mega-viewport {
     position: absolute;
     top: calc(100% + 0.65rem);
@@ -240,9 +266,7 @@ const summary =
     transform: translateY(6px);
     overflow: hidden;
     border: 1px solid var(--border);
-    border-radius: 1.5rem;
     background: var(--popover);
-    box-shadow: 0 24px 60px -16px rgb(0 0 0 / 0.28);
     transition: left 300ms cubic-bezier(0.22, 1, 0.36, 1), height 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms, transform 200ms, visibility 200ms;
   }
   .mega-viewport[data-open="true"] { visibility: visible; opacity: 1; transform: none; }

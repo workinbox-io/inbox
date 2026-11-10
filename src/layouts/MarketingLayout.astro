@@ -13,13 +13,15 @@ interface Props {
   footer?: boolean;
   /** "paper" is the marketing look (.mk, styles/marketing.css); "plain" keeps the app style for docs, legal and error pages. */
   look?: "paper" | "plain";
+  /** The page opens with an ink band (.mk-band) under a see-through header. */
+  ink?: boolean;
 }
-const { title, description, jsonLd, footer = true, look = "paper" } = Astro.props;
+const { title, description, jsonLd, footer = true, look = "paper", ink = false } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description} jsonLd={jsonLd}>
-  <div class:list={["relative z-10 flex min-h-svh flex-col [--header-height:calc(var(--spacing)*14)] lg:[--header-height:calc(var(--spacing)*16)]", look === "paper" && "mk mk-grain"]}>
-    <SiteHeader />
+  <div class:list={["relative z-10 flex min-h-svh flex-col [--header-height:calc(var(--spacing)*14)] sm:[--header-height:calc(var(--spacing)*16)]", look === "paper" && "mk"]}>
+    <SiteHeader ink={ink} />
     <main class="flex min-h-0 flex-1 flex-col"><slot /></main>
     {footer ? <SiteFooter /> : null}
   </div>

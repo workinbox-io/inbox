@@ -1,5 +1,7 @@
 ---
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import PageHero from "@/components/site/PageHero.astro";
+import ClosingBand from "@/components/site/ClosingBand.astro";
 import SectionHeading from "@/components/site/SectionHeading.astro";
 import PricingCards from "@/components/site/PricingCards.astro";
 import Faq from "@/components/site/Faq.astro";
@@ -32,19 +34,19 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout title="Pricing" description={`${siteConfig.name} pricing: free for one person, then from €${PLANS.starter.priceMonthly / 100} per person a month, shared mailboxes free, self-hosted free. ${TRIAL_DAYS}-day trial, no card needed.`} jsonLd={jsonLd}>
-  <div class="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-5 pb-8 sm:px-10">
-    <header class="relative pt-14 text-center sm:pt-20">
-      <div class="dot-grid" aria-hidden="true"></div>
-      <h1 class="hero-title hero-fade relative mx-auto max-w-4xl" style="--d: 60ms">The first person is free. <em>Then pay per person.</em></h1>
-      <p class="hero-fade relative mx-auto mt-6 max-w-xl text-lg leading-7 text-pretty text-foreground/65" style="--d: 160ms">
-        Shared mailboxes and aliases are free on every plan. {TRIAL_DAYS}-day free trial, no card needed. Pay yearly and get two months free. Prices exclude VAT.
-      </p>
-    </header>
+<MarketingLayout title="Pricing" description={`${siteConfig.name} pricing: free for one person, then from €${PLANS.starter.priceMonthly / 100} per person a month, shared mailboxes free, self-hosted free. ${TRIAL_DAYS}-day trial, no card needed.`} jsonLd={jsonLd} ink>
+  <PageHero>
+    <h1 class="mk-h1 max-w-4xl">The first person is free. <em>Then pay per person.</em></h1>
+    <p class="mk-lead mt-6 max-w-2xl">
+      Shared mailboxes and aliases are free on every plan. {TRIAL_DAYS}-day free trial, no card needed. Pay yearly and get two months free. Prices exclude VAT.
+    </p>
+  </PageHero>
+  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
     <div data-reveal="items" class="mt-12 sm:mt-16"><PricingCards yearly /></div>
     <section class="pt-24">
       <SectionHeading muted="about plans.">Questions</SectionHeading>
-      <div class="mx-auto mt-10 w-full max-w-2xl"><Faq items={faq} /></div>
+      <div class="mt-10 w-full max-w-3xl"><Faq items={faq} /></div>
     </section>
   </div>
+  <ClosingBand />
 </MarketingLayout>

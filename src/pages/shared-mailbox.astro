@@ -6,6 +6,8 @@
  */
 import { ArrowRight } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import PageHero from "@/components/site/PageHero.astro";
+import ClosingBand from "@/components/site/ClosingBand.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import Shot from "@/components/site/Shot.astro";
 import Faq from "@/components/site/Faq.astro";
@@ -37,19 +39,19 @@ const faq = [
 const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) };
 ---
 
-<MarketingLayout title="Shared mailbox for your team's support@ and sales@" description="Shared mailboxes for support@, sales@ and invoices@ on your own domain: the whole team answers from one address, everyone signs in as themselves, and shared mailboxes are free on every plan." jsonLd={jsonLd}>
-  <div class="mx-auto flex w-full max-w-[1120px] flex-1 flex-col px-5 pb-8 sm:px-10">
-    <header class="pt-14 text-center sm:pt-20">
-      <h1 class="hero-title mx-auto max-w-4xl">One support@, <em>the whole team on it.</em></h1>
-      <p class="mx-auto mt-6 max-w-2xl text-lg leading-7 text-pretty text-foreground/65">
-        Stop forwarding mail around and sharing one password. In Work Inbox, support@ is a mailbox several people open with
-        their own accounts, and replies go out from support@. Shared mailboxes are free on every plan.
-      </p>
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-        <a href="/signup" class="mk-btn">Start free trial <ArrowRight className="size-5" /></a>
-        <a href="/pricing" class="underline underline-offset-4">See pricing</a>
-      </div>
-    </header>
+<MarketingLayout title="Shared mailbox for your team's support@ and sales@" description="Shared mailboxes for support@, sales@ and invoices@ on your own domain: the whole team answers from one address, everyone signs in as themselves, and shared mailboxes are free on every plan." jsonLd={jsonLd} ink>
+  <PageHero>
+    <h1 class="mk-h1 max-w-4xl">One support@, <em>the whole team on it.</em></h1>
+    <p class="mk-lead mt-6 max-w-2xl">
+      Stop forwarding mail around and sharing one password. In Work Inbox, support@ is a mailbox several people open with
+      their own accounts, and replies go out from support@. Shared mailboxes are free on every plan.
+    </p>
+    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <a href="/signup" class="mk-btn">Start free <ArrowRight className="size-5" /></a>
+      <a href="/pricing" class="mk-link">See pricing</a>
+    </div>
+  </PageHero>
+  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
 
     <div class="mt-14"><Stage><BrowserFrame url="workinbox.io/app/mail"><Shot name="shared-mailbox" alt="support@ open as a shared mailbox, with a customer question" eager /></BrowserFrame></Stage></div>
 
@@ -69,4 +71,5 @@ const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntit
       <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
     </section>
   </div>
+  <ClosingBand />
 </MarketingLayout>

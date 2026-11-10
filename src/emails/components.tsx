@@ -10,9 +10,9 @@ import { appUrl } from "./urls";
 const light = EMAIL_COLORS.light;
 const dark = EMAIL_COLORS.dark;
 
-/** Inter Tight loads in Apple Mail and iOS; Gmail and Outlook fall back to the system sans. */
-const FONT = "'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-const FONT_CSS = "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500&subset=latin-ext&display=swap";
+/** Figtree loads in Apple Mail and iOS; Gmail and Outlook fall back to the system sans. */
+const FONT = "'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+const FONT_CSS = "https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap";
 
 const responsiveStyles = `
   :root { color-scheme: light dark; supported-color-schemes: light dark; }
