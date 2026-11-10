@@ -65,9 +65,23 @@ export function cleanCard(c: Partial<SignatureCard>): SignatureCard {
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const lines = (s: string) => esc(s).replace(/\r?\n/g, "<br>");
-const FONT = "font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif";
+const FONT = "font-family:Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
-/** The signature as text and HTML, or null when there's nothing to show. `appUrl` makes the logo URL absolute (sent mail). */
+/** "Anna Kowalska" → "AK", for the badge shown when there's no logo. */
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+
+/**
+ * The signature as text and HTML, or null when there's nothing to show. `appUrl` makes the logo URL absolute (sent
+ * mail). The HTML is a modern card built from tables and inline styles, so Gmail and Outlook keep it: the logo (or an
+ * initials badge in the brand colour), a thin brand-coloured rule, the name, the role and company, and one line of
+ * contacts.
+ */
 export function renderSignature(card: SignatureCard, brand: SignatureBrand, appUrl: string) {
   const c = cleanCard(card);
   const b = cleanBrand(brand);
@@ -78,17 +92,29 @@ export function renderSignature(card: SignatureCard, brand: SignatureBrand, appU
   if (!text) return null;
 
   const color = b.color || DEFAULT_COLOR;
+  const badge = initials(c.name || b.company);
+  const mark = b.logoUrl
+    ? `<img src="${esc(appUrl ? new URL(b.logoUrl, appUrl).href : b.logoUrl)}" alt="${esc(b.company)}" width="52" height="52" style="display:block;width:52px;height:52px;border-radius:12px;object-fit:contain;border:0">`
+    : badge
+      ? `<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr><td width="52" height="52" align="center" valign="middle" style="width:52px;height:52px;border-radius:26px;background:${color};color:#ffffff;font-size:18px;font-weight:600;letter-spacing:0.5px;${FONT}">${esc(badge)}</td></tr></table>`
+      : "";
+  const role = [c.role && `<span style="color:#6b7280">${esc(c.role)}</span>`, b.company && `<span style="color:#111827;font-weight:500">${esc(b.company)}</span>`]
+    .filter(Boolean)
+    .join(`<span style="color:#d1d5db">&nbsp;&nbsp;·&nbsp;&nbsp;</span>`);
+  const contacts = [
+    c.phone && `<a href="tel:${esc(c.phone.replace(/[^\d+]/g, ""))}" style="color:#374151;text-decoration:none">${esc(c.phone)}</a>`,
+    site && `<a href="${esc(site)}" style="color:${color};text-decoration:none;font-weight:500">${esc(siteLabel)}</a>`,
+  ]
+    .filter(Boolean)
+    .join(`<span style="color:#d1d5db">&nbsp;&nbsp;|&nbsp;&nbsp;</span>`);
   const rows = [
-    c.name && `<div style="font-weight:600;font-size:15px;color:${color}">${esc(c.name)}</div>`,
-    roleLine && `<div>${esc(roleLine)}</div>`,
-    c.phone && `<div><a href="tel:${esc(c.phone.replace(/[^\d+]/g, ""))}" style="color:inherit;text-decoration:none">${esc(c.phone)}</a></div>`,
-    site && `<div><a href="${esc(site)}" style="color:${color};text-decoration:none">${esc(siteLabel)}</a></div>`,
-    c.note && `<div style="margin-top:6px;color:#777">${lines(c.note)}</div>`,
+    c.name && `<div style="font-size:15px;font-weight:600;color:#111827;letter-spacing:-0.1px">${esc(c.name)}</div>`,
+    role && `<div style="margin-top:2px;font-size:13px">${role}</div>`,
+    contacts && `<div style="margin-top:8px;font-size:12.5px">${contacts}</div>`,
+    c.note && `<div style="margin-top:8px;font-size:12px;color:#9ca3af">${lines(c.note)}</div>`,
   ].filter(Boolean);
-  const logo = b.logoUrl
-    ? `<td style="padding-right:12px;vertical-align:top"><img src="${esc(appUrl ? new URL(b.logoUrl, appUrl).href : b.logoUrl)}" alt="${esc(b.company)}" width="48" height="48" style="display:block;width:48px;height:48px;object-fit:contain;border:0"></td>`
-    : "";
-  const html = `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;border-collapse:collapse;${FONT};font-size:13px;line-height:1.45;color:#444"><tr>${logo}<td style="vertical-align:top">${rows.join("")}</td></tr></table>`;
+  const markCell = mark ? `<td valign="top" style="padding-right:14px">${mark}</td>` : "";
+  const html = `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;border-collapse:collapse;${FONT};line-height:1.45;color:#374151"><tr>${markCell}<td valign="top" style="border-left:2px solid ${color};padding-left:14px">${rows.join("")}</td></tr></table>`;
   return { text, html };
 }
 

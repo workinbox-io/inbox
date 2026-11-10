@@ -18,6 +18,9 @@ describe("signature", () => {
     expect(sig.html).toContain("&lt;b&gt;&quot;x&quot;&lt;/b&gt;");
     expect(sig.html).toContain("line 1<br>line 2");
     expect(sig.html).not.toContain("<img");
+    const badge = renderSignature({ ...EMPTY_CARD, name: "Anna Kowalska" }, { ...EMPTY_BRAND, color: "#e5484d" }, "https://a.b")!;
+    expect(badge.html).toContain(">AK</td>");
+    expect(badge.html).toContain("background:#e5484d");
   });
   it("drops invalid brand values and renders nothing when empty", () => {
     expect(cleanBrand({ color: "red", website: "javascript:alert(1)", logoUrl: "https://evil.example/x.png" })).toEqual({ company: "", website: "", logoUrl: "", color: "" });
