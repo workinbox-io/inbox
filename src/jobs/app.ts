@@ -12,8 +12,8 @@ import { purgeSubtree } from "@/lib/server/drive/items";
 
 export interface AppJobs {
   "mail.send": { id: string };
-  /** A mail SES received and stored in S3 (api/ses/webhook.ts). */
-  "mail.inbound": { bucket: string; key: string; from: string; recipients: string[] };
+  /** A mail SES received and stored in S3 (api/ses/webhook.ts); `recover` = found by the S3 sweep, envelope from headers. */
+  "mail.inbound": { bucket: string; key: string; from: string; recipients: string[]; recover?: boolean };
   /** The next batch of a mail import (lib/server/mail/import.ts). */
   "mail.import": { id: string };
   "billing.seats": { orgId: string };

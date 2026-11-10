@@ -48,6 +48,7 @@ const MAX_TEXT_CHARS = 100_000;
 const MAX_CANDIDATES = 10;
 const PAGE_SIZE = 50;
 
+const logIn = (event: string, data: Record<string, unknown>) => console.log(`[mail-in] ${event}`, JSON.stringify(data));
 const msgId = (id: string) => (id.startsWith("<") ? id : `<${id}>`);
 
 const addrs = (list: Address[] | Address | undefined) =>
@@ -157,8 +158,12 @@ export interface ImportedMail {
 
 export async function handleOrgMail(message: IncomingMail, imported?: ImportedMail): Promise<boolean> {
   const mailbox = await findRecipient(message.to);
-  if (!mailbox) return false;
+  if (!mailbox) {
+    logIn("no recipient", { to: message.to, from: message.from });
+    return false;
+  }
   if (message.rawSize > MAX_RAW_BYTES) {
+    logIn("rejected: too large", { to: message.to, from: message.from, size: message.rawSize });
     message.setReject("Message too large");
     return true;
   }
@@ -191,6 +196,7 @@ export async function handleOrgMail(message: IncomingMail, imported?: ImportedMa
   // Imported mail was filtered where it came from.
   const spam = !imported && (verdict === "block" || (verdict !== "allow" && scored.spam));
   const reasons = verdict === "block" ? ["Blocked sender"] : verdict === "allow" ? [] : scored.reasons;
+  if (dupe) logIn("duplicate", { to: message.to, mailbox: mailbox.id, messageId, imported: !!imported });
   if (dupe && imported) {
     imported.duplicate = true;
     return true;
@@ -206,7 +212,11 @@ export async function handleOrgMail(message: IncomingMail, imported?: ImportedMa
   const reservationBytes = raw.byteLength + byteLength(text) + byteLength(parsed.html) + parsed.attachments.reduce((sum, a) => sum + (typeof a.content === "string" ? byteLength(a.content) : a.content.byteLength), 0);
   try { await reserveStorage(mailbox.id, reservationBytes, storedMessageId); }
   catch (e) {
-    if (e instanceof HttpError && e.status === 507) { message.setReject("Mailbox storage quota exceeded"); return true; }
+    if (e instanceof HttpError && e.status === 507) {
+      logIn("rejected: mailbox full", { to: message.to, from: fromEmail, mailbox: mailbox.id, size: reservationBytes });
+      message.setReject("Mailbox storage quota exceeded");
+      return true;
+    }
     throw e;
   }
   let createdKeys: string[] = [];
@@ -287,10 +297,12 @@ export async function handleOrgMail(message: IncomingMail, imported?: ImportedMa
     .onConflictDoNothing()
     .returning({ id: m.id });
   if (!inserted.length) {
+    logIn("duplicate (concurrent)", { to: message.to, mailbox: mailbox.id, messageId });
     await env.FILES.delete(createdKeys);
     await releaseStorageReservation(storedMessageId);
   }
   else if (!imported) {
+    logIn("stored", { to: message.to, from: fromEmail, mailbox: mailbox.id, message: storedMessageId, thread: threadId, spam, size: raw.byteLength });
     await applyMailFilters(mailbox, storedMessageId, message.headers, spam);
     const { recordMailNotifications } = await import("./notifications");
     await recordMailNotifications(mailbox.orgId, mailbox.id, storedMessageId, threadId);
@@ -304,6 +316,7 @@ export async function handleOrgMail(message: IncomingMail, imported?: ImportedMa
   }
   return true;
   } catch (e) {
+    logIn("failed", { to: message.to, from: fromEmail, mailbox: mailbox.id, messageId, error: String(e) });
     const [saved] = await db.select({id:m.id}).from(m).where(eq(m.id,storedMessageId));
     if (!saved) {
       if(createdKeys.length) await env.FILES.delete(createdKeys);

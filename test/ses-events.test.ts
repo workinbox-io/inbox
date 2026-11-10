@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bareAddress, fromHeader, fromSesEvent, rawHeaders } from "../src/lib/mail/ses-events";
+import { bareAddress, bounceable, fromHeader, fromSesEvent, parseS3List, rawHeaders, recoveredEnvelope } from "../src/lib/mail/ses-events";
 
 describe("SES events", () => {
   it("maps deliveries and bounces to per-recipient events", () => {
@@ -30,5 +30,39 @@ describe("SES events", () => {
     expect(h.get("subject")).toBe("Hello there");
     expect(h.get("x-ses-spam-verdict")).toBe("FAIL");
     expect(h.get("body")).toBeNull();
+  });
+});
+
+describe("lost SES mail", () => {
+  it("recovers the envelope from SES's headers", () => {
+    const h = new Headers({
+      "return-path": "<bob@x.com>",
+      received: "from mx.x.com by inbound-smtp.eu-west-1.amazonaws.com with SMTP id abc for hidden@acme.test; Tue, 10 Nov 2026",
+      to: '"Anna" <Anna@acme.test>, out@gmail.com',
+      cc: "team@acme.test",
+    });
+    expect(recoveredEnvelope(h)).toEqual({ from: "bob@x.com", recipients: ["hidden@acme.test", "anna@acme.test", "out@gmail.com", "team@acme.test"] });
+  });
+
+  it("bounces only to verified, human senders", () => {
+    const ok = { "authentication-results": "amazonses.com; spf=pass smtp.mailfrom=x.com; dkim=fail" };
+    expect(bounceable("bob@x.com", new Headers(ok))).toBe(true);
+    expect(bounceable("bob@x.com", new Headers({ "authentication-results": "amazonses.com; spf=fail; dkim=none" }))).toBe(false);
+    expect(bounceable("", new Headers(ok))).toBe(false);
+    expect(bounceable("MAILER-DAEMON@x.com", new Headers(ok))).toBe(false);
+    expect(bounceable("bob@x.com", new Headers({ ...ok, "auto-submitted": "auto-replied" }))).toBe(false);
+    expect(bounceable("bob@x.com", new Headers({ ...ok, "auto-submitted": "no" }))).toBe(true);
+    expect(bounceable("bob@x.com", new Headers({ ...ok, "list-id": "<news.x.com>" }))).toBe(false);
+    expect(bounceable("bob@x.com", new Headers({ ...ok, "x-ses-spam-verdict": "FAIL" }))).toBe(false);
+  });
+
+  it("parses an S3 listing", () => {
+    const xml = `<ListBucketResult><Contents><Key>mail/a&amp;b</Key><LastModified>2026-11-10T10:00:00.000Z</LastModified></Contents>
+      <Contents><Key>mail/c</Key><LastModified>2026-11-10T11:00:00.000Z</LastModified></Contents><NextContinuationToken>t+1</NextContinuationToken></ListBucketResult>`;
+    expect(parseS3List(xml)).toEqual({
+      objects: [{ key: "mail/a&b", lastModified: Date.parse("2026-11-10T10:00:00Z") }, { key: "mail/c", lastModified: Date.parse("2026-11-10T11:00:00Z") }],
+      next: "t+1",
+    });
+    expect(parseS3List("<ListBucketResult></ListBucketResult>")).toEqual({ objects: [], next: undefined });
   });
 });

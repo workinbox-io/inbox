@@ -55,7 +55,8 @@
   "queues": {
     "producers": [{ "binding": "JOBS", "queue": "inbox-jobs" }],
     "consumers": [{ "queue": "inbox-jobs", "max_retries": 5, "max_batch_size": 10, "dead_letter_queue": "inbox-jobs-dlq" },
-      { "queue": "inbox-mail-events", "max_retries": 10, "max_batch_size": 10, "dead_letter_queue": "inbox-mail-events-dlq" }]
+      { "queue": "inbox-mail-events", "max_retries": 10, "max_batch_size": 10, "dead_letter_queue": "inbox-mail-events-dlq" },
+      { "queue": "inbox-jobs-dlq", "max_retries": 3 }]
   },
   "ratelimits": [
     // Public API: requests per API key per minute.
@@ -64,7 +65,7 @@
     { "name": "AUTH_RATE_LIMIT", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } }
   ],
   "triggers": {
-    // Daily housekeeping and trial reminders (see src/jobs/cron.ts).
-    "crons": ["17 3 * * *", "* * * * *"]
+    // Daily housekeeping and trial reminders (see src/jobs/cron.ts); every minute and hourly: src/app-worker.ts.
+    "crons": ["17 3 * * *", "* * * * *", "41 * * * *"]
   }
 }

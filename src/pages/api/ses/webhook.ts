@@ -27,8 +27,14 @@ interface Received {
  */
 export const POST: APIRoute = async ({ request, url }) => {
   const secret = env.SES_EVENTS_SECRET;
-  if (!secret || !sesConfigured()) return new Response("Not configured", { status: 404 });
-  if (!safeEqual(url.searchParams.get("secret") ?? "", secret)) return new Response("Unauthorized", { status: 401 });
+  if (!secret || !sesConfigured()) {
+    console.warn("[ses-webhook] not configured: SES_EVENTS_SECRET or AWS secrets missing; SNS will give up (the S3 sweep picks up received mail)");
+    return new Response("Not configured", { status: 404 });
+  }
+  if (!safeEqual(url.searchParams.get("secret") ?? "", secret)) {
+    console.warn("[ses-webhook] wrong secret in the SNS subscription URL");
+    return new Response("Unauthorized", { status: 401 });
+  }
   const sns = JSON.parse(await request.text()) as SnsMessage;
   if (sns.Type === "SubscriptionConfirmation" && sns.SubscribeURL) {
     const confirm = new URL(sns.SubscribeURL);
@@ -41,6 +47,7 @@ export const POST: APIRoute = async ({ request, url }) => {
   try {
     if ("notificationType" in message && message.notificationType === "Received") {
       const action = message.receipt?.action;
+      console.log("[ses-webhook] received", JSON.stringify({ key: action?.objectKey, from: message.mail?.source, recipients: message.receipt?.recipients }));
       if (action?.type === "S3" && action.bucketName && action.objectKey)
         await enqueue("mail.inbound", { bucket: action.bucketName, key: action.objectKey, from: message.mail?.source ?? "", recipients: message.receipt?.recipients ?? [] });
     } else {

@@ -7,6 +7,7 @@
  */
 import { AwsClient } from "aws4fetch";
 import { env } from "cloudflare:workers";
+import { parseS3List } from "@/lib/mail/ses-events";
 
 /** The configuration set with the SNS event destination (docs/ses.md). */
 export const SES_CONFIGURATION_SET = "workinbox";
@@ -163,6 +164,14 @@ export async function getInboundMail(bucket: string, key: string): Promise<Array
   if (res.status === 404) return null;
   if (!res.ok) throw new SesError(`S3: GET ${res.status} ${(await res.text()).slice(0, 200)}`, res.status, `HTTP ${res.status}`);
   return res.arrayBuffer();
+}
+
+/** One page (up to 1000) of the mail SES stored and we haven't handled yet (deleted after handling). */
+export async function listInboundMail(bucket: string, continuation?: string) {
+  const q = new URLSearchParams({ "list-type": "2", prefix: "mail/", ...(continuation ? { "continuation-token": continuation } : {}) });
+  const res = await aws("s3").fetch(`https://${bucket}.s3.${sesRegion()}.amazonaws.com/?${q}`);
+  if (!res.ok) throw new SesError(`S3: LIST ${res.status} ${(await res.text()).slice(0, 200)}`, res.status, `HTTP ${res.status}`);
+  return parseS3List(await res.text());
 }
 
 export async function deleteInboundMail(bucket: string, key: string) {

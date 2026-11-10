@@ -76,3 +76,39 @@ export function rawHeaders(raw: ArrayBuffer) {
   }
   return headers;
 }
+
+/**
+ * Envelope of a mail found in S3 without its SNS notification (the S3 sweep, lib/server/mail/ses-inbound.ts).
+ * shortcut: Bcc recipients are only known when SES's Received header names one ("for x@y"); with several Bcc'd
+ * recipients the notification is the only source, so keep SNS working and treat this as the fallback it is.
+ */
+export function recoveredEnvelope(headers: { get(name: string): string | null }) {
+  const from = bareAddress(headers.get("return-path") ?? "").replace(/^<|>$/g, "");
+  const received = [...(headers.get("received") ?? "").matchAll(/\bfor\s+<?([^\s<>;]+@[^\s<>;]+)>?/gi)].map((m) => m[1]!);
+  const listed = ["to", "cc", "delivered-to"].flatMap((h) => (headers.get(h) ?? "").match(/[^\s<>,;"']+@[^\s<>,;"']+/g) ?? []);
+  return { from, recipients: [...new Set([...received, ...listed].map((a) => a.toLowerCase()))] };
+}
+
+/**
+ * A bounce goes back only to a real sender: never to an empty return path, a mailer daemon, an automated mail, or a
+ * sender SPF/DKIM didn't vouch for (a forged return path would turn our bounces into backscatter and hurt SES reputation).
+ */
+export function bounceable(from: string, headers: { get(name: string): string | null }) {
+  if (!/\b(spf|dkim|dmarc)=pass\b/i.test(headers.get("authentication-results") ?? "")) return false;
+  if (!from.includes("@") || /^(mailer-daemon|postmaster|no-?reply)@/i.test(from)) return false;
+  if (headers.get("x-ses-spam-verdict") === "FAIL" || headers.get("x-ses-virus-verdict") === "FAIL") return false;
+  const auto = headers.get("auto-submitted");
+  return !(auto && auto.toLowerCase() !== "no") && !headers.get("list-id") && !/^(bulk|junk|list)$/i.test(headers.get("precedence") ?? "");
+}
+
+/** Keys and ages from an S3 ListObjectsV2 response. */
+export function parseS3List(xml: string) {
+  const objects = [...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)].map(([, c]) => ({
+    key: decodeXml(c!.match(/<Key>([\s\S]*?)<\/Key>/)?.[1] ?? ""),
+    lastModified: Date.parse(c!.match(/<LastModified>([^<]+)<\/LastModified>/)?.[1] ?? ""),
+  }));
+  const next = xml.match(/<NextContinuationToken>([^<]+)<\/NextContinuationToken>/)?.[1];
+  return { objects: objects.filter((o) => o.key), next: next ? decodeXml(next) : undefined };
+}
+
+const decodeXml = (s: string) => s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");

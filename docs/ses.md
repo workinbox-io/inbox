@@ -58,6 +58,20 @@ To turn it on: a Cloudflare API token with Zone → DNS → Edit and Zone → Zo
 `wrangler secret put MAIL_ZONE_TOKEN`. `MAIL_BASE_DOMAIN` is a var in `wrangler.jsonc`. Each org adds ~7 records to
 the zone: watch the zone's record limit.
 
+## No lost mail
+
+SES has already accepted a mail (250) before we see it, so nothing may drop it silently (`lib/server/mail/ses-inbound.ts`):
+
+- Unknown address, full mailbox or over 25 MB: a bounce from `mailer-daemon@<domain>` to the sender, only when SPF or
+  DKIM passed and the mail isn't automated or spam (`bounceable`), so forged senders don't get backscatter.
+- Lost SNS notification, webhook down or a `mail.inbound` job that used up its retries: the mail stays in S3, and
+  `sweepInboundMail` (cron `41 * * * *`) queues every object older than 3 h again, envelope read from its headers
+  (`recoveredEnvelope`). Still there after a day: an alert (app errors), the bucket expires mail after 14 days.
+- Dead jobs in `inbox-jobs-dlq` are logged with their payload and acked.
+- Logs: `[mail-in]` (each recipient: stored, duplicate, rejected, failed), `[ses-inbound]`, `[ses-webhook]`.
+
+The sweep needs `s3:ListBucket` on `mail/`: re-run `scripts/ses-setup.sh setup` (it rewrites the IAM policy) once.
+
 ## Not done yet
 
 - No cron re-checks pending custom domains: the admin clicks Check DNS (free addresses re-check on their own).

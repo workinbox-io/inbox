@@ -58,7 +58,8 @@ setup() {
   ensure aws iam create-user --user-name "$NAME-ses"
   aws iam put-user-policy --user-name "$NAME-ses" --policy-name ses --policy-document "{\"Version\":\"2012-10-17\",\"Statement\":[
     {\"Effect\":\"Allow\",\"Action\":[\"ses:SendEmail\",\"ses:CreateEmailIdentity\",\"ses:GetEmailIdentity\",\"ses:DeleteEmailIdentity\",\"ses:PutEmailIdentityMailFromAttributes\",\"ses:CreateTenant\",\"ses:CreateTenantResourceAssociation\",\"ses:DeleteTenantResourceAssociation\",\"ses:ListResourceTenants\"],\"Resource\":\"*\"},
-    {\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:DeleteObject\"],\"Resource\":\"arn:aws:s3:::$BUCKET/mail/*\"}]}"
+    {\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:DeleteObject\"],\"Resource\":\"arn:aws:s3:::$BUCKET/mail/*\"},
+    {\"Effect\":\"Allow\",\"Action\":\"s3:ListBucket\",\"Resource\":\"arn:aws:s3:::$BUCKET\",\"Condition\":{\"StringLike\":{\"s3:prefix\":\"mail/*\"}}}]}"
 
   # 6. Worker secrets. A new access key only when the user has none (AWS shows the secret once).
   if [ "$(aws iam list-access-keys --user-name "$NAME-ses" --query 'length(AccessKeyMetadata)' --output text)" = "0" ]; then
