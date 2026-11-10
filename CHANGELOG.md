@@ -3,6 +3,12 @@
 Template releases. Note anything a product has to do by hand after `pnpm template:update`
 (new secret, binding or env var; `pnpm db:generate` after schema changes).
 
+## v1.16.1 (2026-11-10)
+
+- Toasts use more of Ding: the toast region's screen-reader names go through the panel `t()` ("Notifications",
+  "Dismiss notification"), and Undo on "Sending…" morphs the pill into "Not sent" instead of closing it. Return a
+  `ToastPatch` from any toast action to do the same. No manual steps.
+
 ## v1.16.0 (2026-11-10)
 
 - Toasts moved from Sonner to Ding (`@yusufceng1z/ding-react`): one pill on screen that morphs into the next message
