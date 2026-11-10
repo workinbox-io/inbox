@@ -25,7 +25,7 @@ import { AccountMenu, type MailUser } from "./account-menu"
 import { OutboxDetail, outboxRows, scheduledCount, type OutboxRow } from "./outbox-panel"
 import { Toaster } from "@/components/ui/toaster"
 import { AppFrame } from "@/components/workspace/app-frame"
-import { shortcutsPaused, useMediaQuery } from "@/components/workspace/ui"
+import { shortcutsPaused, useAppLayout } from "@/components/workspace/ui"
 import { cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { FOLDER_KEYS, Kbd, assignMailboxColors } from "./mail-ui"
 import { FilePen, MessagesSquare, X as XIcon } from "lucide-react"
@@ -75,8 +75,7 @@ export interface MailboxAppProps {
 export function MailboxApp(props: MailboxAppProps) {
   // Before the first render: every child reads the colours.
   React.useMemo(() => assignMailboxColors(props.mailboxes), [props.mailboxes])
-  const desktop = useMediaQuery("(min-width: 768px)")
-  const wide = useMediaQuery("(min-width: 1280px)")
+  const { ref: frameRef, desktop, wide } = useAppLayout()
   const multiple = props.mailboxes.length > 1
   const [mailbox, setMailbox] = React.useState(multiple ? ALL_MAILBOXES : (props.mailboxes[0] ?? ""))
   const [folder, setFolder] = React.useState<MailFolder>(props.outbox ? "outbox" : props.drafts ? "drafts" : "inbox")
@@ -663,7 +662,7 @@ export function MailboxApp(props: MailboxAppProps) {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <AppFrame userView={!!props.account}>
+      <AppFrame ref={frameRef} userView={!!props.account}>
         {desktop ? (
           <FolderRail
             mailboxes={props.mailboxes}

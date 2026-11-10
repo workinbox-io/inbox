@@ -43,7 +43,7 @@ import { DetailHeader, IconAction } from "@/components/workspace/detail-header"
 import { ListBody, ListEmpty, ListHeader, ListPane, ListRow, ListSearch } from "@/components/workspace/list-pane"
 import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
 import { SplitView } from "@/components/workspace/split-view"
-import { Kbd, shortcutsPaused, useMediaQuery, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
+import { Kbd, shortcutsPaused, useAppLayout, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
 import { t } from "@/lib/i18n/panel"
 import { pushUrl, replaceUrl } from "@/lib/panel-history"
@@ -97,7 +97,7 @@ export function NotesApp(props: NotesAppProps) {
   const [detailVersion, setDetailVersion] = React.useState(0)
   const searchRef = React.useRef<HTMLInputElement>(null)
   const mounted = useMounted()
-  const desktop = useMediaQuery("(min-width: 768px)")
+  const { ref: frameRef, desktop } = useAppLayout()
 
   // Fetch the editor's code once the list is up, so opening a note doesn't wait for it.
   React.useEffect(() => {
@@ -513,7 +513,7 @@ export function NotesApp(props: NotesAppProps) {
   )
 
   return (
-    <AppFrame userView={userView}>
+    <AppFrame ref={frameRef} userView={userView}>
       {desktop ? rail : null}
       <SplitView list={list} detail={detail} showDetail={!!selectedId} />
       <FolderDialog folder={typeof folderDialog === "object" ? folderDialog : null} open={!!folderDialog} onOpenChange={(o) => !o && setFolderDialog(false)} onSave={saveFolder} />

@@ -72,7 +72,7 @@ export function BillingPanel(props: BillingPanelProps) {
   const s = STATUS[status] ?? { label: status, dot: "bg-muted-foreground" }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
       <PageHeader
         title="Billing"
         description={
@@ -90,7 +90,7 @@ export function BillingPanel(props: BillingPanelProps) {
         }
       />
 
-      <section className="grid gap-4">
+      <section className="grid grid-cols-[minmax(0,1fr)] gap-4">
         <div className="bg-surface flex flex-wrap items-center justify-between gap-4 rounded-2xl p-6 sm:p-8">
           <div className="grid gap-1">
             <SectionLabel>Current plan</SectionLabel>

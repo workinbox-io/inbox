@@ -38,6 +38,36 @@ export function useMediaQuery(query: string) {
   )
 }
 
+/** An element's width, kept current: layouts that depend on the room an app really has (sidebars and rails take part of the window). */
+export function useWidth<T extends HTMLElement>() {
+  const [width, setWidth] = React.useState<number>()
+  // A callback ref: the element may mount after the component (e.g. once its data loads).
+  const ref = React.useCallback((el: T | null) => {
+    if (!el) return
+    setWidth(el.getBoundingClientRect().width)
+    const observer = new ResizeObserver(([entry]) => setWidth(entry!.contentRect.width))
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return [ref, width] as const
+}
+
+/**
+ * Room for an app's rail (224px) next to a list (260) and its detail (360), and for a third column (`wide`), judged by
+ * the app frame's own width: the dashboard sidebar and the app rail take part of the window. Pass `ref` to `AppFrame`.
+ * The media queries only cover the first render, before the frame is measured.
+ */
+export function useAppLayout() {
+  const [ref, width] = useWidth<HTMLDivElement>()
+  const desktopQuery = useMediaQuery("(min-width: 768px)")
+  const wideQuery = useMediaQuery("(min-width: 1280px)")
+  return {
+    ref,
+    desktop: width === undefined ? desktopQuery : width >= 860,
+    wide: width === undefined ? wideQuery : width >= 1100,
+  }
+}
+
 /** True while focus is in a field or editor, so single-key shortcuts stay out of the way. */
 export const isTyping = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))

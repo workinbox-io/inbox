@@ -123,7 +123,7 @@ export function ThreadList({
 
   return (
     <aside className="@container flex h-full min-h-0 flex-col">
-      <div className={cn("grid gap-2.5 p-3", !rail && "border-b")}>
+      <div className={cn("grid grid-cols-[minmax(0,1fr)] gap-2.5 p-3", !rail && "border-b")}>
         {rail ? (
           <div className="flex h-8 items-baseline gap-2 px-1">
             <h2 className="text-lg font-semibold tracking-tight">{query ? "Search" : FOLDERS.find((f) => f.id === folder)?.label}</h2>
@@ -256,11 +256,11 @@ export function ThreadList({
             onValueChange={onFolder}
             options={FOLDERS.map((f) => ({
               value: f.id,
-              // A narrow list shows the other folders as icons; the open one always has its name.
+              // A narrow list shows the other folders as icons; the open one has its name from 420px.
               label: (
                 <span className="flex items-center gap-1.5" title={f.label}>
                   <f.icon className="size-3.5 shrink-0" />
-                  <span className={cn(folder !== f.id && "sr-only @min-[680px]:not-sr-only")}>{f.label}</span>
+                  <span className={cn(folder !== f.id ? "sr-only @min-[680px]:not-sr-only" : "sr-only @min-[420px]:not-sr-only")}>{f.label}</span>
                 </span>
               ),
               count: f.id === "inbox" ? totalUnread : counts[f.id] || undefined,

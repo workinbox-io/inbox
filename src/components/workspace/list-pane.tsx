@@ -21,9 +21,9 @@ export function ListPane({ children, label }: { children: React.ReactNode; label
 /** Title, subtitle and (on phones, where there is no rail) actions; then whatever goes below (search). */
 export function ListHeader({ title, subtitle, loading, actions, children }: { title: React.ReactNode; subtitle?: React.ReactNode; loading?: boolean; actions?: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <div className="grid gap-2.5 p-3">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-2.5 p-3">
       <div className="flex h-8 items-center gap-2 px-1">
-        <h2 className="truncate text-lg font-semibold tracking-tight">{title}</h2>
+        <h2 className="min-w-0 truncate text-lg font-semibold tracking-tight">{title}</h2>
         {subtitle ? <span className="text-muted-foreground truncate text-[13px]">{subtitle}</span> : null}
         {loading ? <Loader2 className="text-muted-foreground size-3.5 shrink-0 animate-spin" /> : null}
         {actions ? <div className="ml-auto flex shrink-0 items-center gap-1">{actions}</div> : null}

@@ -15,7 +15,7 @@ export function SettingsSection({ title, description, destructive, className, ch
   return (
     <section
       id={id}
-      className={cn("grid scroll-mt-20 gap-4 md:grid-cols-[18rem_1fr] md:gap-10", className)}
+      className={cn("grid scroll-mt-20 grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-10", className)}
       {...props}
     >
       <div className="grid content-start gap-1">

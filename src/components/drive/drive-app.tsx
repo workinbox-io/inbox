@@ -17,7 +17,7 @@ import { ActionMenu, cleanActions, type MenuAction } from "@/components/workspac
 import { AppFrame } from "@/components/workspace/app-frame"
 import { ListEmpty } from "@/components/workspace/list-pane"
 import { ShareDialog } from "@/components/workspace/share-dialog"
-import { shortcutsPaused, useMediaQuery } from "@/components/workspace/ui"
+import { shortcutsPaused, useAppLayout } from "@/components/workspace/ui"
 import { clickSelect, moveFocus, sortItems, type Selection } from "@/lib/drive/explorer"
 import { api } from "@/lib/api-client"
 import { t } from "@/lib/i18n/panel"
@@ -102,8 +102,7 @@ export function DriveApp(props: DriveAppProps) {
   const folderInput = React.useRef<HTMLInputElement>(null)
   const scroller = React.useRef<HTMLDivElement>(null)
   // desktop: room for the folder tree beside the files (the frame, not the window); wide: the details panel too.
-  const desktop = useMediaQuery("(min-width: 768px)")
-  const wide = useMediaQuery("(min-width: 1024px)")
+  const { ref: frameRef, desktop, wide } = useAppLayout()
   const userView = !!props.account
 
   // Preferences live in this browser; read them after hydration so the server's HTML matches the first render.
@@ -531,7 +530,7 @@ export function DriveApp(props: DriveAppProps) {
   )
 
   return (
-    <AppFrame userView={userView}>
+    <AppFrame ref={frameRef} userView={userView}>
       {desktop ? (
         <FolderTree
           location={loc}

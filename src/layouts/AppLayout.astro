@@ -75,7 +75,7 @@ const adminMail = boxes.length ? { unread: await adminUnreadCount(boxes).catch((
     {/* SidebarInset, with the sidebar's state read through the wrapper (the island isn't its sibling). */}
     <main
       data-slot="sidebar-inset"
-      class="bg-background relative flex w-full flex-1 flex-col md:m-2 md:ml-0 md:rounded-2xl md:group-has-[[data-slot=sidebar][data-state=collapsed]]/sidebar-wrapper:ml-2"
+      class="bg-background relative flex w-full min-w-0 flex-1 flex-col md:m-2 md:ml-0 md:rounded-2xl md:group-has-[[data-slot=sidebar][data-state=collapsed]]/sidebar-wrapper:ml-2"
     >
       <header class="flex h-14 shrink-0 items-center gap-2 px-4">
         <SidebarToggle client:load />

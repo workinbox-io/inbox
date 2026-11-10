@@ -25,7 +25,7 @@ interface OverviewProps {
 /** Dashboard home: plan usage, a nudge while on trial, and recent activity. Make it about your product. */
 export function OverviewPanel(props: OverviewProps) {
   return (
-    <div className="grid gap-8">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-8">
       <PageHeader
         title={`Welcome, ${props.userName.split(" ")[0]}`}
         description="Here's what's happening in your organization."
@@ -52,7 +52,7 @@ export function OverviewPanel(props: OverviewProps) {
         </div>
       ) : null}
 
-      <section className="grid gap-3">
+      <section className="grid grid-cols-[minmax(0,1fr)] gap-3">
         <SectionLabel>{props.plan.name} plan</SectionLabel>
         <TickKpiCard
           metrics={[
@@ -62,7 +62,7 @@ export function OverviewPanel(props: OverviewProps) {
       </section>
 
       {props.recent ? (
-        <section className="grid gap-3">
+        <section className="grid grid-cols-[minmax(0,1fr)] gap-3">
           <SectionLabel>Recent activity</SectionLabel>
           {props.recent.length ? (
             <ul className="bg-surface divide-border/60 divide-y rounded-2xl">

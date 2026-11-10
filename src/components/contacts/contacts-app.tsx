@@ -43,7 +43,7 @@ import { DetailHeader, IconAction } from "@/components/workspace/detail-header"
 import { ListBody, ListEmpty, ListHeader, ListPane, ListRow, ListSearch } from "@/components/workspace/list-pane"
 import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
 import { SplitView } from "@/components/workspace/split-view"
-import { Kbd, shortcutsPaused, tint, useMediaQuery, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
+import { Kbd, shortcutsPaused, tint, useAppLayout, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
 import { IMPORT_MAX_BYTES, parseContactsFile } from "@/lib/contacts/import"
 import { t, tp } from "@/lib/i18n/panel"
@@ -95,7 +95,7 @@ export function ContactsApp(props: ContactsAppProps) {
   const searchRef = React.useRef<HTMLInputElement>(null)
   const fileRef = React.useRef<HTMLInputElement>(null)
   const mounted = useMounted()
-  const desktop = useMediaQuery("(min-width: 768px)")
+  const { ref: frameRef, desktop } = useAppLayout()
   const userView = !!props.account
 
   const listUrl = React.useCallback(
@@ -494,7 +494,7 @@ export function ContactsApp(props: ContactsAppProps) {
     )
 
   return (
-    <AppFrame userView={userView}>
+    <AppFrame ref={frameRef} userView={userView}>
       {desktop ? rail : null}
       <SplitView list={list} detail={detail} showDetail={!!selectedId} />
       <input
