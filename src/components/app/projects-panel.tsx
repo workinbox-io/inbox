@@ -1,6 +1,6 @@
 import * as React from "react"
 import { FolderKanban, Plus } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 
 import type { Project } from "@/lib/server/projects"
 import { api } from "@/lib/api-client"

@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Download, ShieldCheck } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "@yusufceng1z/ding-react"
 import { renderSVG } from "uqr"
 
 import { authClient } from "@/lib/auth-client"
