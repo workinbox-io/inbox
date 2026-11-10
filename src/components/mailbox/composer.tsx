@@ -4,7 +4,9 @@ import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
 import { tapllEvent } from "@/lib/tapll"
-import { forwardSubject, replyRecipients, splitAddresses, withSignature } from "@/lib/admin-mail/rules"
+import { forwardSubject, replyRecipients, splitAddresses } from "@/lib/admin-mail/rules"
+import { signaturePreview, type MailboxSignature, type SignatureBrand } from "@/lib/mail/signature"
+import { Checkbox } from "@/components/ui/checkbox"
 import { replySubject } from "@/lib/mail/threading"
 import { cn } from "@/lib/utils"
 import { guardLeaving } from "@/lib/panel-history"
@@ -106,7 +108,7 @@ async function sendRequest(d: Draft, files: { url: string; mediaType: string; fi
     const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify({ ...d, files })))
     const digest = [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, "0")).join("")
     const requestKey = `${d.idempotencyKey ?? crypto.randomUUID()}:${digest}`
-    const base = { sendAt: d.sendAt, idempotencyKey: requestKey, to: d.to[0], cc: [...d.to.slice(1), ...d.cc], text: d.text.trim(), files }
+    const base = { sendAt: d.sendAt, idempotencyKey: requestKey, to: d.to[0], cc: [...d.to.slice(1), ...d.cc], text: d.text.trim(), signature: !d.noSignature, files }
     const result = await ((d.mode === "reply" || d.mode === "replyAll") && threadId
       ? api<QueuedSend>("POST", `/api/app/mail/threads/${threadId}/reply`, base)
       : api<QueuedSend>("POST", "/api/app/mail/threads", d.mode === "forward"
@@ -134,10 +136,13 @@ function MailForm({
   bodyClassName,
   autoFocusTo,
   focusSignal = 0,
+  signatureHtml,
   onSend,
   onDiscard,
 }: {
   focusSignal?: number
+  /** The sender's signature as the server will append it (lib/mail/signature.ts), or null. */
+  signatureHtml?: string | null
   draft: Draft
   set: (patch: Partial<Draft>) => void
   contacts: string[]
@@ -228,6 +233,7 @@ function MailForm({
         onChange={(text) => set({ text })}
         bodyClassName={bodyClassName}
         note={note}
+        footer={signatureHtml ? <SignaturePreview html={signatureHtml} on={!draft.noSignature} onChange={(on) => set({ noSignature: !on })} /> : null}
         attachments={attachments}
         disabled={disabled}
         sendLabel={draft.sendAt ? "Schedule" : "Send"}
@@ -241,9 +247,21 @@ function MailForm({
 const MODE_LABEL: Record<ReplyMode, string> = { reply: "Reply", replyAll: "Reply all", forward: "Forward" }
 const MODE_ICON = { reply: Reply, replyAll: ReplyAll, forward: Forward }
 
+/** The signature under the text, as recipients will see it (on white), with a box to leave it out. */
+function SignaturePreview({ html, on, onChange }: { html: string; on: boolean; onChange: (on: boolean) => void }) {
+  return (
+    <div className="grid gap-1.5 px-4 pb-2">
+      <label className="text-muted-foreground flex w-fit items-center gap-1.5 text-xs">
+        <Checkbox checked={on} onCheckedChange={(v) => onChange(v === true)} /> Signature
+      </label>
+      {on ? <div className="w-fit max-w-full overflow-hidden rounded-md bg-white px-3 pb-2 [&>table]:!mt-2" dangerouslySetInnerHTML={{ __html: html }} /> : null}
+    </div>
+  )
+}
+
 /** A fresh draft for replying to or forwarding `source` in `thread`. */
-export function replyDraft(mode: ReplyMode, thread: MailThread, source: MailMessage, mailboxes: string[], signature: string): Draft {
-  const text = withSignature("", signature)
+export function replyDraft(mode: ReplyMode, thread: MailThread, source: MailMessage, mailboxes: string[]): Draft {
+  const text = ""
   if (mode === "forward") return { mode, from: thread.mailbox, to: [], cc: [], subject: forwardSubject(source.subject || thread.subject), text, messageId: source.id }
   const r = replyRecipients(source, thread.contactEmail, mailboxes, mode === "replyAll")
   return { mode, from: thread.mailbox, to: r.to, cc: r.cc, subject: replySubject(thread.subject), text, messageId: source.id }
@@ -256,7 +274,7 @@ export function InlineComposer({
   initial,
   mailboxes,
   contacts,
-  signature,
+  signatureHtml,
   schedule,
   focusSignal,
   onClose,
@@ -267,7 +285,7 @@ export function InlineComposer({
   initial: Draft
   mailboxes: string[]
   contacts: string[]
-  signature: string
+  signatureHtml: string | null
   schedule: (job: SendJob) => void
   onClose: () => void
 }) {
@@ -286,7 +304,7 @@ export function InlineComposer({
   }, [])
   const source = messages.find((x) => x.id === draft.messageId) ?? messages.at(-1)!
   const switchMode = (mode: ReplyMode) => {
-    const next = replyDraft(mode, thread, source, mailboxes, signature)
+    const next = replyDraft(mode, thread, source, mailboxes)
     // Keep what was written; only the recipients and subject change.
     setDraft((d) => ({ ...next, text: d.text }))
   }
@@ -352,6 +370,7 @@ export function InlineComposer({
         note={draft.mode === "forward" ? "The original e-mail and its files go below your text." : "The previous e-mail is quoted below your reply."}
         bodyClassName="max-h-[45vh]"
         focusSignal={focusSignal}
+        signatureHtml={signatureHtml}
         onSend={send}
         onDiscard={discard}
       />
@@ -367,6 +386,7 @@ export function ComposeWindow({
   mailbox,
   contacts,
   signatures,
+  signatureBrand,
   schedule,
   onClose,
 }: {
@@ -376,14 +396,15 @@ export function ComposeWindow({
   mailboxes: string[]
   mailbox: string
   contacts: string[]
-  signatures: Record<string, { signature: string; name?: string }>
+  signatures: Record<string, MailboxSignature>
+  signatureBrand: SignatureBrand
   schedule: (job: SendJob) => void
   onClose: () => void
 }) {
   const attachments = useAttachments(upload)
   const fresh = React.useCallback(
-    (from: string, to: string[] = []): Draft => ({ mode: "new", from, to, cc: [], subject: "", text: withSignature("", signatures[from]?.signature ?? "") }),
-    [signatures],
+    (from: string, to: string[] = []): Draft => ({ mode: "new", from, to, cc: [], subject: "", text: "" }),
+    [],
   )
   const [draft, setDraft] = React.useState<Draft>(() => fresh(mailbox))
   const [pending, setPending] = React.useState(false)
@@ -401,12 +422,7 @@ export function ComposeWindow({
   const touched = React.useRef(false)
   const set = (patch: Partial<Draft>) => {
     touched.current = true
-    setDraft((d) => {
-      const next = { ...d, ...patch, idempotencyKey: undefined }
-      // A new sender brings their signature, unless the text was already changed.
-      if (patch.from && patch.from !== d.from && d.text === withSignature("", signatures[d.from]?.signature ?? "")) return { ...next, text: withSignature("", signatures[patch.from]?.signature ?? "") }
-      return next
-    })
+    setDraft((d) => ({ ...d, ...patch, idempotencyKey: undefined }))
   }
   // Saved once something was typed, so opening and closing an empty window leaves no draft.
   React.useEffect(() => {
@@ -458,6 +474,7 @@ export function ComposeWindow({
         senderNames={Object.fromEntries(Object.entries(signatures).map(([m, s]) => [m, s.name ?? ""]))}
         showSubject
         autoFocusTo={!draft.to.length}
+        signatureHtml={signaturePreview(signatures[draft.from], signatureBrand)}
         onSend={send}
         onDiscard={discard}
       />

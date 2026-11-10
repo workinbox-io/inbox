@@ -1,4 +1,5 @@
 import * as React from "react"
+import { signaturePreview, type MailboxSignature, type SignatureBrand } from "@/lib/mail/signature"
 import { Archive, Clock, ExternalLink, Forward, Inbox, Mail, MailOpen, Reply, ReplyAll, ShieldAlert, ShieldCheck, SquareCheck, Star, StarOff, Trash2 } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 
@@ -53,7 +54,9 @@ export interface MailboxAppProps {
   threads: MailThread[]
   hasMore: boolean
   unread: Record<string, number>
-  signatures: Record<string, { signature: string; name?: string }>
+  signatures: Record<string, MailboxSignature>
+  /** The org's signature template, for the composer's preview. */
+  signatureBrand: SignatureBrand
   selectedId: string | null
   /** Owners and admins: the empty state links to Settings → Mail. */
   canManage?: boolean
@@ -497,7 +500,7 @@ export function MailboxApp(props: MailboxAppProps) {
         mailboxes={props.mailboxes}
         multipleMailboxes={multiple}
         contacts={contacts}
-        signature={signatures[detail.thread.mailbox]?.signature ?? ""}
+        signatureHtml={signaturePreview(signatures[detail.thread.mailbox], props.signatureBrand)}
         schedule={schedule}
         onPatch={(change) => patch([detail.thread.id], change)}
         onDelete={() => remove([detail.thread.id])}
@@ -599,10 +602,11 @@ export function MailboxApp(props: MailboxAppProps) {
         mailbox={mailbox === ALL_MAILBOXES ? props.mailboxes[0]! : mailbox}
         contacts={contacts}
         signatures={signatures}
+        signatureBrand={props.signatureBrand}
         schedule={schedule}
         onClose={() => setCompose((c) => ({ ...c, open: false }))}
       />
-      <MailPreferences open={settingsOpen} onOpenChange={setSettingsOpen} section={settingsSection} mailboxes={props.mailboxes} mailbox={mailbox === ALL_MAILBOXES ? props.mailboxes[0]! : mailbox} signatures={signatures} onSignatures={setSignatures} account={!!props.account} />
+      <MailPreferences open={settingsOpen} onOpenChange={setSettingsOpen} section={settingsSection} mailboxes={props.mailboxes} mailbox={mailbox === ALL_MAILBOXES ? props.mailboxes[0]! : mailbox} signatures={signatures} signatureBrand={props.signatureBrand} onSignatures={setSignatures} account={!!props.account} />
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>

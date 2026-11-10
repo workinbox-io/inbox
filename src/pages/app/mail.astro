@@ -9,12 +9,14 @@ import { viewerMailboxes } from "@/lib/server/mail/access";
 import { listThreads, unreadCounts } from "@/lib/server/mail/store";
 import { canManage } from "@/lib/server/roles";
 import { workspaceView } from "@/lib/server/workspace-view";
+import { getSignatureBrand } from "@/lib/server/mail/admin";
 
 const role = Astro.locals.role ?? "member";
 const boxes = await viewerMailboxes({ orgId: Astro.locals.orgId!, userId: Astro.locals.user!.id, role });
 const [list, unread] = await Promise.all([listThreads({ boxes, folder: "inbox" }), unreadCounts(boxes)]);
 // The name each mailbox sends under: its sender name, else the viewer's (as sendMail does).
-const signatures = Object.fromEntries(boxes.map((b) => [b.address, { signature: b.signature, name: b.displayName || Astro.locals.user!.name }]));
+const signatures = Object.fromEntries(boxes.map((b) => [b.address, { signature: b.signature, name: b.displayName || Astro.locals.user!.name, card: b.signatureCard }]));
+const signatureBrand = await getSignatureBrand(Astro.locals.orgId!);
 // Dates as ISO strings, like the API.
 const threads = JSON.parse(JSON.stringify(list.threads));
 // Members get mail only (MailLayout); owners and admins get it inside the dashboard.
@@ -51,6 +53,7 @@ const user = Astro.locals.user!;
     hasMore={list.hasMore}
     unread={unread}
     signatures={signatures}
+    signatureBrand={signatureBrand}
     selectedId={Astro.url.searchParams.get("t")}
     canManage={manager}
     account={!mailOnly ? undefined : { name: user.name, email: user.email }}

@@ -92,14 +92,14 @@ export const ThreadView = React.forwardRef<
     mailboxes: string[]
     multipleMailboxes: boolean
     contacts: string[]
-    signature: string
+    signatureHtml: string | null
     schedule: (job: SendJob) => void
     onPatch: (patch: ThreadPatch) => void
     onDelete: () => void
     onBack: () => void
     onInfo?: () => void
   }
->(function ThreadView({ detail, mailboxes, multipleMailboxes, contacts, signature, schedule, onPatch, onDelete, onBack, onInfo }, handle) {
+>(function ThreadView({ detail, mailboxes, multipleMailboxes, contacts, signatureHtml, schedule, onPatch, onDelete, onBack, onInfo }, handle) {
   const { thread, messages } = detail
   const last = messages.at(-1)
   const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set(last ? [last.id] : []))
@@ -112,7 +112,7 @@ export const ThreadView = React.forwardRef<
   function startReply(mode: ReplyMode, messageId?: string) {
     const source = messages.find((x) => x.id === messageId) ?? last
     if (!source) return
-    const next = replyDraft(mode, thread, source, mailboxes, signature)
+    const next = replyDraft(mode, thread, source, mailboxes)
     // Switching an open draft keeps its text.
     const merged = draft ? { ...next, text: draft.text } : next
     writeDraft(thread.id, merged)
@@ -270,7 +270,7 @@ export const ThreadView = React.forwardRef<
               initial={draft}
               mailboxes={mailboxes}
               contacts={contacts}
-              signature={signature}
+              signatureHtml={signatureHtml}
               schedule={schedule}
               focusSignal={focusSignal}
               onClose={() => setDraft(null)}

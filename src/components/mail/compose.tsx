@@ -166,6 +166,7 @@ export function ComposeBody({
   placeholder = "Write your e-mail…",
   bodyClassName,
   note,
+  footer,
   attachments,
   disabled,
   sendLabel = "Send",
@@ -178,6 +179,8 @@ export function ComposeBody({
   placeholder?: string
   bodyClassName?: string
   note?: React.ReactNode
+  /** Under the text, above the note (e.g. the signature preview). */
+  footer?: React.ReactNode
   attachments: Attachments
   disabled: boolean
   sendLabel?: string
@@ -200,6 +203,7 @@ export function ComposeBody({
           if (!disabled) onSend()
         }}
       />
+      {footer}
       {note ? <p className="text-muted-foreground px-4 pb-2 text-xs">{note}</p> : null}
       <AttachmentStrip attachments={attachments} removeLabel="Remove" className="px-4" />
       <div className="flex items-center justify-between gap-2 border-t px-3 py-2">

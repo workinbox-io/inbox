@@ -3,7 +3,8 @@
  * shared like support@), aliases, catch-all and who may open a shared mailbox.
  */
 import { env } from "cloudflare:workers";
-import { and, count, db, eq, inArray, invitation, gt, mailboxAccess, mailAliases, mailboxes, mailDomains, mailMessages, mailThreads, mailOutbox, member, user } from "@/db";
+import { and, count, db, eq, inArray, invitation, gt, mailboxAccess, mailAliases, mailboxes, mailDomains, mailMessages, mailSignatureBrands, mailThreads, mailOutbox, member, user } from "@/db";
+import { EMPTY_BRAND, cleanBrand, cleanCard, type SignatureBrand } from "@/lib/mail/signature";
 import { ATTACHMENT_URL_PREFIX } from "@/lib/uploads";
 import { evaluateDns, isValidDomain, isValidLocalPart, mailFromDomain, normalizeDomain, planDnsChanges, requiredDnsRecords, type ExistingDnsRecord } from "@/lib/mail/rules";
 import { createIdentity, deleteIdentity, getIdentity, sesConfigured, sesRegion, sesTenant } from "@/lib/server/ses";
@@ -19,7 +20,7 @@ const dohAnswers = async (name: string, type: "MX" | "TXT") => {
 };
 
 export async function listMailSetup(orgId: string) {
-  const [domains, boxes, aliases, access, members] = await Promise.all([
+  const [domains, boxes, aliases, access, members, signatureBrand] = await Promise.all([
     db.select().from(mailDomains).where(eq(mailDomains.orgId, orgId)).orderBy(mailDomains.domain),
     db.select().from(mailboxes).where(eq(mailboxes.orgId, orgId)).orderBy(mailboxes.address),
     db.select().from(mailAliases).where(eq(mailAliases.orgId, orgId)).orderBy(mailAliases.address),
@@ -33,6 +34,7 @@ export async function listMailSetup(orgId: string) {
       .from(member)
       .innerJoin(user, eq(user.id, member.userId))
       .where(eq(member.organizationId, orgId)),
+    getSignatureBrand(orgId),
   ]);
   return {
     domains: domains.map((d) => ({ ...d, records: requiredDnsRecords(d.domain, sesSetup(d)) })),
@@ -47,6 +49,7 @@ export async function listMailSetup(orgId: string) {
     }),
     aliases,
     members,
+    signatureBrand,
   };
 }
 
@@ -137,6 +140,18 @@ export async function connectCloudflare(orgId: string, domainId: string, token: 
   return { domain: await checkDomain(orgId, d.id), created: plan.create.length, replaced: plan.conflicts.length };
 }
 
+/** The org's signature template (company, website, logo, colour), empty until an admin sets it. */
+export async function getSignatureBrand(orgId: string): Promise<SignatureBrand> {
+  const [row] = await db.select().from(mailSignatureBrands).where(eq(mailSignatureBrands.orgId, orgId));
+  return row ? { company: row.company, website: row.website, logoUrl: row.logoUrl, color: row.color } : EMPTY_BRAND;
+}
+
+export async function setSignatureBrand(orgId: string, brand: Partial<SignatureBrand>) {
+  const clean = cleanBrand(brand);
+  await db.insert(mailSignatureBrands).values({ orgId, ...clean }).onConflictDoUpdate({ target: mailSignatureBrands.orgId, set: { ...clean, updatedAt: new Date() } });
+  return clean;
+}
+
 export async function removeDomain(orgId: string, domainId: string) {
   const d = await ownDomain(orgId, domainId);
   const [used] = await db.select({ n: count() }).from(mailboxes).where(eq(mailboxes.domainId, d.id));
@@ -211,6 +226,7 @@ export async function createMailbox(orgId: string, input: NewMailbox) {
 export interface MailboxPatch {
   displayName?: string;
   signature?: string;
+  signatureCard?: { name?: string; role?: string; phone?: string };
   /** Turns a personal mailbox into a shared one (e.g. after someone leaves), or hands it to another member. */
   kind?: "personal" | "shared";
   userId?: string | null;
@@ -221,6 +237,10 @@ export async function updateMailbox(orgId: string, id: string, patch: MailboxPat
   const set: Partial<typeof mailboxes.$inferInsert> = {};
   if (patch.displayName !== undefined) set.displayName = patch.displayName.trim().slice(0, 100);
   if (patch.signature !== undefined) set.signature = patch.signature.slice(0, 2000);
+  if (patch.signatureCard !== undefined) {
+    const { name, role, phone } = cleanCard(patch.signatureCard);
+    set.signatureCard = { name, role, phone };
+  }
   if (patch.kind === "shared") {
     set.kind = "shared";
     set.userId = null;
@@ -239,7 +259,7 @@ export async function updateMailbox(orgId: string, id: string, patch: MailboxPat
 }
 
 /** A member edits their own mailbox's name and signature (or a shared one they can open). */
-export async function updateOwnMailbox(boxIds: string[], id: string, patch: Pick<MailboxPatch, "displayName" | "signature">) {
+export async function updateOwnMailbox(boxIds: string[], id: string, patch: Pick<MailboxPatch, "displayName" | "signature" | "signatureCard">) {
   if (!boxIds.includes(id)) throw new HttpError(404, "Not found");
   const [mb] = await db.select({ orgId: mailboxes.orgId }).from(mailboxes).where(eq(mailboxes.id, id));
   return updateMailbox(mb!.orgId, id, patch);

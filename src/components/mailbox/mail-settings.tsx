@@ -5,6 +5,8 @@ import { toast } from "@yusufceng1z/ding-react"
 
 import { StorageSettings } from "./storage-settings"
 import { MailImport } from "./mail-import"
+import { SignatureTemplate } from "./signature-template"
+import type { SignatureBrand } from "@/lib/mail/signature"
 import type { DnsRecord } from "@/lib/mail/rules"
 import { api } from "@/lib/api-client"
 import { tapllEvent } from "@/lib/tapll"
@@ -34,6 +36,7 @@ export interface MailSetup {
   mailboxes: { id: string; domainId: string; address: string; kind: "personal" | "shared"; userId: string | null; displayName: string; access: string[]; mailOnly?: boolean }[]
   aliases: { id: string; address: string; mailboxId: string }[]
   members: { userId: string; name: string; email: string; role: string }[]
+  signatureBrand: SignatureBrand
 }
 
 const NONE = "__none__"
@@ -69,6 +72,7 @@ export function MailSettings(props: { initial: MailSetup }) {
       <DomainsSection setup={setup} act={act} />
       <MailboxesSection setup={setup} act={act} refresh={refresh} />
       <AliasesSection setup={setup} act={act} />
+      <SignatureTemplate key={JSON.stringify(setup.signatureBrand)} initial={setup.signatureBrand} onSaved={refresh} />
       <StorageSettings mailboxes={setup.mailboxes} />
       <MailImport mailboxes={setup.mailboxes} />
     </div>

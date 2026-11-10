@@ -9,7 +9,7 @@ function fixture() {
  CREATE TABLE invitation(id TEXT PRIMARY KEY, organization_id TEXT, email TEXT, status TEXT, expires_at INTEGER);
  CREATE TABLE mail_domains(id TEXT PRIMARY KEY, org_id TEXT, status TEXT);
  CREATE TABLE member(id TEXT PRIMARY KEY, organization_id TEXT, user_id TEXT);
- CREATE TABLE mailboxes(id TEXT PRIMARY KEY, org_id TEXT, domain_id TEXT, address TEXT UNIQUE, kind TEXT, user_id TEXT, display_name TEXT, signature TEXT, uid_validity INTEGER, uid_next INTEGER, modseq INTEGER, created_at INTEGER, updated_at INTEGER);
+ CREATE TABLE mailboxes(id TEXT PRIMARY KEY, org_id TEXT, domain_id TEXT, address TEXT UNIQUE, kind TEXT, user_id TEXT, display_name TEXT, signature TEXT, signature_card TEXT, uid_validity INTEGER, uid_next INTEGER, modseq INTEGER, created_at INTEGER, updated_at INTEGER);
  CREATE TABLE mail_aliases(id TEXT PRIMARY KEY, address TEXT);
  CREATE TABLE mailbox_access(mailbox_id TEXT, user_id TEXT);
  INSERT INTO user VALUES ('u', 'Anna', 'anna@gmail.com');

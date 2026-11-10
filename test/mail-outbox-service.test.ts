@@ -36,7 +36,7 @@ vi.mock("@/db", async () => {
   const ops = await import("drizzle-orm");
   const schema = await import("@/db/schema");
   const sql = new DatabaseSync(":memory:"); state.sql = sql;
-  sql.exec("CREATE TABLE organization(id TEXT PRIMARY KEY); CREATE TABLE mailboxes(id TEXT PRIMARY KEY,org_id TEXT,domain_id TEXT,address TEXT,kind TEXT,user_id TEXT,display_name TEXT,signature TEXT,uid_validity INTEGER,uid_next INTEGER,modseq INTEGER,created_at INTEGER,updated_at INTEGER); CREATE TABLE mail_threads(id TEXT,mailbox_id TEXT);");
+  sql.exec("CREATE TABLE organization(id TEXT PRIMARY KEY); CREATE TABLE mailboxes(id TEXT PRIMARY KEY,org_id TEXT,domain_id TEXT,address TEXT,kind TEXT,user_id TEXT,display_name TEXT,signature TEXT,signature_card TEXT,uid_validity INTEGER,uid_next INTEGER,modseq INTEGER,created_at INTEGER,updated_at INTEGER); CREATE TABLE mail_threads(id TEXT,mailbox_id TEXT);");
   sql.exec(readFileSync(new URL("../migrations/0007_outbox.sql", import.meta.url), "utf8"));
   const db = drizzle(async (query, params, method) => {
     const stmt = sql.prepare(query);
@@ -51,7 +51,7 @@ const boxes = [{ id: "box", orgId: "org", address: "anna@example.com", kind: "sh
 const input = { mailbox: "anna@example.com", to: "b@example.net", text: "hello", subject: "Test" };
 const options = { apiKeyId: "key", idempotencyKey: "request-1" };
 beforeEach(() => {
-  state.sql!.exec("DELETE FROM mail_outbox; DELETE FROM mail_send_limits; DELETE FROM mail_suppressions; DELETE FROM mailboxes; DELETE FROM organization; INSERT INTO organization VALUES ('org'); INSERT INTO mailboxes VALUES ('box','org','domain','anna@example.com','shared',NULL,'Anna','',1,1,1,1,1);");
+  state.sql!.exec("DELETE FROM mail_outbox; DELETE FROM mail_send_limits; DELETE FROM mail_suppressions; DELETE FROM mailboxes; DELETE FROM organization; INSERT INTO organization VALUES ('org'); INSERT INTO mailboxes VALUES ('box','org','domain','anna@example.com','shared',NULL,'Anna','',NULL,1,1,1,1,1);");
   state.reservations.clear(); state.enqueue.mockReset(); state.send.mockReset(); state.persist.mockReset(); state.authorized = true;
   state.enqueue.mockResolvedValue(undefined);
   state.send.mockResolvedValue("provider-1"); state.persist.mockResolvedValue({});

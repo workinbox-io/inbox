@@ -18,10 +18,11 @@ import { mailboxColor } from "./mail-ui"
 import { PushControl } from "./push-control"
 import { RecoveryEmailSettings } from "./security-settings"
 import { PrefList, PrefRow } from "./pref-ui"
+import { signaturePreview, type MailboxSignature, type SignatureBrand } from "@/lib/mail/signature"
 
 export type PreferenceSection = "signature" | "labels" | "filters" | "forwarding" | "storage" | "notifications" | "appearance" | "password" | "recovery"
 
-type Signatures = Record<string, { signature: string; name?: string }>
+type Signatures = Record<string, MailboxSignature>
 
 interface SectionDef {
   id: PreferenceSection
@@ -33,7 +34,7 @@ interface SectionDef {
 }
 
 const MAILBOX_SECTIONS: SectionDef[] = [
-  { id: "signature", label: "Signature", icon: PenLine, perMailbox: true, description: "Goes under new e-mails, replies and forwards. You can still edit it in each message." },
+  { id: "signature", label: "Signature", icon: PenLine, perMailbox: true, description: "Goes under new e-mails, replies and forwards, with your organization's logo and colours. Untick it in a message to send without it." },
   { id: "labels", label: "Labels", icon: Tag, perMailbox: true, description: "Group threads your own way. Apply them from the list or with a filter." },
   { id: "filters", label: "Filters", icon: Filter, perMailbox: true, description: "Run top to bottom on every new message. A filter acts when all its conditions match." },
   { id: "forwarding", label: "Forwarding", icon: Forward, perMailbox: true, description: "Addresses a filter may forward mail to, once their owner confirms." },
@@ -60,6 +61,7 @@ export function MailPreferences({
   mailboxes,
   mailbox: initialMailbox,
   signatures,
+  signatureBrand,
   onSignatures,
   account,
 }: {
@@ -69,6 +71,7 @@ export function MailPreferences({
   mailboxes: string[]
   mailbox: string
   signatures: Signatures
+  signatureBrand: SignatureBrand
   onSignatures: (s: Signatures) => void
   /** The mail-only view: no dashboard account settings, so password and recovery live here. */
   account: boolean
@@ -141,7 +144,7 @@ export function MailPreferences({
             </header>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-6">
               <div className="mx-auto flex max-w-2xl flex-col gap-6">
-                {current.id === "signature" ? <SignatureSection key={mailbox} mailbox={mailbox} signatures={signatures} onSaved={onSignatures} /> : null}
+                {current.id === "signature" ? <SignatureSection key={mailbox} mailbox={mailbox} signatures={signatures} brand={signatureBrand} onSaved={onSignatures} /> : null}
                 {current.id === "labels" ? <LabelsSection rules={rules} /> : null}
                 {current.id === "filters" ? <FiltersSection rules={rules} /> : null}
                 {current.id === "forwarding" ? <ForwardingSection rules={rules} /> : null}
@@ -192,15 +195,20 @@ function MailboxPicker({ mailboxes, value, onChange }: { mailboxes: string[]; va
   )
 }
 
-function SignatureSection({ mailbox, signatures, onSaved }: { mailbox: string; signatures: Signatures; onSaved: (s: Signatures) => void }) {
-  const saved = signatures[mailbox]?.signature ?? ""
-  const [text, setText] = React.useState(saved)
+/** The mailbox's signature: a few fields and free lines, shown under the org's template (logo, company, colour). */
+function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: string; signatures: Signatures; brand: SignatureBrand; onSaved: (s: Signatures) => void }) {
+  const current = signatures[mailbox]
+  const saved = { name: current?.card?.name ?? "", role: current?.card?.role ?? "", phone: current?.card?.phone ?? "", note: current?.signature ?? "" }
+  const [form, setForm] = React.useState(saved)
   const [saving, setSaving] = React.useState(false)
+  const changed = JSON.stringify(form) !== JSON.stringify(saved)
+  const preview = signaturePreview({ signature: form.note, name: current?.name, card: form }, brand)
   async function save() {
     setSaving(true)
     try {
-      await api("PUT", "/api/app/mail/mailboxes", { mailbox, signature: text })
-      onSaved({ ...signatures, [mailbox]: { ...signatures[mailbox], signature: text } })
+      const card = { name: form.name, role: form.role, phone: form.phone }
+      await api("PUT", "/api/app/mail/mailboxes", { mailbox, signature: form.note, signatureCard: card })
+      onSaved({ ...signatures, [mailbox]: { ...current, signature: form.note, card } })
       toast.success("Signature saved")
     } catch (e) {
       toast.error((e as Error).message)
@@ -208,30 +216,43 @@ function SignatureSection({ mailbox, signatures, onSaved }: { mailbox: string; s
       setSaving(false)
     }
   }
+  const field = (key: "name" | "role" | "phone", label: string, placeholder: string) => (
+    <Field>
+      <FieldLabel htmlFor={`sig-${key}`}>{label}</FieldLabel>
+      <Input id={`sig-${key}`} value={form[key]} placeholder={placeholder} maxLength={key === "phone" ? 40 : 100} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+    </Field>
+  )
   return (
-    <div className="overflow-hidden rounded-xl border focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50">
-      <Textarea
-        aria-label="Signature"
-        className="min-h-44 rounded-none border-0 font-[inherit] shadow-none focus-visible:ring-0 dark:bg-transparent"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={(e) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && text !== saved) save()
-        }}
-        placeholder={"Anna Kowalska\nAcme · acme.com"}
-      />
-      <div className="bg-muted/40 flex items-center justify-between gap-3 border-t px-3 py-2">
-        <p className="text-muted-foreground text-xs">{text === saved ? (saved ? "Saved" : "No signature") : "Unsaved changes"}</p>
-        <div className="flex gap-2">
-          {text !== saved ? (
-            <Button variant="ghost" size="sm" onClick={() => setText(saved)}>
-              Discard
-            </Button>
-          ) : null}
-          <Button size="sm" onClick={save} loading={saving} disabled={saving || text === saved}>
-            Save
+    <div className="grid gap-5">
+      <FieldGroup className="grid gap-4 sm:grid-cols-2">
+        {field("name", "Name", current?.name || "Anna Kowalska")}
+        {field("role", "Role", "Head of Support")}
+        {field("phone", "Phone", "+48 600 100 200")}
+      </FieldGroup>
+      <Field>
+        <FieldLabel htmlFor="sig-note">More lines</FieldLabel>
+        <Textarea id="sig-note" className="min-h-20" value={form.note} maxLength={2000} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Office hours: Mon–Fri, 9–17" />
+        <FieldDescription>
+          {brand.company || brand.logoUrl ? "Company, website, logo and colour come from your organization's template." : "Your admin can add the company, website, logo and colour in Settings → Mail."}
+        </FieldDescription>
+      </Field>
+      <div className="grid gap-1.5">
+        <span className="text-muted-foreground text-xs">Preview</span>
+        {preview ? (
+          <div className="w-fit max-w-full overflow-hidden rounded-lg border bg-white px-4 pb-3 [&>table]:!mt-3" dangerouslySetInnerHTML={{ __html: preview }} />
+        ) : (
+          <p className="text-muted-foreground text-sm">No signature yet.</p>
+        )}
+      </div>
+      <div className="flex justify-end gap-2">
+        {changed ? (
+          <Button variant="ghost" size="sm" onClick={() => setForm(saved)}>
+            Discard
           </Button>
-        </div>
+        ) : null}
+        <Button size="sm" onClick={save} loading={saving} disabled={saving || !changed}>
+          Save
+        </Button>
       </div>
     </div>
   )

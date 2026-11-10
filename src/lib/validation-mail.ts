@@ -15,6 +15,8 @@ export const mailSendSchema = z
     cc: z.array(mailAddress).max(20).default([]),
     subject: z.string().trim().max(300).optional(),
     text: z.string().trim().max(50_000).default(""),
+    /** Append the sender's signature (lib/mail/signature.ts). */
+    signature: z.boolean().default(true),
     files: z.array(z.object({ url: z.string().max(500), mediaType: z.string().max(200), filename: z.string().max(200) })).max(5).default([]),
   })
   .refine((v) => !!v.text || !!v.forwardOf, { message: "Write a message", path: ["text"] });
@@ -34,6 +36,7 @@ export const mailDeleteSchema = z.object({ ids });
 export const ownMailboxSchema = z.object({
   mailbox: z.string().trim().toLowerCase(),
   signature: z.string().max(2000).optional(),
+  signatureCard: z.object({ name: z.string().max(100), role: z.string().max(100), phone: z.string().max(40) }).partial().optional(),
   displayName: z.string().trim().max(100).optional(),
 });
 
@@ -41,6 +44,7 @@ export const ownMailboxSchema = z.object({
 export const mailSetupSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("domain.add"), domain: z.string().trim().max(253) }),
   z.object({ action: z.literal("domain.check"), domainId: z.string().uuid() }),
+  z.object({ action: z.literal("signature.brand"), company: z.string().max(100), website: z.string().max(200), logoUrl: z.string().max(300), color: z.string().max(7) }),
   z.object({ action: z.literal("domain.connectCloudflare"), domainId: z.string().uuid(), token: z.string().trim().min(20).max(200), replaceMx: z.boolean().default(false) }),
   z.object({ action: z.literal("domain.remove"), domainId: z.string().uuid() }),
   z.object({ action: z.literal("domain.catchAll"), domainId: z.string().uuid(), mailboxId: z.string().uuid().nullable() }),

@@ -11,5 +11,5 @@ export const POST = handler(async (ctx) => {
   const body = await parseBody(ctx.request, mailSendSchema);
   if (!body.text) throw new HttpError(422, "Write a message");
   const files = await checkAttachments(ctx.orgId, body.files);
-  return json(await sendMail({ threadId: ctx.params.id!, to: body.to, cc: body.cc, text: body.text, files, sendAt: body.sendAt }, boxes, ctx.locals.user!.name, { actorUserId: ctx.locals.user!.id, idempotencyKey: ctx.request.headers.get("Idempotency-Key") ?? body.idempotencyKey }), 202);
+  return json(await sendMail({ threadId: ctx.params.id!, to: body.to, cc: body.cc, text: body.text, signature: body.signature, files, sendAt: body.sendAt }, boxes, ctx.locals.user!.name, { actorUserId: ctx.locals.user!.id, idempotencyKey: ctx.request.headers.get("Idempotency-Key") ?? body.idempotencyKey }), 202);
 });

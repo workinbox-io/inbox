@@ -22,6 +22,10 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   uploaded to R2 in 10 MB parts (`/api/app/mail/imports`), then job `mail.import` (`lib/server/mail/import.ts`, pure
   parser `lib/mail/mbox.ts`) feeds batches of 40 to `handleOrgMail(…, imported)`: read, dated from the header, sent
   when from the mailbox, Gmail labels place it, no rules or notifications, duplicates skipped by Message-ID.
+- Signatures: the org's brand (Settings → Mail → Signature template: company, website, logo, colour;
+  `mail_signature_brands`) plus each mailbox's card (`mailboxes.signature_card`: name, role, phone; `signature` = its
+  free lines). `lib/mail/signature.ts` renders text + e-mail-safe HTML; `prepareMailSend` appends it unless
+  `signature: false` (composer checkbox) or an automated forward. The composer only previews it (ComposeBody `footer`).
 - Access: `lib/server/mail/access.ts` (`viewerMailboxes`): own personal mailbox, shared ones granted in
   `mailbox_access`, all shared ones for owners/admins. Every mail query is scoped to that list.
 - UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search
@@ -37,6 +41,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `/messages/[id]/raw`, `/mailboxes` (own signature), `/settings` (owners/admins, one `action` per POST).
 - Test incoming mail locally: `curl -X POST "localhost:4321/cdn-cgi/handler/email?from=a@b.com&to=anna@acme.test" --data-binary @mail.eml`.
 - Template files changed here (upstream them to the template): `src/worker.ts` (org mail hook),
+  `components/mail/compose.tsx` (ComposeBody `footer` slot for the signature preview),
   `components/app/settings-nav.tsx` (Mail tab). Template bug to fix there: `components/admin-mail/composer.tsx` shows
   a hardcoded "Luxivo" sender name and `admin-mail/drafts.ts` uses `luxivo:` storage keys (fixed in `components/mailbox`).
 

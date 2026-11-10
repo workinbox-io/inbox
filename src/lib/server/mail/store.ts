@@ -4,6 +4,7 @@
  * the mailboxes a viewer may open (access.ts), with UIDs and modseq for later IMAP sync.
  */
 import { env } from "cloudflare:workers";
+import { renderSignature } from "@/lib/mail/signature";
 import PostalMime, { type Address, type Attachment } from "postal-mime";
 import {
   and,
@@ -536,8 +537,17 @@ const escapeHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
 const formatDate = (d: Date) => d.toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
 const FONT = "font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5";
 
-function renderMail(text: string, extra: { quote?: MailMessageRow; forward?: MailMessageRow }) {
-  const body = `<div style="${FONT};white-space:pre-wrap">${escapeHtml(text)}</div>`;
+/** The signature a mailbox sends with: its card and note under the org's brand. */
+async function mailboxSignature(mailbox: Mailbox) {
+  const { getSignatureBrand } = await import("./admin");
+  const card = { name: mailbox.signatureCard?.name || mailbox.displayName, role: mailbox.signatureCard?.role ?? "", phone: mailbox.signatureCard?.phone ?? "", note: mailbox.signature };
+  return renderSignature(card, await getSignatureBrand(mailbox.orgId), env.PUBLIC_APP_URL);
+}
+
+function renderMail(rawText: string, extra: { quote?: MailMessageRow; forward?: MailMessageRow; signature?: { text: string; html: string } | null }) {
+  const sig = extra.signature;
+  const text = sig ? `${rawText}\n\n-- \n${sig.text}`.trim() : rawText;
+  const body = `<div style="${FONT};white-space:pre-wrap">${escapeHtml(rawText)}</div>${sig?.html ?? ""}`;
   if (extra.forward) {
     const f = extra.forward;
     const head = forwardHeaders(f, formatDate);
@@ -564,6 +574,8 @@ export interface SendInput {
   cc?: string[];
   subject?: string;
   text: string;
+  /** Append the mailbox's signature (default); never on automated forwards. */
+  signature?: boolean;
   files?: AttachmentInput[];
   sendAt?: number;
   automatedForward?: boolean;
@@ -589,7 +601,8 @@ export async function prepareMailSend(input: SendInput, boxes: Mailbox[], sender
   const ids = history.flatMap((x) => (x.messageId ? [x.messageId] : [])).reverse();
   const headers: Record<string, string> = ids.length ? { "In-Reply-To": ids.at(-1)!, References: ids.slice(-10).join(" ") } : {};
   if (input.automatedForward) headers["X-WorkInbox-Forwarded"] = "1";
-  const { text, html } = renderMail(input.text, { quote: forward ? undefined : lastIn, forward });
+  const signature = input.signature === false || input.automatedForward ? null : await mailboxSignature(mailbox);
+  const { text, html } = renderMail(input.text, { quote: forward ? undefined : lastIn, forward, signature });
   const files = [...(forward?.files ?? []).map((f) => ({ url: f.url, mediaType: f.mediaType, filename: f.filename })), ...(input.files ?? [])];
   const fromName = mailbox.displayName || senderFallbackName;
 

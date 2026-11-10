@@ -80,6 +80,8 @@ export interface Draft {
   text: string
   /** The message a reply answers or a forward carries. */
   messageId?: string
+  /** Sent without the mailbox's signature (the composer's "Signature" box unticked). */
+  noSignature?: boolean
 }
 
 export interface ThreadPatch {

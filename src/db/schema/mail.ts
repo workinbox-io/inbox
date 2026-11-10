@@ -64,6 +64,8 @@ export const mailboxes = sqliteTable(
     /** Sender name on outgoing mail. */
     displayName: text("display_name").notNull().default(""),
     signature: text("signature").notNull().default(""),
+    /** The signature's fields (lib/mail/signature.ts); `signature` above is its free note lines. */
+    signatureCard: text("signature_card", { mode: "json" }).$type<{ name: string; role: string; phone: string }>(),
     uidValidity: integer("uid_validity").notNull().$defaultFn(() => Math.floor(Date.now() / 1000)),
     uidNext: integer("uid_next").notNull().default(1),
     modseq: integer("modseq").notNull().default(1),
@@ -222,3 +224,15 @@ export const mailImports = sqliteTable(
   },
   (t) => [index("mail_imports_org_idx").on(t.orgId)],
 );
+
+/** The org's signature template (Settings → Mail): company, website, logo and colour on everyone's signature. */
+export const mailSignatureBrands = sqliteTable("mail_signature_brands", {
+  orgId: text("org_id")
+    .primaryKey()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  company: text("company").notNull().default(""),
+  website: text("website").notNull().default(""),
+  logoUrl: text("logo_url").notNull().default(""),
+  color: text("color").notNull().default(""),
+  updatedAt: updatedAt(),
+});
