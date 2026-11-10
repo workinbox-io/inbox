@@ -110,7 +110,7 @@ export const COMPETITORS: Competitor[] = [
     ],
     faq: [
       { question: "Can Work Inbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, files and video calls, not yet: calendar, contacts and drive are on the roadmap, and Work Inbox has no video calls." },
-      { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in Work Inbox and point its MX records at Cloudflare Email Routing. New mail then arrives in Work Inbox. Importing old mail isn't built yet." },
+      { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in Work Inbox and replace its MX records with the one Work Inbox lists. New mail then arrives in Work Inbox. Importing old mail isn't built yet." },
     ],
     sources: [
       "https://workspace.google.com/pricing",
@@ -317,6 +317,42 @@ export const COMPETITORS: Competitor[] = [
       { question: "Does Nextcloud include a mail server?", answer: "No. Nextcloud's own groupware page says Nextcloud Mail is a client for IMAP infrastructure and Nextcloud doesn't include a mail server. Enterprise can bundle one at extra cost." },
     ],
     sources: ["https://nextcloud.com/pricing/", "https://nextcloud.com/groupware/", "https://docs.nextcloud.com/server/stable/admin_manual/ai/app_context_agent.html"],
+  },
+  {
+    slug: "cloudflare-agentic-inbox",
+    name: "Cloudflare Agentic Inbox",
+    logo: "/logos/cloudflare-agentic-inbox.png",
+    tagline: "A Cloudflare Agentic Inbox alternative for teams",
+    intro:
+      "Agentic Inbox is Cloudflare's open-source email client with an AI agent, deployed to your own Cloudflare account. It suits one person or a small team behind one Cloudflare Access policy. Work Inbox is built for a team: everyone signs in with their own account, shared mailboxes have their own access, and there is a hosted version you don't have to deploy.",
+    checked: "2026-11-10",
+    theirPricing: ["Free and open source (Apache 2.0); you pay Cloudflare for Workers, Durable Objects, R2, Workers AI and Email Service"],
+    rows: {
+      price: info("Free; you pay Cloudflare for what it uses"),
+      trial: yes("Free to self-host"),
+      shared: partial("Everyone who passes the Cloudflare Access policy can open every mailbox; no per-mailbox access"),
+      aliases: partial("Mailboxes for any address on the domain via a catch-all rule; aliases not listed"),
+      notes: no("Not included"),
+      selfHost: yes("Open source (Apache 2.0), deploys to your own Cloudflare account"),
+      imap: no("Not mentioned in its README"),
+      ai: yes("Built-in agent on Workers AI that drafts replies, plus an MCP server"),
+      suite: no("Not included"),
+    },
+    whyUs: [
+      "Each person signs in with their own account; shared mailboxes are opened only by the people you choose.",
+      `Hosted: add your domain and click Connect Cloudflare, nothing to deploy. Free for up to ${FREE_PEOPLE} people.`,
+      "Shared notes, contacts and an audit log next to the mail.",
+    ],
+    pickThemIf: [
+      "You want an AI agent drafting replies inside the inbox.",
+      "You're one person, or a small team that's fine with everyone seeing every mailbox.",
+      "You prefer the Apache 2.0 licence to our AGPL-3.0.",
+    ],
+    faq: [
+      { question: "What is Cloudflare Agentic Inbox?", answer: "An open-source email client by Cloudflare that runs on Workers in your own account: Email Routing receives, Email Service sends, Durable Objects store each mailbox, and an agent on Workers AI reads, searches and drafts replies. Cloudflare Access guards the whole app." },
+      { question: "Can a team use Agentic Inbox?", answer: "Its README says anyone who passes the shared Cloudflare Access policy can access all mailboxes, and that there is no per-mailbox authorization. Work Inbox gives each person their own mailbox and decides per shared mailbox who may open it." },
+    ],
+    sources: ["https://github.com/cloudflare/agentic-inbox"],
   },
 ];
 

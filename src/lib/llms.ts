@@ -43,6 +43,7 @@ export async function llmsTxt(site: URL) {
     link("/pricing", "Pricing", "plans per person, the self-hosted option"),
     link("/shared-mailbox", "Shared mailboxes", "how support@ and sales@ work, compared with Google, Microsoft, Zoho and Proton"),
     link("/google-workspace-alternative", "Google Workspace alternative", "what a team keeps and gives up, and what five people cost on six plans"),
+    link("/cloudflare-email-routing", "Inbox for Cloudflare Email Routing", "reply from your own domain instead of only forwarding: hosted with Connect Cloudflare, or self-hosted next to Email Routing"),
     link("/vs", "Comparisons", "Work Inbox next to other products, with sources"),
     ...COMPETITORS.map((c) => link(`/vs/${c.slug}`, `${siteConfig.name} vs ${c.name}`, `facts checked ${c.checked}`)),
     "",

@@ -49,9 +49,9 @@ const giveUp = [
 ];
 
 const steps = [
-  { title: "Add the domain", text: "In Settings → Mail. Work Inbox shows the MX, SPF and DMARC records." },
+  { title: "Add the domain", text: "In Settings → Mail. Work Inbox shows the DNS records it needs (MX, DKIM, DMARC); on Cloudflare, Connect Cloudflare adds them." },
   { title: "Add your people", text: "Each person gets a mailbox with the same address they had in Gmail." },
-  { title: "Switch the MX records", text: "Point them at Cloudflare Email Routing. New mail arrives in Work Inbox; keep Google as an archive." },
+  { title: "Switch the MX records", text: "Replace Google's MX records with the one Work Inbox lists. New mail arrives in Work Inbox; keep Google as an archive." },
 ];
 
 const faq = [

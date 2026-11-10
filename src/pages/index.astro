@@ -88,7 +88,7 @@ const next = [
 ];
 
 const steps = [
-  { command: "add domain acme.com", status: "acme.com: MX, SPF and DMARC check out", text: "Turn on Cloudflare Email Routing, or add the MX, SPF and DMARC records at your DNS provider." },
+  { command: "add domain acme.com", status: "acme.com: MX, DKIM and DMARC check out", text: "On Cloudflare, Connect Cloudflare adds the records with an API token; anywhere else, add them at your DNS provider." },
   { command: "add people anna ben chris", status: "3 people, each with a mailbox · free up to 5", text: "Each person gets a mailbox on the domain and a temporary password to sign in with." },
   { command: "share support@ with everyone", status: "support@ shared with 3 people · mail flowing", text: "Create support@ or sales@ and pick who answers it. Shared mailboxes cost nothing." },
 ];
@@ -120,7 +120,7 @@ const faq = [
   },
   {
     question: "Do I have to move my domain to Cloudflare?",
-    answer: "No. If your domain is on Cloudflare, turning on Email Routing adds the records for you. Anywhere else, add the MX, SPF and DMARC records the setup shows and click Check DNS.",
+    answer: "No. If your domain is on Cloudflare, Connect Cloudflare adds the records for you with an API token. Anywhere else, add the MX, DKIM and DMARC records the setup shows and click Check DNS.",
   },
   {
     question: "What does a shared mailbox cost?",

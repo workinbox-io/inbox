@@ -1,5 +1,5 @@
 import { COMPETITORS } from "@/config/compare";
-import { BookOpen, Code, HelpCircle, Inbox, NotebookPen, Plug, Server, Users, type LucideIcon } from "lucide-react";
+import { BookOpen, Cloud, Code, HelpCircle, Inbox, NotebookPen, Plug, Server, Users, type LucideIcon } from "lucide-react";
 
 /** Header links: optional descriptions, Lucide components or local logo paths. */
 export type NavLink = { href: string; label: string; description?: string; icon?: LucideIcon; logo?: string };
@@ -29,6 +29,7 @@ export const siteConfig = {
         { href: "/#features", label: "Mail on your domain", description: "Personal mailboxes, aliases, catch-all and spam rules.", icon: Inbox },
         { href: "/shared-mailbox", label: "Shared mailboxes", description: "support@ and sales@, answered by the whole team.", icon: Users },
         { href: "/#notes", label: "Shared notes", description: "Notes your team writes together, live.", icon: NotebookPen },
+        { href: "/cloudflare-email-routing", label: "For Cloudflare Email Routing", description: "Reply from your domain, not just forward.", icon: Cloud },
         { href: "/docs/self-host", label: "Self-hosting", description: "Run it free on your own Cloudflare account.", icon: Server },
         { href: "/docs/mcp", label: "AI apps", description: "Read and answer mail from Claude or ChatGPT.", icon: Plug },
       ],
