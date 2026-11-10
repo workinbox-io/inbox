@@ -42,6 +42,8 @@ export interface ToolDef<S extends InputSchema | undefined = InputSchema | undef
   destructive?: boolean;
   /** Reaches outside the organization (sends mail to the world). */
   openWorld?: boolean;
+  /** Saves something (e.g. a draft) though it needs no write scope: reported as not read-only. */
+  persists?: boolean;
   /**
    * Connected apps (OAuth) only let their widgets call it, so a person has to click; the model can't call it
    * on its own, even when a received mail asks it to. API keys (scripts, CLIs) keep calling it directly.

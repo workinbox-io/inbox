@@ -42,6 +42,7 @@ export const contactsTools: Tools = {
   contacts_update: defineTool({
     title: "Edit contact",
     description: "Changes a contact. Only the fields sent change; `emails` and `phones` replace the whole list, so send the existing entries too (contacts_get returns them).",
+    destructive: true,
     input: fields.extend({ id: contactId }),
     scope: "write",
     async run({ id, ...input }, ctx) {

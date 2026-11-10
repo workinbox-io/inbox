@@ -40,7 +40,12 @@ export const mailModule: McpModule = {
       input: z.object({ q: z.string().max(2000), before: z.number().int().positive().optional() }),
       widget: "mail-threads",
       async run(input, ctx) {
-        return listThreads({ ...input, folder: "inbox", boxes: await boxes(ctx) });
+        const { threads, hasMore } = await listThreads({ ...input, folder: "inbox", boxes: await boxes(ctx) });
+        // Only what answers the question: no org, mailbox or sync ids.
+        return {
+          threads: threads.map((t) => ({ id: t.id, mailbox: t.mailbox, subject: t.subject, contactName: t.contactName, contactEmail: t.contactEmail, snippet: t.snippet, unread: t.unread, starred: t.starred, hasFiles: t.hasFiles, messageCount: t.messageCount, lastMessageAt: t.lastMessageAt })),
+          hasMore,
+        };
       },
     }),
     mail_read_thread: defineTool({
@@ -78,6 +83,7 @@ export const mailModule: McpModule = {
         text: z.string().trim().max(50_000),
       }),
       widget: "mail-compose",
+      persists: true,
       async run(input, ctx) {
         const list = await boxes(ctx);
         if (!list.length) throw new HttpError(422, "You have no mailbox yet");
@@ -91,11 +97,13 @@ export const mailModule: McpModule = {
           subject: thread ? thread.subject : (input.subject ?? ""),
           text: input.text,
         };
-        // Kept in the person's Drafts (API keys have no person), so hosts without cards lose nothing.
-        const draftKey = ctx.userId ? (thread?.id ?? `d-${crypto.randomUUID()}`) : null;
+        // Kept in the person's Drafts (API keys have no person), so hosts without cards lose nothing. A reply draft
+        // the person already started in that thread is never overwritten: then only the card has the new text.
+        let draftKey: string | null = ctx.userId ? (thread?.id ?? `d-${crypto.randomUUID()}`) : null;
         if (draftKey) {
           const payload = { mode: thread ? ("reply" as const) : ("new" as const), from, to: draft.to ? [draft.to] : [], cc: input.cc, subject: draft.subject, text: input.text };
-          await saveDraft({ orgId: ctx.orgId, userId: ctx.userId!, boxes: list }, draftKey, payload, { source: "ai", via: ctx.via });
+          const saved = await saveDraft({ orgId: ctx.orgId, userId: ctx.userId!, boxes: list }, draftKey, payload, { source: "ai", via: ctx.via, keepExisting: true });
+          if (!saved) draftKey = null;
         }
         return {
           draft,
@@ -113,6 +121,8 @@ export const mailModule: McpModule = {
       description: "Queues a message from an accessible mailbox, or a reply when `threadId` is set; returns a send job with a 10-second undo window.",
       scope: "write",
       openWorld: true,
+      // Sent mail can't be taken back once delivered.
+      destructive: true,
       appOnly: true,
       input: z.object({
         message: mailSendSchema,
@@ -137,6 +147,7 @@ export const mailModule: McpModule = {
       title: "Undo send",
       description: "Cancels a queued message within its undo window.",
       scope: "write",
+      destructive: true,
       appOnly: true,
       input: z.object({ id: z.string().uuid().describe("Send job id from mail_send") }),
       async run({ id }, ctx) {

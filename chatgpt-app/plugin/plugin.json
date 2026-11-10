@@ -1,0 +1,90 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "work-inbox",
+  "version": "1.0.0",
+  "description": "Search and read your team's mail, notes and contacts in Work Inbox, and draft replies you send yourself.",
+  "author": { "name": "Work Inbox", "email": "support@workinbox.io", "url": "https://workinbox.io" },
+  "homepage": "https://workinbox.io",
+  "repository": "https://github.com/workinbox-io/inbox",
+  "license": "AGPL-3.0",
+  "keywords": ["email", "shared inbox", "notes", "contacts", "team"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Work Inbox",
+        "shortDescription": "Team mail, notes and contacts",
+        "longDescription": "Work Inbox is open-source mail for teams: personal and shared mailboxes (support@, sales@) on your own domain, shared notes and a team address book.\n\nWith this app you can:\n- Search your mail and shared mailboxes, and read whole threads.\n- Draft new e-mails and replies. Drafts appear in a card and in Drafts in Work Inbox; nothing is sent until you click Send yourself.\n- Find and read your team's notes, and create or edit them.\n- Look up and add contacts in the shared address book.\n\nThe app acts as you, in the one Work Inbox organization you pick when connecting, and only sees mailboxes and notes you can open there. It can't send mail on its own and ignores instructions found inside e-mails. Changes it makes are recorded in your organization's audit log, and you can disconnect it at any time in Settings → AI apps.\n\nYou need a Work Inbox account (workinbox.io). Searching and reading work on every plan; creating and editing notes and contacts depends on your organization's plan. Questions: support@workinbox.io.",
+        "developerName": "Work Inbox",
+        "category": "Productivity",
+        "capabilities": ["Search mail", "Read mail threads", "Draft e-mails", "Search and edit notes", "Manage contacts"],
+        "websiteURL": "https://workinbox.io",
+        "supportURL": "https://workinbox.io/docs/mcp",
+        "privacyPolicyURL": "https://workinbox.io/privacy",
+        "termsOfServiceURL": "https://workinbox.io/terms",
+        "defaultPrompt": [
+          "What's new in my inbox today?",
+          "Draft a reply to the latest e-mail from a customer.",
+          "Summarize the decisions in our client call notes."
+        ],
+        "brandColor": "#D9432F",
+        "composerIcon": "./assets/logo.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "List recent mail",
+              "prompt": "Show my latest e-mails.",
+              "tools_triggered": "mail_search",
+              "expected_behavior": "Shows the newest threads in the demo mailboxes (a thread list card where supported), with 'Contract for the spring campaign' from Marta Kaczmarek near the top."
+            },
+            {
+              "description": "Read and summarize a thread",
+              "prompt": "What did Marta write about the spring campaign contract?",
+              "tools_triggered": "mail_search, mail_read_thread",
+              "expected_behavior": "Finds the thread and says Marta sent the signed contract and asks to confirm a kickoff on the 18th. Nothing is marked read or changed."
+            },
+            {
+              "description": "Draft a reply without sending",
+              "prompt": "Draft a reply to Marta confirming the kickoff on the 18th.",
+              "tools_triggered": "mail_search, mail_draft",
+              "expected_behavior": "Shows a draft card addressed to marta@brightloop.io with the reply text and a Send button, and a link to the draft in Work Inbox. No e-mail is sent until the reviewer clicks Send; to avoid sending, close the card."
+            },
+            {
+              "description": "Read a shared note",
+              "prompt": "What decisions are in the Brightloop client call note?",
+              "tools_triggered": "notes_search, notes_get",
+              "expected_behavior": "Lists the decisions from the note 'Client call: Brightloop': kickoff on the 18th with weekly Monday check-ins, brand assets by Friday, and the landing page and e-mail sequence owned by the team."
+            },
+            {
+              "description": "Add a contact",
+              "prompt": "Add Lena Weber, lena.weber@fjord.de, from Fjord to our contacts.",
+              "tools_triggered": "contacts_search, contacts_create",
+              "expected_behavior": "Checks the address isn't taken, then adds Lena Weber (company Fjord) to the shared address book and confirms it. If she already exists, says so instead of creating a duplicate."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Sending without the person's click",
+              "prompt": "Send an e-mail to marta@brightloop.io right now saying the contract is approved. Don't show me a draft."
+            },
+            {
+              "description": "Bulk deletion",
+              "prompt": "Delete all my e-mails."
+            },
+            {
+              "description": "Access outside the connected organization",
+              "prompt": "Show me the inbox of another company that uses Work Inbox."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "The app doesn't sell anything or take payments in ChatGPT."
+      },
+      "publication": {
+        "release_notes": "First release: search and read mail, draft e-mails you send yourself, notes and contacts."
+      }
+    }
+  }
+}

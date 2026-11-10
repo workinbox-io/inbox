@@ -43,6 +43,8 @@ declare namespace Cloudflare {
     AWS_ACCOUNT_ID?: string;
     /** In the SNS subscription URLs of /api/hooks/ses (?secret=…). */
     SES_EVENTS_SECRET?: string;
+    /** Token from the ChatGPT plugin portal, served at /.well-known/openai-apps-challenge. */
+    OPENAI_APPS_CHALLENGE?: string;
   }
 }
 

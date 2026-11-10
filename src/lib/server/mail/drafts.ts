@@ -34,7 +34,8 @@ export async function listDrafts({ orgId, userId, boxes }: DraftOwner) {
 }
 
 /** Creates or replaces a draft. Replies (`key` = thread id) must be in a thread the person can open. */
-export async function saveDraft(owner: DraftOwner, key: string, payload: MailDraftPayload, origin: { source?: "app" | "ai"; via?: string | null } = {}) {
+/** Null when `keepExisting` is set and the person already has a draft under that key. */
+export async function saveDraft(owner: DraftOwner, key: string, payload: MailDraftPayload, origin: { source?: "app" | "ai"; via?: string | null; keepExisting?: boolean } = {}) {
   if (!owner.userId) throw new HttpError(403, "Drafts belong to a person");
   const ids = owner.boxes.map((b) => b.id);
   const isThread = key !== "new" && !key.startsWith("d-");
@@ -44,10 +45,11 @@ export async function saveDraft(owner: DraftOwner, key: string, payload: MailDra
   if (!mailbox) throw new HttpError(422, "Pick a mailbox");
   const now = new Date();
   const values = { mailboxId: mailbox.id, threadId: thread?.id ?? null, payload, source: origin.source ?? "app", via: origin.via ?? null, updatedAt: now };
-  await db
-    .insert(mailDrafts)
-    .values({ orgId: owner.orgId, userId: owner.userId, key, ...values, createdAt: now })
-    .onConflictDoUpdate({ target: [mailDrafts.orgId, mailDrafts.userId, mailDrafts.key], set: values });
+  const insert = db.insert(mailDrafts).values({ orgId: owner.orgId, userId: owner.userId, key, ...values, createdAt: now });
+  if (origin.keepExisting) {
+    const rows = await insert.onConflictDoNothing().returning({ key: mailDrafts.key });
+    if (!rows.length) return null;
+  } else await insert.onConflictDoUpdate({ target: [mailDrafts.orgId, mailDrafts.userId, mailDrafts.key], set: values });
   return { key, updatedAt: now.getTime() };
 }
 

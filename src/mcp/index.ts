@@ -38,8 +38,11 @@ const widgetUri = (name: string) => `ui://widgets/${name}.html`;
 async function runTool(name: string, tool: ToolDef, args: unknown, p: McpPrincipal): Promise<ToolResult> {
   const notes: (McpAuditNote & { action: AuditAction })[] = [];
   try {
-    // Reading is free. Changes are checked per call rather than at connect time, so the model can tell the user what to upgrade.
-    if (needsPlan(tool)) await requireFeature(p.orgId, "mcpAccess");
+    // Reading is free. Changes are checked per call; the message stays neutral (ChatGPT's rules forbid upsells in apps).
+    if (needsPlan(tool)) {
+      const allowed = await requireFeature(p.orgId, "mcpAccess").then(() => true, (e) => (e instanceof HttpError ? false : Promise.reject(e)));
+      if (!allowed) return toolError("This organization's plan doesn't include changes from AI apps. An owner can change that in Work Inbox settings.");
+    }
     const data = await tool.run((args ?? {}) as never, {
       orgId: p.orgId,
       role: p.role,
@@ -64,7 +67,7 @@ export function buildMcpServer(p: McpPrincipal) {
     { name: siteConfig.name, version: "1.0.0" },
     {
       instructions: [
-        `${siteConfig.name}: ${siteConfig.description} Every tool works inside one organization, the one the user connected; call get_organization to see which and what its plan allows. Reading is free; changes need a paid plan.`,
+        `${siteConfig.name}: ${siteConfig.description} Every tool works inside one organization, the one the user connected; call get_organization to see which.`,
         ...appModules.map((m) => m.instructions),
       ].join("\n"),
     },
@@ -85,7 +88,7 @@ export function buildMcpServer(p: McpPrincipal) {
         inputSchema: tool.input ?? z.object({}),
         annotations: {
           title: tool.title,
-          readOnlyHint: (tool.scope ?? "read") === "read",
+          readOnlyHint: (tool.scope ?? "read") === "read" && !tool.persists,
           destructiveHint: Boolean(tool.destructive),
           openWorldHint: Boolean(tool.openWorld),
         },

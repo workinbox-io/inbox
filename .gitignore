@@ -8,3 +8,6 @@ worker-configuration.d.ts
 .DS_Store
 .paddle.prod.vars
 .ses.prod.vars
+
+# ChatGPT plugin ZIP, built from chatgpt-app/plugin
+chatgpt-app/*.zip

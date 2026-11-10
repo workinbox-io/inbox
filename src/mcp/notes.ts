@@ -12,7 +12,7 @@ const noteId = z.string().uuid().describe("Note id from notes_search");
 
 /** What the model reads: markdown instead of the editor's JSON. */
 const out = (note: Awaited<ReturnType<typeof getNote>>) => {
-  const { value: _value, preview: _preview, ...rest } = note;
+  const { value: _value, preview: _preview, ownerId: _owner, ...rest } = note;
   return rest;
 };
 
@@ -23,7 +23,8 @@ export const notesTools: Tools = {
       "Lists notes the user may open, pinned first then most recently changed, with a text preview. `q` searches titles and text; `view` narrows to mine, shared (with me), pinned or archived.",
     input: noteListSchema.pick({ view: true, q: true, folderId: true, limit: true }),
     async run(input, ctx) {
-      return listNotes(viewer(ctx), { ...input, limit: input.limit ?? 20 });
+      const { notes, ...rest } = await listNotes(viewer(ctx), { ...input, limit: input.limit ?? 20 });
+      return { ...rest, notes: notes.map(({ ownerId: _owner, ...n }) => n) };
     },
   }),
 
@@ -53,6 +54,7 @@ export const notesTools: Tools = {
     title: "Edit note",
     description:
       "Changes a note's content from markdown: `append` adds at the end (safe while others are editing), `replace` rewrites the whole note (confirm with the user first). Can also rename it. People with the note open see the change at once.",
+    destructive: true,
     input: z.object({
       id: noteId,
       markdown: z.string().max(500_000).optional(),
@@ -70,6 +72,7 @@ export const notesTools: Tools = {
   notes_archive: defineTool({
     title: "Archive note",
     description: "Archives a note (or restores it with archived: false). Archived notes are read-only and can be restored later.",
+    destructive: true,
     input: z.object({ id: noteId, archived: z.boolean().default(true) }),
     scope: "write",
     async run({ id, archived }, ctx) {
