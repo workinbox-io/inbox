@@ -71,11 +71,14 @@ export function cleanCard(c: Partial<SignatureCard>): SignatureCard {
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const lines = (s: string) => esc(s).replace(/\r?\n/g, "<br>");
+/** A grey with enough contrast on white and on the dark backgrounds of mail apps' dark modes. */
+const GREY = "#7c8089";
 const FONT = "font-family:Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
 /**
  * The signature as text and HTML, or null when there's nothing to show. `appUrl` makes the logo URL absolute (sent
- * mail; previews pass ""). The HTML is minimal and built from tables with inline styles so Gmail and Outlook keep it:
+ * mail; previews pass ""). The HTML is minimal and built from tables with inline styles so Gmail and Outlook keep it.
+ * It reads on light and dark backgrounds alike: the name takes the text colour, the rest uses mid greys:
  * a small logo next to the name and "role · company", one grey line of contacts (the website in the brand colour),
  * the note, and the org's small-print footer.
  */
@@ -89,27 +92,27 @@ export function renderSignature(card: SignatureCard, brand: SignatureBrand, appU
   if (!person && !b.footer) return null;
   const text = [person, b.footer].filter(Boolean).join("\n\n");
 
-  const color = b.color || DEFAULT_COLOR;
+  const link = b.color ? `color:${b.color}` : "color:inherit;text-decoration:underline";
   const logo = b.logoUrl
     ? `<td valign="middle" style="padding-right:12px"><img src="${esc(appUrl ? new URL(b.logoUrl, appUrl).href : b.logoUrl)}" alt="${esc(b.company)}" width="40" height="40" style="display:block;width:40px;height:40px;border-radius:8px;object-fit:contain;border:0"></td>`
     : "";
   const head = [
-    c.name && `<div style="font-size:14px;font-weight:600;color:#111827">${esc(c.name)}</div>`,
-    roleLine && `<div style="font-size:13px;color:#6b7280">${esc(roleLine)}</div>`,
+    c.name && `<div style="font-size:14px;font-weight:600">${esc(c.name)}</div>`,
+    roleLine && `<div style="font-size:13px;color:${GREY}">${esc(roleLine)}</div>`,
   ].filter(Boolean);
-  const dot = `<span style="color:#d1d5db">&nbsp;·&nbsp;</span>`;
+  const dot = `<span style="color:${GREY}">&nbsp;·&nbsp;</span>`;
   const contacts = [
-    c.phone && `<a href="tel:${esc(c.phone.replace(/[^\d+]/g, ""))}" style="color:#6b7280;text-decoration:none">${esc(c.phone)}</a>`,
-    c.email && `<a href="mailto:${esc(c.email)}" style="color:#6b7280;text-decoration:none">${esc(c.email)}</a>`,
-    site && `<a href="${esc(site)}" style="color:${color};text-decoration:none">${esc(siteLabel)}</a>`,
+    c.phone && `<a href="tel:${esc(c.phone.replace(/[^\d+]/g, ""))}" style="color:${GREY};text-decoration:none">${esc(c.phone)}</a>`,
+    c.email && `<a href="mailto:${esc(c.email)}" style="color:${GREY};text-decoration:none">${esc(c.email)}</a>`,
+    site && `<a href="${esc(site)}" style="${link};text-decoration-thickness:1px">${esc(siteLabel)}</a>`,
   ].filter(Boolean);
   const rows = [
     head.length || logo ? `<tr><td><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>${logo}<td valign="middle">${head.join("")}</td></tr></table></td></tr>` : "",
     contacts.length ? `<tr><td style="padding-top:8px;font-size:12.5px">${contacts.join(dot)}</td></tr>` : "",
-    c.note ? `<tr><td style="padding-top:4px;font-size:12.5px;color:#6b7280">${lines(c.note)}</td></tr>` : "",
-    b.footer ? `<tr><td style="padding-top:12px;font-size:10.5px;line-height:1.5;color:#9ca3af">${lines(b.footer)}</td></tr>` : "",
+    c.note ? `<tr><td style="padding-top:4px;font-size:12.5px;color:${GREY}">${lines(c.note)}</td></tr>` : "",
+    b.footer ? `<tr><td style="padding-top:12px;font-size:10.5px;line-height:1.5;color:${GREY}">${lines(b.footer)}</td></tr>` : "",
   ].filter(Boolean);
-  const html = `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;max-width:540px;border-collapse:collapse;${FONT};line-height:1.5;color:#374151">${rows.join("")}</table>`;
+  const html = `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;max-width:540px;border-collapse:collapse;${FONT};line-height:1.5">${rows.join("")}</table>`;
   return { text, html };
 }
 

@@ -7,6 +7,7 @@ import { tapllEvent } from "@/lib/tapll"
 import { forwardSubject, replyRecipients, splitAddresses } from "@/lib/admin-mail/rules"
 import { signaturePreview, type MailboxSignature, type SignatureBrand } from "@/lib/mail/signature"
 import { Checkbox } from "@/components/ui/checkbox"
+import { SignatureHtml } from "./signature-preview"
 import { replySubject } from "@/lib/mail/threading"
 import { cn } from "@/lib/utils"
 import { guardLeaving } from "@/lib/panel-history"
@@ -258,7 +259,7 @@ function SignaturePreview({ html, on, onChange }: { html: string; on: boolean; o
       <label className="text-muted-foreground flex w-fit items-center gap-1.5 text-xs">
         <Checkbox checked={on} onCheckedChange={(v) => onChange(v === true)} /> Signature
       </label>
-      {on ? <div className="w-fit max-w-full overflow-hidden rounded-md bg-white px-3 pb-2 [&>table]:!mt-2" dangerouslySetInnerHTML={{ __html: html }} /> : null}
+      {on ? <SignatureHtml html={html} /> : null}
     </div>
   )
 }

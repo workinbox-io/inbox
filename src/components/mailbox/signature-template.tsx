@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { SignatureHtml } from "./signature-preview"
 import { SettingsSection } from "@/components/app/settings-section"
 import { uploadWithProgress } from "@/components/uploads/attachments"
 
@@ -108,7 +109,7 @@ export function SignatureTemplate({ initial, onSaved }: { initial: SignatureBran
         </div>
         <div className="grid gap-1.5">
           <span className="text-muted-foreground text-xs">Preview with a sample person</span>
-          {preview ? <div className="w-fit max-w-full overflow-hidden rounded-lg border bg-white px-4 pb-3 [&>table]:!mt-3" dangerouslySetInnerHTML={{ __html: preview }} /> : null}
+          {preview ? <SignatureHtml html={preview} framed /> : null}
         </div>
         <div className="flex justify-end gap-2">
           {changed ? (

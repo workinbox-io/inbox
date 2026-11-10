@@ -18,6 +18,7 @@ import { mailboxColor } from "./mail-ui"
 import { PushControl } from "./push-control"
 import { RecoveryEmailSettings } from "./security-settings"
 import { PrefList, PrefRow } from "./pref-ui"
+import { SignatureHtml } from "./signature-preview"
 import { signaturePreview, type MailboxSignature, type SignatureBrand } from "@/lib/mail/signature"
 
 export type PreferenceSection = "signature" | "labels" | "filters" | "forwarding" | "storage" | "notifications" | "appearance" | "password" | "recovery"
@@ -239,7 +240,7 @@ function SignatureSection({ mailbox, signatures, brand, onSaved }: { mailbox: st
       <div className="grid gap-1.5">
         <span className="text-muted-foreground text-xs">Preview</span>
         {preview ? (
-          <div className="w-fit max-w-full overflow-hidden rounded-lg border bg-white px-4 pb-3 [&>table]:!mt-3" dangerouslySetInnerHTML={{ __html: preview }} />
+          <SignatureHtml html={preview} framed />
         ) : (
           <p className="text-muted-foreground text-sm">No signature yet.</p>
         )}
