@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Maximize2, Minimize2, Minus, Send, Trash2, X, type LucideIcon } from "lucide-react"
+import { Maximize2, Minimize2, Minus, Send, Trash2, Users, X, type LucideIcon } from "lucide-react"
 
 import { splitAddresses } from "@/lib/admin-mail/rules"
 import { cn } from "@/lib/utils"
@@ -13,6 +13,12 @@ import { AttachButton, AttachmentStrip, type Attachments } from "@/components/up
  * else that sends one e-mail (a product's "new conversation"): the docked window, the From / To / Subject
  * rows, recipients as chips and the body with its send row.
  */
+
+export interface AddressSuggestion {
+  /** A name, or a group's name; empty shows the address. */
+  label: string
+  emails: string[]
+}
 
 export const EMAIL = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]{2,}$/
 
@@ -40,6 +46,7 @@ export function AddressInput({
   value,
   onChange,
   suggestions,
+  search,
   placeholder,
   autoFocus,
 }: {
@@ -47,16 +54,33 @@ export function AddressInput({
   value: string[]
   onChange: (v: string[]) => void
   suggestions: string[]
+  /** More suggestions from the server (an address book); a group suggestion adds all its addresses. */
+  search?: (q: string) => Promise<AddressSuggestion[]>
   placeholder?: string
   autoFocus?: boolean
 }) {
   const [text, setText] = React.useState("")
+  const [remote, setRemote] = React.useState<AddressSuggestion[]>([])
   const add = (raw: string) => {
     const found = splitAddresses(raw).filter((a) => !value.includes(a))
     if (found.length) onChange([...value, ...new Set(found)])
     setText("")
   }
-  const matches = text.length > 1 ? suggestions.filter((s) => s.includes(text.toLowerCase()) && !value.includes(s)).slice(0, 6) : []
+  React.useEffect(() => {
+    const q = text.trim()
+    if (!search || q.length < 2) return setRemote([])
+    let live = true
+    const timer = setTimeout(() => void search(q).then((r) => live && setRemote(r)).catch(() => live && setRemote([])), 150)
+    return () => {
+      live = false
+      clearTimeout(timer)
+    }
+  }, [text, search])
+  const q = text.toLowerCase()
+  const fromServer = text.length > 1 ? remote.filter((s) => s.emails.some((e) => !value.includes(e))) : []
+  const known = new Set(fromServer.flatMap((s) => s.emails))
+  const local = text.length > 1 ? suggestions.filter((s) => s.includes(q) && !value.includes(s) && !known.has(s)).map((s) => ({ label: "", emails: [s] })) : []
+  const matches: AddressSuggestion[] = [...fromServer, ...local].slice(0, 8)
   return (
     <div className="relative flex flex-wrap items-center gap-1.5">
       {value.map((a) => (
@@ -86,7 +110,7 @@ export function AddressInput({
         onKeyDown={(e) => {
           if (e.key === "Enter" && text.trim()) {
             e.preventDefault()
-            add(matches[0] && !EMAIL.test(text) ? matches[0] : text)
+            add(matches[0] && !EMAIL.test(text) ? matches[0].emails.join(",") : text)
           } else if (e.key === "Backspace" && !text && value.length) {
             onChange(value.slice(0, -1))
           }
@@ -104,18 +128,29 @@ export function AddressInput({
       {matches.length ? (
         <ul className="bg-popover absolute top-full left-0 z-20 mt-1 w-80 max-w-full overflow-hidden rounded-xl border shadow-md">
           {matches.map((s) => (
-            <li key={s}>
+            <li key={s.label + s.emails.join(",")}>
               <button
                 type="button"
+                // Out of the Tab order: Tab leaves the field (Enter picks the first suggestion).
+                tabIndex={-1}
                 // mousedown: before the input's blur turns the half-typed text into a chip.
                 onMouseDown={(e) => {
                   e.preventDefault()
-                  add(s)
+                  add(s.emails.join(","))
                 }}
                 className="hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
               >
-                <UserAvatar seed={s} size={20} />
-                <span className="truncate">{s}</span>
+                {s.emails.length > 1 ? (
+                  <span className="bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded-full">
+                    <Users className="size-3" />
+                  </span>
+                ) : (
+                  <UserAvatar seed={s.emails[0]!} size={20} />
+                )}
+                <span className="grid min-w-0">
+                  <span className="truncate">{s.label || s.emails[0]}</span>
+                  {s.label ? <span className="text-muted-foreground truncate text-xs">{s.emails.length > 1 ? `${s.emails.length} · ${s.emails.slice(0, 3).join(", ")}` : s.emails[0]}</span> : null}
+                </span>
               </button>
             </li>
           ))}
@@ -133,6 +168,7 @@ export function ComposeBody({
   placeholder = "Write your e-mail…",
   bodyClassName,
   note,
+  footer,
   attachments,
   disabled,
   sendLabel = "Send",
@@ -145,6 +181,8 @@ export function ComposeBody({
   placeholder?: string
   bodyClassName?: string
   note?: React.ReactNode
+  /** Under the text, above the note (e.g. the signature preview). */
+  footer?: React.ReactNode
   attachments: Attachments
   disabled: boolean
   sendLabel?: string
@@ -167,6 +205,7 @@ export function ComposeBody({
           if (!disabled) onSend()
         }}
       />
+      {footer}
       {note ? <p className="text-muted-foreground px-4 pb-2 text-xs">{note}</p> : null}
       <AttachmentStrip attachments={attachments} removeLabel="Remove" className="px-4" />
       <div className="flex items-center justify-between gap-2 border-t px-3 py-2">

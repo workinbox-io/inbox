@@ -13,3 +13,6 @@ export const APP_HELP = [{ href: "/docs", label: "Documentation", icon: BookOpen
 
 /** Extra entries in the command palette. */
 export const APP_ACTIONS = [{ href: "/app/projects?new=1", label: "New project", icon: Plus }];
+
+/** Your settings pages, shown after Account and Organization (components/app/settings-nav.tsx). */
+export const APP_SETTINGS: { href: string; label: string }[] = [];

@@ -1,12 +1,14 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { APP_SETTINGS } from "@/config/nav"
 
 export const SETTINGS_PAGES = [
   { href: "/app/settings/account", label: "Account" },
   { href: "/app/settings/organization", label: "Organization" },
+  ...APP_SETTINGS,
   { href: "/app/settings/ai-apps", label: "AI apps" },
-] as const
+]
 
 const FADE = "1.5rem"
 
