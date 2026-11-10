@@ -144,3 +144,51 @@ Shipped 2026-11-10 (`a340e88`, `4371c61`, `f32843c`), deployed; production accep
 - ✅ Collaborative editing with changes synchronized between participants (Plate + Yjs on a Durable Object per note)
 - ✅ `/app/notes`, public API and MCP tools for searching, reading and editing notes
 - ⬜ Later: version history, comments, mention notifications, full-text search (FTS5), offline editing
+
+## Phase 8: team chat
+
+Slack-style chat, with the Macro idea that chat, mail, notes and files are one workspace: any of them can be talked
+about in place and linked without copying.
+
+- ⬜ Channels (public in the org, private by invitation), direct messages and group DMs; threads on any message
+- ⬜ Live delivery over a Durable Object per channel (like `NoteRoom`: hibernating WebSockets, tickets), messages in D1,
+  edits and deletes, typing and presence, unread counts and badges in the app rail
+- ⬜ @mentions, @channel, reactions, Markdown, link previews; Web Push for DMs and mentions, quiet hours
+- ⬜ Files from the drive and uploads (into the drive), previews in the conversation
+- ⬜ Across apps: "Discuss" on a mail thread, note or file opens a thread linked to it; shared mailboxes get a team
+  thread per conversation (internal comments next to the mail, never sent); paste a link to any item for a live card
+- ⬜ Search (FTS5) with `from: in: has:file`, saved messages, pinned messages per channel
+- ⬜ Shared channels with guests from other organizations (later)
+- ⬜ API, MCP (`chat_search`, `chat_read`, `chat_post` as a draft the person sends), outgoing webhooks and slash commands
+  for bots
+- ⬜ Huddles: audio/video calls in a channel over Cloudflare Realtime (later, with meetings below)
+
+## Gaps to a full product
+
+What a team switching from Google Workspace or Microsoft 365 would still miss, beyond the phases above.
+
+Must have before selling to larger teams:
+- ⬜ The app in more languages, Polish first (the i18n is in place, `config/languages.ts` lists English only)
+- ⬜ Mail: out-of-office replies, templates (canned replies), rules that reply; shared mailboxes with assignment,
+  status (open/done) and internal comments (collision-free answering, like Front)
+- ⬜ SSO (SAML/OIDC, Google and Microsoft sign-in for admins) and SCIM provisioning (Business, "Soon" on pricing)
+- ⬜ Passkeys; admin-enforced 2FA; sign out a person everywhere; device and session list for admins
+- ⬜ Organization export (mail as .mbox, contacts, notes as Markdown, the drive as ZIP) and leaving cleanly
+- ⬜ Migration from Google Workspace in one go: mailboxes, contacts, calendars and Drive (today mail .mbox and contacts)
+
+Expected by most teams:
+- ⬜ Meetings: video calls with links in calendar events (Cloudflare Realtime), or Google Meet/Zoom/Teams links
+- ⬜ One search across mail, chat, notes, contacts, files and events (⌘K today finds pages and actions)
+- ⬜ One notification center and preferences for every app (today mail's)
+- ⬜ Tasks: a to-do from any mail, message or note, with due dates and assignees, shown in the calendar
+- ⬜ Native mobile apps (iOS, Android), or IMAP/CalDAV/CardDAV so phones' own apps work (phase 6)
+
+Trust and compliance:
+- ⬜ Retention policies, legal hold and eDiscovery export for admins
+- ⬜ Mail encryption: S/MIME, and encrypted mail to outside recipients; DLP rules (block or warn on sensitive data)
+- ⬜ GDPR: DPA, subprocessors list, data region (EU), status page and an uptime SLA for Business
+- ⬜ Backups and restore for admins (D1 Time Travel plus R2 versions), deleted-mailbox recovery
+
+Later:
+- ⬜ Spreadsheets and documents beyond notes (or open-in with OnlyOffice/Collabora), forms
+- ⬜ Browser extension and desktop app (the PWA installs today)
