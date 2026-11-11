@@ -3,16 +3,17 @@ title: Introduction
 description: What Work Inbox does today, what's next, and where to start.
 section: Getting started
 order: 1
-updated: 2026-11-10
+updated: 2026-11-11
 ---
 
-Work Inbox is open-source team email on your own domain, with shared notes. It runs on Cloudflare: hosted by us, or
+Work Inbox is open-source team email on your own domain, with shared notes, contacts and a drive. It runs on Cloudflare: hosted by us, or
 self-hosted on your own Cloudflare account.
 
 ## What ships today
 
 - **Mail**: a personal mailbox per person, shared mailboxes like support@, aliases, a catch-all per domain, plus
-  addressing, a spam score and sender rules, search operators and keyboard shortcuts.
+  addressing, a spam score and sender rules, search operators and keyboard shortcuts, and the original .eml of every
+  message, received or sent.
 - **Notes**: notes your team edits together, live, shared with chosen people or the whole team.
 - **Contacts**: one address book for the team, filled from the mail you send, with Google, Outlook and vCard import and
   export, and suggestions in the composer.

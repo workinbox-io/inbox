@@ -1,5 +1,5 @@
 import { COMPETITORS } from "@/config/compare";
-import { BookOpen, Cloud, Code, HelpCircle, Inbox, NotebookPen, Plug, Server, Users, type LucideIcon } from "lucide-react";
+import { BookOpen, Cloud, Code, Contact, HardDrive, HelpCircle, Inbox, NotebookPen, Plug, Server, Users, type LucideIcon } from "lucide-react";
 
 /** Header links: optional descriptions, Lucide components or local logo paths. */
 export type NavLink = { href: string; label: string; description?: string; icon?: LucideIcon; logo?: string };
@@ -14,7 +14,7 @@ export type NavItem =
 export const siteConfig = {
   /** The brand as written in marketing, the app and e-mails (the domain stays workinbox.io). */
   name: "Work Inbox",
-  description: "Open-source team email on your own domain: personal and shared mailboxes, aliases, catch-all and shared notes, on Cloudflare.",
+  description: "Open-source team email on your own domain: personal and shared mailboxes, aliases and catch-all, plus shared notes, a team address book and a shared drive, on Cloudflare.",
   /** The public code, linked from the self-hosting docs and the footer. */
   repoUrl: "https://github.com/workinbox-io/inbox",
   /** Production URL, used for canonical links and the sitemap (astro.config.mjs reads it too). */
@@ -28,10 +28,12 @@ export const siteConfig = {
       items: [
         { href: "/#features", label: "Mail on your domain", description: "Personal mailboxes, aliases, catch-all and spam rules.", icon: Inbox },
         { href: "/shared-mailbox", label: "Shared mailboxes", description: "support@ and sales@, answered by the whole team.", icon: Users },
-        { href: "/#notes", label: "Shared notes", description: "Notes your team writes together, live.", icon: NotebookPen },
+        { href: "/#tour-notes", label: "Shared notes", description: "Notes your team writes together, live.", icon: NotebookPen },
+        { href: "/#tour-contacts", label: "Contacts", description: "One address book for the team, filled from your mail.", icon: Contact },
+        { href: "/#tour-drive", label: "Drive", description: "Shared folders, previews and public links.", icon: HardDrive },
+        { href: "/docs/mcp", label: "AI apps", description: "Read and answer mail from Claude or ChatGPT.", icon: Plug },
         { href: "/cloudflare-email-routing", label: "For Cloudflare Email Routing", description: "Reply from your domain, not just forward.", icon: Cloud },
         { href: "/docs/self-host", label: "Self-hosting", description: "Run it free on your own Cloudflare account.", icon: Server },
-        { href: "/docs/mcp", label: "AI apps", description: "Read and answer mail from Claude or ChatGPT.", icon: Plug },
       ],
       footer: { href: "/docs/quickstart", label: "Get started" },
     },

@@ -1,7 +1,7 @@
 /**
  * Screenshots of the app for the marketing site (public/marketing/*.webp), modelled on Luxivo's scripts/marketing-shots.ts.
  *
- *   node scripts/marketing-shots.ts --seed   send the demo mail and notes first (adds them again on every run)
+ *   node scripts/marketing-shots.ts --seed   send the demo mail and notes first (adds them again on every run; contacts and drive files only once)
  *   node scripts/marketing-shots.ts          all shots
  *   node scripts/marketing-shots.ts notes    only the ones whose file name contains "notes"
  *
@@ -81,6 +81,25 @@ const NOTES: { title: string; markdown: string }[] = [
   { title: "Support replies we reuse", markdown: "Password reset, invoices, shared mailboxes." },
 ];
 
+/** Address book entries: [name, company, title, email, phone]. */
+const CONTACTS: [string, string, string, string, string][] = [
+  ["Marta Kaczmarek", "Brightloop", "Marketing lead", "marta@brightloop.io", "+48 601 234 567"],
+  ["Felix Wagner", "Studio Wagner", "Founder", "felix@studio-wagner.de", "+49 30 1234 5678"],
+  ["Lena Weber", "Fjord", "Finance", "lena.weber@fjord.de", ""],
+  ["Oliver Smith", "Northwind", "Operations", "oliver@northwind.co", ""],
+  ["Sofía García", "Casa García", "Owner", "sofia@casa-garcia.es", "+34 612 345 678"],
+];
+
+/** Drive: folders at the root, then files [name, media type, folder or null for the root]. */
+const FOLDERS = ["Brightloop", "Brand assets", "Contracts", "Finance", "Onboarding"];
+const FILES: [string, string, string | null][] = [
+  ["Spring campaign brief.pdf", "application/pdf", null],
+  ["Q4 budget.csv", "text/csv", null],
+  ["Team offsite photos.zip", "application/zip", null],
+  ["Kickoff agenda.txt", "text/plain", null],
+  ["Signed contract.pdf", "application/pdf", "Brightloop"],
+];
+
 const SHOTS: Shot[] = [
   { file: "mail.webp", path: "/app/mail", view: "user" },
   {
@@ -105,6 +124,24 @@ const SHOTS: Shot[] = [
   },
   { file: "notes.webp", path: (db) => `/app/notes/${noteId(db, "Client call: Brightloop")}`, view: "user", prepare: (page) => page.waitForTimeout(2500) },
   {
+    file: "contacts.webp",
+    path: (db) => `/app/contacts/${rowId(db, "contacts", "Marta Kaczmarek")}`,
+    view: "user",
+    async prepare(page) {
+      await page.getByText("Partners", { exact: true }).first().click();
+      await page.waitForTimeout(2500);
+    },
+  },
+  {
+    file: "drive.webp",
+    path: "/app/drive",
+    view: "user",
+    async prepare(page) {
+      await page.getByText("Brightloop", { exact: true }).last().click();
+      await page.waitForTimeout(1500);
+    },
+  },
+  {
     file: "mail-settings.webp",
     path: "/app/settings/mail",
     view: "admin",
@@ -120,6 +157,12 @@ const SHOTS: Shot[] = [
 function noteId(db: DatabaseSync, title: string) {
   const row = db.prepare("select id from notes where org_id = ? and title = ? order by created_at desc").get(ORG_ID, title) as { id: string } | undefined;
   if (!row) throw new Error(`Note "${title}" missing: run with --seed`);
+  return row.id;
+}
+
+function rowId(db: DatabaseSync, table: "contacts" | "drive_items", name: string) {
+  const row = db.prepare(`select id from ${table} where org_id = ? and name = ? limit 1`).get(ORG_ID, name) as { id: string } | undefined;
+  if (!row) throw new Error(`"${name}" missing from ${table}: run with --seed`);
   return row.id;
 }
 
@@ -148,7 +191,7 @@ const apiAs =
     return res.json() as Promise<T>;
   };
 
-async function seed(db: DatabaseSync, api: Api) {
+async function seed(db: DatabaseSync, api: Api, cookie: string) {
   // The old test threads stay, archived, so the inbox shows only the demo.
   const archived = db.prepare("update mail_threads set archived_at = ? where org_id = ? and archived_at is null and trashed_at is null").run(Date.now(), ORG_ID);
   console.log(`archived ${archived.changes} old threads`);
@@ -166,7 +209,27 @@ async function seed(db: DatabaseSync, api: Api) {
   }
   db.prepare("update mail_threads set starred = 1 where org_id = ? and subject = 'Contract for the spring campaign'").run(ORG_ID);
   for (const n of [...NOTES].reverse()) await api("POST", "/api/app/notes", { title: n.title, markdown: n.markdown, sharing: "team", teamRole: "edit" });
-  console.log(`seeded ${MAIL.length} messages and ${NOTES.length} notes`);
+  // Contacts and drive skip what's already there, so --seed can run again.
+  const has = (table: "contacts" | "drive_items", name: string) => !!db.prepare(`select 1 from ${table} where org_id = ? and name = ? and ${table === "drive_items" ? "trashed_at is null" : "1"}`).get(ORG_ID, name);
+  // The contacts shot shows the "Partners" group, so the org's own test contacts stay out of it.
+  const group = (db.prepare("select id from contact_groups where org_id = ? and name = 'Partners'").get(ORG_ID) as { id: string } | undefined) ?? (await api<{ id: string }>("POST", "/api/app/contacts/groups", { name: "Partners" }));
+  for (const [name, company, title, email, phone] of CONTACTS) {
+    const body = { name, company, title, emails: [{ value: email, label: "work" }], phones: phone ? [{ value: phone, label: "work" }] : [], groupIds: [group.id] };
+    if (has("contacts", name)) await api("PATCH", `/api/app/contacts/${rowId(db, "contacts", name)}`, { groupIds: [group.id] });
+    else await api("POST", "/api/app/contacts", body);
+  }
+  // Other top-level drive items go to the trash (restorable, like the archived threads above).
+  const keep = [...FOLDERS, ...FILES.filter((f) => !f[2]).map((f) => f[0])];
+  db.prepare(`update drive_items set trashed_at = ? where org_id = ? and parent_id is null and trashed_at is null and name not in (${keep.map(() => "?").join(",")})`).run(Date.now(), ORG_ID, ...keep);
+  const folders = new Map<string, string>();
+  for (const name of FOLDERS) folders.set(name, has("drive_items", name) ? rowId(db, "drive_items", name) : (await api<{ id: string }>("POST", "/api/app/drive/items", { name })).id);
+  for (const [name, type, folder] of FILES) {
+    if (has("drive_items", name)) continue;
+    const parent = folder ? `?parentId=${folders.get(folder)}` : "";
+    const res = await fetch(`${BASE}/api/app/drive/files${parent}`, { method: "PUT", headers: { cookie, origin: BASE, "content-type": type, "x-filename": encodeURIComponent(name) }, body: `${name}\n`.repeat(2000) });
+    if (!res.ok) throw new Error(`drive ${name}: ${res.status} ${await res.text()}`);
+  }
+  console.log(`seeded ${MAIL.length} messages, ${NOTES.length} notes, ${CONTACTS.length} contacts and ${FILES.length} files`);
 }
 
 async function main() {
@@ -189,8 +252,9 @@ async function main() {
 
   const browser = await chromium.launch();
   try {
-    const api = apiAs(`better-auth.session_token=${signed}`);
-    if (args.includes("--seed")) await seed(db, api);
+    const cookie = `better-auth.session_token=${signed}`;
+    const api = apiAs(cookie);
+    if (args.includes("--seed")) await seed(db, api, cookie);
     // Each shot in both themes: <name>.webp (light, docs and comparisons) and <name>-dark.webp (the dark marketing pages).
     for (const [shot, scheme] of shots.flatMap((s) => (["light", "dark"] as const).map((c) => [s, c] as const))) {
       const viewport = shot.viewport ?? { width: 1440, height: 900 };

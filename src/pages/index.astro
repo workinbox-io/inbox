@@ -1,6 +1,6 @@
 ---
 /**
- * The home page, laid out after boat.dev in our ink: an ink hero with a pixel harbour, three feature cards, the setup
+ * The home page, laid out after boat.dev in our ink: an ink hero with a pixel harbour, six feature cards, the setup
  * in three steps, what a team pays next to the big suites, a pricing calculator, open source and what's next, FAQ and
  * a closing band. Pixel scenes are ours (components/site/pixel); the tour shows real screens of the app.
  * Only claim what ships; calendar and IMAP stay under "Coming next".
@@ -25,6 +25,8 @@ const tabs = [
   { id: "inbox", label: "Inbox", url: "workinbox.io/app/mail", name: "mail-thread", alt: "Work Inbox mail: folders, the inbox of anna@ and support@, an open message and the sender panel" },
   { id: "shared", label: "Shared mailbox", url: "workinbox.io/app/mail", name: "shared-mailbox", alt: "The shared mailbox support@ with a customer question open" },
   { id: "notes", label: "Notes", url: "workinbox.io/app/notes", name: "notes", alt: "A shared note with decisions, a checklist and open questions, and the formatting toolbar" },
+  { id: "contacts", label: "Contacts", url: "workinbox.io/app/contacts", name: "contacts", alt: "The team address book: a group of partners and a contact with their details and the latest conversation" },
+  { id: "drive", label: "Drive", url: "workinbox.io/app/drive", name: "drive", alt: "The shared drive: folders and files in a list, with a folder's details, access and public links" },
   { id: "domains", label: "Domains", url: "workinbox.io/app/settings/mail", name: "mail-settings", alt: "Mail settings: the domain's DNS records with a Check DNS button, the catch-all choice and the mailboxes" },
 ];
 
@@ -33,6 +35,7 @@ const extras = [
   { text: "search with from:, to:, has:attachment and is:unread" },
   { text: "keyboard shortcuts" },
   { text: "spam scores and sender rules" },
+  { text: "the original .eml of every message" },
   { text: "aliases, a catch-all and plus addressing" },
   { text: "Claude and ChatGPT", href: "/docs/mcp" },
   { text: "a REST API", href: "/docs/api" },
@@ -60,6 +63,28 @@ const cards = [
     command: "anna and ben are editing",
     title: "Notes written together",
     text: "Meeting notes, checklists and how-tos, edited live with everyone's cursor on the page.",
+  },
+  {
+    scene: "contacts" as const,
+    caption: "contacts · partners",
+    command: "marta@brightloop.io → saved",
+    title: "One address book",
+    text: "Filled from the mail your team sends, with Google, Outlook and vCard import, and suggestions as you type.",
+  },
+  {
+    scene: "drive" as const,
+    caption: "drive · brightloop",
+    command: "contract.pdf → shared with the team",
+    title: "A drive you share",
+    text: "Folders for people or the whole team, previews, and public links with a password. Attach files straight to mail.",
+  },
+  {
+    scene: "ai" as const,
+    caption: "claude · chatgpt",
+    command: "reply to marta → draft → Send",
+    title: "Mail from Claude or ChatGPT",
+    text: "Search and read mail, notes and files from your AI app. Replies come back as drafts you send yourself.",
+    href: "/docs/mcp",
   },
 ];
 
@@ -177,7 +202,7 @@ const jsonLd = [
     <div class="mk-wrap pt-10 sm:pt-16">
       <h1 class="mk-h1 max-w-4xl">Your team's email,<br /> on your own domain</h1>
       <p class="mk-lead mt-6 max-w-2xl">
-        Personal and shared mailboxes, aliases and notes your team writes together. Free for up to {FREE_PEOPLE} people, then from
+        Personal and shared mailboxes and aliases, with notes, contacts and a drive your team shares. Free for up to {FREE_PEOPLE} people, then from
         €{lowest} per person a month, or free on your own Cloudflare account.
       </p>
       <div class="mt-9 flex flex-wrap items-center gap-3">
@@ -194,9 +219,9 @@ const jsonLd = [
     </div>
   </section>
 
-  <!-- Three cards, each a small scene in a frame. -->
+  <!-- Six cards, each a small scene in a frame. -->
   <section id="features" class="mk-wrap mk-section scroll-mt-20">
-    <div class="grid gap-12 md:grid-cols-3 md:gap-8 lg:gap-10">
+    <div class="grid gap-12 md:grid-cols-3 md:gap-x-8 md:gap-y-16 lg:gap-x-10">
       {
         cards.map((c) => (
           <div data-reveal>
@@ -249,7 +274,7 @@ const jsonLd = [
     </p>
   </section>
 
-  <!-- The real app: four screens behind mono tabs. -->
+  <!-- The real app: screens behind mono tabs. -->
   <section id="tour" class="mk-wrap scroll-mt-20 pb-20 sm:pb-28" data-tabs>
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -589,5 +614,14 @@ const jsonLd = [
         next.focus();
       });
     });
+    // /#tour-notes, /#tour-drive…: the header's Product menu opens the tour on that screen.
+    const fromHash = () => {
+      const btn = buttons.find((b) => location.hash === `#tour-${b.dataset.tab}`);
+      if (!btn) return;
+      select(btn);
+      tour.scrollIntoView();
+    };
+    fromHash();
+    addEventListener("hashchange", fromHash);
   }
 </script>

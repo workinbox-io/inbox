@@ -11,6 +11,8 @@ const S = {
   // An envelope on the page: outlined, since the page is white.
   letter: sprite(["5555555", "5500055", "5050505", "5005005", "5555555"]),
   postbox: sprite(["wwwwww", "w3333w", "wwwwww", "wwwwww", "wwwwww", ".3..3.", ".3..3."]),
+  // A page with a folded corner, outlined like the letter.
+  doc: sprite(["55555..", "5000055", "5033005", "5000005", "5033305", "5000005", "5555555"]),
   at: sprite([".55555.", "5.....5", "5..55.5", "5.5.5.5", "5..5555", "5......", ".55555."]),
   plant: sprite(["..3...3..", ".333.333.", "3.33333.3", ".3333333.", "..33333..", "...333...", "....3....", "..22222..", "..22222..", "...222..."]),
   standing: sprite(["..55..", ".5555.", ".5555.", "..55..", ".4444.", "444444", "444444", "444444", ".4..4.", ".4..4."]),
@@ -306,6 +308,100 @@ export const SCENES: Record<string, Scene> = {
       // The writer follows the pen; the other one walks along the board.
       p.draw(S.standing, Math.max(14, Math.min(98, Math.floor(pen[0]) - 3)), floor - 10);
       p.draw(S.standing, 86 - Math.round((Math.sin(t * 0.5) * 0.5 + 0.5) * 20), floor - 10, { "5": "3", "4": "2" });
+    },
+  },
+  /** Card: the team's address book, a pinboard of cards that fills as mail goes out. */
+  contacts: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(8, 4, 72, 42, "4");
+      p.rect(10, 6, 68, 38, "1");
+      const faces: ColorKey[] = ["5", "4", "3", "5", "3", "4"];
+      const slot = (i: number): [number, number] => [13 + (i % 3) * 22, 9 + Math.floor(i / 3) * 17];
+      const cyc = wrap(t, 10.5);
+      const filled = Math.min(6, Math.floor(cyc / 1.5));
+      for (let i = 0; i < filled; i++) {
+        const [x, y] = slot(i);
+        p.rect(x, y, 18, 14, "3");
+        p.rect(x + 1, y + 1, 16, 12, "0");
+        p.rect(x + 3, y + 3, 4, 4, faces[i]!);
+        p.rect(x + 9, y + 4, 6, 1, "4");
+        p.rect(x + 9, y + 7, 4, 1, "2");
+        p.rect(x + 3, y + 10, 12, 1, "2");
+      }
+      // Whoever sends the mail stands by the board; each letter becomes a card.
+      p.draw(S.standing, 90, floor - 10);
+      p.draw(S.plant, 106, floor - 10);
+      if (filled < 6) {
+        const [x, y] = slot(filled);
+        fly(p, S.letter, [94, floor - 12], [x + 9, y + 7], (cyc % 1.5) / 1.2, 12);
+      }
+    },
+  },
+  /** Card: a shelf of folders the team shares, files filing in from a laptop. */
+  drive: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(8, 6, 58, 52, "4");
+      p.rect(10, 8, 54, 48, "1");
+      const colors: ColorKey[] = ["3", "4", "5", "2"];
+      const cyc = wrap(t, 11);
+      const added = Math.min(9, Math.floor(cyc / 1.1));
+      [26, 44, 56].forEach((base, r) => {
+        if (r < 2) p.rect(10, base, 54, 2, "4");
+        const count = r < 2 ? 12 : added;
+        for (let j = 0; j < count; j++) {
+          const h = 10 + ((j * 7 + r * 3) % 5);
+          const x = 12 + j * 4;
+          p.rect(x, base - h, 3, h, colors[(j + r) % 4]!);
+          p.dot(x + 1, base - h + 2, "0");
+        }
+      });
+      desk(p, 74, floor, t, 0, "5");
+      p.draw(S.plant, 106, floor - 10);
+      if (added < 9) fly(p, S.doc, [87, floor - 20], [13 + added * 4, 46], (cyc % 1.1) / 0.9, 14);
+    },
+  },
+  /** Card: an AI app on the wall screen; its reply waits as a draft until someone presses Send. */
+  ai: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(10, 4, 74, 44, "5");
+      p.rect(12, 6, 70, 40, "0");
+      const cyc = wrap(t, 8);
+      const bubbles: [number, number, number, ColorKey][] = [
+        [16, 10, 30, "3"],
+        [48, 17, 30, "4"],
+      ];
+      bubbles.forEach(([x, y, w, c], i) => {
+        if (cyc < 0.4 + i * 1.2) return;
+        p.rect(x, y, w, 5, c);
+        p.rect(x + 2, y + 2, w - 8, 1, "0");
+      });
+      if (cyc > 2.8) {
+        // The draft card: a letter and its Send button, pressed a moment later.
+        p.rect(16, 26, 62, 15, "4");
+        p.rect(17, 27, 60, 13, "0");
+        p.draw(S.letter, 20, 31);
+        p.rect(30, 31, 22, 1, "3");
+        p.rect(30, 34, 16, 1, "2");
+        p.rect(62, 31, 12, 5, cyc > 4.6 ? "5" : "3");
+      }
+      p.draw(S.standing, 90, floor - 10);
+      p.draw(S.plant, 106, floor - 10);
+      fly(p, S.letter, [68, 33], [124, 4], (cyc - 4.8) / 1.6, 10);
     },
   },
   /** Setup steps (data-state 0…3): the company's door and @, the people at their desks, the shared screen and mail. */
