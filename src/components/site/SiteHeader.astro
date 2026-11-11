@@ -8,7 +8,7 @@ interface Props {
   ink?: boolean;
 }
 const { ink = false } = Astro.props;
-const path = Astro.url.pathname;
+const path = pagePath(Astro.url.pathname);
 const isActive = (href: string) => !href.includes("#") && (path === href || path.startsWith(`${href}/`));
 const nav: NavItem[] = siteConfig.navItems;
 const withIcon = (it: NavLink) => ({ ...it, Icon: it.icon });
@@ -25,6 +25,7 @@ const item =
 const footerLink = "mega-footer";
 const summary =
   "flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium [&::-webkit-details-marker]:hidden";
+import { pagePath } from "@/lib/page-path";
 ---
 
 <header

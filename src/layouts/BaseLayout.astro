@@ -19,8 +19,9 @@ const { title, description = siteConfig.description, jsonLd, noindex = false, la
 // The dashboard's words in the user's language (lib/i18n/panel.ts), before any island runs.
 const panelWords = lang !== "en" ? `/i18n/${lang}.js?v=${dictionaryVersion(lang)}` : null;
 const fullTitle = `${title} · ${siteConfig.name}`;
-// No trailing slash, to match the sitemap (prerendered pages see "/pricing/").
-const canonical = Astro.site ? new URL(Astro.url.pathname.replace(/(.)\/$/, "$1"), Astro.site).href : undefined;
+// The served path, as in the sitemap: prerendered pages see "/pricing.html" at build time (lib/page-path.ts).
+const canonical = Astro.site ? new URL(pagePath(Astro.url.pathname), Astro.site).href : undefined;
+import { pagePath } from "@/lib/page-path";
 ---
 
 <!doctype html>

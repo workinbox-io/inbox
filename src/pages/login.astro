@@ -12,6 +12,6 @@ const oauth = Astro.url.searchParams.has("sig");
 if (!oauth && (await getAuth().api.getSession({ headers: Astro.request.headers }))) return Astro.redirect(next);
 ---
 
-<AuthLayout title="Sign in">
+<AuthLayout title="Sign in" noindex>
   <AuthForm client:load mode="login" next={next} email={email} />
 </AuthLayout>
