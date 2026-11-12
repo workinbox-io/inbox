@@ -6,14 +6,17 @@ WorkInbox (workinbox.io) is open-source mail, contacts, calendar and drive for t
 
 Status: ✅ done · 🚧 in progress · ⬜ planned
 
-## Next up (2026-11-10)
+## Next up (2026-11-12)
 
 1. 🚧 Acceptance on production:
    - Web Push on a real phone
    - A first free `<name>.workinbox.io` address: claim, verify, Gmail → mailbox → reply
    - The drive signed in: upload a large file and a folder, share with a member, a public link, ZIP, attach to mail
    - The hourly SES sweep's first run (`[ses-inbound]` in the Worker logs)
-2. ⬜ Calendar (phase 3), starting with calendars, events with RRULE, week/month views and iMIP invitations in the thread
+   - The calendar: an invitation to Gmail and Outlook shows their own RSVP buttons, the answer comes back and updates
+     the attendee; a CANCEL by mail; a colleague's calendar overlaid with real events; a reminder push on a phone
+2. ⬜ Calendar toward Notion Calendar (phase 3, "Next"): meeting notes from an event, then ⌘K with events typed in
+   plain words and the smaller gaps
 3. ⬜ ChatGPT directory: submit the app (`chatgpt-app/`), then the `/chatgpt` page and the `/vs` row once OpenAI approves
 4. ⬜ Drive follow-ups: a link instead of a large attachment, resized thumbnails, copies of large folders through the queue
 
@@ -90,12 +93,43 @@ Implemented and acceptance:
 
 ## Phase 3: calendar
 
-- ⬜ Personal, shared and resource calendars; events with time zones, RRULE and exceptions; reminders via queue/cron
-- ⬜ Day, week, month and agenda views in the same Cron style as mail
-- ⬜ Invitations over iMIP: outgoing `text/calendar` REQUEST, incoming REQUEST/REPLY/CANCEL update RSVPs and show
-  an invitation card in the thread
-- ⬜ Free/busy when scheduling, private ICS feed, `.ics` import (Google Calendar export)
-- ⬜ MCP: `calendar_list_events`, `calendar_create_event`
+Shipped 2026-11-12 (`b9f9510`, `40aa9aa`, then UI polish up to `08c1d0c`), deployed; production acceptance pending
+(Next up).
+
+- ✅ A personal calendar per person plus shared ones, shared like notes (private, people, team)
+- ✅ Events with time zones, RRULE and exceptions ("this", "this and following", "all"); reminders by push from the
+  every-minute cron
+- ✅ Day, week and month views in the Cron / Notion Calendar style: drag to create, move and resize (the new event's
+  rectangle too, synced with its panel), keyboard shortcuts, right-click menus, the rail's mini month, labels that
+  grow with the width
+- ✅ Several time zones side by side; colleagues' calendars overlaid (busy blocks when you can't see the details);
+  availability picked on the grid and copied as text
+- ✅ Invitations over iMIP: outgoing `text/calendar` REQUEST/CANCEL to outside attendees, incoming
+  REQUEST/REPLY/CANCEL update RSVPs, an invitation card in the mail thread
+- ✅ Private `.ics` feed, `.ics` import (Google Calendar export)
+- ✅ API `/api/v1/calendar/events`, MCP `calendar_list_events`, `calendar_find_free_time`, `calendar_create_event`
+- ⬜ Agenda view; resource calendars (rooms, equipment)
+
+Next, toward Notion Calendar (2026-11-12), in this order:
+
+1. ⬜ Meeting notes: "Meeting notes" on an event makes a note linked to it, shared with its attendees; the event shows
+   the note and the note links back (Notion Calendar attaches Notion pages; we have our own notes)
+2. ⬜ ⌘K for the calendar and events typed in plain words ("lunch with Ola tomorrow 1pm")
+3. ⬜ Smaller gaps:
+   - hide weekends; 2–4 day views; hour height (zoom)
+   - search events
+   - a colour per event
+   - ⌘Z undo, copy, paste and duplicate (⌘D)
+   - select several events at once
+   - drag into the all-day row and between calendars
+   - suggest a time free for every attendee while adding them
+   - a "Join" prompt just before a meeting
+   - the rail's calendars and settings on phones (today the rail is desktop only)
+4. ⬜ Booking links: a page where the other side picks one of your free slots (today availability is copied as text;
+   not claimed on the site until it ships)
+5. ⬜ Connected Google and Outlook accounts in one view, and subscribing to outside `.ics` URLs (today import/export
+   only; two-way sync with CalDAV is phase 6)
+6. ⬜ Video links added on their own (Meet, Zoom, or our own meetings, see "Gaps to a full product"); today a link field
 
 ## Phase 4: drive (R2)
 
