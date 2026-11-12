@@ -187,7 +187,12 @@ export function CalendarRail({
                     label={p?.name || p?.email || "…"}
                     active={false}
                     onClick={() => onPickerOpen(true)}
-                    leading={<span className="size-3.5 shrink-0 rounded-full" style={{ background: personColor(id, people) }} aria-hidden />}
+                    leading={
+                      // The ring is the person's overlay colour, matching their blocks in the grid.
+                      <span className="inline-flex shrink-0 rounded-full p-px" style={{ boxShadow: `0 0 0 1.5px ${personColor(id, people)}` }}>
+                        <UserAvatar seed={p?.email ?? id} size={16} />
+                      </span>
+                    }
                     actions={[{ label: t("Remove from view"), icon: UserMinus, onSelect: () => onPeople(people.filter((x) => x !== id)) }]}
                   />
                 )
