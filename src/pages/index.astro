@@ -8,6 +8,7 @@
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import Shot from "@/components/site/Shot.astro";
+import NotesPresence from "@/components/site/NotesPresence.astro";
 import Faq from "@/components/site/Faq.astro";
 import PixelScene from "@/components/site/pixel/PixelScene.astro";
 import PixelIcon from "@/components/site/pixel/PixelIcon.astro";
@@ -62,7 +63,7 @@ const cards = [
     caption: "notes · launch plan",
     command: "anna and ben are editing",
     title: "Notes written together",
-    text: "Meeting notes, checklists and how-tos, edited live with everyone's cursor on the page.",
+    text: "See who's here and what they're editing. Shared meeting notes, checklists and how-tos, with named cursors and live selections.",
   },
   {
     scene: "contacts" as const,
@@ -226,7 +227,7 @@ const jsonLd = [
         cards.map((c) => (
           <div data-reveal>
             <p class="mk-cap">{c.caption}</p>
-            <div class="mk-frame mt-2"><PixelScene scene={c.scene} /></div>
+            <div class="mk-frame mt-2">{c.scene === "notes" ? <NotesPresence /> : <PixelScene scene={c.scene} />}</div>
             <p class="mk-cap mt-2">$ {c.command}</p>
             <h2 class="mk-h3 mt-6">{c.title}</h2>
             <p class="mt-3 text-lg leading-7 text-(--muted-foreground)">
