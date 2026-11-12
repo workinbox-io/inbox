@@ -3,7 +3,8 @@ import * as React from "react"
 import { addDays, sameDay, wallTime } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
-import { Chip } from "./time-grid"
+import { ActionMenu, type MenuAction } from "@/components/workspace/action-menu"
+import { Chip, menuOf } from "./time-grid"
 import { eventKey, fmt, fmtTime, type Draft, type EventView } from "./shared"
 
 const SHOWN = 3
@@ -19,6 +20,8 @@ export function MonthGrid({
   onSelect,
   onDay,
   onCreate,
+  eventActions,
+  spaceActions,
 }: {
   days: number[]
   /** 1–12: days outside it are dimmed. */
@@ -31,6 +34,8 @@ export function MonthGrid({
   onSelect: (e: EventView) => void
   onDay: (day: number) => void
   onCreate: (d: Draft) => void
+  eventActions: (e: EventView) => MenuAction[]
+  spaceActions: (at: number, allDay: boolean) => MenuAction[]
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -47,8 +52,8 @@ export function MonthGrid({
           const list = events.filter((e) => e.start < next && e.end > d)
           const w = wallTime(d, tz)
           return (
+            <ActionMenu key={d} actions={() => spaceActions(d, true)}>
             <div
-              key={d}
               className={cn("flex min-h-0 flex-col gap-0.5 overflow-hidden border-b border-l p-1", w.month !== month && "bg-muted/30")}
               onDoubleClick={() => onCreate({ start: d, end: next, allDay: true })}
             >
@@ -65,11 +70,12 @@ export function MonthGrid({
               </button>
               {list.slice(0, SHOWN).map((e) =>
                 e.allDay ? (
-                  <Chip key={eventKey(e)} e={e} color={colorOf(e)} selected={selectedKey === eventKey(e)} onClick={() => onSelect(e)} />
+                  <Chip key={eventKey(e)} e={e} color={colorOf(e)} selected={selectedKey === eventKey(e)} onClick={() => onSelect(e)} actions={menuOf(eventActions(e))} />
                 ) : (
+                  <ActionMenu key={eventKey(e)} actions={menuOf(eventActions(e))}>
                   <button
-                    key={eventKey(e)}
                     type="button"
+                    onContextMenu={(ev) => ev.stopPropagation()}
                     onClick={() => onSelect(e)}
                     className={cn("hover:bg-muted flex items-center gap-1 truncate rounded px-1 text-left text-[11px]", selectedKey === eventKey(e) && "bg-muted", e.myStatus === "declined" && "line-through opacity-50")}
                   >
@@ -77,6 +83,7 @@ export function MonthGrid({
                     <span className="text-muted-foreground tabular-nums">{fmtTime(e.start, tz)}</span>
                     <span className="truncate">{e.role === "busy" ? t("Busy") : e.title || t("(No title)")}</span>
                   </button>
+                  </ActionMenu>
                 ),
               )}
               {list.length > SHOWN ? (
@@ -85,6 +92,7 @@ export function MonthGrid({
                 </button>
               ) : null}
             </div>
+            </ActionMenu>
           )
         })}
       </div>

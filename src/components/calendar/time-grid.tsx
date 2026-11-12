@@ -5,6 +5,7 @@
  */
 import * as React from "react"
 import { X } from "lucide-react"
+import { ActionMenu, type MenuAction } from "@/components/workspace/action-menu"
 import { tint } from "@/components/workspace/ui"
 import type { Slot } from "@/lib/calendar/availability"
 import { layoutDay } from "@/lib/calendar/layout"
@@ -32,7 +33,16 @@ interface Props {
   onChange: (e: EventView, start: number, end: number) => void
   onSlots: (slots: Slot[]) => void
   onDay: (day: number) => void
+  /** Right-click on an event. */
+  eventActions: (e: EventView) => MenuAction[]
+  /** Right-click on empty space: the instant under the pointer (15-minute step), or the day for the all-day row. */
+  spaceActions: (at: number, allDay: boolean) => MenuAction[]
 }
+
+/** Undefined for nothing to do, so the browser's own menu stays. */
+export const menuOf = (actions: MenuAction[]) => (actions.length ? actions : undefined)
+/** An event's menu must not also open the empty-space menu around it. */
+const own = (e: React.MouseEvent) => e.stopPropagation()
 
 type Draw = { kind: "create" | "slot"; day: number; from: number; to: number; x: number; y: number; moved: boolean }
 type Edit = { kind: "move" | "resize"; event: EventView; day: number; grabDay: number; grabMin: number; min: number; x: number; y: number; moved: boolean }
@@ -49,6 +59,8 @@ export function TimeGrid(props: Props) {
   const colsRef = React.useRef<HTMLDivElement>(null)
   const [drag, setDrag] = React.useState<Drag | null>(null)
   const dragRef = React.useRef<Drag | null>(null)
+  // Where the last right-click on empty space landed (day index, minute).
+  const spot = React.useRef({ day: 0, min: 0 })
   const set = (d: Drag | null) => {
     dragRef.current = d
     setDrag(d)
@@ -159,15 +171,20 @@ export function TimeGrid(props: Props) {
             const next = addDays(d, 1, tz)
             const list = allDay.filter((e) => e.start < next && e.end > d)
             return (
-              <div
-                key={d}
-                className="grid min-h-7 content-start gap-0.5 border-l p-0.5"
-                onDoubleClick={() => props.onCreate({ start: d, end: next, allDay: true })}
-              >
-                {list.map((e) => (
-                  <Chip key={eventKey(e)} e={e} color={props.colorOf(e)} selected={props.selectedKey === eventKey(e)} onClick={() => props.onSelect(e)} />
-                ))}
-              </div>
+              <ActionMenu key={d} actions={() => props.spaceActions(d, true)}>
+                <div className="grid min-h-7 content-start gap-0.5 border-l p-0.5" onDoubleClick={() => props.onCreate({ start: d, end: next, allDay: true })}>
+                  {list.map((e) => (
+                    <Chip
+                      key={eventKey(e)}
+                      e={e}
+                      color={props.colorOf(e)}
+                      selected={props.selectedKey === eventKey(e)}
+                      onClick={() => props.onSelect(e)}
+                      actions={menuOf(props.eventActions(e))}
+                    />
+                  ))}
+                </div>
+              </ActionMenu>
             )
           })}
         </div>
@@ -205,10 +222,11 @@ export function TimeGrid(props: Props) {
               })
               const placed = new Map(layoutDay(mine.map((e) => ({ id: eventKey(e), start: e.start, end: e.end }))).map((p) => [p.id, p]))
               return (
+                <ActionMenu key={d} actions={() => props.spaceActions(atMinute(days[spot.current.day]!, snapDown(spot.current.min), tz), false)}>
                 <div
-                  key={d}
                   className="relative border-l"
                   style={{ backgroundImage: `repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px ${HOUR}px)` }}
+                  onContextMenu={(e) => (spot.current = at(e.clientX, e.clientY))}
                   onPointerDown={(e) => {
                     const { min } = at(e.clientX, e.clientY)
                     begin(e, { kind: slots ? "slot" : "create", day: di, from: min, to: min, x: e.clientX, y: e.clientY, moved: false })
@@ -244,6 +262,7 @@ export function TimeGrid(props: Props) {
                         }
                         onClick={(ev) => (ev.stopPropagation(), !can && !slots && props.onSelect(e))}
                         onResize={can ? (ev) => begin(ev, { kind: "resize", event: e, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false }) : undefined}
+                        actions={slots ? undefined : menuOf(props.eventActions(e))}
                       />
                     )
                   })}
@@ -263,6 +282,7 @@ export function TimeGrid(props: Props) {
                           key={i}
                           type="button"
                           onPointerDown={(ev) => ev.stopPropagation()}
+                          onContextMenu={own}
                           onClick={() => props.onSlots(slots!.filter((x) => x !== s))}
                           className="group absolute inset-x-0.5 z-10 flex items-start justify-between rounded-md border border-emerald-500 bg-emerald-500/15 px-1.5 py-0.5 text-left text-[11px] font-medium text-emerald-700 dark:text-emerald-300"
                           style={{ top: (top / 60) * HOUR, height: ((bottom - top) / 60) * HOUR - 1 }}
@@ -274,6 +294,7 @@ export function TimeGrid(props: Props) {
                       )
                     })}
                 </div>
+                </ActionMenu>
               )
             })}
           </div>
@@ -305,6 +326,7 @@ function Block({
   onPointerDown,
   onClick,
   onResize,
+  actions,
 }: {
   e: EventView
   tz: string
@@ -315,14 +337,17 @@ function Block({
   onPointerDown: (e: React.PointerEvent) => void
   onClick: (e: React.MouseEvent) => void
   onResize?: (e: React.PointerEvent) => void
+  actions?: MenuAction[]
 }) {
   const short = e.end - e.start <= 45 * 60_000
   const title = e.role === "busy" ? t("Busy") : e.title || t("(No title)")
   return (
+    <ActionMenu actions={actions}>
     <div
       role="button"
       tabIndex={0}
       aria-label={`${title}, ${fmtTime(e.start, tz)}`}
+      onContextMenu={own}
       onPointerDown={onPointerDown}
       onClick={onClick}
       className={cn(
@@ -342,6 +367,7 @@ function Block({
       {!short && e.location && e.role !== "busy" ? <div className="text-foreground/60 truncate">{e.location}</div> : null}
       {onResize ? <div onPointerDown={onResize} className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize" aria-hidden /> : null}
     </div>
+    </ActionMenu>
   )
 }
 
@@ -362,15 +388,18 @@ function Ghost({ start, end, day, tz, color, title }: { start: number; end: numb
   )
 }
 
-export function Chip({ e, color, selected, onClick }: { e: EventView; color: string; selected: boolean; onClick: () => void }) {
+export function Chip({ e, color, selected, onClick, actions }: { e: EventView; color: string; selected: boolean; onClick: () => void; actions?: MenuAction[] }) {
   return (
+    <ActionMenu actions={actions}>
     <button
       type="button"
+      onContextMenu={own}
       onClick={(ev) => (ev.stopPropagation(), onClick())}
       className={cn("truncate rounded px-1.5 py-px text-left text-[11px] font-medium", selected && "ring-foreground/60 ring-2", e.myStatus === "declined" && "line-through opacity-50")}
       style={blockStyle(e, color)}
     >
       {e.role === "busy" ? t("Busy") : e.title || t("(No title)")}
     </button>
+    </ActionMenu>
   )
 }

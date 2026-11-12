@@ -5,12 +5,13 @@
  * Backspace delete, Enter edit the title.
  */
 import * as React from "react"
-import { CalendarCheck, ChevronLeft, ChevronRight, UserPlus } from "lucide-react"
+import { CalendarCheck, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleHelp, Copy, ExternalLink, PanelRightOpen, Trash2, UserPlus, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
 import { Button } from "@/components/ui/button"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
+import { cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { AppFrame } from "@/components/workspace/app-frame"
 import { IconAction } from "@/components/workspace/detail-header"
 import { shortcutsPaused, useAppLayout, useMounted } from "@/components/workspace/ui"
@@ -294,6 +295,58 @@ export function CalendarApp(props: CalendarAppProps) {
     await load()
   }
 
+  // ---------- right-click menus ----------
+
+  function eventActions(e: EventView): MenuAction[] {
+    if (e.role === "busy") return []
+    const editable = canEdit(e)
+    return cleanActions([
+      { label: t("Open"), icon: PanelRightOpen, shortcut: "↵", onSelect: () => select(e) },
+      e.url ? { label: t("Join meeting"), icon: ExternalLink, onSelect: () => void window.open(e.url, "_blank", "noopener") } : null,
+      e.myStatus ? { separator: true } : null,
+      e.myStatus ? { label: t("Going"), icon: Check, disabled: e.myStatus === "accepted", onSelect: () => rsvp(e, "accepted") } : null,
+      e.myStatus ? { label: t("Maybe"), icon: CircleHelp, disabled: e.myStatus === "tentative", onSelect: () => rsvp(e, "tentative") } : null,
+      e.myStatus ? { label: t("Not going"), icon: X, disabled: e.myStatus === "declined", onSelect: () => rsvp(e, "declined") } : null,
+      { separator: true },
+      editable
+        ? {
+            label: t("Duplicate"),
+            icon: Copy,
+            onSelect: () =>
+              create({
+                calendarId: e.calendarId,
+                title: e.title,
+                description: e.description,
+                location: e.location,
+                url: e.url,
+                start: e.start,
+                end: e.end,
+                allDay: e.allDay,
+                timezone: e.timezone,
+                busy: e.busy,
+                reminders: e.reminders,
+              }),
+          }
+        : null,
+      { label: t("Go to day"), icon: CalendarDays, onSelect: () => (setDate(e.start), setView("day")) },
+      editable ? { separator: true } : null,
+      editable ? { label: t("Delete"), icon: Trash2, destructive: true, shortcut: "⌫", onSelect: () => remove(e) } : null,
+    ])
+  }
+
+  function spaceActions(at: number, allDay: boolean): MenuAction[] {
+    const startNew = (d: { start: number; end: number; allDay: boolean }) => (setSelectedKey(null), setOpened(null), setDraft(d))
+    return cleanActions([
+      allDay
+        ? { label: t("New all-day event"), icon: CalendarPlus, onSelect: () => startNew({ start: startOfDay(at, tz), end: stepDate(startOfDay(at, tz), "day", 1, tz), allDay: true }) }
+        : { label: t("New event here"), icon: CalendarPlus, shortcut: "C", onSelect: () => startNew({ start: at, end: at + 30 * 60_000, allDay: false }) },
+      { label: slots ? t("Leave availability") : t("Pick availability"), icon: CalendarCheck, shortcut: "A", onSelect: () => setSlots((s) => (s ? null : [])) },
+      { separator: true },
+      view !== "day" ? { label: t("Open this day"), icon: CalendarDays, shortcut: "D", onSelect: () => (setDate(at), setView("day")) } : null,
+      { label: t("Today"), shortcut: "T", onSelect: () => setDate(Date.now()) },
+    ])
+  }
+
   // ---------- keyboard ----------
 
   const selected = (selectedKey && events.find((e) => eventKey(e) === selectedKey)) || opened
@@ -438,6 +491,8 @@ export function CalendarApp(props: CalendarAppProps) {
             onSelect={select}
             onDay={(d) => (setDate(d), setView("day"))}
             onCreate={(d) => (setSelectedKey(null), setOpened(null), setDraft(d))}
+            eventActions={eventActions}
+            spaceActions={spaceActions}
           />
         ) : (
           <TimeGrid
@@ -457,6 +512,8 @@ export function CalendarApp(props: CalendarAppProps) {
             onChange={(e, s, en) => void move(e, s, en)}
             onSlots={setSlots}
             onDay={(d) => (setDate(d), setView("day"))}
+            eventActions={eventActions}
+            spaceActions={spaceActions}
           />
         )}
         {slots ? <AvailabilityBar slots={slots} zones={[tz, ...prefs.timezones.slice(1)]} onClear={() => setSlots([])} onDone={() => setSlots(null)} /> : null}

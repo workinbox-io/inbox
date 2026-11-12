@@ -4,19 +4,86 @@
  */
 import * as React from "react"
 import type { LucideIcon } from "lucide-react"
+import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { ActionMenu, ActionMenuButton, type MenuAction } from "./action-menu"
 import { Kbd } from "./ui"
 
+const RAIL_KEY = "workspace-rail-width"
+const RAIL_MIN = 200
+const RAIL_MAX = 420
+const RAIL_DEFAULT = 256
+
+/** The rails' width, dragged by their right edge and kept per browser for every app. */
+function useRailWidth() {
+  const [width, setWidth] = React.useState(RAIL_DEFAULT)
+  React.useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem(RAIL_KEY))
+      if (saved) setWidth(Math.min(RAIL_MAX, Math.max(RAIL_MIN, saved)))
+    } catch {}
+  }, [])
+  const save = (w: number) => {
+    setWidth(w)
+    try {
+      localStorage.setItem(RAIL_KEY, String(w))
+    } catch {}
+  }
+  return [width, save] as const
+}
+
+/** The rail's column: its width and the drag handle on the right edge (double-click resets). Mail's FolderRail uses it too. */
+export function RailNav({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+  const [width, setWidth] = useRailWidth()
+  const start = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
+    e.preventDefault()
+    const x = e.clientX
+    const from = width
+    const el = e.currentTarget
+    el.setPointerCapture(e.pointerId)
+    const move = (ev: PointerEvent) => setWidth(Math.min(RAIL_MAX, Math.max(RAIL_MIN, from + ev.clientX - x)))
+    const up = () => {
+      el.removeEventListener("pointermove", move)
+      el.removeEventListener("pointerup", up)
+    }
+    el.addEventListener("pointermove", move)
+    el.addEventListener("pointerup", up)
+  }
+  return (
+    <div className="relative h-full shrink-0 border-r" style={{ width }}>
+      <nav aria-label={label} className={cn("flex h-full flex-col gap-6 overflow-y-auto px-3 py-3", className)}>
+        {children}
+      </nav>
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={t("Resize")}
+        aria-valuemin={RAIL_MIN}
+        aria-valuemax={RAIL_MAX}
+        aria-valuenow={width}
+        tabIndex={0}
+        onPointerDown={start}
+        onDoubleClick={() => setWidth(RAIL_DEFAULT)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowLeft") setWidth(Math.max(RAIL_MIN, width - 16))
+          if (e.key === "ArrowRight") setWidth(Math.min(RAIL_MAX, width + 16))
+        }}
+        className="hover:bg-primary/40 focus-visible:bg-primary/40 absolute inset-y-0 -right-[3px] z-10 w-1.5 cursor-col-resize outline-none transition-colors"
+      />
+    </div>
+  )
+}
+
 export function Rail({ label, children, footer, hint }: { label: string; children: React.ReactNode; footer?: React.ReactNode; hint?: React.ReactNode }) {
   return (
-    <nav aria-label={label} className="flex h-full w-56 shrink-0 flex-col gap-6 overflow-y-auto border-r px-3 py-3">
+    <RailNav label={label}>
       {children}
       <div className="mt-auto grid gap-2">
         {hint ? <p className="text-muted-foreground flex items-center gap-1.5 px-2 text-xs">{hint}</p> : null}
         {footer ? <div className="-mx-1 border-t pt-2">{footer}</div> : null}
       </div>
-    </nav>
+    </RailNav>
   )
 }
 

@@ -2,6 +2,7 @@ import * as React from "react"
 import { Check, Copy, Eye, Layers, Plus, Settings2 } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { ActionMenu, ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
+import { RailNav } from "@/components/workspace/rail"
 
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
 import type { MailView as MailFolder } from "./types"
@@ -38,7 +39,7 @@ export function FolderRail({
   const all = mailbox === ALL_MAILBOXES
   const inboxUnread = all ? Object.values(unread).reduce((a, b) => a + b, 0) : (unread[mailbox] ?? 0)
   return (
-    <nav aria-label="Mail" className="flex h-full w-56 shrink-0 flex-col gap-6 border-r px-3 py-3">
+    <RailNav label="Mail">
       <button
         type="button"
         onClick={onCompose}
@@ -125,7 +126,7 @@ export function FolderRail({
         </p>
         {footer ? <div className="-mx-1 border-t pt-2">{footer}</div> : null}
       </div>
-    </nav>
+    </RailNav>
   )
 }
 
