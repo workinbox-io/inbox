@@ -11,7 +11,7 @@ export const GET = handler(async ctx => {
   const placeholders = boxes.map(() => "?").join(",");
   const args = [ctx.orgId, ctx.locals.user.id, ...boxes.map(b => b.id)];
   const where = `n.org_id = ? AND n.user_id = ? AND n.mailbox_id IN (${placeholders})`;
-  const rows = await env.DB.prepare(`SELECT n.id, n.thread_id AS threadId, n.created_at AS createdAt, n.read_at AS readAt, m.subject, m.from_email AS sender FROM mail_notifications n JOIN mail_messages m ON m.id = n.message_id WHERE ${where} ORDER BY n.created_at DESC LIMIT 100`).bind(...args).all();
+  const rows = await env.DB.prepare(`SELECT n.id, n.thread_id AS threadId, n.created_at AS createdAt, n.read_at AS readAt, m.subject, m.from_email AS sender, m.from_name AS senderName, substr(m.text, 1, 400) AS preview FROM mail_notifications n JOIN mail_messages m ON m.id = n.message_id WHERE ${where} ORDER BY n.created_at DESC LIMIT 100`).bind(...args).all();
   const count = await env.DB.prepare(`SELECT count(*) AS total FROM mail_notifications n WHERE ${where} AND n.read_at IS NULL`).bind(...args).first<{ total: number }>();
   return json({ notifications: rows.results, unread: count?.total ?? 0 });
 });

@@ -5,6 +5,7 @@
  */
 import * as React from "react"
 import { AlignLeft, Bell, CalendarDays, Clock, MapPin, Repeat, Trash2, Users, Video, X } from "lucide-react"
+import { ConfirmDialog } from "@/components/app/confirm-button"
 import { UserAvatar } from "@/components/app/user-avatar"
 import { AddressInput, type AddressSuggestion } from "@/components/mail/compose"
 import { Button } from "@/components/ui/button"
@@ -216,6 +217,23 @@ export function EventPanel({
   const dirty = JSON.stringify(f) !== JSON.stringify(start) || !event
   const field = "h-8 bg-transparent"
 
+  // Esc drops a new event, even while typing in it; asks first once something was written.
+  const [discarding, setDiscarding] = React.useState(false)
+  const filled = !event && !!(f.title.trim() || f.description.trim() || f.location.trim() || f.url.trim() || f.attendees.length)
+  React.useEffect(() => {
+    if (event) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return
+      // Open selects, menus and dialogs (the Sheet on phones too) close first on their own.
+      if (document.querySelector("[role=dialog][data-state=open], [role=alertdialog], [role=menu], [role=listbox]")) return
+      e.preventDefault()
+      if (filled) setDiscarding(true)
+      else onClose()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [event, filled, onClose])
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex min-h-12 items-center gap-1 border-b px-3">
@@ -392,6 +410,14 @@ export function EventPanel({
           </div>
         ) : null}
       </form>
+      <ConfirmDialog
+        open={discarding}
+        onOpenChange={setDiscarding}
+        title={t("Discard this event?")}
+        description={t("What you've entered will be lost.")}
+        confirmLabel={t("Discard")}
+        onConfirm={onClose}
+      />
     </div>
   )
 }

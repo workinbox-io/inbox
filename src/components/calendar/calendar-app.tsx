@@ -444,7 +444,7 @@ export function CalendarApp(props: CalendarAppProps) {
         case "/":
           return go(() => setPickerOpen(true))
         case "Escape":
-          return slots ? go(() => setSlots(null)) : selected || draft ? go(close) : undefined
+          return slots ? go(() => setSlots(null)) : selected && !draft ? go(close) : undefined // a draft's panel handles its own Esc
         case "Enter":
           return selected ? go(() => document.getElementById("event-title")?.focus()) : undefined
         case "Backspace":
