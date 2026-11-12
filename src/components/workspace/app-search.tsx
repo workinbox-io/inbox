@@ -6,7 +6,7 @@ import { APP_ACTIONS, APP_HELP, APP_NAV } from "@/config/nav"
 import { t } from "@/lib/i18n/panel"
 
 /** The workspace apps the user view switches between (AppRail's list). */
-const USER_APPS = new Set(["/app/mail", "/app/notes", "/app/contacts"])
+const USER_APPS = new Set(["/app/mail", "/app/calendar", "/app/notes", "/app/contacts", "/app/drive"])
 
 /**
  * The user view's ⌘K: the button in AppTopBar and the palette with the apps and "new" actions. On phones it is also

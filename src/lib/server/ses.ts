@@ -150,6 +150,18 @@ export async function sendSes(msg: SesMessage, tenant: string): Promise<string> 
   return res.MessageId;
 }
 
+/** Sends a ready MIME message (invitations need a text/calendar alternative, which Simple content can't carry). */
+export async function sendSesRaw(from: string, to: string, raw: string, tenant: string): Promise<string> {
+  const res = await ses<{ MessageId: string }>("POST", "/outbound-emails", {
+    FromEmailAddress: from,
+    Destination: { ToAddresses: [to] },
+    ConfigurationSetName: SES_CONFIGURATION_SET,
+    TenantName: tenant,
+    Content: { Raw: { Data: base64(new TextEncoder().encode(raw).buffer as ArrayBuffer) } },
+  });
+  return res.MessageId;
+}
+
 /** SES receiving (rule set `workinbox`) stores each mail in this bucket under `mail/` (docs/ses.md). */
 export const inboundBucket = () => `workinbox-inbound-mail-${env.AWS_ACCOUNT_ID}`;
 

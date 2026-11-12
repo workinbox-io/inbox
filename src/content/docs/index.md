@@ -20,10 +20,12 @@ self-hosted on your own Cloudflare account.
 - **Drive**: folders and files shared with chosen people or the whole team (a folder's share covers everything in it),
   a file explorer with drag and drop, folder upload and ZIP downloads, previews, public links with a password and
   expiry, attach from the drive and save attachments to it.
+- **Calendar**: a calendar per person and shared ones, colleagues' calendars side by side, recurring events, several
+  time zones, invitations by e-mail and a subscription link ([Calendar](/docs/calendar)).
 - **AI apps and API**: read and answer mail and notes from Claude or ChatGPT ([AI apps](/docs/mcp)), or over the
   [REST API](/docs/api).
 
-Calendar is next. There is no IMAP access yet: mail is read and sent in the web app, which you can
+There is no IMAP access yet: mail is read and sent in the web app, which you can
 install on a phone or a computer.
 
 ## Where to start

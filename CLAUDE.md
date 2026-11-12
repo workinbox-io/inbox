@@ -150,6 +150,27 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   4 GB / 65k entries) at `/api/app/drive/zip?ids=` and `/s/<token>/zip`.
 - API `/api/app/drive/*`, `/api/v1/drive/items` re-exports list/get/patch/content. MCP `src/mcp/drive.ts` (read only).
 
+## Calendar (product)
+
+- Tables `src/db/schema/calendar.ts`: `calendars` (one `personal` per person, made lazily by `personalCalendar`, plus
+  shared ones; sharing like notes via `noteRole`), `calendar_access`, `calendar_events` (UTC ms, `timezone` = the wall
+  clock a series repeats in; series = master with `rrule`/`exdates`/`recur_until`, overrides = rows with `parent_id` +
+  `original_start`), `calendar_attendees` (stored once on the master; `user_id` set for org people, who see the event
+  without a copy), `calendar_prefs` (time zones, week start, working hours, default reminder), `calendar_feeds`,
+  `calendar_reminder_log`.
+- Pure logic `lib/calendar/*` (tested in `test/calendar*.test.ts`): `time.ts` (zones through Intl, no date library),
+  `recurrence.ts` (ical.js iterates the RRULE in floating wall time, UNTIL checked by us; `splitRule` for "this and
+  following"), `ics.ts` (in/out, iTIP methods), `layout.ts`, `availability.ts`, `free-time.ts`, `import.ts`.
+- Server `lib/server/calendar/*`: `access.ts` (`visibleCalendars`, `requireCalendar`, `requireEvent`: invited = view),
+  `events.ts` (range lists with series expanded and colleagues overlaid as busy blocks, create/patch/delete with
+  `scope` this|following|all, RSVP, prefs), `calendars.ts`, `invites.ts` (iMIP via `queueMailSend` from the
+  organizer's personal mailbox, outside attendees only), `feed.ts`, `import.ts`, `reminders.ts` (every-minute cron;
+  push via `pushToUser`, the service worker `public/mail-sw.js` reads the title with the session).
+- Public feed `/cal/<token>.ics` (`pages/cal/[token].ics.ts`, token = only credential, misses rate-limited).
+- API `/api/app/calendar/{events,events/[id],events/[id]/rsvp,calendars,calendars/[id]/share,prefs,feed,import}`,
+  `/api/v1/calendar/events` re-exports. MCP `src/mcp/calendar.ts` (`calendar_list_events`, `calendar_find_free_time`,
+  `calendar_create_event`: outside attendees are returned as `notInvitedYet`, never mailed on the model's word).
+
 ## AI apps: MCP modules and the ChatGPT app (product)
 
 - `src/mcp/app.ts` lists `appModules` (`McpModule` in `define.ts`: `tools`, `widgets`, one `instructions` line appended to
@@ -184,7 +205,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   before editing, keep "pick them if" and our gaps honest). `/llms.txt` is generated from `config/plans.ts` and
   `compare.ts` (`lib/llms.ts`): update it with every shipped feature, like Luxivo's feature rollout (landing, `/vs` row,
   `llms.txt`, docs, footer).
-- Claim only what ships: no IMAP, calendar is "Soon". Import is .mbox/.eml upload only (no IMAP import).
+- Claim only what ships: no IMAP, no CalDAV or booking pages. Import is .mbox/.eml upload only (no IMAP import).
 - Billing (workinbox.io runs `DEPLOY_MODE=cloud`, PADDLE_ENV production; self-hosters set `self`): per person = personal
   mailboxes (`lib/server/seats.ts`). Checkout sells that quantity; adding/removing/converting a personal mailbox calls
   `seatsChanged` → job `billing.seats` → PATCH the Paddle subscription (prorated next period); a daily task reconciles.

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { CheckCheck, Copy, Download, FileCode, Forward, HardDrive, ImageOff, MoreHorizontal, Paperclip, Reply, ReplyAll } from "lucide-react"
+import { CalendarDays, CheckCheck, Copy, Download, FileCode, Forward, HardDrive, ImageOff, MoreHorizontal, Paperclip, Reply, ReplyAll } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 
 import { hasQuotedHtml, hasRemoteImages, linkSegments, mailSrcDoc } from "@/lib/admin-mail/rules"
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button"
 import { UserAvatar } from "@/components/app/user-avatar"
 import { ActionMenu, ActionMenuButton, type MenuAction } from "@/components/workspace/action-menu"
 import { trustedSenders, trustSender } from "./drafts"
-import type { MailFile, MailMessage, ReplyMode } from "./types"
+import type { MailFile, MailInvite, MailMessage, ReplyMode, RsvpStatus } from "./types"
 
 export const shortDate = (iso: string) => {
   const d = new Date(iso)
@@ -95,6 +95,79 @@ async function saveToDrive(f: MailFile) {
   } catch (e) {
     job.fail((e as Error).message)
   }
+}
+
+const isIcs = (f: MailFile) => /^(text|application)\/(calendar|ics)\b/i.test(f.mediaType) || /\.ics$/i.test(f.filename)
+
+function inviteWhen(i: MailInvite) {
+  const opts: Intl.DateTimeFormatOptions = i.allDay
+    ? { weekday: "short", day: "numeric", month: "short", year: "numeric" }
+    : { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }
+  const end = i.allDay ? i.end - 1 : i.end
+  const sameDay = new Date(i.start).toDateString() === new Date(end).toDateString()
+  const tail = sameDay
+    ? i.allDay ? "" : new Date(end).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : new Date(end).toLocaleString(undefined, opts)
+  return [new Date(i.start).toLocaleString(undefined, opts), tail].filter(Boolean).join(" – ")
+}
+
+/** An invitation (.ics) above the message: what, when, and Accept / Maybe / Decline when the viewer is invited. */
+function InviteCard({ invite }: { invite: MailInvite }) {
+  const [status, setStatus] = React.useState<RsvpStatus | null>(invite.myStatus)
+  const [busy, setBusy] = React.useState(false)
+  const cancelled = invite.method === "CANCEL"
+  const answer = async (next: Exclude<RsvpStatus, "needs-action">) => {
+    if (!invite.eventId) return
+    setBusy(true)
+    try {
+      await api("POST", `/api/app/calendar/events/${invite.eventId}/rsvp`, { status: next })
+      setStatus(next)
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setBusy(false)
+    }
+  }
+  const choices: [Exclude<RsvpStatus, "needs-action">, string][] = [
+    ["accepted", t("Accept")],
+    ["tentative", t("Maybe")],
+    ["declined", t("Decline")],
+  ]
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm">
+      <span className="bg-muted grid size-10 shrink-0 place-items-center rounded-md">
+        <CalendarDays className="text-muted-foreground size-5" />
+      </span>
+      <div className="grid min-w-0 flex-1">
+        <span className={cn("truncate font-medium", cancelled && "line-through")}>{invite.title || t("(no title)")}</span>
+        <span className="text-muted-foreground truncate">
+          {inviteWhen(invite)}
+          {invite.location ? ` · ${invite.location}` : ""}
+        </span>
+        {invite.eventId ? (
+          <a href={`/app/calendar?date=${invite.start}&event=${invite.eventId}`} className="text-muted-foreground w-fit text-xs underline-offset-2 hover:underline">
+            {t("Open in calendar")}
+          </a>
+        ) : null}
+      </div>
+      {cancelled ? (
+        <span className="text-muted-foreground text-xs">{t("Cancelled")}</span>
+      ) : invite.eventId && status ? (
+        <div className="flex gap-1" role="group" aria-label={t("Your answer")}>
+          {choices.map(([value, label]) => (
+            <Button key={value} size="sm" variant={status === value ? "default" : "outline"} disabled={busy} aria-pressed={status === value} onClick={() => answer(value)}>
+              {label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+      {invite.url ? (
+        <Button size="sm" variant="outline" asChild>
+          <a href={invite.url} target="_blank" rel="noreferrer">{t("Join")}</a>
+        </Button>
+      ) : null}
+    </div>
+  )
 }
 
 function Files({ files }: { files: MailFile[] }) {
@@ -255,6 +328,7 @@ export function MessageItem({
             </button>
           </div>
         ) : null}
+        {m.invite ? <InviteCard invite={m.invite} /> : null}
         {m.html ? <HtmlFrame html={m.html} remoteImages={images} showQuoted={showQuoted} /> : <TextBody text={m.text} showQuoted={showQuoted} />}
         {quoted ? (
           <button
@@ -267,7 +341,7 @@ export function MessageItem({
             <MoreHorizontal className="size-4" />
           </button>
         ) : null}
-        {m.files.length ? <Files files={m.files} /> : null}
+        {(m.invite ? m.files.filter((f) => !isIcs(f)) : m.files).length ? <Files files={m.invite ? m.files.filter((f) => !isIcs(f)) : m.files} /> : null}
       </div>
     </li>
   )

@@ -14,6 +14,9 @@ export interface EmlInput {
   text: string;
   html?: string | null;
   attachments?: { filename: string; mediaType: string; content: Uint8Array }[];
+  replyTo?: string | null;
+  /** iMIP: the invitation as a text/calendar alternative (what makes Gmail and Outlook show RSVP buttons). */
+  calendar?: { method: string; ics: string } | null;
 }
 
 const enc = new TextEncoder();
@@ -73,10 +76,16 @@ export function buildEml(input: EmlInput) {
     ...(input.messageId ? [`Message-ID: ${clean(input.messageId)}`] : []),
     ...(input.inReplyTo ? [`In-Reply-To: ${clean(input.inReplyTo)}`] : []),
     ...(input.references ? [`References: ${clean(input.references)}`] : []),
+    ...(input.replyTo ? [`Reply-To: ${clean(input.replyTo)}`] : []),
     "MIME-Version: 1.0",
   ];
   const plain = textPart("text/plain", input.text);
-  const body = input.html ? multipart("alternative", [plain, textPart("text/html", input.html)]) : plain;
+  const alternatives = [
+    plain,
+    ...(input.html ? [textPart("text/html", input.html)] : []),
+    ...(input.calendar ? [textPart(`text/calendar; method=${clean(input.calendar.method).replace(/[^A-Z]/gi, "")}`, input.calendar.ics)] : []),
+  ];
+  const body = alternatives.length > 1 ? multipart("alternative", alternatives) : plain;
   const files = (input.attachments ?? []).map((a) => {
     const p = filenameParams(a.filename);
     return leaf([`Content-Type: ${clean(a.mediaType) || "application/octet-stream"}${p.type}`, `Content-Disposition: attachment${p.disposition}`], a.content);

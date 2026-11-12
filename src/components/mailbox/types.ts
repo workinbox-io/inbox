@@ -47,7 +47,27 @@ export interface MailMessage {
   spamReasons?: string[]
   /** The original .eml is kept ("Show original"). */
   hasRaw?: boolean
+  /** A calendar invitation (.ics) in the message. */
+  invite?: MailInvite | null
   createdAt: string
+}
+
+export type RsvpStatus = "needs-action" | "accepted" | "declined" | "tentative"
+
+export interface MailInvite {
+  method: string | null
+  title: string
+  start: number
+  end: number
+  allDay: boolean
+  timezone: string
+  location: string
+  url: string
+  organizer: string | null
+  /** Our copy of the event in the org's calendars. */
+  eventId: string | null
+  /** The viewer's answer, when they're invited. */
+  myStatus: RsvpStatus | null
 }
 
 export interface RelatedThread {

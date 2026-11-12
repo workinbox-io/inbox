@@ -23,6 +23,25 @@ const contactInput = {
   },
 };
 
+const eventInput = {
+  type: "object",
+  properties: {
+    calendarId: { type: "string", description: "A calendar shared with the team (API keys see team calendars only)" },
+    title: { type: "string", maxLength: 500 }, description: { type: "string", maxLength: 20000 },
+    location: { type: "string", maxLength: 500 }, url: { type: "string", description: "Meeting link" },
+    start: { type: "integer", description: "UTC milliseconds" }, end: { type: "integer", description: "UTC milliseconds" },
+    allDay: { type: "boolean" }, timezone: { type: "string", description: "IANA zone the event repeats in" },
+    rrule: { type: ["string", "null"], description: "iCalendar RRULE, e.g. FREQ=WEEKLY;BYDAY=MO" },
+    busy: { type: "boolean" }, status: { type: "string", enum: ["confirmed", "tentative", "cancelled"] },
+    reminders: { type: "array", maxItems: 5, items: { type: "integer" }, description: "Minutes before the start" },
+    attendees: { type: "array", maxItems: 200, items: { type: "object", required: ["email"], properties: { email: { type: "string", format: "email" }, name: { type: "string" }, optional: { type: "boolean" } } } },
+  },
+};
+const scope = [
+  { name: "scope", in: "query", schema: { type: "string", enum: ["this", "following", "all"] }, description: "Part of a recurring series" },
+  { name: "occurrence", in: "query", schema: { type: "integer" }, description: "The occurrence's original start (ms), for this/following" },
+];
+
 const json = (schema: object) => ({ content: { "application/json": { schema } } });
 const idParam = [{ name: "id", in: "path", required: true, schema: { type: "string" } }];
 
@@ -103,6 +122,20 @@ const spec = {
       get: { summary: "Read a contact", responses: { 200: { description: "Contact" }, ...errors } },
       patch: { summary: "Change a contact; only the fields sent change, emails and phones replace the whole list", requestBody: json(contactInput), responses: { 200: { description: "Updated contact" }, 409: { description: "An e-mail address already belongs to another contact" }, ...errors } },
       delete: { summary: "Delete a contact", responses: { 200: { description: "Deleted" }, ...errors } },
+    },
+    "/calendar/events": {
+      get: { summary: "Events in a time range, recurring series expanded into occurrences", parameters: [
+        { name: "from", in: "query", required: true, schema: { type: "integer" }, description: "UTC milliseconds" },
+        { name: "to", in: "query", required: true, schema: { type: "integer" }, description: "UTC milliseconds, at most a year after from" },
+        { name: "calendars", in: "query", schema: { type: "string" }, description: "Comma-separated calendar ids" },
+      ], responses: { 200: { description: "events" }, ...errors } },
+      post: { summary: "Create an event; attendees outside the organization get an e-mail invitation", requestBody: { required: true, ...json({ ...eventInput, required: ["start", "end"] }) }, responses: { 201: { description: "The event" }, ...errors } },
+    },
+    "/calendar/events/{id}": {
+      parameters: idParam,
+      get: { summary: "Read an event (a series' master is not expanded)", responses: { 200: { description: "Event" }, ...errors } },
+      patch: { summary: "Change an event or part of a series; only the fields sent change", requestBody: json({ ...eventInput, properties: { ...eventInput.properties, scope: scope[0].schema, occurrence: scope[1].schema } }), responses: { 200: { description: "Updated event" }, ...errors } },
+      delete: { summary: "Delete an event or part of a series", parameters: scope, responses: { 200: { description: "Deleted" }, ...errors } },
     },
   },
 };

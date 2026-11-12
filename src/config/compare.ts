@@ -1,7 +1,7 @@
 /**
  * Comparison pages (/vs and /vs/<slug>), modelled on Luxivo's config/compare.ts: Work Inbox next to one competitor.
  * Competitor facts come from their own pricing and help pages on `checked` (links in `sources`); re-check them before
- * changing a page. Keep "pick them if" honest, and keep our gaps (no IMAP, no calendar yet) in the table: a comparison
+ * changing a page. Keep "pick them if" honest, and keep our gaps (no IMAP, no CalDAV) in the table: a comparison
  * that hides the other side's strengths, or ours' weaknesses, doesn't convert and doesn't get cited.
  */
 import { FREE_PEOPLE, MIN_SEATS, PLAN_LIST, PLANS, amount } from "./plans";
@@ -46,7 +46,7 @@ export const OURS: Record<RowKey, Cell> = {
   selfHost: yes("Open source; runs on your own Cloudflare account"),
   imap: no("Not yet: web app only (installable). IMAP gateway planned"),
   ai: yes("MCP server: search and read mail, notes, contacts and drive files on every plan; replies and changes on Pro and Business"),
-  suite: partial("Contacts (a team address book) and a shared drive today; calendar next"),
+  suite: partial("Calendar, contacts (a team address book) and a shared drive; no office documents or video calls"),
 };
 
 export interface Competitor {
@@ -109,7 +109,7 @@ export const COMPETITORS: Competitor[] = [
       "You need Gemini across mail, documents and meetings.",
     ],
     faq: [
-      { question: "Can Work Inbox replace Google Workspace?", answer: "For mail and shared notes, yes. For calendar, office documents and video calls, not yet: contacts ship as a team address book and files as a shared drive, calendar is on the roadmap, and Work Inbox has no Docs/Sheets editors or video calls." },
+      { question: "Can Work Inbox replace Google Workspace?", answer: "For mail, shared notes, contacts, files and calendar, yes: a team address book, a shared drive, and team calendars with invitations that Gmail and Outlook users can answer. For office documents and video calls, no: Work Inbox has no Docs/Sheets editors or video calls, and the calendar has no CalDAV sync or booking pages yet." },
       { question: "Can I move my domain's mail from Google Workspace?", answer: "Yes: add the domain in Work Inbox and replace its MX records with the one Work Inbox lists. New mail then arrives in Work Inbox. Old mail comes along too: upload an export (.mbox or .eml files) in Settings → Mail → Import mail." },
     ],
     sources: [
@@ -275,7 +275,7 @@ export const COMPETITORS: Competitor[] = [
     pickThemIf: [
       "You want to keep your IMAP and CalDAV apps on every device.",
       "Mail alone is what you need, from an independent vendor.",
-      "You need a calendar today.",
+      "You need CalDAV calendars in your phone's calendar app.",
     ],
     faq: [],
     sources: ["https://www.fastmail.com/pricing/", "https://www.fastmail.help/hc/en-us/articles/1500000277382-Account-limits", "https://fastmail.com/dev/"],

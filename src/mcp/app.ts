@@ -9,5 +9,6 @@ import { mailModule } from "./mail";
 import { notesModule } from "./notes";
 import { contactsModule } from "./contacts";
 import { driveModule } from "./drive";
+import { calendarModule } from "./calendar";
 
-export const appModules: McpModule[] = [mailModule, notesModule, contactsModule, driveModule];
+export const appModules: McpModule[] = [mailModule, notesModule, contactsModule, driveModule, calendarModule];

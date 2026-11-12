@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { siteConfig } from "@/config/site";
+import { buildEml } from "@/lib/mail/mime";
 import { ATTACHMENT_KEY, ATTACHMENT_URL_PREFIX, type AttachmentInput } from "@/lib/uploads";
 import { enqueue } from "./queue";
 
@@ -19,6 +20,8 @@ export interface EmailMessage {
   headers?: Record<string, string>;
   /** Uploaded files (/api/files/attachments/…), attached from R2 when sending. */
   files?: AttachmentInput[];
+  /** iMIP invitation part: such mail goes out as raw MIME (structured send APIs can't add a text/calendar alternative). */
+  calendar?: { method: "REQUEST" | "CANCEL" | "REPLY"; ics: string };
 }
 
 /**
@@ -54,6 +57,26 @@ export async function attachFiles(files: AttachmentInput[] | undefined) {
   return attached;
 }
 
+/** The message as RFC 5322 text, for providers that take raw MIME and for "Show original". */
+export async function rawEmail(msg: EmailMessage, extra: { date?: Date; messageId?: string | null } = {}) {
+  const files = await attachFiles(msg.files);
+  return buildEml({
+    from: { email: msg.fromEmail ?? env.EMAIL_FROM_ADDRESS, name: msg.fromName ?? siteConfig.name },
+    to: msg.to,
+    cc: msg.cc?.join(", "),
+    replyTo: msg.replyTo ?? null,
+    subject: msg.subject,
+    date: extra.date ?? new Date(),
+    messageId: extra.messageId ?? `<${crypto.randomUUID()}@${(msg.fromEmail ?? env.EMAIL_FROM_ADDRESS).split("@")[1]}>`,
+    inReplyTo: msg.headers?.["In-Reply-To"],
+    references: msg.headers?.References,
+    text: msg.text,
+    html: msg.html,
+    attachments: files.map((f) => ({ filename: f.filename, mediaType: f.type, content: new Uint8Array(f.content) })),
+    calendar: msg.calendar,
+  });
+}
+
 /** Sends right away (no queue) and returns the provider's Message-ID, for callers that store it. */
 export async function sendNow(msg: EmailMessage): Promise<string> {
   if (import.meta.env.DEV) {
@@ -61,8 +84,15 @@ export async function sendNow(msg: EmailMessage): Promise<string> {
     const cc = msg.cc?.length ? `\nCc: ${msg.cc.join(", ")}` : "";
     const headers = msg.headers ? `\nHeaders: ${JSON.stringify(msg.headers)}` : "";
     const files = msg.files?.length ? `\nFiles: ${msg.files.map((f) => f.filename).join(", ")}` : "";
-    console.info(`[email:dev] To: ${msg.to}${cc}\nFrom: ${from}\nSubject: ${msg.subject}${headers}${files}\n---\n${msg.text}\n---`);
+    const calendar = msg.calendar ? `\nCalendar: text/calendar; method=${msg.calendar.method}\n${msg.calendar.ics}` : "";
+    console.info(`[email:dev] To: ${msg.to}${cc}\nFrom: ${from}\nSubject: ${msg.subject}${headers}${files}\n---\n${msg.text}\n---${calendar}`);
     return `dev-${crypto.randomUUID()}`;
+  }
+  if (msg.calendar) {
+    // shortcut: raw MIME has a single envelope recipient, so Cc is dropped; invitations go one per attendee.
+    const { EmailMessage } = await import("cloudflare:email");
+    const result = await env.EMAIL.send(new EmailMessage(msg.fromEmail ?? env.EMAIL_FROM_ADDRESS, msg.to, await rawEmail(msg)));
+    return result.messageId;
   }
   const result = await env.EMAIL.send({
     to: msg.to,

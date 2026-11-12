@@ -58,6 +58,15 @@ export const AUDIT_ACTIONS = {
   "contact.delete": "Deleted contact",
   "contact.import": "Imported contacts",
   "contact_group.change": "Changed contact groups",
+  "calendar.create": "Created calendar",
+  "calendar.update": "Changed calendar",
+  "calendar.share": "Changed calendar sharing",
+  "calendar.delete": "Deleted calendar",
+  "calendar.feed": "Created or rotated a calendar subscription link",
+  "calendar.import": "Imported calendar events",
+  "event.create": "Created event",
+  "event.update": "Changed event",
+  "event.delete": "Deleted event",
 } as const;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

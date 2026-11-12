@@ -103,11 +103,12 @@ const EXTRAS: Record<PlanId, PlanFeature[]> = {
     { label: "Spam filter and sender rules" },
     { label: "Shared notes with live editing" },
     { label: "Team address book" },
+    { label: "Team calendars with invitations" },
     { label: `Shared drive, ${PLANS.starter.driveGbPerPerson} GB per person` },
     { label: "Two-factor authentication" },
   ],
   pro: [{ label: "Everything in Starter" }, { label: `${PLANS.pro.driveGbPerPerson} GB of drive per person` }, { label: "REST API" }, { label: "Claude & ChatGPT connector" }, { label: "Audit log" }],
-  business: [{ label: "Everything in Pro" }, { label: `${PLANS.business.driveGbPerPerson} GB of drive per person` }, { label: "Calendar", soon: true }, { label: "SSO", soon: true }, { label: "Priority support" }],
+  business: [{ label: "Everything in Pro" }, { label: `${PLANS.business.driveGbPerPerson} GB of drive per person` }, { label: "SSO", soon: true }, { label: "Priority support" }],
 };
 
 /** Pricing-page lines. Every plan is per person with unlimited people, so no limit lines. */

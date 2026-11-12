@@ -1,0 +1,51 @@
+---
+/**
+ * The calendar: /app/calendar (state in the query: ?date=&view=&event=). /app/calendar/<event id> opens that event.
+ * Members get it full screen next to mail (MailLayout and the app rail); owners and admins inside the dashboard.
+ */
+import AppRail from "@/components/workspace/AppRail.astro";
+import AppTopBar from "@/components/workspace/AppTopBar.astro";
+import { NotificationCenter } from "@/components/mailbox/notification-center";
+import { CalendarApp } from "@/components/calendar/calendar-app";
+import AppLayout from "@/layouts/AppLayout.astro";
+import MailLayout from "@/layouts/MailLayout.astro";
+import { listCalendars } from "@/lib/server/calendar/calendars";
+import { getPrefs } from "@/lib/server/calendar/events";
+import { canManage } from "@/lib/server/roles";
+import { workspaceView } from "@/lib/server/workspace-view";
+import { t } from "@/lib/i18n/panel";
+
+const id = Astro.params.id ?? null;
+if (id) return Astro.redirect(/^[0-9a-f-]{36}$/.test(id) ? `/app/calendar?event=${id}` : "/app/calendar");
+
+const role = Astro.locals.role ?? "member";
+const user = Astro.locals.user!;
+const orgId = Astro.locals.orgId!;
+const viewer = { orgId, userId: user.id, role };
+const [calendars, prefs] = await Promise.all([listCalendars(viewer), getPrefs(user.id)]);
+const userView = workspaceView(Astro.cookies, user.id, role) === "user";
+const Layout = userView ? MailLayout : AppLayout;
+---
+
+<Layout title={t("Calendar")} fullBleed>
+  {!userView && (
+    <Fragment slot="actions">
+      <NotificationCenter client:load />
+    </Fragment>
+  )}
+  <div class="flex h-full min-h-0">
+    {userView && <AppRail current="calendar" />}
+    <div class="flex min-w-0 flex-1 flex-col">
+      {userView && <AppTopBar title={t("Calendar")} />}
+      <div class="min-h-0 flex-1">
+        <CalendarApp
+          client:load
+          calendars={calendars}
+          prefs={prefs}
+          canManage={canManage(role)}
+          account={userView ? { name: user.name, email: user.email } : undefined}
+        />
+      </div>
+    </div>
+  </div>
+</Layout>

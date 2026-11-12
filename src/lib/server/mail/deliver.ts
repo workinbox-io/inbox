@@ -4,8 +4,8 @@
  */
 import { db, eq, mailDomains } from "@/db";
 import { fromHeader } from "@/lib/mail/ses-events";
-import { attachFiles, sendNow, type EmailMessage } from "@/lib/server/email";
-import { sendSes, sesTenant } from "@/lib/server/ses";
+import { attachFiles, rawEmail, sendNow, type EmailMessage } from "@/lib/server/email";
+import { sendSes, sendSesRaw, sesTenant } from "@/lib/server/ses";
 
 /** Sends right away and returns the provider's message id (delivery events refer to it). */
 export async function sendOrgMail(email: EmailMessage): Promise<string> {
@@ -13,6 +13,7 @@ export async function sendOrgMail(email: EmailMessage): Promise<string> {
   if (import.meta.env.DEV || !domain) return sendNow(email);
   const [d] = await db.select({ orgId: mailDomains.orgId, provider: mailDomains.provider }).from(mailDomains).where(eq(mailDomains.domain, domain));
   if (d?.provider !== "ses") return sendNow(email);
+  if (email.calendar) return sendSesRaw(email.fromEmail!, email.to, await rawEmail(email), sesTenant(d.orgId));
   return sendSes(
     {
       from: fromHeader(email.fromName, email.fromEmail!),

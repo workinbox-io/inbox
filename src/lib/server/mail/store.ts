@@ -304,6 +304,15 @@ export async function handleOrgMail(message: IncomingMail, imported?: ImportedMa
   else if (!imported) {
     logIn("stored", { to: message.to, from: fromEmail, mailbox: mailbox.id, message: storedMessageId, thread: threadId, spam, size: raw.byteLength });
     await applyMailFilters(mailbox, storedMessageId, message.headers, spam);
+    if (!spam) {
+      const { handleCalendarMail, isCalendarFile } = await import("@/lib/server/calendar/inbound");
+      const invites = parsed.attachments.filter((a) => isCalendarFile(a.mimeType, a.filename));
+      // A broken invitation never fails delivery of the mail it came in.
+      if (invites.length)
+        await handleCalendarMail(mailbox, storedMessageId, invites, fromEmail).catch(async (e) =>
+          (await import("@/lib/server/errors")).reportError("queue", e, { orgId: mailbox.orgId, where: "calendar.inbound" }),
+        );
+    }
     const { recordMailNotifications } = await import("./notifications");
     await recordMailNotifications(mailbox.orgId, mailbox.id, storedMessageId, threadId);
     if (!spam && !automated) {
@@ -593,6 +602,8 @@ export interface SendInput {
   sendAt?: number;
   automatedForward?: boolean;
   idempotencyKey?: string;
+  /** iMIP invitation part (lib/server/calendar/invites.ts). */
+  calendar?: { method: "REQUEST" | "CANCEL" | "REPLY"; ics: string };
 }
 
 /** Sends from one of the viewer's mailboxes and stores the mail: a reply in its thread, or a new thread. */
@@ -627,7 +638,7 @@ export async function prepareMailSend(input: SendInput, boxes: Mailbox[], sender
   }));
   if (storedFiles.reduce((n, f) => n + f.size, 0) > 18 * 1024 * 1024) throw new HttpError(413, "Attachments exceed the 18 MB sending limit");
   const payload: OutboxPayload = {
-    email: { to: input.to, cc: input.cc, subject, text, html, fromEmail: mailbox.address, fromName, replyTo: mailbox.address, headers, files },
+    email: { to: input.to, cc: input.cc, subject, text, html, fromEmail: mailbox.address, fromName, replyTo: mailbox.address, headers, files, ...(input.calendar ? { calendar: input.calendar } : {}) },
     threadId: thread?.id,
     files: storedFiles,
   };
@@ -649,9 +660,15 @@ export async function persistOutboxMail(mailbox: Mailbox, payload: OutboxPayload
   const threadId = payload.threadId ?? newThreadId;
   const { storeHtml } = await import("./storage");
   const stored = await storeHtml(mailbox.orgId, mailbox.id, messageId, email.html);
+  // backfillSentRaw can't rebuild an invitation's text/calendar part from the row, so its .eml is written now.
+  const rawKey = email.calendar ? `mail-raw/${mailbox.orgId}/${mailbox.id}/${messageId}.eml` : null;
+  if (rawKey) {
+    const { rawEmail } = await import("@/lib/server/email");
+    await env.FILES.put(rawKey, await rawEmail(email, { date: now, messageId: msgId(sentId) }), { httpMetadata: { contentType: "message/rfc822" } });
+  }
   await db.batch([
     payload.threadId ? db.update(t).set({ lastMessageAt: now, modseq }).where(and(eq(t.id, threadId), eq(t.mailboxId, mailbox.id))) : db.insert(t).values({ id: threadId, orgId: mailbox.orgId, mailboxId: mailbox.id, subject: email.subject, contactEmail: email.to.toLowerCase(), lastMessageAt: now, modseq }).onConflictDoNothing(),
-    db.insert(m).values({ id: messageId, orgId: mailbox.orgId, mailboxId: mailbox.id, threadId, uid, direction: "out", fromEmail: mailbox.address, fromName: email.fromName, to: email.to.toLowerCase(), cc: (email.cc ?? []).join(", "), subject: email.subject, text: email.text, ...stored, messageId: msgId(sentId), inReplyTo: email.headers?.["In-Reply-To"] ?? null, references: email.headers?.References ?? null, files: payload.files, storageKeys: [...payload.files.map(f => f.url.slice(ATTACHMENT_URL_PREFIX.length)), ...(stored.htmlKey ? [stored.htmlKey] : [])], size: new TextEncoder().encode(email.text).byteLength + new TextEncoder().encode(email.html).byteLength + payload.files.reduce((n, f) => n + f.size, 0), createdAt: now }).onConflictDoNothing(),
+    db.insert(m).values({ id: messageId, orgId: mailbox.orgId, mailboxId: mailbox.id, threadId, uid, direction: "out", fromEmail: mailbox.address, fromName: email.fromName, to: email.to.toLowerCase(), cc: (email.cc ?? []).join(", "), subject: email.subject, text: email.text, ...stored, messageId: msgId(sentId), inReplyTo: email.headers?.["In-Reply-To"] ?? null, references: email.headers?.References ?? null, files: payload.files, rawKey, storageKeys: [...payload.files.map(f => f.url.slice(ATTACHMENT_URL_PREFIX.length)), ...(stored.htmlKey ? [stored.htmlKey] : []), ...(rawKey ? [rawKey] : [])], size: new TextEncoder().encode(email.text).byteLength + new TextEncoder().encode(email.html).byteLength + payload.files.reduce((n, f) => n + f.size, 0), createdAt: now }).onConflictDoNothing(),
   ]);
   const [message] = await db.select().from(m).where(eq(m.id, messageId));
   // The team address book learns who we write to; it must never fail a send that already went out.
