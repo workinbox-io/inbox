@@ -45,6 +45,8 @@ interface Props {
   onDraft: (d: Draft) => void
   /** The zone labels above the hours open the time zone settings. */
   onZones: () => void
+  /** Right-click on the unsaved new event. */
+  draftActions: () => MenuAction[]
   onChange: (e: EventView, start: number, end: number) => void
   onSlots: (slots: Slot[]) => void
   onDay: (day: number) => void
@@ -123,7 +125,8 @@ export function TimeGrid(props: Props) {
   }
 
   function begin(e: React.PointerEvent, d: Drag) {
-    if (e.button !== 0) return
+    // Menus are portals, but React bubbles their clicks through the tree: a menu item must not draw or drag here.
+    if (e.button !== 0 || !(e.currentTarget as Node).contains(e.target as Node)) return
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
     set(d)
@@ -154,6 +157,8 @@ export function TimeGrid(props: Props) {
       if (d.event) props.onChange(d.event, p.start, p.end)
       else props.onDraft({ ...props.draft!, start: p.start, end: p.end, allDay: false })
     }
+    // Drawing, clicking or moving the new event: back to typing its title (the panel's field).
+    if (d.kind === "create" || (!drawing(d) && !d.event)) requestAnimationFrame(() => document.getElementById("event-title")?.focus())
   }
 
   const live = drag && !drawing(drag) && drag.moved ? drag : null
@@ -311,6 +316,7 @@ export function TimeGrid(props: Props) {
                   {ghost && sameDay(ghost.start, d, tz) ? <Ghost tz={tz} color={ghost.kind === "slot" ? "#4caf6e" : DRAFT_COLOR} title="" {...ghost} day={d} /> : null}
                   {!ghost && !(live && !live.event) && props.draft && !props.draft.allDay && sameDay(props.draft.start, d, tz) ? (
                     <DraftBlock
+                      actions={menuOf(props.draftActions())}
                       draft={props.draft}
                       day={d}
                       tz={tz}
@@ -429,14 +435,28 @@ function Block({
 }
 
 /** The unsaved new event: drag it to move, its top and bottom handles to change the times. */
-function DraftBlock({ draft, day, tz, onPointerDown }: { draft: Draft; day: number; tz: string; onPointerDown: (e: React.PointerEvent, kind: "move" | "resize" | "resize-start") => void }) {
+function DraftBlock({
+  draft,
+  day,
+  tz,
+  actions,
+  onPointerDown,
+}: {
+  draft: Draft
+  day: number
+  tz: string
+  actions?: MenuAction[]
+  onPointerDown: (e: React.PointerEvent, kind: "move" | "resize" | "resize-start") => void
+}) {
   const next = addDays(day, 1, tz)
   const top = draft.start <= day ? 0 : minuteOfDay(draft.start, tz)
   const bottom = draft.end >= next ? 1440 : minuteOfDay(draft.end, tz) || 1440
   const height = Math.max(((bottom - top) / 60) * HOUR - 1, 16)
   const handle = "absolute inset-x-0 flex h-2.5 cursor-ns-resize justify-center"
-  const pill = "bg-background h-1 w-6 rounded-full border shadow-sm transition-opacity"
+  // Inverse of the theme (dark pills on light, light on dark), so they read on the solid block and the grid alike.
+  const pill = "bg-foreground border-background h-1 w-6 rounded-full border shadow-sm transition-opacity"
   return (
+    <ActionMenu actions={actions}>
     <div
       role="group"
       aria-label={t("New event")}
@@ -457,6 +477,7 @@ function DraftBlock({ draft, day, tz, onPointerDown }: { draft: Draft; day: numb
         <span className={pill} />
       </div>
     </div>
+    </ActionMenu>
   )
 }
 

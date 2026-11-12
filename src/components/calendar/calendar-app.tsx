@@ -17,7 +17,7 @@ import { IconAction } from "@/components/workspace/detail-header"
 import { shortcutsPaused, useAppLayout, useMounted } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
 import type { Slot } from "@/lib/calendar/availability"
-import { sameDay, startOfDay, wallTime } from "@/lib/calendar/time"
+import { addDays, sameDay, startOfDay, wallTime } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { replaceUrl } from "@/lib/panel-history"
 import { cn } from "@/lib/utils"
@@ -54,6 +54,8 @@ export interface CalendarAppProps {
   canManage: boolean
   /** The user view: full screen, the account menu at the bottom of the rail. */
   account?: MailUser
+  /** `?date=` and `?view=` read on the server, so the first render already shows them (no jump from today). */
+  initial?: { date: string | null; view: string | null }
 }
 
 const VIEWS: ViewMode[] = ["day", "week", "month"]
@@ -66,8 +68,8 @@ export function CalendarApp(props: CalendarAppProps) {
   const [calendars, setCalendars] = React.useState(props.calendars)
   const [hidden, setHidden] = React.useState<Set<string>>(new Set())
   const [people, setPeople] = React.useState<string[]>([])
-  const [view, setView] = React.useState<ViewMode>("week")
-  const [date, setDate] = React.useState(() => Date.now())
+  const [view, setView] = React.useState<ViewMode>(() => (VIEWS.includes(props.initial?.view as ViewMode) ? (props.initial!.view as ViewMode) : "week"))
+  const [date, setDate] = React.useState(() => parseDayKey(props.initial?.date ?? null, tz) ?? Date.now())
   const [events, setEvents] = React.useState<EventView[]>([])
   const [loading, setLoading] = React.useState(false)
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null)
@@ -302,6 +304,17 @@ export function CalendarApp(props: CalendarAppProps) {
 
   // ---------- right-click menus ----------
 
+  /** Right-click on the unsaved new event. */
+  function draftActions(): MenuAction[] {
+    if (!draft) return []
+    return [
+      ...(draft.allDay
+        ? []
+        : [{ label: t("Make it all-day"), icon: CalendarDays, onSelect: () => setDraft({ ...draft, start: startOfDay(draft.start, tz), end: addDays(startOfDay(draft.start, tz), 1, tz), allDay: true }) }]),
+      { label: t("Discard"), icon: X, shortcut: "Esc", onSelect: close },
+    ]
+  }
+
   function eventActions(e: EventView): MenuAction[] {
     if (e.role === "busy") return []
     const editable = canEdit(e)
@@ -529,6 +542,7 @@ export function CalendarApp(props: CalendarAppProps) {
             onCreate={(d) => (setSelectedKey(null), setOpened(null), newDraft(d))}
             onDraft={setDraft}
             onZones={() => setSettingsOpen(true)}
+            draftActions={draftActions}
             onChange={(e, s, en) => void move(e, s, en)}
             onSlots={setSlots}
             onDay={(d) => (setDate(d), setView("day"))}

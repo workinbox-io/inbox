@@ -44,6 +44,7 @@ const Layout = userView ? MailLayout : AppLayout;
           prefs={prefs}
           canManage={canManage(role)}
           account={userView ? { name: user.name, email: user.email } : undefined}
+          initial={{ date: Astro.url.searchParams.get("date"), view: Astro.url.searchParams.get("view") }}
         />
       </div>
     </div>
