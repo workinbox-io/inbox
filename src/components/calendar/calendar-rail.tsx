@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { MenuAction } from "@/components/workspace/action-menu"
+import { ActionMenuButton, type MenuAction } from "@/components/workspace/action-menu"
 import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
 import { ShareDialog } from "@/components/workspace/share-dialog"
 import { Kbd } from "@/components/workspace/ui"
@@ -46,6 +46,8 @@ export function CalendarRail({
   onPickerOpen,
   onPrefs,
   onImport,
+  settingsOpen,
+  onSettingsOpen,
 }: {
   date: number
   tz: string
@@ -64,11 +66,13 @@ export function CalendarRail({
   onPickerOpen: (open: boolean) => void
   onPrefs: (p: Prefs) => void
   onImport: () => void
+  /** Time zones and week settings (also opened from the grid's zone label). */
+  settingsOpen: boolean
+  onSettingsOpen: (open: boolean) => void
 }) {
   const everyone = useNotePeople()
   const [editing, setEditing] = React.useState<CalendarView | "new" | null>(null)
   const [sharing, setSharing] = React.useState<CalendarView | null>(null)
-  const [settings, setSettings] = React.useState(false)
   const [feed, setFeed] = React.useState(false)
   const w = wallTime(date, tz)
   const selected = new Date(w.year, w.month - 1, w.day)
@@ -147,9 +151,20 @@ export function CalendarRail({
         <RailSection
           title={t("Calendars")}
           action={
-            <RailSectionButton label={t("New calendar")} onClick={() => setEditing("new")}>
-              <Plus />
-            </RailSectionButton>
+            <span className="flex items-center">
+              <ActionMenuButton
+                label={t("Calendar settings")}
+                actions={[
+                  { label: t("Time zones and week"), icon: Settings2, onSelect: () => onSettingsOpen(true) },
+                  { separator: true },
+                  { label: t("Subscribe in another app (.ics)"), icon: LinkIcon, onSelect: () => setFeed(true) },
+                  { label: t("Import .ics file"), icon: Download, onSelect: onImport },
+                ]}
+              />
+              <RailSectionButton label={t("New calendar")} onClick={() => setEditing("new")}>
+                <Plus />
+              </RailSectionButton>
+            </span>
           }
         >
           <RailList>
@@ -205,11 +220,6 @@ export function CalendarRail({
             <p className="text-muted-foreground px-2 text-xs">{t("See when colleagues are busy: press / or +.")}</p>
           )}
         </RailSection>
-        <RailList>
-          <RailItem icon={Settings2} label={t("Time zones and week")} active={false} onClick={() => setSettings(true)} />
-          <RailItem icon={LinkIcon} label={t("Subscribe (.ics)")} active={false} onClick={() => setFeed(true)} />
-          <RailItem icon={Download} label={t("Import .ics")} active={false} onClick={onImport} />
-        </RailList>
       </Rail>
 
       <CommandPalette
@@ -250,7 +260,7 @@ export function CalendarRail({
           onSaved={() => void onCalendars()}
         />
       ) : null}
-      <SettingsDialog open={settings} onOpenChange={setSettings} prefs={prefs} tz={tz} onSaved={onPrefs} />
+      <SettingsDialog open={settingsOpen} onOpenChange={onSettingsOpen} prefs={prefs} tz={tz} onSaved={onPrefs} />
       <FeedDialog open={feed} onOpenChange={setFeed} />
     </>
   )

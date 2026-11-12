@@ -78,6 +78,7 @@ export function CalendarApp(props: CalendarAppProps) {
   const newDraft = (d: Draft) => (setDraftSeq((n) => n + 1), setDraft(d))
   const [slots, setSlots] = React.useState<Slot[] | null>(null)
   const [pickerOpen, setPickerOpen] = React.useState(false)
+  const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [now, setNow] = React.useState(() => Date.now())
   const fileRef = React.useRef<HTMLInputElement>(null)
   const { ref: frameRef, desktop } = useAppLayout()
@@ -443,6 +444,8 @@ export function CalendarApp(props: CalendarAppProps) {
       onCalendars={reloadCalendars}
       onPeople={choosePeople}
       onPickerOpen={setPickerOpen}
+      settingsOpen={settingsOpen}
+      onSettingsOpen={setSettingsOpen}
       onPrefs={setPrefs}
       onImport={() => fileRef.current?.click()}
     />
@@ -525,6 +528,7 @@ export function CalendarApp(props: CalendarAppProps) {
             onSelect={select}
             onCreate={(d) => (setSelectedKey(null), setOpened(null), newDraft(d))}
             onDraft={setDraft}
+            onZones={() => setSettingsOpen(true)}
             onChange={(e, s, en) => void move(e, s, en)}
             onSlots={setSlots}
             onDay={(d) => (setDate(d), setView("day"))}

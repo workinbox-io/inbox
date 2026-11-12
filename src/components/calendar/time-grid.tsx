@@ -43,6 +43,8 @@ interface Props {
   onCreate: (d: Draft) => void
   /** The unsaved new event's rectangle was moved or resized. */
   onDraft: (d: Draft) => void
+  /** The zone labels above the hours open the time zone settings. */
+  onZones: () => void
   onChange: (e: EventView, start: number, end: number) => void
   onSlots: (slots: Slot[]) => void
   onDay: (day: number) => void
@@ -166,9 +168,16 @@ export function TimeGrid(props: Props) {
       <div className="flex border-b">
         <div className="flex shrink-0 items-end" style={{ width: GUTTER * (zones.length + 1) }}>
           {[...zones].reverse().concat(tz).map((z) => (
-            <div key={z} className="text-muted-foreground w-[52px] truncate px-1 pb-1 text-center text-[10px]" title={z}>
+            <button
+              key={z}
+              type="button"
+              onClick={props.onZones}
+              className="text-muted-foreground hover:bg-muted hover:text-foreground mb-0.5 w-[52px] truncate rounded px-1 py-0.5 text-center text-[10px]"
+              title={`${z} · ${t("Time zones and week")}`}
+              aria-label={`${zoneAbbr(firstDay, z)}, ${t("Time zones and week")}`}
+            >
               {zoneAbbr(firstDay, z)}
-            </div>
+            </button>
           ))}
         </div>
         <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
