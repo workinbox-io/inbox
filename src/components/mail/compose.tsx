@@ -3,6 +3,7 @@ import { Maximize2, Minimize2, Minus, Send, Trash2, Users, X, type LucideIcon } 
 
 import { splitAddresses } from "@/lib/admin-mail/rules"
 import { cn } from "@/lib/utils"
+import { useListKeys } from "@/hooks/use-list-keys"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { UserAvatar } from "@/components/app/user-avatar"
@@ -81,6 +82,7 @@ export function AddressInput({
   const known = new Set(fromServer.flatMap((s) => s.emails))
   const local = text.length > 1 ? suggestions.filter((s) => s.includes(q) && !value.includes(s) && !known.has(s)).map((s) => ({ label: "", emails: [s] })) : []
   const matches: AddressSuggestion[] = [...fromServer, ...local].slice(0, 8)
+  const keys = useListKeys(matches.length, `${id}-suggestions`)
   return (
     <div className="relative flex flex-wrap items-center gap-1.5">
       {value.map((a) => (
@@ -101,16 +103,21 @@ export function AddressInput({
         value={text}
         autoFocus={autoFocus}
         autoComplete="off"
+        {...keys.inputProps}
         placeholder={value.length ? "" : placeholder}
         onChange={(e) => {
           const v = e.target.value
+          keys.reset()
           if (/[,;\s]$/.test(v)) add(v)
           else setText(v)
         }}
         onKeyDown={(e) => {
+          if (keys.onKeyDown(e)) return
           if (e.key === "Enter" && text.trim()) {
             e.preventDefault()
-            add(matches[0] && !EMAIL.test(text) ? matches[0].emails.join(",") : text)
+            // The option picked with the arrows, else the first one unless a full address was typed.
+            const pick = keys.active >= 0 ? matches[keys.active] : keys.open && !EMAIL.test(text) ? matches[0] : undefined
+            add(pick ? pick.emails.join(",") : text)
           } else if (e.key === "Backspace" && !text && value.length) {
             onChange(value.slice(0, -1))
           }
@@ -125,20 +132,20 @@ export function AddressInput({
         onBlur={() => text.trim() && add(text)}
         className="placeholder:text-muted-foreground h-7 min-w-32 flex-1 bg-transparent text-sm outline-none"
       />
-      {matches.length ? (
-        <ul className="bg-popover absolute top-full left-0 z-20 mt-1 w-80 max-w-full overflow-hidden rounded-xl border shadow-md">
-          {matches.map((s) => (
-            <li key={s.label + s.emails.join(",")}>
+      {keys.open ? (
+        <ul {...keys.listProps} className="bg-popover absolute top-full left-0 z-20 mt-1 w-80 max-w-full overflow-hidden rounded-xl border shadow-md">
+          {matches.map((s, i) => (
+            <li key={s.label + s.emails.join(",")} {...keys.optionProps(i)}>
               <button
                 type="button"
-                // Out of the Tab order: Tab leaves the field (Enter picks the first suggestion).
+                // Out of the Tab order: Tab leaves the field (↑/↓ highlight a suggestion, Enter picks it).
                 tabIndex={-1}
                 // mousedown: before the input's blur turns the half-typed text into a chip.
                 onMouseDown={(e) => {
                   e.preventDefault()
                   add(s.emails.join(","))
                 }}
-                className="hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
+                className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-sm", i === keys.active && "bg-muted")}
               >
                 {s.emails.length > 1 ? (
                   <span className="bg-muted text-muted-foreground flex size-5 shrink-0 items-center justify-center rounded-full">

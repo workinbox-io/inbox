@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { api } from "@/lib/api-client"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
+import { useListKeys } from "@/hooks/use-list-keys"
 import { useNotePeople } from "@/components/notes/editor/people"
 
 type Sharing = "private" | "people" | "team"
@@ -63,6 +64,12 @@ export function ShareDialog<T extends Shareable>({
   const candidates = q
     ? everyone.filter((p) => p.id !== note.ownerId && !people.some((x) => x.userId === p.id) && (p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q))).slice(0, 6)
     : []
+  const keys = useListKeys(candidates.length, "share-people")
+  const pick = (p: { id: string }) => {
+    setPeople((list) => [...list, { userId: p.id, role: "edit" }])
+    setQuery("")
+    keys.reset()
+  }
 
   async function save() {
     setSaving(true)
@@ -126,21 +133,29 @@ export function ShareDialog<T extends Shareable>({
               <div className="relative">
                 <input
                   value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  {...keys.inputProps}
+                  aria-label={t("Add people by name or e-mail")}
+                  onChange={(e) => (setQuery(e.target.value), keys.reset())}
+                  onKeyDown={(e) => {
+                    if (keys.onKeyDown(e)) return
+                    if (e.key === "Enter" && keys.open) {
+                      e.preventDefault()
+                      pick(candidates[Math.max(keys.active, 0)]!)
+                    }
+                  }}
                   placeholder={t("Add people by name or e-mail")}
                   className="h-9 w-full rounded-md border bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
                 />
-                {candidates.length > 0 && (
-                  <div className="absolute inset-x-0 top-full z-10 mt-1 rounded-md border bg-popover p-1 shadow-md">
-                    {candidates.map((p) => (
+                {keys.open && (
+                  <div {...keys.listProps} className="absolute inset-x-0 top-full z-10 mt-1 rounded-md border bg-popover p-1 shadow-md">
+                    {candidates.map((p, i) => (
                       <button
                         key={p.id}
                         type="button"
-                        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent"
-                        onClick={() => {
-                          setPeople((list) => [...list, { userId: p.id, role: "edit" }])
-                          setQuery("")
-                        }}
+                        tabIndex={-1}
+                        {...keys.optionProps(i)}
+                        className={cn("flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm", i === keys.active && "bg-accent")}
+                        onClick={() => pick(p)}
                       >
                         <span className="truncate">{p.name}</span>
                         <span className="truncate text-xs text-muted-foreground">{p.email}</span>
