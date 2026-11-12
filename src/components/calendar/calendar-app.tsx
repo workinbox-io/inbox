@@ -1,7 +1,7 @@
 /**
- * /app/calendar, keyboard-first like Cron: week view by default (also day and month), the rail with the mini month,
+ * /app/calendar, keyboard-first like Cron: week view by default (also day, month and year), the rail with the mini month,
  * calendars and colleagues overlaid, the open event on the right. Address: ?date=YYYY-MM-DD&view=&event=<id>[:<occurrence>].
- * Shortcuts: c new, t today, j/k or arrows previous/next, d/w/m views, a availability, / add a colleague, Esc close,
+ * Shortcuts: c new, t today, j/k or arrows previous/next, d/w/m/y views, a availability, / add a colleague, Esc close,
  * Backspace delete, Enter edit the title.
  */
 import * as React from "react"
@@ -48,6 +48,7 @@ import {
   type ViewMode,
 } from "./shared"
 import { TimeGrid } from "./time-grid"
+import { YearGrid } from "./year-grid"
 
 export interface CalendarAppProps {
   calendars: CalendarView[]
@@ -60,7 +61,7 @@ export interface CalendarAppProps {
   initial?: { date: string | null; view: string | null }
 }
 
-const VIEWS: ViewMode[] = ["day", "week", "month"]
+const VIEWS: ViewMode[] = ["day", "week", "month", "year"]
 const IMPORT_MAX = 2 * 1024 * 1024
 
 export function CalendarApp(props: CalendarAppProps) {
@@ -117,6 +118,12 @@ export function CalendarApp(props: CalendarAppProps) {
   const availabilityReady = loadedSource === source && !loading
 
   const load = React.useCallback(async () => {
+    if (view === "year") {
+      ++loadRequest.current
+      setLoading(false)
+      setLoadedSource(null)
+      return
+    }
     const q = new URLSearchParams({ from: String(from), to: String(to), calendars: shownIds || "none" })
     if (people.length) q.set("people", people.join(","))
     const request = ++loadRequest.current
@@ -133,7 +140,7 @@ export function CalendarApp(props: CalendarAppProps) {
     } finally {
       if (request === loadRequest.current) setLoading(false)
     }
-  }, [from, to, shownIds, people, source])
+  }, [from, to, shownIds, people, source, view])
 
   React.useEffect(() => {
     if (mounted) void load()
@@ -202,12 +209,12 @@ export function CalendarApp(props: CalendarAppProps) {
     if (slots) return setSlots(null)
     setSelectedKey(null)
     setOpened(null)
-    if (view === "month") setView("week")
+    if (view === "month" || view === "year") setView("week")
     setSlots([])
   }
 
   function chooseView(next: ViewMode) {
-    if (next === "month") setSlots(null)
+    if (next === "month" || next === "year") setSlots(null)
     setView(next)
   }
 
@@ -439,6 +446,8 @@ export function CalendarApp(props: CalendarAppProps) {
           return go(() => setView("week"))
         case "m":
           return go(() => chooseView("month"))
+        case "y":
+          return go(() => chooseView("year"))
         case "a":
           return go(() => toggleAvailability())
         case "/":
@@ -462,7 +471,9 @@ export function CalendarApp(props: CalendarAppProps) {
     e.person ? personColor(e.person, people) : (CALENDAR_COLORS[calendars.find((c) => c.id === e.calendarId)?.color ?? "blue"] ?? CALENDAR_COLORS.blue!)
 
   const title =
-    view === "day"
+    view === "year"
+      ? fmt(date, tz, { year: "numeric" })
+      : view === "day"
       ? fmt(date, tz, { weekday: "long", month: "long", day: "numeric", year: "numeric" })
       : view === "month"
         ? fmt(date, tz, { month: "long", year: "numeric" })
@@ -516,7 +527,8 @@ export function CalendarApp(props: CalendarAppProps) {
     <AppFrame ref={frameRef} userView={!!props.account}>
       {desktop ? rail : null}
       <div className="@container/cal flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-12 flex-wrap items-center gap-1 border-b px-2 py-1.5 md:px-3">
+        <header className="grid min-h-12 grid-cols-2 items-center gap-1 border-b px-2 py-1.5 md:px-3 @3xl/cal:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+          <div className="flex min-w-0 flex-wrap items-center gap-1 @3xl/cal:flex-nowrap">
           <Button variant="outline" size="sm" onClick={() => setDate(Date.now())}>
             {t("Today")}
           </Button>
@@ -526,7 +538,7 @@ export function CalendarApp(props: CalendarAppProps) {
           <IconAction label={t("Next (j)")} onClick={() => setDate((d) => stepDate(d, view, 1, tz))}>
             <ChevronRight />
           </IconAction>
-          <h1 className={cn("order-last ml-1 min-w-0 basis-full truncate text-sm font-semibold sm:order-none sm:basis-auto sm:flex-1", loading && "opacity-60")}>{mounted ? (
+          <h1 className={cn("order-last ml-1 min-w-0 basis-full truncate text-sm font-semibold @3xl/cal:order-none @3xl/cal:basis-auto @3xl/cal:flex-1", loading && "opacity-60")}>{mounted ? (
               <>
                 <span className="@3xl/cal:hidden">{title}</span>
                 <span className="hidden @3xl/cal:inline">{longTitle}</span>
@@ -535,12 +547,27 @@ export function CalendarApp(props: CalendarAppProps) {
               ""
             )}
           </h1>
+          </div>
+          <SegmentedControl
+            size="sm"
+            className="col-span-2 row-start-2 justify-self-center @3xl/cal:col-span-1 @3xl/cal:col-start-2 @3xl/cal:row-start-1"
+            aria-label={t("View")}
+            value={view}
+            onValueChange={chooseView}
+            options={[
+              { value: "day", label: t("Day"), shortLabel: "D" },
+              { value: "week", label: t("Week"), shortLabel: "W" },
+              { value: "month", label: t("Month"), shortLabel: "M" },
+              { value: "year", label: t("Year"), shortLabel: "Y" },
+            ]}
+          />
+          <div className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center justify-end gap-1 @3xl/cal:col-start-3">
           <Button size="sm" variant={slots ? "secondary" : "ghost"} aria-pressed={slots !== null} onClick={toggleAvailability} title={t("Availability (a)")}>
             <CalendarCheck data-icon="inline-start" />
             <span className="hidden sm:inline">{t("Availability")}</span>
             <span className="sr-only sm:hidden">{t("Availability")}</span>
           </Button>
-          {view !== "month" ? (
+          {view === "day" || view === "week" ? (
             <IconAction label={t(preciseLocation ? "Use approximate sunrise and sunset times" : "Use your location for more accurate sunrise and sunset times")} onClick={toggleSun} disabled={locating}>
               <Sunrise className={cn(preciseLocation && "text-primary", locating && "motion-safe:animate-pulse")} />
             </IconAction>
@@ -550,24 +577,16 @@ export function CalendarApp(props: CalendarAppProps) {
               <UserPlus />
             </IconAction>
           ) : null}
-          <SegmentedControl
-            size="sm"
-            aria-label={t("View")}
-            value={view}
-            onValueChange={chooseView}
-            options={[
-              { value: "day", label: t("Day"), shortLabel: "D" },
-              { value: "week", label: t("Week"), shortLabel: "W" },
-              { value: "month", label: t("Month"), shortLabel: "M" },
-            ]}
-          />
           <IconAction label={t("Calendar settings")} onClick={() => setSettingsOpen(true)}>
             <Settings2 />
           </IconAction>
           {!desktop && props.account ? <AccountMenu user={props.account} canManage={props.canManage} compact /> : null}
+          </div>
         </header>
         {!mounted ? (
           <div className="flex-1" />
+        ) : view === "year" ? (
+          <YearGrid date={date} tz={tz} weekStart={prefs.weekStart} now={now} onMonth={(d) => (setDate(d), setView("month"))} />
         ) : view === "month" ? (
           <MonthGrid
             hourCycle={prefs.hourCycle}

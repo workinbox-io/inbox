@@ -6,7 +6,7 @@ import type { CalendarView } from "@/lib/server/calendar/calendars"
 import type { EventView } from "@/lib/server/calendar/events"
 
 export type { CalendarView, EventView }
-export type ViewMode = "day" | "week" | "month"
+export type ViewMode = "day" | "week" | "month" | "year"
 export type Scope = "this" | "following" | "all"
 
 export interface Prefs {
@@ -88,6 +88,11 @@ export function atMinute(dayStart: number, minutes: number, tz: string) {
 
 /** The days shown and the range to load for a view around `date`. */
 export function rangeOf(date: number, view: ViewMode, tz: string, weekStart: number) {
+  if (view === "year") {
+    const w = wallTime(startOfMonth(date, tz), tz)
+    const from = fromWallTime({ ...w, month: 1 }, tz)
+    return { days: [], from, to: fromWallTime({ ...w, year: w.year + 1, month: 1 }, tz) }
+  }
   const first = view === "day" ? startOfDay(date, tz) : view === "week" ? startOfWeek(date, tz, weekStart) : startOfWeek(startOfMonth(date, tz), tz, weekStart)
   const count = view === "day" ? 1 : view === "week" ? 7 : 42
   const days = Array.from({ length: count }, (_, i) => addDays(first, i, tz))
@@ -99,6 +104,7 @@ export function stepDate(date: number, view: ViewMode, dir: 1 | -1, tz: string) 
   if (view === "day") return addDays(date, dir, tz)
   if (view === "week") return addDays(date, 7 * dir, tz)
   const w = wallTime(startOfMonth(date, tz), tz)
+  if (view === "year") return fromWallTime({ ...w, year: w.year + dir, month: 1 }, tz)
   return fromWallTime({ ...w, month: w.month + dir, day: 1 }, tz)
 }
 

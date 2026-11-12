@@ -9,14 +9,17 @@ updated: 2026-11-12
 Open **Calendar** from the app rail. Everyone has a calendar of their own; add more (for example "Holidays") in the
 left column and share them like notes: private, with chosen people (view or edit) or with the whole team.
 
+Choose **Year** for a twelve-month overview, with today highlighted. Click a month or date to open that month’s
+events. The arrows move between years; **Today** returns to the current year.
+
 ## Shortcuts
 
 | Key | Does |
 | --- | --- |
 | `c` | New event |
 | `t` | Today |
-| `j` / `k` or `←` / `→` | Next / previous day, week or month |
-| `d` / `w` / `m` | Day, week, month view |
+| `j` / `k` or `←` / `→` | Next / previous day, week, month or year |
+| `d` / `w` / `m` / `y` | Day, week, month, year view |
 | `a` | Pick free times to share |
 | `/` | Show a colleague's calendar next to yours |
 | `Enter` / `Esc` | Open / close the event |
@@ -48,7 +51,7 @@ Add a colleague under **People** to see their calendar over yours; events you ca
 
 ## Sharing your availability
 
-Press `a` or choose **Availability**. From the month view this opens the week grid. Click for 30 minutes, or drag
+Press `a` or choose **Availability**. From the month or year view this opens the week grid. Click for 30 minutes, or drag
 to select a longer range. Busy events in the visible calendars (including overlaid colleagues) are excluded;
 events marked free, cancelled events and invitations you declined do not block the selection.
 
