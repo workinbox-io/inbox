@@ -222,3 +222,15 @@ export function businessNotice(p: { subject: string; heading: string; muted?: st
     </EmailLayout>,
   );
 }
+
+export function twoFactorChanged(change: "enabled" | "disabled" | "replaced" | "backup codes regenerated") {
+  const heading = change === "backup codes regenerated" ? "Your backup codes were regenerated." : `Two-factor authentication ${change}.`;
+  return build(
+    `${heading} · ${siteConfig.name}`,
+    <EmailLayout preview={heading}>
+      <EmailHeading intro="If you made this change, no action is needed. If you didn't, reset your password and review your active sessions. Resetting your password does not turn off two-factor authentication.">{heading}</EmailHeading>
+      <Section><EmailButton href={appUrl("/app/settings/account")}>Review account security</EmailButton></Section>
+      <Text style={emailStyles.text}>Need help? Contact {siteConfig.supportEmail}. Never send us your password, authenticator key or backup codes.</Text>
+    </EmailLayout>,
+  );
+}

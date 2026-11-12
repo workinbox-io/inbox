@@ -11,6 +11,7 @@ import { siteConfig } from "@/config/site";
 export const prerender = true;
 
 const faq = [
+  { question: "Is two-factor authentication included?", answer: "Yes. Optional authenticator-based 2FA for password sign-in is included on every plan, including free and self-hosted. Google sign-in uses Google's own security settings. Organization-wide enforcement is not available yet." },
   { question: "Who counts as a person?", answer: `Everyone with a personal mailbox on your domains, and the first ${FREE_PEOPLE} are free: a team of twelve pays for seven. Shared mailboxes like support@ and aliases like hello@ are free and unlimited.` },
   { question: "Is there a free plan?", answer: `Yes. Up to ${FREE_PEOPLE} people are free for good: a personal mailbox each on your own domain, plus shared mailboxes, aliases, catch-all and notes. A plan is needed from person ${FREE_PEOPLE + 1}, and the first ${FREE_PEOPLE} stay free on it. Every plan bills at least ${MIN_SEATS} people, so ${PLANS.starter.name} is €${(MIN_SEATS * PLANS.starter.priceMonthly) / 100} a month for up to ${FREE_PEOPLE + MIN_SEATS} people. That minimum also applies to a smaller team that buys a plan for the API, the AI connector or the audit log.` },
   { question: "How does the trial work?", answer: `You get ${TRIAL_DAYS} days of ${PLANS[TRIAL_PLAN].name} without a card. Choose a plan any time from the Billing page; with up to ${FREE_PEOPLE} people, mail keeps working for free after the trial.` },
@@ -43,6 +44,7 @@ const jsonLd = [
   </PageHero>
   <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
     <div data-reveal="items" class="mt-12 sm:mt-16"><PricingCards yearly /></div>
+    <p class="mt-6 text-sm text-foreground/70">Optional two-factor authentication is included on every plan. <a href="/security" class="mk-link">See account security</a>.</p>
     <section class="pt-24">
       <SectionHeading muted="about plans.">Questions</SectionHeading>
       <div class="mt-10 w-full max-w-3xl"><Faq items={faq} /></div>

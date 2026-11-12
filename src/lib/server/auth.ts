@@ -16,6 +16,7 @@ import { attributeSignup } from "./analytics";
 import { clientIp } from "./api";
 import { auditTeamChange } from "./auth-audit";
 import { sendEmail } from "./email";
+import { clearFactorTrust, confirmSecondFactor, notifyFactorChange, reserveFactorAttempt, resetFactorAttempts, TWO_FACTOR_MANAGEMENT_PATHS } from "./two-factor";
 import { MCP_SCOPES, ORG_CLAIM, fetchClientMetadataResource, mcpResource, oauthOrgSelection } from "./oauth";
 import { OrgError, createPersonalOrg, hasPendingInvitation, memberLimit, prepareAccountDeletion, seatUpsell, seatsLeft } from "./org";
 import { enqueue } from "./queue";
@@ -54,7 +55,10 @@ function createAuth() {
         const to = security?.recoveryVerifiedAt && security.recoveryEmail ? security.recoveryEmail : user.email;
         await sendEmail({ to, ...(await emails.resetPassword(url)) });
       },
-      onPasswordReset: async ({ user }) => clearPasswordRequirement(user.id),
+      onPasswordReset: async ({ user }) => {
+        await clearPasswordRequirement(user.id);
+        await clearFactorTrust(user.id);
+      },
       // Sign-up with a taken address looks successful; the owner gets a heads-up instead.
       onExistingUserSignUp: async ({ user }) => {
         await sendEmail({ to: user.email, ...(await emails.existingAccount()) });
@@ -162,17 +166,44 @@ function createAuth() {
       cimd({ fetchClientMetadataResource, metadataProfile: "mcp-2026-07-28" }),
     ],
     hooks: {
-      before: createAuthMiddleware(async (ctx) => {
+      before: createAuthMiddleware(async (ctx): Promise<void> => {
         if (ctx.path === "/change-password" && ctx.body?.newPassword === ctx.body?.currentPassword) throw new APIError("BAD_REQUEST", { message: "Choose a different password" });
         const session = await getSessionFromCtx(ctx).catch(() => null);
-        if (!session || !(await mustChangePassword(session.user.id))) return;
-        const allowed = ["/change-password", "/sign-out", "/get-session", "/request-password-reset", "/reset-password"];
-        if (!allowed.includes(ctx.path)) throw new APIError("FORBIDDEN", { message: "Change your temporary password first" });
+        if (!session) return;
+        if (await mustChangePassword(session.user.id)) {
+          const allowed = ["/change-password", "/sign-out", "/get-session", "/request-password-reset", "/reset-password"];
+          if (!allowed.includes(ctx.path)) throw new APIError("FORBIDDEN", { message: "Change your temporary password first" });
+        }
+        if (ctx.path.startsWith("/two-factor/")) {
+          Object.assign(ctx.context, { factorBefore: { id: session.user.id, email: session.user.email, enabled: !!session.user.twoFactorEnabled } });
+        }
+        if (session.user.twoFactorEnabled && (ctx.path === "/two-factor/verify-totp" || ctx.path === "/two-factor/verify-backup-code")) {
+          await reserveFactorAttempt(session.user.id);
+        }
+        if (session.user.twoFactorEnabled && TWO_FACTOR_MANAGEMENT_PATHS.has(ctx.path)) {
+          const { success } = await env.AUTH_RATE_LIMIT.limit({ key: `2fa-manage:${session.user.id}` });
+          if (!success) throw new APIError("TOO_MANY_REQUESTS", { message: "Too many attempts. Wait a minute and try again." });
+          if (typeof ctx.body?.password !== "string") throw new APIError("BAD_REQUEST", { message: "Enter your current password." });
+          // Check password and session freshness before consuming a one-use backup code.
+          await getAuth().api.verifyPassword({ headers: new Headers(ctx.headers), body: { password: ctx.body.password } });
+          await confirmSecondFactor(session.user.id, new Headers(ctx.headers));
+        }
       }),
-      after: createAuthMiddleware(async (ctx) => {
+      after: createAuthMiddleware(async (ctx): Promise<void> => {
         if (ctx.path === "/change-password" && ctx.context.returned && !(ctx.context.returned instanceof Error) && !(ctx.context.returned instanceof Response)) {
           const session = ctx.context.session ?? await getSessionFromCtx(ctx).catch(() => null);
           if (session) await clearPasswordRequirement(session.user.id);
+        }
+        const before = (ctx.context as typeof ctx.context & { factorBefore?: { id: string; email: string; enabled: boolean } }).factorBefore;
+        const returned = ctx.context.returned;
+        if (before && returned && !(returned instanceof Error) && !(returned instanceof Response)) {
+          if (before.enabled && (ctx.path === "/two-factor/verify-totp" || ctx.path === "/two-factor/verify-backup-code")) await resetFactorAttempts(before.id);
+          if (ctx.path === "/two-factor/disable") {
+            await clearFactorTrust(before.id);
+            await notifyFactorChange(before, "disabled");
+          }
+          if (ctx.path === "/two-factor/generate-backup-codes") await notifyFactorChange(before, "backup codes regenerated");
+          if (ctx.path === "/two-factor/verify-totp" && !before.enabled) await notifyFactorChange(before, "enabled");
         }
         await auditTeamChange(ctx);
       }),

@@ -67,17 +67,20 @@ export function TwoFactorChallenge({ next }: { next: string }) {
     const trustDevice = form.get("trust") === "on"
     setPending(true)
     setError(null)
-    const { data, error } = backup
-      ? await authClient.twoFactor.verifyBackupCode({ code, trustDevice })
-      : await authClient.twoFactor.verifyTotp({ code, trustDevice })
-    if (error) {
-      setPending(false)
-      // The pending sign-in lives for 10 minutes; after that, start over.
-      if (error.code === "INVALID_TWO_FACTOR_COOKIE") return window.location.reload()
-      return setError(error.message ?? "That code didn't work")
-    }
-    // Signing in to connect an AI app: Better Auth continues its authorization.
-    window.location.assign(oauthRedirect(data) ?? next)
+    try {
+      const { data, error } = backup
+        ? await authClient.twoFactor.verifyBackupCode({ code, trustDevice })
+        : await authClient.twoFactor.verifyTotp({ code, trustDevice })
+      if (error) {
+        // Expired challenges and exhausted attempts need a fresh password sign-in.
+        if (error.code === "INVALID_TWO_FACTOR_COOKIE" || error.code === "TOO_MANY_ATTEMPTS_REQUEST_NEW_CODE") return window.location.reload()
+        return setError(error.message ?? "That code didn't work")
+      }
+      // Signing in to connect an AI app: Better Auth continues its authorization.
+      window.location.assign(oauthRedirect(data) ?? next)
+    } catch {
+      setError("Could not connect. Check your connection and try again.")
+    } finally { setPending(false) }
   }
 
   return (
@@ -109,9 +112,9 @@ export function TwoFactorChallenge({ next }: { next: string }) {
           </div>
           <label className="text-muted-foreground flex items-center gap-2 text-sm">
             <Checkbox name="trust" />
-            Trust this device for 30 days
+            Trust this personal device for 30 days after each sign-in
           </label>
-          {error ? <p className="text-destructive text-sm">{error}</p> : null}
+          {error ? <p role="alert" className="text-destructive text-sm">{error}</p> : null}
         </CardContent>
         <CardFooter className="mt-6 flex-col gap-3">
           <Button loading={pending} type="submit" className="w-full" disabled={pending}>
@@ -120,6 +123,7 @@ export function TwoFactorChallenge({ next }: { next: string }) {
           <button
             type="button"
             className="text-muted-foreground hover:text-foreground text-sm"
+            disabled={pending}
             onClick={() => {
               setBackup(!backup)
               setError(null)

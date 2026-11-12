@@ -1,5 +1,5 @@
 import { COMPETITORS } from "@/config/compare";
-import { BookOpen, Cloud, Code, Contact, HardDrive, HelpCircle, Inbox, NotebookPen, Plug, Server, Users, type LucideIcon } from "lucide-react";
+import { BookOpen, Cloud, Code, Contact, HardDrive, HelpCircle, Inbox, NotebookPen, Plug, Server, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 
 /** Header links: optional descriptions, Lucide components or local logo paths. */
 export type NavLink = { href: string; label: string; description?: string; icon?: LucideIcon; logo?: string };
@@ -49,6 +49,7 @@ export const siteConfig = {
     {
       label: "Resources",
       items: [
+        { href: "/security", label: "Security", description: "Two-factor authentication and individual access.", icon: ShieldCheck },
         { href: "/docs", label: "Documentation", description: "Get set up and find your way around.", icon: BookOpen },
         { href: "/docs/api", label: "API reference", description: "Connect your tools and build integrations.", icon: Code },
         { href: "/#faq", label: "FAQ", description: "Answers to common questions about the product.", icon: HelpCircle },
