@@ -345,11 +345,18 @@ export function TimeGrid(props: Props) {
   }
 }
 
-function blockStyle(e: EventView, color: string): React.CSSProperties {
-  if (e.role === "busy")
-    return { background: `repeating-linear-gradient(135deg, ${tint(color, 22)} 0 5px, ${tint(color, 8)} 5px 10px)`, borderColor: color, color }
-  return { background: tint(color, e.myStatus === "needs-action" ? 6 : 18), borderColor: color }
+/** The colour's own darker shade for text on its tint (Notion Calendar style: no side bar, the block is the colour). */
+const ink = (color: string) => `color-mix(in oklab, ${color} 60%, var(--foreground))`
+
+function blockStyle(e: EventView, color: string, selected = false): React.CSSProperties {
+  if (selected) return { background: color, borderColor: color, color: "white" }
+  if (e.role === "busy") return { background: `repeating-linear-gradient(135deg, ${tint(color, 22)} 0 5px, ${tint(color, 8)} 5px 10px)`, color: ink(color) }
+  if (e.myStatus === "needs-action" || e.status === "tentative") return { background: tint(color, 6), borderColor: tint(color, 70), color: ink(color) }
+  return { background: tint(color, 22), color: ink(color) }
 }
+
+/** The solid look of what's being dragged or drawn. */
+const solid = (color: string): React.CSSProperties => ({ background: color, color: "white" })
 
 function Block({
   e,
@@ -386,20 +393,21 @@ function Block({
       onPointerDown={onPointerDown}
       onClick={onClick}
       className={cn(
-        "absolute z-10 cursor-pointer overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-[11px] leading-tight",
-        e.myStatus === "needs-action" || e.status === "tentative" ? "border border-dashed border-l-[3px]" : "",
+        // The background-coloured outline keeps overlapping blocks apart.
+        "absolute z-10 cursor-pointer overflow-hidden rounded-md px-1.5 py-0.5 text-[11px] leading-tight shadow-[0_0_0_1px_var(--background)]",
+        e.myStatus === "needs-action" || e.status === "tentative" ? "border border-dashed" : "",
         e.myStatus === "declined" && "line-through opacity-50",
-        selected && "ring-foreground/60 z-20 ring-2",
+        selected && "z-20 shadow-md",
         dim && "opacity-40",
       )}
-      style={{ ...style, ...blockStyle(e, color) }}
+      style={{ ...style, ...blockStyle(e, color, selected) }}
     >
       <div className={cn("truncate font-medium", short && "inline")}>{title}</div>
-      <div className={cn("text-foreground/60 truncate tabular-nums", short && "ml-1 inline")}>
+      <div className={cn("truncate tabular-nums opacity-75", short && "ml-1 inline")}>
         {fmtTime(e.start, tz)}
         {short ? "" : ` – ${fmtTime(e.end, tz)}`}
       </div>
-      {!short && e.location && e.role !== "busy" ? <div className="text-foreground/60 truncate">{e.location}</div> : null}
+      {!short && e.location && e.role !== "busy" ? <div className="truncate opacity-75">{e.location}</div> : null}
       {onResize ? (
         <>
           <div onPointerDown={(ev) => onResize(ev, "resize-start")} className="absolute inset-x-0 top-0 h-1.5 cursor-ns-resize" aria-hidden />
@@ -426,11 +434,11 @@ function DraftBlock({ draft, day, tz, onPointerDown }: { draft: Draft; day: numb
       onContextMenu={own}
       onPointerDown={(e) => onPointerDown(e, "move")}
       onClick={(e) => e.stopPropagation()}
-      className="group/draft absolute inset-x-0.5 z-30 cursor-grab rounded-md border-l-[3px] px-1.5 py-0.5 text-[11px] leading-tight shadow-md ring-2 active:cursor-grabbing"
-      style={{ top: (top / 60) * HOUR, height, background: tint(DRAFT_COLOR, 30), borderColor: DRAFT_COLOR, ["--tw-ring-color" as string]: tint(DRAFT_COLOR, 70) }}
+      className="group/draft absolute inset-x-0.5 z-30 cursor-grab rounded-md px-1.5 py-0.5 text-[11px] leading-tight shadow-lg active:cursor-grabbing"
+      style={{ top: (top / 60) * HOUR, height, ...solid(DRAFT_COLOR) }}
     >
       <div className={cn("truncate font-medium", height < 30 && "inline")}>{draft.title || t("New event")}</div>
-      <div className={cn("tabular-nums", height < 30 && "ml-1 inline")}>
+      <div className={cn("tabular-nums opacity-85", height < 30 && "ml-1 inline")}>
         {fmtTime(draft.start, tz)} – {fmtTime(draft.end, tz)}
       </div>
       <div onPointerDown={(e) => onPointerDown(e, "resize-start")} className={cn(handle, "-top-1 items-start")} aria-hidden>
@@ -449,11 +457,11 @@ function Ghost({ start, end, day, tz, color, title }: { start: number; end: numb
   const bottom = end >= next ? 1440 : minuteOfDay(end, tz) || 1440
   return (
     <div
-      className="pointer-events-none absolute inset-x-0.5 z-30 rounded-md border-l-[3px] px-1.5 py-0.5 text-[11px] leading-tight shadow-md"
-      style={{ top: (top / 60) * HOUR, height: Math.max(((bottom - top) / 60) * HOUR - 1, 16), background: tint(color, 30), borderColor: color }}
+      className="pointer-events-none absolute inset-x-0.5 z-30 rounded-md px-1.5 py-0.5 text-[11px] leading-tight shadow-lg"
+      style={{ top: (top / 60) * HOUR, height: Math.max(((bottom - top) / 60) * HOUR - 1, 16), ...solid(color) }}
     >
       {title ? <div className="truncate font-medium">{title}</div> : null}
-      <div className="tabular-nums">
+      <div className="tabular-nums opacity-85">
         {fmtTime(start, tz)} – {fmtTime(end, tz)}
       </div>
     </div>
@@ -467,8 +475,12 @@ export function Chip({ e, color, selected, onClick, actions }: { e: EventView; c
       type="button"
       onContextMenu={own}
       onClick={(ev) => (ev.stopPropagation(), onClick())}
-      className={cn("truncate rounded px-1.5 py-px text-left text-[11px] font-medium", selected && "ring-foreground/60 ring-2", e.myStatus === "declined" && "line-through opacity-50")}
-      style={blockStyle(e, color)}
+      className={cn(
+        "truncate rounded px-1.5 py-px text-left text-[11px] font-medium",
+        (e.myStatus === "needs-action" || e.status === "tentative") && !selected && "border border-dashed",
+        e.myStatus === "declined" && "line-through opacity-50",
+      )}
+      style={blockStyle(e, color, selected)}
     >
       {e.role === "busy" ? t("Busy") : e.title || t("(No title)")}
     </button>
