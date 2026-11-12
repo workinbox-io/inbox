@@ -5,7 +5,7 @@
  * Backspace delete, Enter edit the title.
  */
 import * as React from "react"
-import { CalendarCheck, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleHelp, Copy, ExternalLink, PanelRightOpen, Trash2, UserPlus, X } from "lucide-react"
+import { CalendarCheck, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleHelp, Copy, ExternalLink, PanelRightOpen, Sunrise, Trash2, UserPlus, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,7 @@ import { IconAction } from "@/components/workspace/detail-header"
 import { shortcutsPaused, useAppLayout, useMounted } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
 import type { Slot } from "@/lib/calendar/availability"
+import type { SunLocation } from "@/lib/calendar/sun"
 import { addDays, sameDay, startOfDay, wallTime } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { replaceUrl } from "@/lib/panel-history"
@@ -52,6 +53,7 @@ export interface CalendarAppProps {
   calendars: CalendarView[]
   prefs: Prefs
   canManage: boolean
+  approximateLocation: SunLocation | null
   /** The user view: full screen, the account menu at the bottom of the rail. */
   account?: MailUser
   /** `?date=` and `?view=` read on the server, so the first render already shows them (no jump from today). */
@@ -82,9 +84,29 @@ export function CalendarApp(props: CalendarAppProps) {
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [now, setNow] = React.useState(() => Date.now())
+  const [preciseLocation, setPreciseLocation] = React.useState<SunLocation | null>(null)
+  const sunLocation = preciseLocation ?? props.approximateLocation
+  const [locating, setLocating] = React.useState(false)
   const fileRef = React.useRef<HTMLInputElement>(null)
   const { ref: frameRef, desktop } = useAppLayout()
   const scope = useScopePrompt()
+
+  function toggleSun() {
+    if (preciseLocation) return setPreciseLocation(null)
+    if (!navigator.geolocation) return toast.error(t("Location is unavailable in this browser."))
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setPreciseLocation({ latitude: coords.latitude, longitude: coords.longitude })
+        setLocating(false)
+      },
+      () => {
+        setLocating(false)
+        toast.error(t("Allow location access for more accurate sunrise and sunset times, then try again."))
+      },
+      { maximumAge: 3_600_000, timeout: 10_000 },
+    )
+  }
 
   const { days, from, to } = React.useMemo(() => rangeOf(date, view, tz, prefs.weekStart), [date, view, tz, prefs.weekStart])
   const shownIds = calendars.filter((c) => !hidden.has(c.id)).map((c) => c.id).join(",")
@@ -490,6 +512,11 @@ export function CalendarApp(props: CalendarAppProps) {
           <IconAction label={t("Availability (a)")} onClick={() => setSlots((s) => (s ? null : []))}>
             <CalendarCheck className={cn(slots && "text-emerald-600")} />
           </IconAction>
+          {view !== "month" ? (
+            <IconAction label={t(preciseLocation ? "Use approximate sunrise and sunset times" : "Use your location for more accurate sunrise and sunset times")} onClick={toggleSun} disabled={locating}>
+              <Sunrise className={cn(preciseLocation && "text-primary", locating && "motion-safe:animate-pulse")} />
+            </IconAction>
+          ) : null}
           {!desktop ? (
             <IconAction label={t("Show a colleague's calendar (/)")} onClick={() => setPickerOpen(true)}>
               <UserPlus />
@@ -538,6 +565,8 @@ export function CalendarApp(props: CalendarAppProps) {
             slots={slots}
             now={now}
             workStart={prefs.workStart}
+            sunLocation={sunLocation}
+            approximateSun={!preciseLocation}
             onSelect={select}
             onCreate={(d) => (setSelectedKey(null), setOpened(null), newDraft(d))}
             onDraft={setDraft}

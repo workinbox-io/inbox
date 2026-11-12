@@ -4,11 +4,12 @@
  * resize; 15-minute steps. In availability mode the same drag picks free slots instead.
  */
 import * as React from "react"
-import { X } from "lucide-react"
+import { Sunrise, Sunset, X } from "lucide-react"
 import { ActionMenu, type MenuAction } from "@/components/workspace/action-menu"
 import { tint } from "@/components/workspace/ui"
 import type { Slot } from "@/lib/calendar/availability"
 import { layoutDay } from "@/lib/calendar/layout"
+import { sunTimes, type SunLocation } from "@/lib/calendar/sun"
 import { addDays, minuteOfDay, sameDay, startOfDay, wallTime, zoneAbbr } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
@@ -38,6 +39,8 @@ interface Props {
   /** Non-null in availability mode. */
   slots: Slot[] | null
   now: number
+  sunLocation: SunLocation | null
+  approximateSun?: boolean
   workStart: number
   onSelect: (e: EventView) => void
   onCreate: (d: Draft) => void
@@ -264,7 +267,7 @@ export function TimeGrid(props: Props) {
               return (
                 <ActionMenu key={d} actions={() => props.spaceActions(atMinute(days[spot.current.day]!, snapDown(spot.current.min), tz), false)}>
                 <div
-                  className="relative border-l"
+                  className="@container relative border-l"
                   style={{ backgroundImage: `repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px ${HOUR}px)` }}
                   onContextMenu={(e) => (spot.current = at(e.clientX, e.clientY))}
                   onPointerDown={(e) => {
@@ -272,9 +275,26 @@ export function TimeGrid(props: Props) {
                     begin(e, { kind: slots ? "slot" : "create", day: di, from: min, to: min, x: e.clientX, y: e.clientY, moved: false })
                   }}
                 >
+                  {props.sunLocation ? sunTimes(d, tz, props.sunLocation).map(({ kind, at }) => {
+                    const Icon = kind === "sunrise" ? Sunrise : Sunset
+                    const label = t(kind === "sunrise" ? "Sunrise" : "Sunset")
+                    const time = `${props.approximateSun ? "≈ " : ""}${fmtTime(at, tz)}`
+                    return (
+                      <div key={`${kind}-${at}`} className="pointer-events-none absolute inset-x-0 z-[1] flex -translate-y-1/2 items-center gap-1 text-muted-foreground" style={{ top: (minuteOfDay(at, tz) / 60) * HOUR }} role="img" aria-label={`${label} · ${props.approximateSun ? t("Approximate time") + " · " : ""}${fmtTime(at, tz)}`}>
+                        <span className="min-w-1 flex-1 border-t border-dashed border-current opacity-25" />
+                        <span className="bg-background/90 mr-1 flex shrink-0 items-center gap-1 rounded px-1 py-0.5 text-[10px] tabular-nums">
+                          <Icon className="size-3" aria-hidden="true" />
+                          <span className="hidden @min-[15rem]:inline">{label}</span>
+                          {time}
+                        </span>
+                      </div>
+                    )
+                  }) : null}
                   {sameDay(d, today, tz) ? (
-                    <div className="pointer-events-none absolute inset-x-0 z-20 h-0.5 bg-red-500" style={{ top: (minuteOfDay(today, tz) / 60) * HOUR }}>
-                      <span className="absolute -top-[3px] -left-1 size-2 rounded-full bg-red-500" />
+                    <div className="text-destructive pointer-events-none absolute inset-x-0 z-20 flex -translate-y-1/2 items-center" style={{ top: (minuteOfDay(today, tz) / 60) * HOUR }} role="img" aria-label={`${t("Current time")} · ${fmtTime(today, tz)}`}>
+                      <span className="bg-destructive ring-background absolute -left-1 size-2 rounded-full ring-2" />
+                      <span className="bg-destructive h-px flex-1" />
+                      <span className="bg-background ring-destructive/30 mr-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums shadow-sm ring-1">{fmtTime(today, tz)}</span>
                     </div>
                   ) : null}
                   {mine.map((e) => {
