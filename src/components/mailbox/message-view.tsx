@@ -33,7 +33,7 @@ export const messageSnippet = (text: string) => splitQuotedReply(text).body.repl
  * An incoming mail's HTML in a sandboxed iframe (no scripts; same-origin only so the page can size
  * it to its content). The CSP in the document blocks remote images until allowed.
  */
-function HtmlFrame({ html, remoteImages, showQuoted }: { html: string; remoteImages: boolean; showQuoted: boolean }) {
+export function HtmlFrame({ html, remoteImages, showQuoted }: { html: string; remoteImages: boolean; showQuoted: boolean }) {
   const ref = React.useRef<HTMLIFrameElement>(null)
   const [height, setHeight] = React.useState(80)
   const doc = React.useMemo(() => mailSrcDoc(html, { origin: location.origin, remoteImages, showQuoted }), [html, remoteImages, showQuoted])
@@ -67,7 +67,7 @@ function HtmlFrame({ html, remoteImages, showQuoted }: { html: string; remoteIma
 }
 
 /** Plain text with links and the quoted history folded behind "…". */
-function TextBody({ text, showQuoted }: { text: string; showQuoted: boolean }) {
+export function TextBody({ text, showQuoted }: { text: string; showQuoted: boolean }) {
   const { body, quoted } = splitQuotedReply(text)
   const shown = showQuoted && quoted ? `${body}\n\n${quoted}` : body
   return (

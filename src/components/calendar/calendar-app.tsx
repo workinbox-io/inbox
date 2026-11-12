@@ -24,7 +24,7 @@ import { replaceUrl } from "@/lib/panel-history"
 import { cn } from "@/lib/utils"
 import { AvailabilityBar } from "./availability-bar"
 import { CalendarRail, CalendarSettingsDialog } from "./calendar-rail"
-import { EventPanel, useScopePrompt, type EventBody } from "./event-panel"
+import { EventPanel, NewEventWindow, useScopePrompt, type EventBody } from "./event-panel"
 import { MonthGrid } from "./month-grid"
 import {
   atMinute,
@@ -483,12 +483,12 @@ export function CalendarApp(props: CalendarAppProps) {
   // Shown instead when the header has room: the week's exact dates.
   const longTitle = view === "week" ? fmtRange(days[0]!, days[6]!, tz, { day: "numeric", month: "long", year: "numeric" }) : title
 
-  const panelOpen = !slots && !!(selected || draft)
+  const panelOpen = !slots && !draft && !!selected
   const panel = panelOpen ? (
     <EventPanel
-      key={draft ? `draft:${draftSeq}` : selectedKey!}
-      event={draft ? null : selected!}
-      draft={draft}
+      key={selectedKey!}
+      event={selected!}
+      draft={null}
       tz={tz}
       calendars={calendars}
       defaultReminder={prefs.defaultReminder}
@@ -497,13 +497,13 @@ export function CalendarApp(props: CalendarAppProps) {
       onSave={save}
       onDelete={remove}
       onRsvp={rsvp}
-      onDraft={(d) => setDraft((x) => (x && x.start === d.start && x.end === d.end && x.allDay === d.allDay && x.title === d.title ? x : d))}
     />
   ) : null
 
   const rail = (
     <CalendarRail
       date={date}
+      view={view}
       tz={tz}
       prefs={prefs}
       calendars={calendars}
@@ -634,6 +634,20 @@ export function CalendarApp(props: CalendarAppProps) {
         )}
         <AvailabilityBar hourCycle={prefs.hourCycle} disabled={!availabilityReady} slots={freeSlots} zones={[tz, ...prefs.timezones.slice(1)]} onRemove={(slot) => setSlots((freeSlots ?? []).filter((s) => s !== slot))} onClear={() => setSlots([])} onDone={() => setSlots(null)} />
       </div>
+      <NewEventWindow
+        key={draftSeq}
+        open={!slots && !!draft}
+        draft={draft}
+        tz={tz}
+        calendars={calendars}
+        defaultReminder={prefs.defaultReminder}
+        onClose={close}
+        onCreate={create}
+        onSave={save}
+        onDelete={remove}
+        onRsvp={rsvp}
+        onDraft={(d) => setDraft((x) => !x || (x.start === d.start && x.end === d.end && x.allDay === d.allDay && x.title === d.title) ? x : d)}
+      />
       {desktop && panel ? <aside className="w-[clamp(340px,26vw,440px)] shrink-0 border-l motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 motion-safe:duration-200">{panel}</aside> : null}
       {!desktop ? (
         <Sheet open={panelOpen} onOpenChange={(o) => !o && close()}>

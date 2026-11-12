@@ -33,11 +33,14 @@ test('engine credentials survive failed creation and are reconciled without repl
 test('scheduler uses saved credentials and records a successful checkpoint', async () => {
   const accounts = store(); accounts.put('org', 'id', input);
   let called;
-  const scheduler = new SyncScheduler(accounts, engine, async options => { called = options; }, async () => '127.0.0.1');
+  const scheduler = new SyncScheduler(accounts, { ...engine, imapTarget: 'stalwart' }, async options => { called = options; }, async host => {
+    assert.equal(host, 'stalwart'); return '127.0.0.1';
+  });
   try {
     await scheduler.run('org', 'id');
     assert.equal(called.far.password, input.imap.password);
     assert.equal(called.near.password, binding.password);
+    assert.equal(called.near.host, 'engine.example.com');
     assert.equal(accounts.status('org', 'id').state, 'ready');
     assert.ok(accounts.status('org', 'id').syncedAt > 0);
   } finally { await scheduler.stop(); accounts.close(); }
@@ -56,7 +59,10 @@ test('cancel waits for the running task before credentials can be removed', asyn
     await scheduler.cancel('org', 'id');
     assert.equal(stopped, true); assert.equal(scheduler.active.size, 0);
     accounts.remove('org', 'id');
-    assert.equal(accounts.get('org', 'id'), null); assert.equal(accounts.binding('org', 'id'), null);
+    assert.equal(accounts.get('org', 'id'), null); assert.deepEqual(accounts.binding('org', 'id'), binding);
+    assert.equal(accounts.list('org')[0].sync.state, 'disconnected');
+    assert.equal(accounts.connectionInfo('org', 'id').readOnly, true);
+    assert.equal(JSON.stringify(accounts.connectionInfo('org', 'id')).includes('external-secret'), false);
     assert.throws(() => accounts.put('org', 'id', input), /new connection id/);
   } finally { await scheduler.stop(); accounts.close(); }
 });

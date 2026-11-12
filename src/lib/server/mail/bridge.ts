@@ -16,12 +16,12 @@ export async function externalAccountsRequest(ctx: HandlerContext, method: strin
     response = await fetch(url, {
       method, redirect: "error", signal: AbortSignal.timeout(60_000),
       headers: { authorization: `Bearer ${env.MAIL_BRIDGE_TOKEN}`, "content-type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body instanceof ReadableStream ? body : body === undefined ? undefined : JSON.stringify(body),
     });
   } catch { throw new HttpError(502, "Mail bridge unavailable"); }
   if (!response.ok) {
-    const status = [404, 409, 413, 422, 503].includes(response.status) ? response.status : 502;
-    throw new HttpError(status, status === 404 ? "Not found" : "Mail server connection failed");
+    const status = [403, 404, 409, 413, 422, 503].includes(response.status) ? response.status : 502;
+    throw new HttpError(status, status === 403 ? "This mailbox is read-only" : status === 404 ? "Not found" : "Mail server connection failed");
   }
   return new Response(response.body, { status: response.status, headers: {
     "content-type": response.headers.get("content-type") ?? "application/json", "cache-control": "no-store",

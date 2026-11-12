@@ -344,7 +344,7 @@ export function TimeGrid(props: Props) {
                     />
                   ) : null}
                   {ghost && sameDay(ghost.start, d, tz) ? (ghost.kind === "slot" ? availableSlots([ghost], events) : [ghost]).map((range) => (
-                    <Ghost key={range.start} tz={tz} hourCycle={hourCycle} color={ghost.kind === "slot" ? "var(--primary)" : DRAFT_COLOR} title="" {...range} day={d} />
+                    <Ghost key={range.start} tz={tz} hourCycle={hourCycle} color={DRAFT_COLOR} slot={ghost.kind === "slot"} title="" {...range} day={d} />
                   )) : null}
                   {!ghost && !(live && !live.event) && props.draft && !props.draft.allDay && sameDay(props.draft.start, d, tz) ? (
                     <DraftBlock
@@ -517,17 +517,21 @@ function DraftBlock({
   )
 }
 
-function Ghost({ start, end, day, tz, hourCycle, color, title }: { start: number; end: number; day: number; tz: string; hourCycle?: HourCycle; color: string; title: string }) {
+/** What's being dragged or drawn: solid, or (`slot`) looking like the picked availability slots it will become. */
+function Ghost({ start, end, day, tz, hourCycle, color, title, slot }: { start: number; end: number; day: number; tz: string; hourCycle?: HourCycle; color: string; title: string; slot?: boolean }) {
   const next = addDays(day, 1, tz)
   const top = start <= day ? 0 : minuteOfDay(start, tz)
   const bottom = end >= next ? 1440 : minuteOfDay(end, tz) || 1440
   return (
     <div
-      className="pointer-events-none absolute inset-x-0.5 z-30 rounded-md px-1.5 py-0.5 text-[11px] leading-tight shadow-lg"
-      style={{ top: (top / 60) * HOUR, height: Math.max(((bottom - top) / 60) * HOUR - 1, 16), ...solid(color) }}
+      className={cn(
+        "pointer-events-none absolute inset-x-0.5 z-30 rounded-md px-1.5 py-0.5 text-[11px] leading-tight",
+        slot ? "border-primary bg-primary/15 text-primary border font-medium" : "shadow-lg",
+      )}
+      style={{ top: (top / 60) * HOUR, height: Math.max(((bottom - top) / 60) * HOUR - 1, 16), ...(slot ? {} : solid(color)) }}
     >
       {title ? <div className="truncate font-medium">{title}</div> : null}
-      <div className="tabular-nums opacity-85">
+      <div className={cn("tabular-nums", !slot && "opacity-85")}>
         {fmtTime(start, tz, hourCycle)} – {fmtTime(end, tz, hourCycle)}
       </div>
     </div>

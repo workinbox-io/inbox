@@ -47,10 +47,10 @@ try {
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   const base = `https://localhost:${server.address().port}`;
-  await build({ stdin: { contents: "export {JmapClient} from './src/lib/mail/jmap.ts'; export {EngineIndex} from './services/mail-bridge/src/engine-sync.mjs'; export {EngineAdmin} from './services/mail-bridge/src/engine-admin.mjs'; export {Accounts} from './services/mail-bridge/src/accounts.mjs'; export {engineMail} from './services/mail-bridge/src/engine-mail.mjs';", resolveDir: process.cwd(), loader: 'ts' }, outfile: join(dir, 'client.mjs'), bundle: true, platform: 'node', format: 'esm' });
+  await build({ stdin: { contents: "export {JmapClient} from './src/lib/mail/jmap.ts'; export {EngineIndex} from './services/mail-bridge/src/engine-sync.mjs'; export {EngineAdmin} from './services/mail-bridge/src/engine-admin.mjs'; export {Accounts} from './services/mail-bridge/src/accounts.mjs'; export {engineMail} from './services/mail-bridge/src/engine-mail.mjs'; export {MailQueue} from './services/mail-bridge/src/mail-queue.mjs';", resolveDir: process.cwd(), loader: 'ts' }, outfile: join(dir, 'client.mjs'), bundle: true, platform: 'node', format: 'esm', banner: { js: "import {createRequire as nodeRequire} from 'node:module';const require=nodeRequire(import.meta.url);" } });
   const fixture = `
     import assert from 'node:assert/strict';
-    import {JmapClient,EngineIndex,EngineAdmin,Accounts,engineMail} from './client.mjs';
+    import {JmapClient,EngineIndex,EngineAdmin,Accounts,engineMail,MailQueue} from './client.mjs';
     import {createServer} from 'node:http';
     import {once} from 'node:events';
     import {DatabaseSync} from 'node:sqlite';
@@ -88,9 +88,11 @@ try {
     const mailbox=await admin.mail(binding);
     const folder=await mailbox.client.createFolder('E2E external');
     const external=await mailbox.client.importMessage(base+'/jmap/upload/{accountId}/',raw,folder,'2026-01-01T00:00:00Z');
+    const deliveries=[];
+    const outbox=new MailQueue(accounts,admin,{deliver:async(_account,payload)=>deliveries.push(payload)});
     const app=createServer(async(req,res)=>{
       const url=new URL(req.url,'http://bridge');
-      await engineMail({accounts,engine:admin,org:'scope',connectionId:'connection',path:url.pathname.slice(1),url,req,res,send:(status,body)=>{res.writeHead(status,{'content-type':'application/json'});res.end(JSON.stringify(body));}});
+      await engineMail({accounts,engine:admin,org:'scope',connectionId:'connection',readOnly:accounts.connectionInfo('scope','connection')?.readOnly,outbox,path:url.pathname.slice(1),url,req,res,send:(status,body)=>{res.writeHead(status,{'content-type':'application/json'});res.end(JSON.stringify(body));}});
     });
     app.listen(0,'127.0.0.1');await once(app,'listening');
     const request=(path,method='GET',body)=>fetch('http://127.0.0.1:'+app.address().port+'/'+path,{method,headers:{'content-type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
@@ -100,12 +102,23 @@ try {
       assert.equal((await request('messages/'+external.id,'PATCH',{starred:true,unread:false})).status,200);
       const changed=await (await request('messages/'+external.id)).json();assert.equal(changed.message.keywords.$flagged,true);
       const original=await request('messages/'+external.id+'/raw');assert.equal(original.status,200);assert.match(await original.text(),/Original body/);
+      const jobId='1479fba3-a32f-44ac-a3b7-64754ebf5fa3';
+      const queued=await request('send','POST',{id:jobId,to:['bob@example.com'],subject:'Reply E2E',text:'Reply body',replyToId:external.id});assert.equal(queued.status,202);
+      accounts.db.exec('UPDATE outgoing_mail SET send_at=0,attempted_at=0');await outbox.tick();
+      assert.equal(outbox.list('scope','connection')[0].state,'sent');assert.equal(deliveries.length,1);
+      assert.match(Buffer.from(deliveries[0].raw,'base64').toString(),/In-Reply-To:/);
       assert.equal((await request('messages/'+external.id,'DELETE')).status,409);
       const allFolders=await (await request('folders')).json();const trash=allFolders.list.find(item=>item.role==='trash');assert.ok(trash);
       assert.equal((await request('messages/'+external.id,'PATCH',{folderId:trash.id})).status,200);
       assert.equal((await request('messages/'+external.id,'DELETE')).status,200);
       assert.equal((await request('messages/'+external.id)).status,404);
-    } finally { await new Promise(resolve=>app.close(resolve)); accounts.close(); }
+      const retained=await mailbox.client.importMessage(base+'/jmap/upload/{accountId}/',raw,folder,'2026-01-01T00:00:00Z');
+      accounts.remove('scope','connection');accounts.remove('scope','connection');assert.equal(accounts.get('scope','connection'),null);
+      assert.equal((await (await request('folders')).json()).readOnly,true);
+      assert.equal((await request('messages/'+retained.id)).status,200);
+      assert.equal((await request('messages/'+retained.id,'PATCH',{starred:true})).status,403);
+      assert.equal((await request('send','POST',{id:'1479fba3-a32f-44ac-a3b7-64754ebf5fa4',to:['bob@example.com'],subject:'Blocked',text:'Blocked'})).status,403);
+    } finally { await outbox.stop(); await new Promise(resolve=>app.close(resolve)); accounts.close(); }
     console.log('Stalwart JMAP and external mailbox API E2E: passed');
   `;
   const child = spawn(process.execPath, ['--input-type=module', '-e', fixture], { cwd: dir, stdio: 'inherit', env: {

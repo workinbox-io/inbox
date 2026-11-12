@@ -293,7 +293,9 @@ export function ComposeFrame({
                 <X />
               </Button>
             </div>
-            {size === "min" ? null : children}
+            <div className={cn("min-h-0 flex-1 flex-col", size === "min" ? "hidden" : "flex")}>
+              {children}
+            </div>
           </div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

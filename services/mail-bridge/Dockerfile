@@ -5,6 +5,7 @@ COPY services/mail-bridge/package*.json ./
 RUN npm ci --omit=dev
 COPY services/mail-bridge/src ./src
 COPY src/lib/mail/jmap.ts /app/src/lib/mail/jmap.ts
+COPY src/lib/mail/outbox-policy.ts /app/src/lib/mail/outbox-policy.ts
 RUN mkdir /data && chown node:node /data
 USER node
 EXPOSE 8090

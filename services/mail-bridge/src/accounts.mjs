@@ -40,6 +40,7 @@ export class Accounts {
         PRIMARY KEY(org_id,id));
       CREATE TABLE IF NOT EXISTS disconnected_accounts (org_id TEXT NOT NULL,id TEXT NOT NULL,PRIMARY KEY(org_id,id));`);
     if (!this.db.prepare('PRAGMA table_info(engine_bindings)').all().some(column => column.name === 'attempted_at')) this.db.exec('ALTER TABLE engine_bindings ADD COLUMN attempted_at INTEGER');
+    if (!this.db.prepare('PRAGMA table_info(disconnected_accounts)').all().some(column => column.name === 'profile')) this.db.exec('ALTER TABLE disconnected_accounts ADD COLUMN profile TEXT');
   }
   put(org, id, input) {
     if (this.db.prepare('SELECT 1 FROM disconnected_accounts WHERE org_id=? AND id=?').get(org, id)) throw new Error('Reconnect using a new connection id');
@@ -81,22 +82,39 @@ export class Accounts {
   status(org, id) {
     return this.db.prepare('SELECT state,synced_at AS syncedAt,error FROM engine_bindings WHERE org_id=? AND id=?').get(org, id) ?? null;
   }
+  connectionInfo(org, id) {
+    const account = this.get(org, id);
+    if (account) {
+      const { password: _imap, ...imap } = account.imap;
+      const { password: _smtp, ...smtp } = account.smtp;
+      return { address: account.address, imap, smtp, readOnly: false };
+    }
+    const row = this.db.prepare('SELECT profile FROM disconnected_accounts WHERE org_id=? AND id=?').get(org, id);
+    return row?.profile && this.binding(org, id) ? this.decrypt(org, id, row.profile, 'disconnected') : null;
+  }
   setStatus(org, id, state, syncedAt = null) {
     this.db.prepare('UPDATE engine_bindings SET state=?,synced_at=coalesce(?,synced_at),error=?,attempted_at=? WHERE org_id=? AND id=?')
       .run(state, syncedAt, state === 'error' ? 'Synchronization failed. Check credentials and server availability.' : null, Date.now(), org, id);
   }
   list(org) {
-    return this.db.prepare('SELECT id FROM accounts WHERE org_id=? ORDER BY created_at').all(org).map(({ id }) => {
+    const active = this.db.prepare('SELECT id FROM accounts WHERE org_id=? ORDER BY created_at').all(org).map(({ id }) => {
       const sync = this.status(org, id);
       return { id, address: this.get(org, id).address, ...(sync ? { sync } : {}) };
     });
+    const disconnected = this.db.prepare('SELECT d.id FROM disconnected_accounts d JOIN engine_bindings e ON e.org_id=d.org_id AND e.id=d.id WHERE d.org_id=? AND d.profile IS NOT NULL').all(org).map(({ id }) => ({ id, address: this.connectionInfo(org, id).address, sync: this.status(org, id) }));
+    return [...active, ...disconnected];
   }
   remove(org, id) {
+    const account = this.get(org, id);
+    if (!account) return;
+    const { password: _imap, ...imap } = account.imap;
+    const { password: _smtp, ...smtp } = account.smtp;
+    const profile = this.encrypt(org, id, { address: account.address, imap, smtp, readOnly: true }, 'disconnected');
     this.db.exec('BEGIN IMMEDIATE');
     try {
-      this.db.prepare('DELETE FROM engine_bindings WHERE org_id=? AND id=?').run(org, id);
+      this.db.prepare("UPDATE engine_bindings SET state='disconnected',error=NULL WHERE org_id=? AND id=?").run(org, id);
       const deleted = this.db.prepare('DELETE FROM accounts WHERE org_id=? AND id=?').run(org, id);
-      if (deleted.changes) this.db.prepare('INSERT OR IGNORE INTO disconnected_accounts VALUES (?,?)').run(org, id);
+      if (deleted.changes) this.db.prepare('INSERT INTO disconnected_accounts(org_id,id,profile) VALUES (?,?,?) ON CONFLICT(org_id,id) DO UPDATE SET profile=excluded.profile').run(org, id, profile);
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }

@@ -39,7 +39,34 @@ servers before saving. The ID is caller-generated (for example a UUID).
 Payload: `{address, imap: {host, port: 993, username, password}, smtp:
 {host, port: 465|587, username, password}}`. Credentials are never returned.
 Accounts are scoped to organization and signed-in user; API keys are rejected.
-These connections are not yet synchronized into the mailbox UI.
+With synchronization configured, Settings → Mail provides an Open mail link to
+`/app/mail/external/<id>`. This view reads the bound engine account through the
+authenticated Workinbox API. It supports folders, paging, message bodies,
+read/star flags, moves, Trash, permanent deletion and original/attachment downloads.
+HTML uses the existing sandbox and remote-image blocking.
+
+## Automatic synchronization pilot
+
+Set `MAIL_SYNC_ENABLED=true` only after configuring the engine API and IMAPS TLS:
+
+- `MAIL_ENGINE_URL`: full HTTPS JMAP endpoint.
+- `MAIL_ENGINE_TOKEN`: server administration token with account creation/query permissions.
+- `MAIL_ENGINE_DOMAIN_ID` and `MAIL_ENGINE_DOMAIN`: an internal domain configured in Stalwart.
+- `MAIL_ENGINE_IMAP_HOST`: the hostname on the engine's TLS certificate.
+- `MAIL_ENGINE_IMAP_TARGET`: trusted connection target, `stalwart` on the Compose network by default.
+
+Each external connection gets a separate engine user with encrypted credentials.
+The bridge runs at most two synchronizations simultaneously, checks pending
+accounts every 30 seconds, and interrupts a run after five minutes; mbsync's
+durable journal resumes progress on the next run. Account identity cannot be
+changed underneath an existing journal. A missing create response is reconciled
+using the persisted engine identity. Reconnect updates passwords; disconnect
+waits for the running task to stop before deleting the external credentials.
+
+Back up engine metadata and mbsync journals together. Never reset a journal to
+resolve an error without checking both mailboxes. UIDVALIDITY resets and deletion
+or renaming of non-empty folders require recovery; synchronization stops instead
+of guessing which messages to delete.
 
 ## Tests
 
@@ -59,14 +86,18 @@ enabled. The test checks the production connection verifier, rejects a bad IMAP
 password, sends an attachment through SMTPS and reads, flags, moves and deletes
 the message over IMAPS. The fixture resolver is supplied directly to the verifier
 by the test; the production HTTP API always checks public DNS and pins the IP.
-The runner removes its container and temporary certificate directory on exit.
+The runner also builds the current bridge image and checks bidirectional copies,
+flags, moves, expunges, repeated runs and credential failure across two real IMAP
+accounts. It checks the actual test container exit status and removes its test
+images, containers and certificate directory on exit.
 
-This is protocol E2E, not browser-to-Workinbox synchronization E2E. The latter
-requires the remaining application adapter and synchronization implementation.
+These are protocol and service integration tests, not a single browser-to-provider
+E2E through a complete authenticated Workinbox session.
 
 The browser integration test bundles the real external-connections component
 and supplies an HTTP API fixture. It checks failure/retry, clearing passwords,
-connection testing and disconnect confirmation. It does not test mail sync.
+connection testing, disconnect confirmation and the mailbox view's flags, Trash,
+permanent deletion, HTML sandbox and remote-image blocking. It does not test sync.
 The settings panel is rendered only when both bridge Worker secrets exist,
 including for members who cannot administer organization mail domains.
 
@@ -91,7 +122,7 @@ Per-account leases fence concurrent or expired workers. It resumes committed
 delta pages on the next run; it does not yet schedule runs automatically.
 It does not fetch external IMAP accounts or update the Workinbox D1 read model.
 
-Still required: external IMAP synchronization,
-JMAP application adapter, per-message folder model, UI/API/MCP integration,
-mail migration and regression/restore tests. Public clients cannot use Workinbox
-accounts until those components and identity provisioning are implemented.
+Still required before production: outbound integration with the existing send
+queue, hosted-mail migration, client app-password provisioning and SMTP relay,
+API/MCP coverage, disconnected read-only copies, guided sync recovery and full
+application/restore tests. Public clients cannot yet use Workinbox accounts.

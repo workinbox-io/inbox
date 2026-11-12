@@ -5,16 +5,18 @@ import { synchronizeImap } from './imap-sync.mjs';
 export class SyncScheduler {
   constructor(accounts, engine, synchronize = synchronizeImap, resolveEngine = async host => (await lookup(host)).address) {
     this.accounts = accounts; this.engine = engine; this.synchronize = synchronize; this.resolveEngine = resolveEngine;
-    this.active = new Map(); this.stopped = false;
+    this.active = new Map(); this.blocked = new Set(); this.stopped = false;
   }
   key(scope, id) { return JSON.stringify([scope, id]); }
   async cancel(scope, id) {
     const task = this.active.get(this.key(scope, id));
     if (task) { task.controller.abort(); await task.promise; }
   }
+  async pause(scope, id) { this.blocked.add(this.key(scope, id)); await this.cancel(scope, id); }
+  resume(scope, id) { this.blocked.delete(this.key(scope, id)); }
   run(scope, id) {
     const key = this.key(scope, id);
-    if (this.stopped || this.active.has(key) || this.active.size >= 2) return;
+    if (this.stopped || this.blocked.has(key) || this.active.has(key) || this.active.size >= 2) return;
     const controller = new AbortController();
     const task = { controller, promise: null };
     this.active.set(key, task);
@@ -28,7 +30,7 @@ export class SyncScheduler {
         this.accounts.setStatus(scope, id, 'syncing');
         timeout = setTimeout(() => controller.abort(), 300000);
         await this.synchronize({ scope, id, far: account.imap,
-          near: { host: this.engine.imapHost, ip: await this.resolveEngine(this.engine.imapHost), port: 993, username: binding.username, password: binding.password },
+          near: { host: this.engine.imapHost, ip: await this.resolveEngine(this.engine.imapTarget ?? this.engine.imapHost), port: 993, username: binding.username, password: binding.password },
           signal: controller.signal,
         });
         if (!controller.signal.aborted) this.accounts.setStatus(scope, id, 'ready', Date.now());

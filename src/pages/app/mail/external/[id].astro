@@ -1,0 +1,22 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import MailLayout from "@/layouts/MailLayout.astro";
+import AppRail from "@/components/workspace/AppRail.astro";
+import AppTopBar from "@/components/workspace/AppTopBar.astro";
+import { ExternalMailbox } from "@/components/mailbox/external-mailbox";
+import { workspaceView } from "@/lib/server/workspace-view";
+
+const id = Astro.params.id ?? "";
+if (!/^[a-zA-Z0-9_-]{1,128}$/.test(id)) return new Response("Not found", { status: 404 });
+const mailOnly = workspaceView(Astro.cookies, Astro.locals.user!.id, Astro.locals.role ?? "member") === "user";
+const Layout = mailOnly ? MailLayout : AppLayout;
+---
+<Layout title="External mail" fullBleed>
+  <div class="flex h-full min-h-0">
+    {mailOnly && <AppRail current="mail" />}
+    <div class="flex min-w-0 flex-1 flex-col">
+      {mailOnly && <AppTopBar title="External mail" />}
+      <div class="min-h-0 flex-1"><ExternalMailbox client:load connectionId={id} draftScope={`${Astro.locals.orgId}:${Astro.locals.user!.id}:${id}`} /></div>
+    </div>
+  </div>
+</Layout>

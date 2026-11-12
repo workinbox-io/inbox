@@ -3,9 +3,10 @@ import { JmapClient } from '../../../src/lib/mail/jmap.ts';
 
 /** Privileged operations stay on the bridge. Browser callers cannot choose engine account IDs. */
 export class EngineAdmin {
-  constructor({ url, token, domainId, domain, imapHost }, transport = fetch) {
+  constructor({ url, token, domainId, domain, imapHost, imapTarget }, transport = fetch) {
     if (!url || new URL(url).protocol !== 'https:' || !token || !domainId || !domain || !imapHost) throw new Error('Complete HTTPS engine configuration required');
     this.url = url; this.token = token; this.domainId = domainId; this.domain = domain; this.imapHost = imapHost; this.transport = transport;
+    this.imapTarget = imapTarget ?? imapHost;
   }
   async call(method, args) {
     const response = await this.transport(this.url, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(30000),
@@ -54,6 +55,8 @@ export class EngineAdmin {
     if (session.primaryAccounts?.['urn:ietf:params:jmap:mail'] !== binding.accountId) throw new Error('Engine mailbox identity mismatch');
     const download = new URL(session.downloadUrl);
     const path = download.pathname.replace(/%7B(accountId|blobId|name)%7D/g, '{$1}');
-    return { client: new JmapClient(this.url, authorization, binding.accountId, this.transport), downloadUrl: `${new URL(this.url).origin}${path}${download.search}` };
+    const upload = new URL(session.uploadUrl);
+    return { client: new JmapClient(this.url, authorization, binding.accountId, this.transport), downloadUrl: `${new URL(this.url).origin}${path}${download.search}`,
+      uploadUrl: `${new URL(this.url).origin}${upload.pathname.replace(/%7BaccountId%7D/g, '{accountId}')}${upload.search}` };
   }
 }

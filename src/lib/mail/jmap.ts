@@ -22,6 +22,8 @@ export interface EngineMessage extends EngineEmail {
   subject: string;
   preview: string;
   from: { name: string; email: string }[] | null;
+  replyTo: { name: string; email: string }[] | null;
+  messageId: string[] | null;
   to: { name: string; email: string }[] | null;
   cc: { name: string; email: string }[] | null;
   textBody: { partId: string; blobId: string }[];
@@ -29,6 +31,7 @@ export interface EngineMessage extends EngineEmail {
   bodyValues: Record<string, { value: string; isTruncated: boolean }>;
   attachments: { partId: string; blobId: string; name: string | null; type: string; size: number }[];
 }
+export type EngineSummary = Pick<EngineMessage, "id" | "blobId" | "threadId" | "mailboxIds" | "keywords" | "receivedAt" | "size" | "subject" | "preview" | "from" | "to" | "cc">;
 
 /** One account per client; callers resolve account access before constructing it. */
 export class JmapClient {
@@ -90,8 +93,14 @@ export class JmapClient {
 
   contents(ids: string[]) {
     return this.call<{ state: string; list: EngineMessage[]; notFound: string[] }>("Email/get", {
-      ids, properties: ["id", "blobId", "threadId", "mailboxIds", "keywords", "receivedAt", "size", "subject", "preview", "from", "to", "cc", "textBody", "htmlBody", "bodyValues", "attachments"],
+      ids, properties: ["id", "blobId", "threadId", "mailboxIds", "keywords", "receivedAt", "size", "subject", "preview", "from", "replyTo", "messageId", "to", "cc", "textBody", "htmlBody", "bodyValues", "attachments"],
       fetchTextBodyValues: true, fetchHTMLBodyValues: true, maxBodyValueBytes: 1_000_000,
+    });
+  }
+
+  summaries(ids: string[]) {
+    return this.call<{ state: string; list: EngineSummary[]; notFound: string[] }>("Email/get", {
+      ids, properties: ["id", "blobId", "threadId", "mailboxIds", "keywords", "receivedAt", "size", "subject", "preview", "from", "to", "cc"],
     });
   }
 

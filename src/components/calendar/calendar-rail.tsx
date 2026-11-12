@@ -27,12 +27,13 @@ import { isTimeZone, wallTime } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { onSettingsSaved, openSettings } from "@/components/settings/open-settings"
-import { CALENDAR_COLORS, parseDayKey, personColor, type CalendarView, type Prefs } from "./shared"
+import { CALENDAR_COLORS, parseDayKey, personColor, type CalendarView, type Prefs, type ViewMode } from "./shared"
 
 const pad = (n: number) => String(n).padStart(2, "0")
 
 export function CalendarRail({
   date,
+  view,
   tz,
   prefs,
   calendars,
@@ -51,6 +52,7 @@ export function CalendarRail({
   onSettingsOpen,
 }: {
   date: number
+  view: ViewMode
   tz: string
   prefs: Prefs
   calendars: CalendarView[]
@@ -75,6 +77,9 @@ export function CalendarRail({
   const w = wallTime(date, tz)
   const selected = new Date(w.year, w.month - 1, w.day)
   const [month, setMonth] = React.useState(selected)
+  // Week view: the whole week shown in the grid gets a band in the mini month.
+  const weekFrom = new Date(w.year, w.month - 1, w.day - ((selected.getDay() - prefs.weekStart + 7) % 7))
+  const week = view === "week" ? { from: weekFrom, to: new Date(weekFrom.getFullYear(), weekFrom.getMonth(), weekFrom.getDate() + 6) } : undefined
   React.useEffect(() => setMonth(new Date(w.year, w.month - 1, 1)), [w.year, w.month])
 
   async function remove(c: CalendarView) {
@@ -141,6 +146,8 @@ export function CalendarRail({
           month={month}
           onMonthChange={setMonth}
           weekStartsOn={prefs.weekStart as 0 | 1 | 6}
+          modifiers={week ? { week } : undefined}
+          modifiersClassNames={{ week: "bg-muted rounded-none! first:rounded-l-(--cell-radius)! last:rounded-r-(--cell-radius)!" }}
           onSelect={(d) => d && onDate(parseDayKey(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, tz)!)}
           // Spans the (resizable) rail: columns stretch, days stay round cells centred in them.
           classNames={{ root: "w-full" }}

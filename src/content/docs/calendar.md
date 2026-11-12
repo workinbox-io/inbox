@@ -26,6 +26,8 @@ events. The arrows move between years; **Today** returns to the current year.
 | `⌫` | Delete the selected event |
 
 Drag in the grid to create an event, drag an event to move it and its bottom edge to change its length.
+New events open in a docked window like a new e-mail: minimize it while choosing a time, or expand it to finish
+the details. Minimizing keeps the form; closing a filled-in event asks before discarding it.
 
 ## Recurring events
 

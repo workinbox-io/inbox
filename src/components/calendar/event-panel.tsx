@@ -7,7 +7,7 @@ import * as React from "react"
 import { AlignLeft, Bell, CalendarDays, Clock, MapPin, Repeat, Trash2, Users, Video, X } from "lucide-react"
 import { ConfirmDialog } from "@/components/app/confirm-button"
 import { UserAvatar } from "@/components/app/user-avatar"
-import { AddressInput, type AddressSuggestion } from "@/components/mail/compose"
+import { AddressInput, ComposeFrame, type AddressSuggestion } from "@/components/mail/compose"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -110,7 +110,9 @@ export function EventPanel({
   onDelete,
   onRsvp,
   onDraft,
+  open = true,
 }: {
+  open?: boolean
   event: EventView | null
   draft: Draft | null
   tz: string
@@ -162,10 +164,10 @@ export function EventPanel({
 
   // Form → grid: times or title typed in the panel.
   React.useEffect(() => {
-    if (event || !range || !onDraft) return
+    if (!open || event || !range || !onDraft) return
     onDraft({ start: range.start, end: range.end, allDay: f.allDay, title: f.title.trim() || undefined })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range?.start, range?.end, f.allDay, f.title])
+  }, [range?.start, range?.end, f.allDay, f.title, open])
   const presets = repeatPresets(range?.start ?? Date.now(), tz)
   const custom = f.rrule && !presets.some((p) => p.value === f.rrule)
 
@@ -217,26 +219,13 @@ export function EventPanel({
   const dirty = JSON.stringify(f) !== JSON.stringify(start) || !event
   const field = "h-8 bg-transparent"
 
-  // Esc drops a new event, even while typing in it; asks first once something was written.
   const [discarding, setDiscarding] = React.useState(false)
   const filled = !event && !!(f.title.trim() || f.description.trim() || f.location.trim() || f.url.trim() || f.attendees.length)
-  React.useEffect(() => {
-    if (event) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented) return
-      // Open selects, menus and dialogs (the Sheet on phones too) close first on their own.
-      if (document.querySelector("[role=dialog][data-state=open], [role=alertdialog], [role=menu], [role=listbox]")) return
-      e.preventDefault()
-      if (filled) setDiscarding(true)
-      else onClose()
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [event, filled, onClose])
+  const requestClose = () => filled ? setDiscarding(true) : onClose()
 
-  return (
+  const content = (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex min-h-12 items-center gap-1 border-b px-3">
+      {event ? <header className="flex min-h-12 items-center gap-1 border-b px-3">
         <span className="text-muted-foreground flex-1 text-xs font-medium">{event ? (editable ? t("Event") : t("Event (view only)")) : t("New event")}</span>
         {event && editable ? (
           <Button variant="ghost" size="icon-sm" aria-label={t("Delete")} onClick={() => void onDelete(event)}>
@@ -246,7 +235,7 @@ export function EventPanel({
         <Button variant="ghost" size="icon-sm" aria-label={t("Close")} onClick={onClose}>
           <X />
         </Button>
-      </header>
+      </header> : null}
       <form
         className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto p-4"
         onSubmit={(e) => {
@@ -401,7 +390,7 @@ export function EventPanel({
 
         {editable ? (
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+            <Button type="button" variant="ghost" size="sm" onClick={requestClose}>
               {t("Cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={!dirty || !range || busy}>
@@ -420,6 +409,18 @@ export function EventPanel({
       />
     </div>
   )
+  return event ? content : (
+    <ComposeFrame open={open} title={t("New event")} closeLabel={t("Close")} dockedOnMobile onClose={requestClose}>
+      {content}
+    </ComposeFrame>
+  )
+}
+
+/** Keep the form mounted while its window closes or is hidden behind availability. */
+export function NewEventWindow({ draft, open, ...props }: Omit<React.ComponentProps<typeof EventPanel>, "event" | "draft"> & { draft: Draft | null; open: boolean }) {
+  const [lastDraft, setLastDraft] = React.useState(draft)
+  if (draft && draft !== lastDraft) setLastDraft(draft)
+  return lastDraft ? <EventPanel {...props} event={null} draft={draft ?? lastDraft} open={open} /> : null
 }
 
 function Row({ icon: Icon, children }: { icon: typeof Clock; children: React.ReactNode }) {

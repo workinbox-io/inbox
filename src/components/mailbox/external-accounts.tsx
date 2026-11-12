@@ -6,8 +6,8 @@ import { Field, FieldLabel, FieldGroup, FieldSet, FieldLegend, FieldError } from
 import { SettingsSection } from "@/components/app/settings-section"
 import { ConfirmButton } from "@/components/app/confirm-button"
 
-interface Connection { id: string; address: string; sync?: { state: "pending" | "syncing" | "ready" | "error"; syncedAt: number | null; error: string | null } }
-interface ConnectionSettings { address: string; imap: { host: string; username: string }; smtp: { host: string; username: string; port: number } }
+interface Connection { id: string; address: string; sync?: { state: "pending" | "syncing" | "ready" | "error" | "disconnected"; syncedAt: number | null; error: string | null } }
+interface ConnectionSettings { address: string; readOnly?: boolean; imap: { host: string; username: string }; smtp: { host: string; username: string; port: number } }
 const endpoint = "/api/app/mail/external-accounts"
 
 export function ExternalAccounts() {
@@ -57,21 +57,22 @@ export function ExternalAccounts() {
       {loading ? <p role="status">Loading connections…</p> : connections.length === 0 && <p>No external connections.</p>}
       {connections.map(connection => <div key={connection.id} className="flex flex-wrap items-center gap-3">
         <span>{connection.address}</span>
-        {connection.sync && <span role="status">{connection.sync.state === "ready" ? `Last synchronized: ${connection.sync.syncedAt ? new Date(connection.sync.syncedAt).toLocaleString() : "—"}` : connection.sync.state === "error" ? connection.sync.error : "Synchronizing…"}</span>}
-        {connection.sync && <Button variant="outline" disabled={busy || connection.sync.state === "syncing"} onClick={() => void run(async () => {
+        {connection.sync && <Button variant="outline" asChild><a href={`/app/mail/external/${encodeURIComponent(connection.id)}`}>Open mail</a></Button>}
+        {connection.sync && <span role="status">{connection.sync.state === "disconnected" ? "Disconnected · Read-only copy" : connection.sync.state === "ready" ? `Last synchronized: ${connection.sync.syncedAt ? new Date(connection.sync.syncedAt).toLocaleString() : "—"}` : connection.sync.state === "error" ? connection.sync.error : "Synchronizing…"}</span>}
+        {connection.sync && connection.sync.state !== "disconnected" && <Button variant="outline" disabled={busy || connection.sync.state === "syncing"} onClick={() => void run(async () => {
           await api("POST", `${endpoint}/${connection.id}/sync`); setNotice("Synchronization queued."); await refresh()
         })}>Sync now</Button>}
-        <Button variant="outline" disabled={busy} onClick={() => void run(async () => {
+        <Button variant="outline" disabled={busy || connection.sync?.state === "disconnected"} onClick={() => void run(async () => {
           await api("POST", `${endpoint}/${connection.id}`)
           setNotice(`Connection to ${connection.address} verified.`)
         })}>Test connection</Button>
         <Button variant="outline" disabled={busy} onClick={() => void run(async () => {
           const config = await api<ConnectionSettings>("GET", `${endpoint}/${connection.id}`)
-          draftId.current = connection.id; setSettings(config); setEditing(true)
+          draftId.current = config.readOnly ? crypto.randomUUID() : connection.id; setSettings(config); setEditing(true)
         })}>Reconnect</Button>
-        <ConfirmButton title="Disconnect account?" description="Saved credentials will be removed. Messages on your mail server will remain unchanged." confirmLabel="Disconnect" onConfirm={() => run(async () => {
+        {connection.sync?.state !== "disconnected" && <ConfirmButton title="Disconnect account?" description="Saved external credentials will be removed. Synchronized messages remain available as a read-only copy; mail on your server stays unchanged." confirmLabel="Disconnect" onConfirm={() => run(async () => {
           await api("DELETE", `${endpoint}/${connection.id}`); await refresh(); setNotice("Connection removed.")
-        })}><Button variant="outline" disabled={busy}>Disconnect</Button></ConfirmButton>
+        })}><Button variant="outline" disabled={busy}>Disconnect</Button></ConfirmButton>}
       </div>)}
       {!editing ? <Button variant="outline" disabled={busy || loading} onClick={() => { draftId.current = crypto.randomUUID(); setSettings(null); setEditing(true) }}>Add connection</Button> :
         <form onSubmit={save} key={draftId.current}>

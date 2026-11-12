@@ -13,6 +13,7 @@ const shell = value => `'${value.replaceAll("'", "'\\''")}'`;
 
 /** All endpoints, including the trusted engine, use verified TLS. Only resolved IPs reach the tunnel. */
 export function syncConfig(far, near, stateDir, caFile) {
+  // shortcut: UIDVALIDITY resets and non-empty folder deletion stop sync; add guided recovery before automatic repair.
   const store = (name, server) => {
     if (!/^[a-zA-Z0-9.-]+$/.test(server.host) || !/^[a-fA-F0-9:.]+$/.test(server.ip) || !Number.isInteger(server.port) || server.port < 1 || server.port > 65535) throw new Error('Invalid IMAP endpoint');
     const address = server.ip.includes(':') ? `[${server.ip}]` : server.ip;
@@ -36,7 +37,7 @@ export async function synchronizeImap({ scope, id, far, near, dataDir = '/data/s
     await new Promise((resolve, reject) => {
       // Secrets are inherited only by this process, never interpolated into shell text or arguments.
       const child = spawn(executable, ['-c', file, '-a', '-q'], {
-        env: { PATH: process.env.PATH, LANG: 'C.UTF-8', WI_FAR_PASSWORD: far.password, WI_NEAR_PASSWORD: near.password },
+        env: { PATH: process.env.PATH, HOME: state, LANG: 'C.UTF-8', WI_FAR_PASSWORD: far.password, WI_NEAR_PASSWORD: near.password },
         stdio: ['ignore', 'ignore', 'ignore'], detached: true,
       });
       let timer;
