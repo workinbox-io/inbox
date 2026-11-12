@@ -20,17 +20,27 @@ function useRailWidth() {
   React.useEffect(() => {
     try {
       const saved = Number(localStorage.getItem(RAIL_KEY))
-      if (saved) setWidth(Math.min(RAIL_MAX, Math.max(RAIL_MIN, saved)))
+      if (!saved) return
+      const w = Math.min(RAIL_MAX, Math.max(RAIL_MIN, saved))
+      setWidth(w)
+      document.documentElement.style.setProperty("--rail-w", `${w}px`)
     } catch {}
   }, [])
   const save = (w: number) => {
     setWidth(w)
+    document.documentElement.style.setProperty("--rail-w", `${w}px`)
     try {
       localStorage.setItem(RAIL_KEY, String(w))
     } catch {}
   }
   return [width, save] as const
 }
+
+/**
+ * Runs while the page is parsed, before the first paint: the saved width goes into `--rail-w`, so a server-rendered
+ * rail opens at it instead of jumping from the default after hydration on every page.
+ */
+const RAIL_WIDTH_SCRIPT = `try{var w=+localStorage.getItem(${JSON.stringify(RAIL_KEY)});if(w)document.documentElement.style.setProperty("--rail-w",Math.min(${RAIL_MAX},Math.max(${RAIL_MIN},w))+"px")}catch(e){}`
 
 /** The rail's column: its width and the drag handle on the right edge (double-click resets). Mail's FolderRail uses it too. */
 export function RailNav({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
@@ -51,7 +61,9 @@ export function RailNav({ label, className, children }: { label: string; classNa
     el.addEventListener("pointerup", up)
   }
   return (
-    <div className="relative h-full shrink-0 border-r" style={{ width }}>
+    // The width comes from the CSS variable (set before paint); state only drives the separator's value.
+    <div className="relative h-full shrink-0 border-r" style={{ width: `var(--rail-w, ${RAIL_DEFAULT}px)` }}>
+      <script dangerouslySetInnerHTML={{ __html: RAIL_WIDTH_SCRIPT }} />
       <nav aria-label={label} className={cn("flex h-full flex-col gap-6 overflow-y-auto px-3 py-3", className)}>
         {children}
       </nav>
