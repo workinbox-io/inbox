@@ -49,6 +49,10 @@ export function mountScenes(root: ParentNode = document) {
       }
       requestAnimationFrame(frame);
     };
+    reduced.addEventListener("change", () => {
+      if (reduced.matches) draw(4);
+      else if (visible) requestAnimationFrame(frame);
+    });
     draw(4);
     new ResizeObserver(() => {
       const before = canvas.width;

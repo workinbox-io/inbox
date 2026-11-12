@@ -62,7 +62,7 @@ export const random = (seed: number) => () => {
 /** Drawing on the canvas, in scene pixels. */
 export class Pix {
   constructor(
-    private ctx: CanvasRenderingContext2D,
+    public readonly ctx: CanvasRenderingContext2D,
     public w: number,
     public h: number,
     public pal: Palette,

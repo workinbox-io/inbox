@@ -8,10 +8,10 @@
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import Shot from "@/components/site/Shot.astro";
-import NotesPresence from "@/components/site/NotesPresence.astro";
 import Faq from "@/components/site/Faq.astro";
 import PixelScene from "@/components/site/pixel/PixelScene.astro";
 import PixelIcon from "@/components/site/pixel/PixelIcon.astro";
+import PersonReferences from "@/components/site/PersonReferences.astro";
 import CommandBox from "@/components/site/CommandBox.astro";
 import ClosingBand from "@/components/site/ClosingBand.astro";
 import { COMPETITORS } from "@/config/compare";
@@ -199,11 +199,11 @@ const jsonLd = [
 ---
 
 <MarketingLayout title="Open-source team email on your own domain" description={siteConfig.description} jsonLd={jsonLd} ink>
-  <!-- Hero: ink band under the see-through header, the pixel harbour dithering into the page. -->
-  <section class="mk-band mk-under-header relative isolate lg:min-h-[66.7vw] lg:pb-[25vw]">
-    <div class="mk-wrap pt-10 sm:pt-16">
+  <!-- Hero: ink band under the see-through header, the isometric living-room startup (pixel scene "house") as a full-width strip. -->
+  <section class="mk-band mk-under-header relative isolate overflow-hidden">
+    <div class="mk-wrap pt-8 sm:pt-12">
       <h1 class="mk-h1 max-w-4xl">Your team's email,<br /> on your own domain</h1>
-      <p class="mk-lead mt-6 max-w-2xl">
+      <p class="mk-lead mt-6 max-w-2xl lg:max-w-xl">
         Personal and shared mailboxes and aliases, with notes, contacts and a drive your team shares. Free for up to {FREE_PEOPLE} people, then from
         €{lowest} per person a month, or free on your own Cloudflare account.
       </p>
@@ -214,10 +214,10 @@ const jsonLd = [
       <CommandBox hint class="mt-6" />
       <p class="mk-cap mt-6">Open source · AGPL-3.0 · runs on Cloudflare</p>
     </div>
-    <!-- Phones: the scene under the text. From lg: the band's background, pinned to the bottom at full width; the
-         padding keeps the text above the window sill, and a taller text just shows more of the (same colour) sky. -->
-    <div class="mt-8 h-[clamp(16rem,60vw,24rem)] bg-(--mk-bg) lg:absolute lg:inset-x-0 lg:bottom-0 lg:-z-10 lg:mt-0 lg:h-auto">
-      <PixelScene scene="hero" cover class="object-bottom lg:h-auto!" />
+    <!-- The living room as a full-width strip under the text, its floor at the bottom of the band. Phones show its
+         middle (the table), twice as large. -->
+    <div class="mt-8 sm:mt-10">
+      <PixelScene scene="house" class="max-md:-ml-[50%] max-md:w-[200%]!" />
     </div>
   </section>
 
@@ -228,8 +228,8 @@ const jsonLd = [
         cards.map((c) => (
           <div data-reveal>
             <p class="mk-cap">{c.caption}</p>
-            <div class="mk-frame mt-2">{c.scene === "notes" ? <NotesPresence /> : <PixelScene scene={c.scene} />}</div>
-            <p class="mk-cap mt-2">$ {c.command}</p>
+            <div class="mk-frame mt-2"><PixelScene scene={c.scene} /></div>
+            <p class="mk-cap mt-2">$ <PersonReferences text={c.command} /></p>
             <h2 class="mk-h3 mt-6">{c.title}</h2>
             <p class="mt-3 text-lg leading-7 text-(--muted-foreground)">
               {c.text} {c.href && <a href={c.href} class="mk-link text-(--foreground)">How it works</a>}
@@ -248,8 +248,9 @@ const jsonLd = [
       <div class="flex min-h-64 flex-col bg-(--mk-grey) p-6 sm:p-8">
         <p class="mk-cap" data-setup-count>Step 1 of {steps.length}</p>
         <p class="mt-3 font-[family-name:var(--mk-font-mono)] text-xl sm:text-2xl">
-          <span class="opacity-50">$</span> <span data-setup-command>{steps[0]!.command}</span><span class="setup-caret" aria-hidden="true"></span>
+          <span class="opacity-50">$</span> <span data-setup-command><PersonReferences text={steps[0]!.command} /></span><span class="setup-caret" aria-hidden="true"></span>
         </p>
+        {steps.map(step => <template data-setup-command-template><PersonReferences text={step.command} /></template>)}
         <p class="mt-3 text-(--muted-foreground)" data-setup-text>{steps[0]!.text}</p>
         <div class="mt-auto pt-6">
           <button type="button" class="mk-btn" data-setup-run>Run</button>
@@ -522,7 +523,8 @@ const jsonLd = [
     const show = () => {
       const step = steps[Math.min(done, steps.length - 1)]!;
       $("count").textContent = done >= steps.length ? "Done" : `Step ${done + 1} of ${steps.length}`;
-      $("command").textContent = step.command;
+      const command = setup.querySelectorAll<HTMLTemplateElement>("[data-setup-command-template]")[Math.min(done, steps.length - 1)]!;
+      $("command").replaceChildren(command.content.cloneNode(true));
       $("text").textContent = step.text;
       $("run").textContent = done >= steps.length ? "Start over" : "Run";
       $("status").textContent = done === 0 ? "No domain yet: nothing billed" : steps[done - 1]!.status;

@@ -1,13 +1,15 @@
 ---
-/** The opening ink band of a marketing page (use with MarketingLayout `ink`): left-aligned content over a strip of the harbour. */
+/** The opening ink band of a marketing page (use with MarketingLayout `ink`): left-aligned content over the living-room strip
+ * (pixel scene "house"), the same as the home page. */
 import PixelScene from "./pixel/PixelScene.astro";
 ---
 
-<section class="mk-band mk-under-header">
-  <div class="mk-wrap pt-10 sm:pt-16">
+<section class="mk-band mk-under-header overflow-hidden">
+  <div class="mk-wrap pt-8 sm:pt-12">
     <slot />
   </div>
-  <div class="mt-10 h-[clamp(9rem,18vw,15rem)] bg-(--mk-bg) sm:mt-14">
-    <PixelScene scene="hero" cover class="object-bottom" />
+  <!-- Phones show the strip's middle (the table), twice as large. -->
+  <div class="mt-8 sm:mt-10">
+    <PixelScene scene="house" class="max-md:-ml-[50%] max-md:w-[200%]!" />
   </div>
 </section>
