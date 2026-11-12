@@ -1,3 +1,6 @@
 ---
-return Astro.redirect("/app/settings/organization", 302);
+/** Settings live in one dialog now (components/settings): this old address opens it at "account". */
+import { settingsRedirect } from "@/lib/server/settings";
+
+return Astro.redirect(settingsRedirect(Astro.url, Astro.request.headers.get("referer"), "account"), 302);
 ---

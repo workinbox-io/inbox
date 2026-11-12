@@ -26,6 +26,7 @@ import { api } from "@/lib/api-client"
 import { isTimeZone, wallTime } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
+import { onSettingsSaved, openSettings } from "@/components/settings/open-settings"
 import { CALENDAR_COLORS, parseDayKey, personColor, type CalendarView, type Prefs } from "./shared"
 
 const pad = (n: number) => String(n).padStart(2, "0")
@@ -71,7 +72,6 @@ export function CalendarRail({
   const everyone = useNotePeople()
   const [editing, setEditing] = React.useState<CalendarView | "new" | null>(null)
   const [sharing, setSharing] = React.useState<CalendarView | null>(null)
-  const [feed, setFeed] = React.useState(false)
   const w = wallTime(date, tz)
   const selected = new Date(w.year, w.month - 1, w.day)
   const [month, setMonth] = React.useState(selected)
@@ -155,7 +155,7 @@ export function CalendarRail({
                 actions={[
                   { label: t("Calendar settings"), icon: Settings2, onSelect: () => onSettingsOpen(true) },
                   { separator: true },
-                  { label: t("Subscribe in another app (.ics)"), icon: LinkIcon, onSelect: () => setFeed(true) },
+                  { label: t("Subscribe in another app (.ics)"), icon: LinkIcon, onSelect: () => openSettings("calendar-feed") },
                   { label: t("Import .ics file"), icon: Download, onSelect: onImport },
                 ]}
               />
@@ -258,7 +258,6 @@ export function CalendarRail({
           onSaved={() => void onCalendars()}
         />
       ) : null}
-      <FeedDialog open={feed} onOpenChange={setFeed} />
     </>
   )
 }
@@ -328,34 +327,38 @@ const ZONES = (() => {
   }
 })()
 
-export function CalendarSettingsDialog({ open, onOpenChange, prefs, tz, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; prefs: Prefs; tz: string; onSaved: (p: Prefs) => void }) {
-  const [zones, setZones] = React.useState<string[]>([])
-  const [weekStart, setWeekStart] = React.useState(prefs.weekStart)
-  const [hourCycle, setHourCycle] = React.useState(prefs.hourCycle)
+/**
+ * The calendar app's handle on its settings: opening it opens the calendar section of the settings dialog, and a
+ * save there comes back through `onSaved`.
+ * shortcut: a stand-in so calendar-app.tsx needn't change while it's being edited elsewhere; inline it there later.
+ */
+export function CalendarSettingsDialog({ open, onOpenChange, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; prefs: Prefs; tz: string; onSaved: (p: Prefs) => void }) {
   React.useEffect(() => {
     if (!open) return
-    setZones(prefs.timezones.length ? prefs.timezones : [tz])
-    setWeekStart(prefs.weekStart)
-    setHourCycle(prefs.hourCycle)
-  }, [open, prefs, tz])
+    openSettings("calendar")
+    onOpenChange(false)
+  }, [open, onOpenChange])
+  React.useEffect(() => onSettingsSaved((saved) => saved.kind === "calendar-prefs" && onSaved(saved.prefs as Prefs)), [onSaved])
+  return null
+}
+
+/** Time zones, time format and week start: the calendar's section of the settings dialog. */
+export function CalendarSettingsForm({ prefs, tz, onSaved }: { prefs: Prefs; tz: string; onSaved: (p: Prefs) => void }) {
+  const [zones, setZones] = React.useState<string[]>(() => (prefs.timezones.length ? prefs.timezones : [tz]))
+  const [weekStart, setWeekStart] = React.useState(prefs.weekStart)
+  const [hourCycle, setHourCycle] = React.useState(prefs.hourCycle)
   const valid = zones.every((z) => isTimeZone(z))
   async function save(e: React.FormEvent) {
     e.preventDefault()
     try {
       onSaved(await api<Prefs>("PUT", "/api/app/calendar/prefs", { timezones: zones, weekStart, hourCycle }))
-      onOpenChange(false)
+      toast.success(t("Saved"))
     } catch (err) {
       toast.error((err as Error).message)
     }
   }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <form onSubmit={save} className="grid gap-4">
-          <DialogHeader>
-            <DialogTitle>{t("Calendar settings")}</DialogTitle>
-            <DialogDescription>{t("The first zone is yours; up to two more show next to the hours.")}</DialogDescription>
-          </DialogHeader>
+        <form onSubmit={save} className="grid gap-6">
           <Field>
             <FieldLabel>{t("Time format")}</FieldLabel>
             <SegmentedControl
@@ -374,6 +377,8 @@ export function CalendarSettingsDialog({ open, onOpenChange, prefs, tz, onSaved 
             ))}
           </datalist>
           <div className="grid gap-2">
+            <FieldLabel>{t("Time zones")}</FieldLabel>
+            <p className="text-muted-foreground -mt-1 text-xs">{t("The first zone is yours; up to two more show next to the hours.")}</p>
             {zones.map((z, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Globe className="text-muted-foreground size-4 shrink-0" />
@@ -412,26 +417,23 @@ export function CalendarSettingsDialog({ open, onOpenChange, prefs, tz, onSaved 
               </SelectContent>
             </Select>
           </Field>
-          <DialogFooter>
+          <div>
             <Button type="submit" disabled={!valid}>
               {t("Save")}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
   )
 }
 
-function FeedDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+/** The private .ics link: the calendar's "Subscribe" section of the settings dialog. */
+export function CalendarFeedSettings() {
   const [url, setUrl] = React.useState<string | null | undefined>(undefined)
   React.useEffect(() => {
-    if (!open) return
-    setUrl(undefined)
     api<{ url: string | null }>("GET", "/api/app/calendar/feed")
       .then((r) => setUrl(r.url))
       .catch((e) => (toast.error((e as Error).message), setUrl(null)))
-  }, [open])
+  }, [])
   async function make() {
     try {
       setUrl((await api<{ url: string | null }>("POST", "/api/app/calendar/feed")).url)
@@ -440,14 +442,7 @@ function FeedDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
     }
   }
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("Subscribe in another calendar")}</DialogTitle>
-          <DialogDescription>
-            {t("Add this link in Google Calendar, Apple Calendar or Outlook (\"From URL\"). It's read-only and secret: anyone with it sees your events.")}
-          </DialogDescription>
-        </DialogHeader>
+    <div className="grid gap-4">
         {url ? (
           <div className="flex gap-2">
             <Input readOnly value={url} onFocus={(e) => e.target.select()} />
@@ -465,14 +460,13 @@ function FeedDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
             </Button>
           </div>
         ) : null}
-        <DialogFooter>
+        <div>
           {url === undefined ? null : (
             <Button type="button" variant={url ? "outline" : "default"} onClick={make}>
               {url ? t("New link (the old one stops working)") : t("Create link")}
             </Button>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+    </div>
   )
 }

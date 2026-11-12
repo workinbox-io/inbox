@@ -37,8 +37,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Access: `lib/server/mail/access.ts` (`viewerMailboxes`): own personal mailbox, shared ones granted in
   `mailbox_access`, all shared ones for owners/admins. Every mail query is scoped to that list.
 - UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search
-  operators `from: to: subject: has:attachment is:unread is:starred`). Settings → Mail (`/app/settings/mail`,
-  `components/mailbox/mail-settings.tsx`) manages domains (DNS records + DoH check), mailboxes, aliases, catch-all.
+  operators `from: to: subject: has:attachment is:unread is:starred`). Settings → Domains and mailboxes (the settings
+  dialog's `mail-admin` section, `components/mailbox/mail-settings.tsx`) manages domains (DNS records + DoH check), mailboxes, aliases, catch-all.
 - Two experiences: owners/admins get the dashboard (AppLayout) with mail inside; members get mail only
   (`layouts/MailLayout.astro`, `MailboxApp` with `account`: full screen, account menu in the rail with signature,
   password, theme, sign out). `pages/app/index.astro` sends members to `/app/mail` (product change to a template page).
@@ -49,7 +49,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `/messages/[id]/raw`, `/mailboxes` (own signature), `/settings` (owners/admins, one `action` per POST).
 - Test incoming mail locally: `curl -X POST "localhost:4321/cdn-cgi/handler/email?from=a@b.com&to=anna@acme.test" --data-binary @mail.eml`.
 - Worker hooks (org mail, delivery-event queue, every-minute cron) live in `src/app-worker.ts` (template v1.17.0);
-  the Mail settings tab is `APP_SETTINGS` in `config/nav.ts`. `src/worker.ts` stays the template's.
+  settings are one dialog (see "Workspace apps"). `src/worker.ts` stays the template's.
 
 ## Workspace apps: views and UI kit (product)
 
@@ -70,6 +70,13 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   row is in it), mailboxes in the rail, messages in a thread, notes (`noteActions`) and note folders. Editors and fields
   keep the browser's own menu.
   Mail still uses its own `FolderRail`/`ThreadList` (the kit's originals); move it onto the kit when touching them.
+- Settings: one dialog for every app on Mail's settings UI (`components/settings/settings-dialog.tsx`, `SettingsHost`
+  mounted once by MailLayout and AppLayout): Mail (signature, labels, filters, forwarding, storage), Calendar, this
+  device, Account, AI apps and, for owners/admins, Organization (team, domains and mailboxes, API keys, audit log).
+  Open it with `openSettings(section)` (`settings/open-settings.ts`) or `?settings=<section>`; the old
+  `/app/settings/*` pages redirect there (`settingsRedirect`). Each section loads what its page used to from
+  `/api/app/settings/<key>` (`lib/server/settings.ts`, owner/admin keys checked there); saves an open app shows
+  elsewhere come back as `onSettingsSaved` (signatures, calendar prefs). A new app's settings = a section there.
 
 ## Shared notes (product)
 

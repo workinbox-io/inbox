@@ -1,19 +1,6 @@
 ---
-import SettingsLayout from "@/layouts/SettingsLayout.astro";
-import { MailSettings } from "@/components/mailbox/mail-settings";
-import { EmptyState } from "@/components/app/empty-state";
-import { Lock } from "lucide-react";
-import { listMailSetup } from "@/lib/server/mail/admin";
-import { canManage } from "@/lib/server/roles";
-import { env } from "cloudflare:workers";
-import { ExternalAccounts } from "@/components/mailbox/external-accounts";
+/** Settings live in one dialog now (components/settings): this old address opens it at "mail-admin". */
+import { settingsRedirect } from "@/lib/server/settings";
 
-const orgId = Astro.locals.orgId!;
-const manager = canManage(Astro.locals.role);
-const setup = manager ? JSON.parse(JSON.stringify(await listMailSetup(orgId))) : null;
+return Astro.redirect(settingsRedirect(Astro.url, Astro.request.headers.get("referer"), "mail-admin"), 302);
 ---
-
-<SettingsLayout description="Your domains, mailboxes and aliases.">
-  {setup ? <MailSettings client:load initial={setup} /> : <EmptyState icon={<Lock />} title="Only owners and admins" description="Ask an owner or admin of your organization to change mail settings." />}
-  {env.MAIL_BRIDGE_URL && env.MAIL_BRIDGE_TOKEN && <div class="mt-12"><ExternalAccounts client:load /></div>}
-</SettingsLayout>

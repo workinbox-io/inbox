@@ -4,7 +4,7 @@ import { ChevronsUpDown, Download, KeyRound, LayoutDashboard, LogOut, Monitor, M
 import { authClient } from "@/lib/auth-client"
 import { tapllEvent } from "@/lib/tapll"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import type { PreferenceSection } from "./mail-preferences"
+import { openSettings, type SettingsSection } from "@/components/settings/open-settings"
 import { UserAvatar } from "@/components/app/user-avatar"
 
 export interface MailUser {
@@ -46,7 +46,18 @@ export function switchView(to: "user" | "admin") {
  * The account corner of the user view (mail and notes) (members): settings, theme, sign out.
  * `compact` is the avatar alone, for the phone layout's list header.
  */
-export function AccountMenu({ user, onSettings, compact = false, canManage = false }: { user: MailUser; onSettings?: (section?: PreferenceSection) => void; compact?: boolean; canManage?: boolean }) {
+export function AccountMenu({
+  user,
+  onSettings = (section) => openSettings(section),
+  compact = false,
+  canManage = false,
+}: {
+  user: MailUser
+  /** Opens the settings dialog; Mail passes its own to start at the open mailbox. */
+  onSettings?: (section?: SettingsSection) => void
+  compact?: boolean
+  canManage?: boolean
+}) {
   const install = useInstallPrompt()
   return (
       <DropdownMenu>
@@ -83,19 +94,15 @@ export function AccountMenu({ user, onSettings, compact = false, canManage = fal
               <DropdownMenuSeparator />
             </>
           )}
-          {onSettings ? (
-            <>
-              <DropdownMenuItem onSelect={() => onSettings()}>
-                <Settings /> Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onSettings("signature")}>
-                <PenLine /> Signature
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onSettings("password")}>
-                <KeyRound /> Change password
-              </DropdownMenuItem>
-            </>
-          ) : null}
+          <DropdownMenuItem onSelect={() => onSettings()}>
+            <Settings /> Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onSettings("signature")}>
+            <PenLine /> Signature
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onSettings("account")}>
+            <KeyRound /> Change password
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={(e) => {
             e.preventDefault()
             window.setThemeMode(window.nextThemeMode())

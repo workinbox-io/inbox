@@ -1,5 +1,7 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
+import { SettingsHost } from "@/components/settings/settings-dialog";
+import { canManage } from "@/lib/server/roles";
 
 /**
  * The mail-only view for members (people added through Settings → Mail → Add person, or invited members):
@@ -17,4 +19,5 @@ const { title } = Astro.props;
   <div data-browser-theme-surface class="bg-background h-svh overflow-hidden">
     <slot />
   </div>
+  {Astro.locals.user && Astro.locals.orgId ? <SettingsHost client:load canManage={canManage(Astro.locals.role)} /> : null}
 </BaseLayout>

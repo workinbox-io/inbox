@@ -6,6 +6,8 @@ import { ThemeToggle } from "@/components/app/theme-toggle";
 import { Separator } from "@/components/ui/separator";
 import { adminMailboxes, isAdmin } from "@/lib/server/admin";
 import { adminUnreadCount } from "@/lib/server/admin-mail";
+import { SettingsHost } from "@/components/settings/settings-dialog";
+import { canManage } from "@/lib/server/roles";
 
 interface Props {
   title: string;
@@ -107,5 +109,7 @@ const adminMail = boxes.length ? { unread: await adminUnreadCount(boxes).catch((
         <slot />
       </main>
     </main>
+    {/* Product: the one settings dialog (components/settings), kept across ClientRouter swaps. */}
+    {user && Astro.locals.orgId ? <SettingsHost client:load transition:persist="settings" canManage={canManage(Astro.locals.role)} /> : null}
   </div>
 </BaseLayout>

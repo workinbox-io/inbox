@@ -1,28 +1,6 @@
 ---
-import SettingsLayout from "@/layouts/SettingsLayout.astro";
-import { TeamPanel } from "@/components/app/team-panel";
-import { ApiKeysPanel } from "@/components/app/api-keys-panel";
-import { AuditLogPanel } from "@/components/app/audit-log-panel";
-import { CompanyDetailsSection, OrgDangerZone, OrgProfileSection } from "@/components/app/organization-settings";
-import { listApiKeys } from "@/lib/server/api-keys";
-import { listAudit } from "@/lib/server/audit";
-import { getBillingDetails, getOrg, loadTeam } from "@/lib/server/org";
-import { canManage } from "@/lib/server/roles";
+/** Settings live in one dialog now (components/settings): this old address opens it at "organization". */
+import { settingsRedirect } from "@/lib/server/settings";
 
-const orgId = Astro.locals.orgId!;
-const me = Astro.locals.user!;
-const role = Astro.locals.role ?? "member";
-const manager = canManage(role);
-const [org, team, billingDetails] = await Promise.all([getOrg(orgId), loadTeam(orgId, me.id), getBillingDetails(orgId)]);
-const [apiKeys, audit] = manager ? await Promise.all([listApiKeys(orgId), listAudit(orgId, { limit: 20 })]) : [null, null];
-const others = team.members.filter((m) => !m.isMe).map(({ id, name, email, role }) => ({ id, name, email, role }));
+return Astro.redirect(settingsRedirect(Astro.url, Astro.request.headers.get("referer"), "organization"), 302);
 ---
-
-<SettingsLayout description="Your organization's details, team, API keys and audit log.">
-  <OrgProfileSection client:load id={orgId} name={org?.name ?? ""} canManage={manager} />
-  <CompanyDetailsSection client:load initial={billingDetails} canManage={manager} />
-  <TeamPanel client:load {...team} />
-  {apiKeys ? <ApiKeysPanel client:load keys={apiKeys} /> : null}
-  {audit ? <AuditLogPanel client:visible initial={audit} /> : null}
-  <OrgDangerZone client:load orgId={orgId} orgName={org?.name ?? ""} role={role} others={others} />
-</SettingsLayout>

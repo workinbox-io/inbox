@@ -19,7 +19,7 @@ import { draftRows, useDraftCount } from "./drafts-panel"
 import { SenderPanel } from "./sender-panel"
 import { ThreadList } from "./thread-list"
 import { LabelActions } from "./mail-rules"
-import { MailPreferences, type PreferenceSection } from "./mail-preferences"
+import { onSettingsSaved, openSettings as openSettingsDialog, type SettingsSection } from "@/components/settings/open-settings"
 import { FolderRail } from "./folder-rail"
 import { AccountMenu, type MailUser } from "./account-menu"
 import { OutboxDetail, outboxRows, scheduledCount, type OutboxRow } from "./outbox-panel"
@@ -114,12 +114,13 @@ export function MailboxApp(props: MailboxAppProps) {
   const [compose, setCompose] = React.useState<{ open: boolean; prefill: { to?: string; nonce: number } | null; draftKey?: string }>({ open: false, prefill: null })
   const [infoOpen, setInfoOpen] = React.useState(false)
   const [helpOpen, setHelpOpen] = React.useState(false)
-  const [settingsOpen, setSettingsOpen] = React.useState(false)
-  const [settingsSection, setSettingsSection] = React.useState<PreferenceSection>("signature")
-  const openSettings = (section: PreferenceSection = "signature") => {
-    setSettingsSection(section)
-    setSettingsOpen(true)
-  }
+  // The settings dialog opens at the mailbox in view; a signature saved there shows in the composer at once.
+  const openSettings = (section: SettingsSection = "signature") =>
+    openSettingsDialog(section, { mailbox: mailbox === ALL_MAILBOXES ? props.mailboxes[0] : mailbox })
+  React.useEffect(
+    () => onSettingsSaved((saved) => saved.kind === "signatures" && setSignatures(saved.signatures as Record<string, MailboxSignature>)),
+    [],
+  )
   const searchRef = React.useRef<HTMLInputElement>(null)
   const gPending = React.useRef(false)
   const threadRef = React.useRef<ThreadViewHandle>(null)
@@ -727,7 +728,6 @@ export function MailboxApp(props: MailboxAppProps) {
         schedule={schedule}
         onClose={() => setCompose((c) => ({ ...c, open: false }))}
       />
-      <MailPreferences open={settingsOpen} onOpenChange={setSettingsOpen} section={settingsSection} mailboxes={props.mailboxes} mailbox={mailbox === ALL_MAILBOXES ? props.mailboxes[0]! : mailbox} signatures={signatures} signatureBrand={props.signatureBrand} onSignatures={setSignatures} account={!!props.account} />
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
