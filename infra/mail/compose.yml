@@ -1,0 +1,47 @@
+name: workinbox-mail
+services:
+  bridge:
+    build:
+      context: ../..
+      dockerfile: services/mail-bridge/Dockerfile
+    restart: unless-stopped
+    init: true
+    user: node
+    mem_limit: 512m
+    cpus: 0.5
+    environment:
+      MAIL_BRIDGE_TOKEN: ${MAIL_BRIDGE_TOKEN:?Set a random bridge token}
+      MAIL_BRIDGE_KEY: ${MAIL_BRIDGE_KEY:?Set a 32-byte hex encryption key}
+      MAIL_ENGINE_URL: ${MAIL_ENGINE_URL:-}
+      MAIL_ENGINE_TOKEN: ${MAIL_ENGINE_TOKEN:-}
+      MAIL_ENGINE_SCOPE: ${MAIL_ENGINE_SCOPE:-}
+      MAIL_ENGINE_ACCOUNT_ID: ${MAIL_ENGINE_ACCOUNT_ID:-}
+      MAIL_SYNC_ENABLED: ${MAIL_SYNC_ENABLED:-false}
+      MAIL_ENGINE_DOMAIN_ID: ${MAIL_ENGINE_DOMAIN_ID:-}
+      MAIL_ENGINE_DOMAIN: ${MAIL_ENGINE_DOMAIN:-}
+      MAIL_ENGINE_IMAP_HOST: ${MAIL_ENGINE_IMAP_HOST:-}
+    ports:
+      - "127.0.0.1:18090:8090"
+    volumes:
+      - bridge-data:/data
+  stalwart:
+    image: ${STALWART_IMAGE:?Set a tested immutable Stalwart image digest}
+    restart: unless-stopped
+    init: true
+    mem_limit: ${MAIL_MEMORY_LIMIT:-1g}
+    cpus: ${MAIL_CPU_LIMIT:-1.0}
+    ports:
+      - "127.0.0.1:18080:8080"
+    volumes:
+      - config:/etc/stalwart
+      - data:/var/lib/stalwart
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  bridge-data: {}
+  config: {}
+  data: {}

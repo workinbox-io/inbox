@@ -17,6 +17,8 @@ declare namespace App {
 /** Secrets aren't in wrangler.jsonc, so `wrangler types` only sees them when .dev.vars exists. */
 declare namespace Cloudflare {
   interface Env {
+    MAIL_BRIDGE_URL?: string;
+    MAIL_BRIDGE_TOKEN?: string;
     BETTER_AUTH_SECRET: string;
     PADDLE_API_KEY?: string;
     PADDLE_WEBHOOK_SECRET?: string;

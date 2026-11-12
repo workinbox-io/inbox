@@ -1,0 +1,7 @@
+# Enable only after configuring TLS, authentication and authenticated relay.
+services:
+  stalwart:
+    ports:
+      - "993:993"
+      - "465:465"
+      - "587:587"
