@@ -22,6 +22,8 @@ export interface Draft {
   start: number
   end: number
   allDay: boolean
+  /** What's typed in the panel so far, shown on the draft's rectangle. */
+  title?: string
 }
 
 /** Pixels per hour in the time grid. */

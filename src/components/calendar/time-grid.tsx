@@ -41,6 +41,8 @@ interface Props {
   workStart: number
   onSelect: (e: EventView) => void
   onCreate: (d: Draft) => void
+  /** The unsaved new event's rectangle was moved or resized. */
+  onDraft: (d: Draft) => void
   onChange: (e: EventView, start: number, end: number) => void
   onSlots: (slots: Slot[]) => void
   onDay: (day: number) => void
@@ -56,11 +58,13 @@ export const menuOf = (actions: MenuAction[]) => (actions.length ? actions : und
 const own = (e: React.MouseEvent) => e.stopPropagation()
 
 type Draw = { kind: "create" | "slot"; day: number; from: number; to: number; x: number; y: number; moved: boolean }
-type Edit = { kind: "move" | "resize"; event: EventView; day: number; grabDay: number; grabMin: number; min: number; x: number; y: number; moved: boolean }
+/** Moving or resizing an event, or the unsaved draft (`event` null). */
+type Edit = { kind: "move" | "resize" | "resize-start"; event: EventView | null; target: { start: number; end: number }; day: number; grabDay: number; grabMin: number; min: number; x: number; y: number; moved: boolean }
 type Drag = Draw | Edit
 const drawing = (d: Drag): d is Draw => d.kind === "create" || d.kind === "slot"
 
 const GUTTER = 52
+const DRAFT_COLOR = "#4f8ff7"
 const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
 const snapDown = (m: number) => Math.floor(m / SNAP) * SNAP
 
@@ -100,7 +104,11 @@ export function TimeGrid(props: Props) {
       const b = Math.max(a + SNAP, Math.ceil(Math.max(d.from, d.to) / SNAP) * SNAP)
       return { start: atMinute(days[d.day]!, a, tz), end: atMinute(days[d.day]!, Math.min(b, 1440), tz) }
     }
-    const e = d.event
+    const e = d.target
+    if (d.kind === "resize-start") {
+      const start = atMinute(days[d.day]!, Math.round(d.min / SNAP) * SNAP, tz)
+      return { start: Math.min(start, e.end - SNAP * 60_000), end: e.end }
+    }
     if (d.kind === "move") {
       const shift = Math.round((d.min - d.grabMin) / SNAP) * SNAP
       const startMin = clamp(minuteOfDay(e.start, tz) + shift, 0, 1440 - SNAP)
@@ -138,8 +146,12 @@ export function TimeGrid(props: Props) {
     if (drawing(d)) {
       if (d.kind === "create") props.onCreate({ ...range, allDay: false })
       else props.onSlots([...(slots ?? []), range])
-    } else if (!d.moved) props.onSelect(d.event)
-    else if (p.start !== d.event.start || p.end !== d.event.end) props.onChange(d.event, p.start, p.end)
+    } else if (!d.moved) {
+      if (d.event) props.onSelect(d.event)
+    } else if (p.start !== d.target.start || p.end !== d.target.end) {
+      if (d.event) props.onChange(d.event, p.start, p.end)
+      else props.onDraft({ ...props.draft!, start: p.start, end: p.end, allDay: false })
+    }
   }
 
   const live = drag && !drawing(drag) && drag.moved ? drag : null
@@ -253,7 +265,7 @@ export function TimeGrid(props: Props) {
                   ) : null}
                   {mine.map((e) => {
                     const key = eventKey(e)
-                    const moving = live && eventKey(live.event) === key
+                    const moving = live?.event && eventKey(live.event) === key
                     const { top, bottom } = span(e)
                     const p = placed.get(key)!
                     const can = !slots && props.editable(e)
@@ -271,21 +283,30 @@ export function TimeGrid(props: Props) {
                           left: `${(p.col / p.cols) * 100}%`,
                           width: `calc(${100 / p.cols}% - 2px)`,
                         }}
-                        onPointerDown={(ev) =>
-                          can ? begin(ev, { kind: "move", event: e, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false }) : ev.stopPropagation()
-                        }
+                        onPointerDown={(ev) => (can ? begin(ev, { kind: "move", event: e, target: e, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false }) : ev.stopPropagation())}
                         onClick={(ev) => (ev.stopPropagation(), !can && !slots && props.onSelect(e))}
-                        onResize={can ? (ev) => begin(ev, { kind: "resize", event: e, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false }) : undefined}
+                        onResize={can ? (ev, kind) => begin(ev, { kind, event: e, target: e, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false }) : undefined}
                         actions={slots ? undefined : menuOf(props.eventActions(e))}
                       />
                     )
                   })}
                   {live && sameDay(preview(live).start, d, tz) ? (
-                    <Ghost tz={tz} color={props.colorOf(live.event)} title={live.event.title} {...preview(live)} day={d} />
+                    <Ghost
+                      tz={tz}
+                      color={live.event ? props.colorOf(live.event) : DRAFT_COLOR}
+                      title={live.event ? live.event.title : props.draft?.title || t("New event")}
+                      {...preview(live)}
+                      day={d}
+                    />
                   ) : null}
-                  {ghost && sameDay(ghost.start, d, tz) ? <Ghost tz={tz} color={ghost.kind === "slot" ? "#4caf6e" : "#4f8ff7"} title="" {...ghost} day={d} /> : null}
-                  {!ghost && props.draft && !props.draft.allDay && sameDay(props.draft.start, d, tz) ? (
-                    <Ghost tz={tz} color="#4f8ff7" title={t("New event")} {...props.draft} day={d} />
+                  {ghost && sameDay(ghost.start, d, tz) ? <Ghost tz={tz} color={ghost.kind === "slot" ? "#4caf6e" : DRAFT_COLOR} title="" {...ghost} day={d} /> : null}
+                  {!ghost && !(live && !live.event) && props.draft && !props.draft.allDay && sameDay(props.draft.start, d, tz) ? (
+                    <DraftBlock
+                      draft={props.draft}
+                      day={d}
+                      tz={tz}
+                      onPointerDown={(ev, kind) => begin(ev, { kind, event: null, target: props.draft!, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false })}
+                    />
                   ) : null}
                   {(slots ?? [])
                     .filter((s) => s.start < next && s.end > d)
@@ -350,7 +371,7 @@ function Block({
   style: React.CSSProperties
   onPointerDown: (e: React.PointerEvent) => void
   onClick: (e: React.MouseEvent) => void
-  onResize?: (e: React.PointerEvent) => void
+  onResize?: (e: React.PointerEvent, kind: "resize" | "resize-start") => void
   actions?: MenuAction[]
 }) {
   const short = e.end - e.start <= 45 * 60_000
@@ -379,9 +400,46 @@ function Block({
         {short ? "" : ` – ${fmtTime(e.end, tz)}`}
       </div>
       {!short && e.location && e.role !== "busy" ? <div className="text-foreground/60 truncate">{e.location}</div> : null}
-      {onResize ? <div onPointerDown={onResize} className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize" aria-hidden /> : null}
+      {onResize ? (
+        <>
+          <div onPointerDown={(ev) => onResize(ev, "resize-start")} className="absolute inset-x-0 top-0 h-1.5 cursor-ns-resize" aria-hidden />
+          <div onPointerDown={(ev) => onResize(ev, "resize")} className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize" aria-hidden />
+        </>
+      ) : null}
     </div>
     </ActionMenu>
+  )
+}
+
+/** The unsaved new event: drag it to move, its top and bottom handles to change the times. */
+function DraftBlock({ draft, day, tz, onPointerDown }: { draft: Draft; day: number; tz: string; onPointerDown: (e: React.PointerEvent, kind: "move" | "resize" | "resize-start") => void }) {
+  const next = addDays(day, 1, tz)
+  const top = draft.start <= day ? 0 : minuteOfDay(draft.start, tz)
+  const bottom = draft.end >= next ? 1440 : minuteOfDay(draft.end, tz) || 1440
+  const height = Math.max(((bottom - top) / 60) * HOUR - 1, 16)
+  const handle = "absolute inset-x-0 flex h-2.5 cursor-ns-resize justify-center"
+  const pill = "bg-background h-1 w-6 rounded-full border shadow-sm transition-opacity"
+  return (
+    <div
+      role="group"
+      aria-label={t("New event")}
+      onContextMenu={own}
+      onPointerDown={(e) => onPointerDown(e, "move")}
+      onClick={(e) => e.stopPropagation()}
+      className="group/draft absolute inset-x-0.5 z-30 cursor-grab rounded-md border-l-[3px] px-1.5 py-0.5 text-[11px] leading-tight shadow-md ring-2 active:cursor-grabbing"
+      style={{ top: (top / 60) * HOUR, height, background: tint(DRAFT_COLOR, 30), borderColor: DRAFT_COLOR, ["--tw-ring-color" as string]: tint(DRAFT_COLOR, 70) }}
+    >
+      <div className={cn("truncate font-medium", height < 30 && "inline")}>{draft.title || t("New event")}</div>
+      <div className={cn("tabular-nums", height < 30 && "ml-1 inline")}>
+        {fmtTime(draft.start, tz)} – {fmtTime(draft.end, tz)}
+      </div>
+      <div onPointerDown={(e) => onPointerDown(e, "resize-start")} className={cn(handle, "-top-1 items-start")} aria-hidden>
+        <span className={pill} />
+      </div>
+      <div onPointerDown={(e) => onPointerDown(e, "resize")} className={cn(handle, "-bottom-1 items-end")} aria-hidden>
+        <span className={pill} />
+      </div>
+    </div>
   )
 }
 

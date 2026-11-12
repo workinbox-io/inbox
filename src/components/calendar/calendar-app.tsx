@@ -73,6 +73,9 @@ export function CalendarApp(props: CalendarAppProps) {
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null)
   const [opened, setOpened] = React.useState<EventView | null>(null)
   const [draft, setDraft] = React.useState<Draft | null>(null)
+  // Each new draft gets a fresh panel; moving or resizing it keeps what's typed.
+  const [draftSeq, setDraftSeq] = React.useState(0)
+  const newDraft = (d: Draft) => (setDraftSeq((n) => n + 1), setDraft(d))
   const [slots, setSlots] = React.useState<Slot[] | null>(null)
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [now, setNow] = React.useState(() => Date.now())
@@ -153,7 +156,7 @@ export function CalendarApp(props: CalendarAppProps) {
         : atMinute(startOfDay(base, zone), Math.max(prefs.workStart, 9 * 60), zone)
       setSelectedKey(null)
       setOpened(null)
-      setDraft({ start, end: start + 3_600_000, allDay: false })
+      newDraft({ start, end: start + 3_600_000, allDay: false })
     },
     [date, tz, prefs.workStart],
   )
@@ -336,7 +339,7 @@ export function CalendarApp(props: CalendarAppProps) {
   }
 
   function spaceActions(at: number, allDay: boolean): MenuAction[] {
-    const startNew = (d: { start: number; end: number; allDay: boolean }) => (setSelectedKey(null), setOpened(null), setDraft(d))
+    const startNew = (d: { start: number; end: number; allDay: boolean }) => (setSelectedKey(null), setOpened(null), newDraft(d))
     return cleanActions([
       allDay
         ? { label: t("New all-day event"), icon: CalendarPlus, onSelect: () => startNew({ start: startOfDay(at, tz), end: stepDate(startOfDay(at, tz), "day", 1, tz), allDay: true }) }
@@ -408,7 +411,7 @@ export function CalendarApp(props: CalendarAppProps) {
   const panelOpen = !!(selected || draft)
   const panel = panelOpen ? (
     <EventPanel
-      key={draft ? `draft:${draft.start}` : selectedKey!}
+      key={draft ? `draft:${draftSeq}` : selectedKey!}
       event={draft ? null : selected!}
       draft={draft}
       tz={tz}
@@ -419,6 +422,7 @@ export function CalendarApp(props: CalendarAppProps) {
       onSave={save}
       onDelete={remove}
       onRsvp={rsvp}
+      onDraft={(d) => setDraft((x) => (x && x.start === d.start && x.end === d.end && x.allDay === d.allDay && x.title === d.title ? x : d))}
     />
   ) : null
 
@@ -501,7 +505,7 @@ export function CalendarApp(props: CalendarAppProps) {
             selectedKey={selectedKey}
             onSelect={select}
             onDay={(d) => (setDate(d), setView("day"))}
-            onCreate={(d) => (setSelectedKey(null), setOpened(null), setDraft(d))}
+            onCreate={(d) => (setSelectedKey(null), setOpened(null), newDraft(d))}
             eventActions={eventActions}
             spaceActions={spaceActions}
           />
@@ -519,7 +523,8 @@ export function CalendarApp(props: CalendarAppProps) {
             now={now}
             workStart={prefs.workStart}
             onSelect={select}
-            onCreate={(d) => (setSelectedKey(null), setOpened(null), setDraft(d))}
+            onCreate={(d) => (setSelectedKey(null), setOpened(null), newDraft(d))}
+            onDraft={setDraft}
             onChange={(e, s, en) => void move(e, s, en)}
             onSlots={setSlots}
             onDay={(d) => (setDate(d), setView("day"))}

@@ -108,6 +108,7 @@ export function EventPanel({
   onSave,
   onDelete,
   onRsvp,
+  onDraft,
 }: {
   event: EventView | null
   draft: Draft | null
@@ -119,12 +120,15 @@ export function EventPanel({
   onSave: (e: EventView, body: EventBody) => Promise<void>
   onDelete: (e: EventView) => Promise<void>
   onRsvp: (e: EventView, status: "accepted" | "declined" | "tentative") => Promise<void>
+  /** The form's times and title changed while drafting, so the rectangle in the grid follows. */
+  onDraft?: (d: Draft) => void
 }) {
   const writable = calendars.filter((c) => c.role === "owner" || c.role === "edit")
   const start = React.useMemo(
     () => initial(event, draft, tz, writable.find((c) => c.personal)?.id ?? writable[0]?.id ?? "", defaultReminder),
+    // A draft's form starts from it once (the panel is keyed per draft); later moves only patch the times below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [event, draft, tz],
+    [event, tz],
   )
   const [f, setF] = React.useState(start)
   const [busy, setBusy] = React.useState(false)
@@ -132,6 +136,35 @@ export function EventPanel({
   const set = (patch: Partial<Form>) => setF((x) => ({ ...x, ...patch }))
   const editable = !event || event.role === "owner" || event.role === "edit"
   const range = times(f, tz)
+
+  /** A new start keeps the event's length, like other calendars (all-day events only push the end day forward). */
+  function setStart(patch: { startDay?: string; startTime?: string }) {
+    const was = times(f, tz)
+    const s = f.allDay ? null : joinDayTime(patch.startDay ?? f.startDay, patch.startTime ?? f.startTime, tz)
+    if (!was || s === null) {
+      const day = patch.startDay ?? f.startDay
+      return set({ ...patch, ...(day > f.endDay ? { endDay: day } : {}) })
+    }
+    const end = s + (was.end - was.start)
+    set({ ...patch, endDay: dayKey(end, tz), endTime: timeKey(end, tz) })
+  }
+
+  // Grid → form: the draft's rectangle was moved or resized.
+  React.useEffect(() => {
+    if (event || !draft) return
+    const now = times(f, tz)
+    if (now && now.start === draft.start && now.end === draft.end && f.allDay === draft.allDay) return
+    const d = initial(null, draft, tz, "", null)
+    set({ startDay: d.startDay, startTime: d.startTime, endDay: d.endDay, endTime: d.endTime, allDay: d.allDay })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft?.start, draft?.end, draft?.allDay])
+
+  // Form → grid: times or title typed in the panel.
+  React.useEffect(() => {
+    if (event || !range || !onDraft) return
+    onDraft({ start: range.start, end: range.end, allDay: f.allDay, title: f.title.trim() || undefined })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [range?.start, range?.end, f.allDay, f.title])
   const presets = repeatPresets(range?.start ?? Date.now(), tz)
   const custom = f.rrule && !presets.some((p) => p.value === f.rrule)
 
@@ -231,8 +264,8 @@ export function EventPanel({
         <Row icon={Clock}>
           <div className="grid gap-1.5">
             <div className="flex items-center gap-1.5">
-              <Input type="date" aria-label={t("Starts")} className={cn(field, "min-w-0 flex-1")} value={f.startDay} disabled={!editable} onChange={(e) => set({ startDay: e.target.value, ...(e.target.value > f.endDay ? { endDay: e.target.value } : {}) })} />
-              {!f.allDay ? <Input type="time" step={900} aria-label={t("Start time")} className={cn(field, "w-28")} value={f.startTime} disabled={!editable} onChange={(e) => set({ startTime: e.target.value })} /> : null}
+              <Input type="date" aria-label={t("Starts")} className={cn(field, "min-w-0 flex-1")} value={f.startDay} disabled={!editable} onChange={(e) => setStart({ startDay: e.target.value })} />
+              {!f.allDay ? <Input type="time" step={900} aria-label={t("Start time")} className={cn(field, "w-28")} value={f.startTime} disabled={!editable} onChange={(e) => setStart({ startTime: e.target.value })} /> : null}
             </div>
             <div className="flex items-center gap-1.5">
               <Input type="date" aria-label={t("Ends")} className={cn(field, "min-w-0 flex-1")} value={f.endDay} min={f.startDay} disabled={!editable} onChange={(e) => set({ endDay: e.target.value })} />
