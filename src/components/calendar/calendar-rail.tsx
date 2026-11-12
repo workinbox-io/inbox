@@ -134,6 +134,7 @@ export function CalendarRail({
         <RailAction icon={CalendarPlus} label={t("New event")} shortcut="C" onClick={onNew} />
         <Calendar
           mode="single"
+          animate
           selected={selected}
           month={month}
           onMonthChange={setMonth}
