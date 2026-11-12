@@ -632,7 +632,7 @@ export function CalendarApp(props: CalendarAppProps) {
             spaceActions={spaceActions}
           />
         )}
-        {freeSlots ? <AvailabilityBar hourCycle={prefs.hourCycle} disabled={!availabilityReady} slots={freeSlots} zones={[tz, ...prefs.timezones.slice(1)]} onRemove={(slot) => setSlots(freeSlots.filter((s) => s !== slot))} onClear={() => setSlots([])} onDone={() => setSlots(null)} /> : null}
+        <AvailabilityBar hourCycle={prefs.hourCycle} disabled={!availabilityReady} slots={freeSlots} zones={[tz, ...prefs.timezones.slice(1)]} onRemove={(slot) => setSlots((freeSlots ?? []).filter((s) => s !== slot))} onClear={() => setSlots([])} onDone={() => setSlots(null)} />
       </div>
       {desktop && panel ? <aside className="w-[clamp(340px,26vw,440px)] shrink-0 border-l motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 motion-safe:duration-200">{panel}</aside> : null}
       {!desktop ? (

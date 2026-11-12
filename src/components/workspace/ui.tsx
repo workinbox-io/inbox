@@ -90,4 +90,4 @@ export const shortcutsPaused = (e: KeyboardEvent) =>
   e.ctrlKey ||
   e.altKey ||
   isTyping(e.target) ||
-  !!document.querySelector("[role=dialog][data-state=open], [role=alertdialog], [role=menu]")
+  !!document.querySelector("[role=dialog][data-state=open]:not([data-compose-window]), [role=alertdialog], [role=menu]")

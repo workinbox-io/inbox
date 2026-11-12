@@ -56,7 +56,7 @@ to select a longer range. Busy events in the visible calendars (including overla
 events marked free, cancelled events and invitations you declined do not block the selection.
 
 Overlapping or adjacent selections merge. Move between days or weeks to add more times. Click a selected block
-or its button in the bottom bar to remove it, or **Clear** to start again. The bar previews the exact text in your
+or its button in the docked Availability window to remove it, or **Clear** to start again. The window can be minimized to its bottom tab while you select more times. It previews the exact text in your
 chosen time zone; **Copy availability** copies it for an e-mail. **Done** or `Esc` leaves the mode.
 
 These times are suggestions: they do not create events or reserve time. Booking links are planned separately.

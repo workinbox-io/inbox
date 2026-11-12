@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Dialog as DialogPrimitive } from "radix-ui"
 import { Maximize2, Minimize2, Minus, Send, Trash2, Users, X, type LucideIcon } from "lucide-react"
 
 import { splitAddresses } from "@/lib/admin-mail/rules"
@@ -240,49 +241,62 @@ export function ComposeBody({
  */
 export function ComposeFrame({
   title,
+  open,
   openKey,
   closeLabel = "Close (the draft is kept)",
+  dockedOnMobile = false,
   onClose,
   children,
 }: {
   title: string
+  open: boolean
   openKey?: React.Key
   closeLabel?: string
+  /** Keep the calendar usable behind its availability picker on phones. */
+  dockedOnMobile?: boolean
   onClose: () => void
   children: React.ReactNode
 }) {
   const [size, setSize] = React.useState<"normal" | "min" | "max">("normal")
-  React.useEffect(() => setSize("normal"), [openKey])
+  React.useEffect(() => { if (open) setSize("normal") }, [open, openKey])
   return (
-    <div
-      role="dialog"
-      aria-label={title}
-      className={cn(
-        "bg-background fixed z-50 flex flex-col overflow-hidden border shadow-2xl",
-        "max-md:inset-0",
-        size === "max" ? "md:inset-6 md:rounded-2xl" : "md:right-6 md:bottom-0 md:w-[600px] md:rounded-t-2xl",
-        size === "min" ? "md:h-auto" : size === "normal" ? "md:h-[min(640px,85svh)]" : "",
-      )}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.stopPropagation()
-          onClose()
-        }
-      }}
-    >
-      <div className="bg-muted/60 flex cursor-default items-center gap-2 px-4 py-2" onDoubleClick={() => setSize((s) => (s === "min" ? "normal" : "min"))}>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">{title}</span>
-        <Button variant="ghost" size="icon-xs" className="max-md:hidden" onClick={() => setSize((s) => (s === "min" ? "normal" : "min"))} aria-label={size === "min" ? "Expand" : "Minimize"}>
-          <Minus />
-        </Button>
-        <Button variant="ghost" size="icon-xs" className="max-md:hidden" onClick={() => setSize((s) => (s === "max" ? "normal" : "max"))} aria-label={size === "max" ? "Smaller" : "Full screen"}>
-          {size === "max" ? <Minimize2 /> : <Maximize2 />}
-        </Button>
-        <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label={closeLabel} title={closeLabel}>
-          <X />
-        </Button>
-      </div>
-      {size === "min" ? null : children}
-    </div>
+    <DialogPrimitive.Root open={open} modal={false} onOpenChange={(next) => !next && onClose()}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Content
+          asChild
+          aria-describedby={undefined}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.stopPropagation()}
+        >
+          <div
+            data-compose-window=""
+            inert={!open || undefined}
+            aria-label={title}
+            className={cn(
+              "bg-background fixed z-50 flex flex-col overflow-hidden border shadow-2xl motion-safe:data-[state=open]:animate-in motion-safe:data-[state=open]:fade-in motion-safe:data-[state=open]:slide-in-from-bottom-8 motion-safe:data-[state=open]:duration-200 motion-safe:data-[state=closed]:animate-out motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=closed]:slide-out-to-bottom-8 motion-safe:data-[state=closed]:duration-150",
+              dockedOnMobile ? "max-md:inset-x-2 max-md:bottom-0 max-md:max-h-[55svh] max-md:rounded-t-2xl" : "max-md:inset-0",
+              size === "max" ? "md:inset-6 md:rounded-2xl" : "md:right-6 md:bottom-0 md:w-[600px] md:rounded-t-2xl",
+              size === "min" ? "md:h-auto" : size === "normal" ? "md:h-[min(640px,85svh)]" : "",
+            )}
+          >
+            <div className="bg-muted/60 flex cursor-default items-center gap-2 px-4 py-2" onDoubleClick={() => setSize((s) => (s === "min" ? "normal" : "min"))}>
+              <DialogPrimitive.Title asChild><span className="min-w-0 flex-1 truncate text-sm font-medium">{title}</span></DialogPrimitive.Title>
+              <Button variant="ghost" size="icon-xs" className={cn(!dockedOnMobile && "max-md:hidden")} onClick={() => setSize((s) => (s === "min" ? "normal" : "min"))} aria-label={size === "min" ? "Expand" : "Minimize"}>
+                <Minus />
+              </Button>
+              <Button variant="ghost" size="icon-xs" className="max-md:hidden" onClick={() => setSize((s) => (s === "max" ? "normal" : "max"))} aria-label={size === "max" ? "Smaller" : "Full screen"}>
+                {size === "max" ? <Minimize2 /> : <Maximize2 />}
+              </Button>
+              <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label={closeLabel} title={closeLabel}>
+                <X />
+              </Button>
+            </div>
+            {size === "min" ? null : children}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   )
 }

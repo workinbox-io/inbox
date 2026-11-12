@@ -478,7 +478,6 @@ export function ComposeWindow({
     })
   }
 
-  if (!open || pending) return null
   const title = draft.subject.trim() || "New e-mail"
   const form = (
       <MailForm
@@ -497,7 +496,8 @@ export function ComposeWindow({
         onDiscard={discard}
       />
   )
-  if (!inline) return <ComposeFrame title={title} openKey={focusKey} onClose={onClose}>{form}</ComposeFrame>
+  if (!inline) return <ComposeFrame open={open && !pending} title={title} openKey={focusKey} onClose={onClose}>{form}</ComposeFrame>
+  if (!open || pending) return null
   return (
     <section aria-label={title} className="flex h-full min-h-0 flex-col">
       <div className="flex h-12 shrink-0 items-center gap-2 border-b px-4">

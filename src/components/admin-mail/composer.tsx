@@ -384,10 +384,9 @@ export function ComposeWindow({
     })
   }
 
-  if (!open || pending) return null
   const title = draft.subject.trim() || "New e-mail"
   return (
-    <ComposeFrame title={title} openKey={focusKey} onClose={onClose}>
+    <ComposeFrame open={open && !pending} title={title} openKey={focusKey} onClose={onClose}>
       <MailForm
         key={focusKey}
         draft={draft}
