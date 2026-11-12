@@ -173,7 +173,6 @@ export function TimeGrid(props: Props) {
 
   const today = props.now
   const firstDay = days[0]!
-  const showNow = days.some((day) => sameDay(day, today, tz))
   const nowMinute = minuteOfDay(today, tz)
 
   return (
@@ -246,7 +245,6 @@ export function TimeGrid(props: Props) {
           {[...zones].reverse().concat(tz).map((z, zi, all) => (
             <div key={z} className={cn("relative shrink-0", zi === all.length - 1 ? "" : "text-muted-foreground/70")} style={{ width: gutter }}>
               {Array.from({ length: 23 }, (_, i) => i + 1).map((h) => {
-                if (showNow && zi === all.length - 1 && Math.abs(h * 60 - nowMinute) < 16) return null
                 const instant = atMinute(firstDay, h * 60, tz)
                 return (
                   <span key={h} className="text-muted-foreground absolute right-1.5 -translate-y-1/2 text-[10px] tabular-nums" style={{ top: h * HOUR }}>
@@ -254,11 +252,6 @@ export function TimeGrid(props: Props) {
                   </span>
                 )
               })}
-              {showNow && zi === all.length - 1 ? (
-                <span className="pointer-events-none absolute right-1.5 z-20 -translate-y-1/2 text-[10px] font-semibold whitespace-nowrap text-[var(--now)] tabular-nums [--now:#ff3b30] dark:[--now:#ff453a]" style={{ top: clamp((nowMinute / 60) * HOUR, 10, HOUR * 24 - 10) }}>
-                  {fmtTime(today, tz, hourCycle)}
-                </span>
-              ) : null}
             </div>
           ))}
           <div
@@ -306,8 +299,12 @@ export function TimeGrid(props: Props) {
                   {sameDay(d, today, tz) ? (
                     <div className="pointer-events-none absolute inset-x-0 z-20 flex -translate-y-1/2 items-center" style={{ top: (nowMinute / 60) * HOUR }} role="img" aria-label={`${t("Current time")} · ${fmtTime(today, tz, hourCycle)}`}>
                       {/* Apple Calendar's red (systemRed, its dark variant in dark mode) for the dot, the line and the time. */}
-                      <span className="ring-background absolute -left-1 size-2 rounded-full bg-[var(--now)] ring-2 [--now:#ff3b30] dark:[--now:#ff453a]" />
-                      <span className="h-[1.5px] flex-1 bg-[#ff3b30] dark:bg-[#ff453a]" />
+                      {/* The dot meets the line with an inverted corner radius: arcs (r 2) tangent to both, no hard corner. */}
+                      <svg className="absolute -left-1 h-2 w-3.5 fill-[#ff3b30] dark:fill-[#ff453a]" viewBox="0 0 14 8" aria-hidden="true">
+                        <path d="M7.555 2.167A2 2 0 0 0 9.333 3.25H14V4.75H9.333A2 2 0 0 0 7.555 5.833A4 4 0 1 1 7.555 2.167Z" />
+                      </svg>
+                      <span className="h-[1.5px] flex-1 rounded-full bg-[#ff3b30] dark:bg-[#ff453a]" />
+                      <span className="mr-1 rounded-full bg-[#ff3b30] px-1.5 py-0.5 text-[10px] font-semibold text-white tabular-nums shadow-sm dark:bg-[#ff453a]">{fmtTime(today, tz, hourCycle)}</span>
                     </div>
                   ) : null}
                   {mine.map((e) => {
