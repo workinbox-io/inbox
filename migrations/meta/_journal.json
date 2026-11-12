@@ -162,6 +162,13 @@
       "when": 1794496376698,
       "tag": "0022_calendar",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1794519287621,
+      "tag": "0023_breezy_meteorite",
+      "breakpoints": true
     }
   ]
 }

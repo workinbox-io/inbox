@@ -5,7 +5,7 @@
  * Backspace delete, Enter edit the title.
  */
 import * as React from "react"
-import { CalendarCheck, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleHelp, Copy, ExternalLink, PanelRightOpen, Sunrise, Trash2, UserPlus, X } from "lucide-react"
+import { CalendarCheck, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleHelp, Copy, ExternalLink, PanelRightOpen, Settings2, Sunrise, Trash2, UserPlus, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
 import { Button } from "@/components/ui/button"
@@ -16,14 +16,14 @@ import { AppFrame } from "@/components/workspace/app-frame"
 import { IconAction } from "@/components/workspace/detail-header"
 import { shortcutsPaused, useAppLayout, useMounted } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
-import type { Slot } from "@/lib/calendar/availability"
+import { availableSlots, type Slot } from "@/lib/calendar/availability"
 import type { SunLocation } from "@/lib/calendar/sun"
 import { addDays, sameDay, startOfDay, wallTime } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { replaceUrl } from "@/lib/panel-history"
 import { cn } from "@/lib/utils"
 import { AvailabilityBar } from "./availability-bar"
-import { CalendarRail } from "./calendar-rail"
+import { CalendarRail, CalendarSettingsDialog } from "./calendar-rail"
 import { EventPanel, useScopePrompt, type EventBody } from "./event-panel"
 import { MonthGrid } from "./month-grid"
 import {
@@ -79,7 +79,7 @@ export function CalendarApp(props: CalendarAppProps) {
   const [draft, setDraft] = React.useState<Draft | null>(null)
   // Each new draft gets a fresh panel; moving or resizing it keeps what's typed.
   const [draftSeq, setDraftSeq] = React.useState(0)
-  const newDraft = (d: Draft) => (setDraftSeq((n) => n + 1), setDraft(d))
+  const newDraft = (d: Draft) => (setSlots(null), setDraftSeq((n) => n + 1), setDraft(d))
   const [slots, setSlots] = React.useState<Slot[] | null>(null)
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [settingsOpen, setSettingsOpen] = React.useState(false)
@@ -111,18 +111,29 @@ export function CalendarApp(props: CalendarAppProps) {
   const { days, from, to } = React.useMemo(() => rangeOf(date, view, tz, prefs.weekStart), [date, view, tz, prefs.weekStart])
   const shownIds = calendars.filter((c) => !hidden.has(c.id)).map((c) => c.id).join(",")
 
+  const source = `${from}:${to}:${shownIds}:${people.join(",")}`
+  const [loadedSource, setLoadedSource] = React.useState<string | null>(null)
+  const loadRequest = React.useRef(0)
+  const availabilityReady = loadedSource === source && !loading
+
   const load = React.useCallback(async () => {
     const q = new URLSearchParams({ from: String(from), to: String(to), calendars: shownIds || "none" })
     if (people.length) q.set("people", people.join(","))
+    const request = ++loadRequest.current
     setLoading(true)
+    setLoadedSource(null)
     try {
-      setEvents((await api<{ events: EventView[] }>("GET", `/api/app/calendar/events?${q}`)).events)
+      const result = await api<{ events: EventView[] }>("GET", `/api/app/calendar/events?${q}`)
+      if (request !== loadRequest.current) return
+      setEvents(result.events)
+      setSlots((current) => current && availableSlots(current, result.events))
+      setLoadedSource(source)
     } catch (e) {
       toast.error((e as Error).message)
     } finally {
-      setLoading(false)
+      if (request === loadRequest.current) setLoading(false)
     }
-  }, [from, to, shownIds, people])
+  }, [from, to, shownIds, people, source])
 
   React.useEffect(() => {
     if (mounted) void load()
@@ -151,6 +162,7 @@ export function CalendarApp(props: CalendarAppProps) {
 
   const select = React.useCallback((e: EventView) => {
     if (e.role === "busy") return
+    setSlots(null)
     setDraft(null)
     setSelectedKey(eventKey(e))
     setOpened(e)
@@ -185,6 +197,21 @@ export function CalendarApp(props: CalendarAppProps) {
     },
     [date, tz, prefs.workStart],
   )
+
+  function toggleAvailability() {
+    if (slots) return setSlots(null)
+    setSelectedKey(null)
+    setOpened(null)
+    if (view === "month") setView("week")
+    setSlots([])
+  }
+
+  function chooseView(next: ViewMode) {
+    if (next === "month") setSlots(null)
+    setView(next)
+  }
+
+  const freeSlots = React.useMemo(() => slots && availableSlots(slots, events), [slots, events])
 
   // Address in, once: view, date, open event, ?new=1; then the saved rail choices.
   React.useEffect(() => {
@@ -338,7 +365,7 @@ export function CalendarApp(props: CalendarAppProps) {
   }
 
   function eventActions(e: EventView): MenuAction[] {
-    if (e.role === "busy") return []
+    if (slots || e.role === "busy") return []
     const editable = canEdit(e)
     return cleanActions([
       { label: t("Open"), icon: PanelRightOpen, shortcut: "↵", onSelect: () => select(e) },
@@ -375,12 +402,13 @@ export function CalendarApp(props: CalendarAppProps) {
   }
 
   function spaceActions(at: number, allDay: boolean): MenuAction[] {
+    if (slots) return [{ label: t("Leave availability"), icon: CalendarCheck, shortcut: "A", onSelect: toggleAvailability }]
     const startNew = (d: { start: number; end: number; allDay: boolean }) => (setSelectedKey(null), setOpened(null), newDraft(d))
     return cleanActions([
       allDay
         ? { label: t("New all-day event"), icon: CalendarPlus, onSelect: () => startNew({ start: startOfDay(at, tz), end: stepDate(startOfDay(at, tz), "day", 1, tz), allDay: true }) }
         : { label: t("New event here"), icon: CalendarPlus, shortcut: "C", onSelect: () => startNew({ start: at, end: at + 30 * 60_000, allDay: false }) },
-      { label: slots ? t("Leave availability") : t("Pick availability"), icon: CalendarCheck, shortcut: "A", onSelect: () => setSlots((s) => (s ? null : [])) },
+      { label: slots ? t("Leave availability") : t("Pick availability"), icon: CalendarCheck, shortcut: "A", onSelect: () => toggleAvailability() },
       { separator: true },
       view !== "day" ? { label: t("Open this day"), icon: CalendarDays, shortcut: "D", onSelect: () => (setDate(at), setView("day")) } : null,
       { label: t("Today"), shortcut: "T", onSelect: () => setDate(Date.now()) },
@@ -410,9 +438,9 @@ export function CalendarApp(props: CalendarAppProps) {
         case "w":
           return go(() => setView("week"))
         case "m":
-          return go(() => setView("month"))
+          return go(() => chooseView("month"))
         case "a":
-          return go(() => setSlots((s) => (s ? null : [])))
+          return go(() => toggleAvailability())
         case "/":
           return go(() => setPickerOpen(true))
         case "Escape":
@@ -444,7 +472,7 @@ export function CalendarApp(props: CalendarAppProps) {
   // Shown instead when the header has room: the week's exact dates.
   const longTitle = view === "week" ? fmtRange(days[0]!, days[6]!, tz, { day: "numeric", month: "long", year: "numeric" }) : title
 
-  const panelOpen = !!(selected || draft)
+  const panelOpen = !slots && !!(selected || draft)
   const panel = panelOpen ? (
     <EventPanel
       key={draft ? `draft:${draftSeq}` : selectedKey!}
@@ -479,9 +507,7 @@ export function CalendarApp(props: CalendarAppProps) {
       onCalendars={reloadCalendars}
       onPeople={choosePeople}
       onPickerOpen={setPickerOpen}
-      settingsOpen={settingsOpen}
       onSettingsOpen={setSettingsOpen}
-      onPrefs={setPrefs}
       onImport={() => fileRef.current?.click()}
     />
   )
@@ -509,9 +535,11 @@ export function CalendarApp(props: CalendarAppProps) {
               ""
             )}
           </h1>
-          <IconAction label={t("Availability (a)")} onClick={() => setSlots((s) => (s ? null : []))}>
-            <CalendarCheck className={cn(slots && "text-emerald-600")} />
-          </IconAction>
+          <Button size="sm" variant={slots ? "secondary" : "ghost"} aria-pressed={slots !== null} onClick={toggleAvailability} title={t("Availability (a)")}>
+            <CalendarCheck data-icon="inline-start" />
+            <span className="hidden sm:inline">{t("Availability")}</span>
+            <span className="sr-only sm:hidden">{t("Availability")}</span>
+          </Button>
           {view !== "month" ? (
             <IconAction label={t(preciseLocation ? "Use approximate sunrise and sunset times" : "Use your location for more accurate sunrise and sunset times")} onClick={toggleSun} disabled={locating}>
               <Sunrise className={cn(preciseLocation && "text-primary", locating && "motion-safe:animate-pulse")} />
@@ -526,19 +554,23 @@ export function CalendarApp(props: CalendarAppProps) {
             size="sm"
             aria-label={t("View")}
             value={view}
-            onValueChange={setView}
+            onValueChange={chooseView}
             options={[
               { value: "day", label: t("Day"), shortLabel: "D" },
               { value: "week", label: t("Week"), shortLabel: "W" },
               { value: "month", label: t("Month"), shortLabel: "M" },
             ]}
           />
+          <IconAction label={t("Calendar settings")} onClick={() => setSettingsOpen(true)}>
+            <Settings2 />
+          </IconAction>
           {!desktop && props.account ? <AccountMenu user={props.account} canManage={props.canManage} compact /> : null}
         </header>
         {!mounted ? (
           <div className="flex-1" />
         ) : view === "month" ? (
           <MonthGrid
+            hourCycle={prefs.hourCycle}
             days={days}
             month={wallTime(date, tz).month}
             tz={tz}
@@ -554,6 +586,7 @@ export function CalendarApp(props: CalendarAppProps) {
           />
         ) : (
           <TimeGrid
+            hourCycle={prefs.hourCycle}
             days={days}
             tz={tz}
             zones={prefs.timezones.slice(1)}
@@ -561,8 +594,9 @@ export function CalendarApp(props: CalendarAppProps) {
             colorOf={colorOf}
             editable={canEdit}
             selectedKey={selectedKey}
-            draft={draft}
-            slots={slots}
+            draft={slots ? null : draft}
+            slots={freeSlots}
+            availabilityReady={availabilityReady}
             now={now}
             workStart={prefs.workStart}
             sunLocation={sunLocation}
@@ -573,15 +607,15 @@ export function CalendarApp(props: CalendarAppProps) {
             onZones={() => setSettingsOpen(true)}
             draftActions={draftActions}
             onChange={(e, s, en) => void move(e, s, en)}
-            onSlots={setSlots}
+            onSlots={(next) => setSlots(availableSlots(next, events))}
             onDay={(d) => (setDate(d), setView("day"))}
             eventActions={eventActions}
             spaceActions={spaceActions}
           />
         )}
-        {slots ? <AvailabilityBar slots={slots} zones={[tz, ...prefs.timezones.slice(1)]} onClear={() => setSlots([])} onDone={() => setSlots(null)} /> : null}
+        {freeSlots ? <AvailabilityBar hourCycle={prefs.hourCycle} disabled={!availabilityReady} slots={freeSlots} zones={[tz, ...prefs.timezones.slice(1)]} onRemove={(slot) => setSlots(freeSlots.filter((s) => s !== slot))} onClear={() => setSlots([])} onDone={() => setSlots(null)} /> : null}
       </div>
-      {desktop && panel ? <aside className="w-[clamp(340px,26vw,440px)] shrink-0 border-l">{panel}</aside> : null}
+      {desktop && panel ? <aside className="w-[clamp(340px,26vw,440px)] shrink-0 border-l motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 motion-safe:duration-200">{panel}</aside> : null}
       {!desktop ? (
         <Sheet open={panelOpen} onOpenChange={(o) => !o && close()}>
           <SheetContent className="w-full gap-0 p-0 sm:max-w-md" showCloseButton={false}>
@@ -590,6 +624,7 @@ export function CalendarApp(props: CalendarAppProps) {
           </SheetContent>
         </Sheet>
       ) : null}
+      <CalendarSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} prefs={prefs} tz={tz} onSaved={setPrefs} />
       {scope.dialog}
       <input
         ref={fileRef}

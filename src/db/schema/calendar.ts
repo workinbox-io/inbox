@@ -117,6 +117,7 @@ export const calendarPrefs = sqliteTable("calendar_prefs", {
   timezones: text("timezones", { mode: "json" }).$type<string[]>().notNull().default([]),
   /** 0 = Sunday, 1 = Monday. */
   weekStart: integer("week_start").notNull().default(1),
+  hourCycle: text("hour_cycle", { enum: ["h12", "h23"] }).notNull().default("h23"),
   /** Minutes from midnight. */
   workStart: integer("work_start").notNull().default(540),
   workEnd: integer("work_end").notNull().default(1020),

@@ -14,6 +14,7 @@ import { getPrefs } from "@/lib/server/calendar/events";
 import { canManage } from "@/lib/server/roles";
 import { workspaceView } from "@/lib/server/workspace-view";
 import { t } from "@/lib/i18n/panel";
+import { approximateSunLocation } from "@/lib/calendar/sun";
 
 const id = Astro.params.id ?? null;
 if (id) return Astro.redirect(/^[0-9a-f-]{36}$/.test(id) ? `/app/calendar?event=${id}` : "/app/calendar");
@@ -42,6 +43,7 @@ const Layout = userView ? MailLayout : AppLayout;
           client:load
           calendars={calendars}
           prefs={prefs}
+          approximateLocation={approximateSunLocation(Astro.request.cf?.latitude, Astro.request.cf?.longitude)}
           canManage={canManage(role)}
           account={userView ? { name: user.name, email: user.email } : undefined}
           initial={{ date: Astro.url.searchParams.get("date"), view: Astro.url.searchParams.get("view") }}

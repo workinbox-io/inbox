@@ -1,6 +1,6 @@
 /** Month view: six weeks, a few events per day and "+N more" (opens the day). Double-click a day for an all-day event. */
 import * as React from "react"
-import { addDays, sameDay, wallTime } from "@/lib/calendar/time"
+import { addDays, sameDay, wallTime, type HourCycle } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { ActionMenu, type MenuAction } from "@/components/workspace/action-menu"
@@ -13,6 +13,7 @@ export function MonthGrid({
   days,
   month,
   tz,
+  hourCycle,
   now,
   events,
   colorOf,
@@ -27,6 +28,7 @@ export function MonthGrid({
   /** 1–12: days outside it are dimmed. */
   month: number
   tz: string
+  hourCycle: HourCycle
   now: number
   events: EventView[]
   colorOf: (e: EventView) => string
@@ -80,7 +82,7 @@ export function MonthGrid({
                     className={cn("hover:bg-muted flex items-center gap-1 truncate rounded px-1 text-left text-[11px]", selectedKey === eventKey(e) && "bg-muted", e.myStatus === "declined" && "line-through opacity-50")}
                   >
                     <span className="size-1.5 shrink-0 rounded-full" style={{ background: colorOf(e) }} />
-                    <span className="text-muted-foreground tabular-nums">{fmtTime(e.start, tz)}</span>
+                    <span className="text-muted-foreground tabular-nums">{fmtTime(e.start, tz, hourCycle)}</span>
                     <span className="truncate">{e.role === "busy" ? t("Busy") : e.title || t("(No title)")}</span>
                   </button>
                   </ActionMenu>

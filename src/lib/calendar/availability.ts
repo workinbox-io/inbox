@@ -1,5 +1,5 @@
 /** Free slots picked in the grid, as text to paste into an e-mail ("Tue, Nov 14 · 10:00–11:30 CET"). */
-import { startOfDay, zoneAbbr } from "./time";
+import { formatTime, sameDay, startOfDay, zoneAbbr, type HourCycle } from "./time";
 
 export interface Slot {
   start: number;
@@ -17,10 +17,28 @@ export function mergeSlots(slots: Slot[]): Slot[] {
   return out;
 }
 
+/** Keep only the parts of the selection outside busy events (including private busy blocks). */
+export function availableSlots(slots: Slot[], events: (Slot & { busy: boolean; status: string; myStatus: string | null })[]): Slot[] {
+  const busy = mergeSlots(events.filter((e) => e.busy && e.status !== "cancelled" && e.myStatus !== "declined"));
+  return mergeSlots(slots).flatMap((slot) => {
+    const free: Slot[] = [];
+    let start = slot.start;
+    for (const block of busy) {
+      if (block.end <= start) continue;
+      if (block.start >= slot.end) break;
+      if (block.start > start) free.push({ start, end: block.start });
+      start = Math.max(start, block.end);
+      if (start >= slot.end) break;
+    }
+    if (start < slot.end) free.push({ start, end: slot.end });
+    return free;
+  });
+}
+
 /** One line per day in `tz`, its slots comma-separated, the zone named once per line. */
-export function availabilityText(slots: Slot[], tz: string, locale = "en-US"): string {
+export function availabilityText(slots: Slot[], tz: string, locale = "en-US", hourCycle?: HourCycle): string {
   const day = new Intl.DateTimeFormat(locale, { timeZone: tz, weekday: "short", month: "short", day: "numeric" });
-  const time = new Intl.DateTimeFormat(locale, { timeZone: tz, hour: "numeric", minute: "2-digit" });
+  const time = (ms: number) => formatTime(ms, tz, locale, hourCycle);
   const days = new Map<number, Slot[]>();
   for (const s of mergeSlots(slots)) {
     const key = startOfDay(s.start, tz);
@@ -28,7 +46,7 @@ export function availabilityText(slots: Slot[], tz: string, locale = "en-US"): s
   }
   return [...days.values()]
     .map((list) => {
-      const ranges = list.map((s) => `${time.format(s.start)}–${time.format(s.end)}`).join(", ");
+      const ranges = list.map((s) => `${time(s.start)}–${sameDay(s.start, s.end, tz) ? "" : day.format(s.end) + " "}${time(s.end)}`).join(", ");
       return `${day.format(list[0].start)} · ${ranges} ${zoneAbbr(list[0].start, tz, locale)}`;
     })
     .join("\n");

@@ -1,6 +1,6 @@
 /** Types and small helpers shared by the calendar's parts (grid, month, panel, rail). */
 import { WORKSPACE_COLORS } from "@/components/workspace/ui"
-import { addDays, fromWallTime, startOfDay, startOfMonth, startOfWeek, wallTime } from "@/lib/calendar/time"
+import { addDays, formatTime, fromWallTime, startOfDay, startOfMonth, startOfWeek, wallTime, type HourCycle } from "@/lib/calendar/time"
 import { appLocale, t } from "@/lib/i18n/panel"
 import type { CalendarView } from "@/lib/server/calendar/calendars"
 import type { EventView } from "@/lib/server/calendar/events"
@@ -10,6 +10,7 @@ export type ViewMode = "day" | "week" | "month"
 export type Scope = "this" | "following" | "all"
 
 export interface Prefs {
+  hourCycle: HourCycle
   timezones: string[]
   weekStart: number
   workStart: number
@@ -110,7 +111,7 @@ export function fmtRange(from: number, to: number, tz: string, opts: Intl.DateTi
   return new Intl.DateTimeFormat(appLocale(), { timeZone: tz, ...opts }).formatRange(from, to)
 }
 
-export const fmtTime = (ms: number, tz: string) => fmt(ms, tz, { hour: "numeric", minute: "2-digit" })
+export const fmtTime = (ms: number, tz: string, hourCycle?: HourCycle) => formatTime(ms, tz, appLocale(), hourCycle)
 
 /** Events shown in the all-day row: all-day ones and those lasting a day or more. */
 export const isAllDayRow = (e: Pick<EventView, "allDay" | "start" | "end">) => e.allDay || e.end - e.start >= 86_400_000

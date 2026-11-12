@@ -76,6 +76,7 @@ export const calendarSchema = z.object({
 export const calendarUpdateSchema = calendarSchema.partial();
 
 export const prefsSchema = z.object({
+  hourCycle: z.enum(["h12", "h23"]),
   timezones: z.array(tz).min(1).max(3),
   weekStart: z.union([z.literal(0), z.literal(1), z.literal(6)]),
   workStart: z.number().int().min(0).max(1440),

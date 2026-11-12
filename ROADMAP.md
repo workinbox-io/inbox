@@ -103,7 +103,8 @@ Shipped 2026-11-12 (`b9f9510`, `40aa9aa`, then UI polish up to `08c1d0c`), deplo
   rectangle too, synced with its panel), keyboard shortcuts, right-click menus, the rail's mini month, labels that
   grow with the width
 - ✅ Several time zones side by side; colleagues' calendars overlaid (busy blocks when you can't see the details);
-  availability picked on the grid and copied as text
+  availability picked on the grid and copied as text (busy time excluded, merged selections, removable slots and a
+  preview in the chosen time zone; no reservation is made)
 - ✅ Invitations over iMIP: outgoing `text/calendar` REQUEST/CANCEL to outside attendees, incoming
   REQUEST/REPLY/CANCEL update RSVPs, an invitation card in the mail thread
 - ✅ Private `.ics` feed, `.ics` import (Google Calendar export)

@@ -42,12 +42,21 @@ Accept, Maybe and Decline.
 ## Time zones and colleagues
 
 In the calendar settings, choose your time zone and up to two more: they show side by side next to the hours.
+Open **Calendar settings** from the gear in the toolbar to choose a **24-hour** or **12-hour** clock.
+The preference is saved to your account and applies to the grid, event labels, sunrise/sunset and copied availability.
 Add a colleague under **People** to see their calendar over yours; events you can't open show as busy.
 
 ## Sharing your availability
 
-Press `a`, click or drag the free times you want to offer, then **Copy**: you get one line per day, such as
-"Tue, Nov 17 · 10:00 AM–11:30 AM CET", ready to paste in an e-mail, in the time zone you pick.
+Press `a` or choose **Availability**. From the month view this opens the week grid. Click for 30 minutes, or drag
+to select a longer range. Busy events in the visible calendars (including overlaid colleagues) are excluded;
+events marked free, cancelled events and invitations you declined do not block the selection.
+
+Overlapping or adjacent selections merge. Move between days or weeks to add more times. Click a selected block
+or its button in the bottom bar to remove it, or **Clear** to start again. The bar previews the exact text in your
+chosen time zone; **Copy availability** copies it for an e-mail. **Done** or `Esc` leaves the mode.
+
+These times are suggestions: they do not create events or reserve time. Booking links are planned separately.
 
 ## Subscription link and import
 

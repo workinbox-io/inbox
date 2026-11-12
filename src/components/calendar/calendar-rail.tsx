@@ -14,8 +14,10 @@ import { Calendar } from "@/components/ui/calendar"
 import { CommandPalette } from "@/components/ui/command-palette"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Field, FieldLabel } from "@/components/ui/field"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ActionMenuButton, type MenuAction } from "@/components/workspace/action-menu"
 import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
 import { ShareDialog } from "@/components/workspace/share-dialog"
@@ -44,9 +46,7 @@ export function CalendarRail({
   onCalendars,
   onPeople,
   onPickerOpen,
-  onPrefs,
   onImport,
-  settingsOpen,
   onSettingsOpen,
 }: {
   date: number
@@ -64,10 +64,8 @@ export function CalendarRail({
   onCalendars: () => Promise<void>
   onPeople: (ids: string[]) => void
   onPickerOpen: (open: boolean) => void
-  onPrefs: (p: Prefs) => void
   onImport: () => void
-  /** Time zones and week settings (also opened from the grid's zone label). */
-  settingsOpen: boolean
+  /** Calendar settings (also opened from the grid's zone label). */
   onSettingsOpen: (open: boolean) => void
 }) {
   const everyone = useNotePeople()
@@ -155,7 +153,7 @@ export function CalendarRail({
               <ActionMenuButton
                 label={t("Calendar settings")}
                 actions={[
-                  { label: t("Time zones and week"), icon: Settings2, onSelect: () => onSettingsOpen(true) },
+                  { label: t("Calendar settings"), icon: Settings2, onSelect: () => onSettingsOpen(true) },
                   { separator: true },
                   { label: t("Subscribe in another app (.ics)"), icon: LinkIcon, onSelect: () => setFeed(true) },
                   { label: t("Import .ics file"), icon: Download, onSelect: onImport },
@@ -260,7 +258,6 @@ export function CalendarRail({
           onSaved={() => void onCalendars()}
         />
       ) : null}
-      <SettingsDialog open={settingsOpen} onOpenChange={onSettingsOpen} prefs={prefs} tz={tz} onSaved={onPrefs} />
       <FeedDialog open={feed} onOpenChange={setFeed} />
     </>
   )
@@ -331,19 +328,21 @@ const ZONES = (() => {
   }
 })()
 
-function SettingsDialog({ open, onOpenChange, prefs, tz, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; prefs: Prefs; tz: string; onSaved: (p: Prefs) => void }) {
+export function CalendarSettingsDialog({ open, onOpenChange, prefs, tz, onSaved }: { open: boolean; onOpenChange: (o: boolean) => void; prefs: Prefs; tz: string; onSaved: (p: Prefs) => void }) {
   const [zones, setZones] = React.useState<string[]>([])
   const [weekStart, setWeekStart] = React.useState(prefs.weekStart)
+  const [hourCycle, setHourCycle] = React.useState(prefs.hourCycle)
   React.useEffect(() => {
     if (!open) return
     setZones(prefs.timezones.length ? prefs.timezones : [tz])
     setWeekStart(prefs.weekStart)
+    setHourCycle(prefs.hourCycle)
   }, [open, prefs, tz])
   const valid = zones.every((z) => isTimeZone(z))
   async function save(e: React.FormEvent) {
     e.preventDefault()
     try {
-      onSaved(await api<Prefs>("PUT", "/api/app/calendar/prefs", { timezones: zones, weekStart }))
+      onSaved(await api<Prefs>("PUT", "/api/app/calendar/prefs", { timezones: zones, weekStart, hourCycle }))
       onOpenChange(false)
     } catch (err) {
       toast.error((err as Error).message)
@@ -354,9 +353,21 @@ function SettingsDialog({ open, onOpenChange, prefs, tz, onSaved }: { open: bool
       <DialogContent className="sm:max-w-md">
         <form onSubmit={save} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>{t("Time zones and week")}</DialogTitle>
+            <DialogTitle>{t("Calendar settings")}</DialogTitle>
             <DialogDescription>{t("The first zone is yours; up to two more show next to the hours.")}</DialogDescription>
           </DialogHeader>
+          <Field>
+            <FieldLabel>{t("Time format")}</FieldLabel>
+            <SegmentedControl
+              aria-label={t("Time format")}
+              value={hourCycle}
+              onValueChange={setHourCycle}
+              options={[
+                { value: "h23", label: t("24-hour · 14:00") },
+                { value: "h12", label: t("12-hour · 2:00 PM") },
+              ]}
+            />
+          </Field>
           <datalist id="calendar-zones">
             {ZONES.map((z) => (
               <option key={z} value={z} />
@@ -386,19 +397,21 @@ function SettingsDialog({ open, onOpenChange, prefs, tz, onSaved }: { open: bool
               </Button>
             ) : null}
           </div>
-          <div className="grid gap-2">
-            <Label>{t("Week starts on")}</Label>
+          <Field>
+            <FieldLabel htmlFor="calendar-week-start">{t("Week starts on")}</FieldLabel>
             <Select value={String(weekStart)} onValueChange={(v) => setWeekStart(Number(v))}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger id="calendar-week-start" className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">{t("Monday")}</SelectItem>
-                <SelectItem value="0">{t("Sunday")}</SelectItem>
-                <SelectItem value="6">{t("Saturday")}</SelectItem>
+                <SelectGroup>
+                  <SelectItem value="1">{t("Monday")}</SelectItem>
+                  <SelectItem value="0">{t("Sunday")}</SelectItem>
+                  <SelectItem value="6">{t("Saturday")}</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
-          </div>
+          </Field>
           <DialogFooter>
             <Button type="submit" disabled={!valid}>
               {t("Save")}

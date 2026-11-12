@@ -7,10 +7,10 @@ import * as React from "react"
 import { Sunrise, Sunset, X } from "lucide-react"
 import { ActionMenu, type MenuAction } from "@/components/workspace/action-menu"
 import { tint } from "@/components/workspace/ui"
-import type { Slot } from "@/lib/calendar/availability"
+import { availableSlots, type Slot } from "@/lib/calendar/availability"
 import { layoutDay } from "@/lib/calendar/layout"
 import { sunTimes, type SunLocation } from "@/lib/calendar/sun"
-import { addDays, minuteOfDay, sameDay, startOfDay, wallTime, zoneAbbr } from "@/lib/calendar/time"
+import { addDays, minuteOfDay, sameDay, startOfDay, wallTime, zoneAbbr, type HourCycle } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { atMinute, eventKey, fmt, fmtTime, HOUR, isAllDayRow, SNAP, type Draft, type EventView } from "./shared"
@@ -29,6 +29,7 @@ export function Weekday({ day, tz, className }: { day: number; tz: string; class
 interface Props {
   days: number[]
   tz: string
+  hourCycle?: HourCycle
   /** Extra zones shown in more gutters (the grid's own zone first is implied). */
   zones: string[]
   events: EventView[]
@@ -38,6 +39,7 @@ interface Props {
   draft: Draft | null
   /** Non-null in availability mode. */
   slots: Slot[] | null
+  availabilityReady: boolean
   now: number
   sunLocation: SunLocation | null
   approximateSun?: boolean
@@ -76,7 +78,8 @@ const clamp = (n: number, a: number, b: number) => Math.min(b, Math.max(a, n))
 const snapDown = (m: number) => Math.floor(m / SNAP) * SNAP
 
 export function TimeGrid(props: Props) {
-  const { days, tz, zones, events, slots } = props
+  const { days, tz, hourCycle, zones, events, slots } = props
+  const gutter = hourCycle === "h12" ? 64 : GUTTER
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const colsRef = React.useRef<HTMLDivElement>(null)
   const [drag, setDrag] = React.useState<Drag | null>(null)
@@ -129,6 +132,7 @@ export function TimeGrid(props: Props) {
 
   function begin(e: React.PointerEvent, d: Drag) {
     // Menus are portals, but React bubbles their clicks through the tree: a menu item must not draw or drag here.
+    if (slots && !props.availabilityReady) return
     if (e.button !== 0 || !(e.currentTarget as Node).contains(e.target as Node)) return
     e.stopPropagation()
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
@@ -150,10 +154,10 @@ export function TimeGrid(props: Props) {
     if (!d) return
     const p = preview(d)
     // A plain click makes 30 minutes, like Cron.
-    const range = d.moved ? p : { start: p.start, end: p.start + 30 * 60_000 }
+    const range = d.moved ? p : { start: p.start, end: Math.min(p.start + 30 * 60_000, addDays(days[d.day]!, 1, tz)) }
     if (drawing(d)) {
       if (d.kind === "create") props.onCreate({ ...range, allDay: false })
-      else props.onSlots([...(slots ?? []), range])
+      else if (props.availabilityReady) props.onSlots([...(slots ?? []), range])
     } else if (!d.moved) {
       if (d.event) props.onSelect(d.event)
     } else if (p.start !== d.target.start || p.end !== d.target.end) {
@@ -169,20 +173,23 @@ export function TimeGrid(props: Props) {
 
   const today = props.now
   const firstDay = days[0]!
+  const showNow = days.some((day) => sameDay(day, today, tz))
+  const nowMinute = minuteOfDay(today, tz)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col select-none">
       {/* Day headers and the all-day row */}
       <div className="flex border-b">
-        <div className="flex shrink-0 items-end" style={{ width: GUTTER * (zones.length + 1) }}>
+        <div className="flex shrink-0 items-end" style={{ width: gutter * (zones.length + 1) }}>
           {[...zones].reverse().concat(tz).map((z) => (
             <button
               key={z}
               type="button"
               onClick={props.onZones}
-              className="text-muted-foreground hover:bg-muted hover:text-foreground mb-0.5 w-[52px] truncate rounded px-1 py-0.5 text-center text-[10px]"
-              title={`${z} · ${t("Time zones and week")}`}
-              aria-label={`${zoneAbbr(firstDay, z)}, ${t("Time zones and week")}`}
+              className="text-muted-foreground hover:bg-muted hover:text-foreground mb-0.5 truncate rounded px-1 py-0.5 text-center text-[10px]"
+              style={{ width: gutter }}
+              title={`${z} · ${t("Calendar settings")}`}
+              aria-label={`${zoneAbbr(firstDay, z)}, ${t("Calendar settings")}`}
             >
               {zoneAbbr(firstDay, z)}
             </button>
@@ -206,7 +213,7 @@ export function TimeGrid(props: Props) {
         </div>
       </div>
       <div className="flex border-b">
-        <div className="text-muted-foreground shrink-0 px-1 py-1 text-right text-[10px]" style={{ width: GUTTER * (zones.length + 1) }}>
+        <div className="text-muted-foreground shrink-0 px-1 py-1 text-right text-[10px]" style={{ width: gutter * (zones.length + 1) }}>
           {t("All day")}
         </div>
         <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}>
@@ -215,7 +222,7 @@ export function TimeGrid(props: Props) {
             const list = allDay.filter((e) => e.start < next && e.end > d)
             return (
               <ActionMenu key={d} actions={() => props.spaceActions(d, true)}>
-                <div className="grid min-h-7 content-start gap-0.5 border-l p-0.5" onDoubleClick={() => props.onCreate({ start: d, end: next, allDay: true })}>
+                <div className="grid min-h-7 content-start gap-0.5 border-l p-0.5" onDoubleClick={() => !slots && props.onCreate({ start: d, end: next, allDay: true })}>
                   {list.map((e) => (
                     <Chip
                       key={eventKey(e)}
@@ -237,15 +244,21 @@ export function TimeGrid(props: Props) {
       <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-y-auto">
         <div className="flex" style={{ height: HOUR * 24 }}>
           {[...zones].reverse().concat(tz).map((z, zi, all) => (
-            <div key={z} className={cn("relative w-[52px] shrink-0", zi === all.length - 1 ? "" : "text-muted-foreground/70")}>
+            <div key={z} className={cn("relative shrink-0", zi === all.length - 1 ? "" : "text-muted-foreground/70")} style={{ width: gutter }}>
               {Array.from({ length: 23 }, (_, i) => i + 1).map((h) => {
+                if (showNow && zi === all.length - 1 && Math.abs(h * 60 - nowMinute) < 16) return null
                 const instant = atMinute(firstDay, h * 60, tz)
                 return (
                   <span key={h} className="text-muted-foreground absolute right-1.5 -translate-y-1/2 text-[10px] tabular-nums" style={{ top: h * HOUR }}>
-                    {fmt(instant, z, { hour: "numeric", minute: wallTime(instant, z).minute ? "2-digit" : undefined })}
+                    {fmt(instant, z, { hour: "numeric", minute: wallTime(instant, z).minute ? "2-digit" : undefined, hourCycle })}
                   </span>
                 )
               })}
+              {showNow && zi === all.length - 1 ? (
+                <span className="pointer-events-none absolute right-1.5 z-20 -translate-y-1/2 text-[10px] font-semibold whitespace-nowrap text-[var(--now)] tabular-nums [--now:#ff3b30] dark:[--now:#ff453a]" style={{ top: clamp((nowMinute / 60) * HOUR, 10, HOUR * 24 - 10) }}>
+                  {fmtTime(today, tz, hourCycle)}
+                </span>
+              ) : null}
             </div>
           ))}
           <div
@@ -267,7 +280,7 @@ export function TimeGrid(props: Props) {
               return (
                 <ActionMenu key={d} actions={() => props.spaceActions(atMinute(days[spot.current.day]!, snapDown(spot.current.min), tz), false)}>
                 <div
-                  className="@container relative border-l"
+                  className={cn("@container relative border-l", slots && "cursor-crosshair touch-none")}
                   style={{ backgroundImage: `repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px ${HOUR}px)` }}
                   onContextMenu={(e) => (spot.current = at(e.clientX, e.clientY))}
                   onPointerDown={(e) => {
@@ -278,9 +291,9 @@ export function TimeGrid(props: Props) {
                   {props.sunLocation ? sunTimes(d, tz, props.sunLocation).map(({ kind, at }) => {
                     const Icon = kind === "sunrise" ? Sunrise : Sunset
                     const label = t(kind === "sunrise" ? "Sunrise" : "Sunset")
-                    const time = `${props.approximateSun ? "≈ " : ""}${fmtTime(at, tz)}`
+                    const time = `${props.approximateSun ? "≈ " : ""}${fmtTime(at, tz, hourCycle)}`
                     return (
-                      <div key={`${kind}-${at}`} className="pointer-events-none absolute inset-x-0 z-[1] flex -translate-y-1/2 items-center gap-1 text-muted-foreground" style={{ top: (minuteOfDay(at, tz) / 60) * HOUR }} role="img" aria-label={`${label} · ${props.approximateSun ? t("Approximate time") + " · " : ""}${fmtTime(at, tz)}`}>
+                      <div key={`${kind}-${at}`} className="pointer-events-none absolute inset-x-0 z-[1] flex -translate-y-1/2 items-center gap-1 text-muted-foreground" style={{ top: (minuteOfDay(at, tz) / 60) * HOUR }} role="img" aria-label={`${label} · ${props.approximateSun ? t("Approximate time") + " · " : ""}${fmtTime(at, tz, hourCycle)}`}>
                         <span className="min-w-1 flex-1 border-t border-dashed border-current opacity-25" />
                         <span className="bg-background/90 mr-1 flex shrink-0 items-center gap-1 rounded px-1 py-0.5 text-[10px] tabular-nums">
                           <Icon className="size-3" aria-hidden="true" />
@@ -291,10 +304,10 @@ export function TimeGrid(props: Props) {
                     )
                   }) : null}
                   {sameDay(d, today, tz) ? (
-                    <div className="text-destructive pointer-events-none absolute inset-x-0 z-20 flex -translate-y-1/2 items-center" style={{ top: (minuteOfDay(today, tz) / 60) * HOUR }} role="img" aria-label={`${t("Current time")} · ${fmtTime(today, tz)}`}>
-                      <span className="bg-destructive ring-background absolute -left-1 size-2 rounded-full ring-2" />
-                      <span className="bg-destructive h-px flex-1" />
-                      <span className="bg-background ring-destructive/30 mr-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums shadow-sm ring-1">{fmtTime(today, tz)}</span>
+                    <div className="pointer-events-none absolute inset-x-0 z-20 flex -translate-y-1/2 items-center" style={{ top: (nowMinute / 60) * HOUR }} role="img" aria-label={`${t("Current time")} · ${fmtTime(today, tz, hourCycle)}`}>
+                      {/* Apple Calendar's red (systemRed, its dark variant in dark mode) for the dot, the line and the time. */}
+                      <span className="ring-background absolute -left-1 size-2 rounded-full bg-[var(--now)] ring-2 [--now:#ff3b30] dark:[--now:#ff453a]" />
+                      <span className="h-[1.5px] flex-1 bg-[#ff3b30] dark:bg-[#ff453a]" />
                     </div>
                   ) : null}
                   {mine.map((e) => {
@@ -307,7 +320,7 @@ export function TimeGrid(props: Props) {
                       <Block
                         key={key}
                         e={e}
-                        tz={tz}
+                        tz={tz} hourCycle={hourCycle}
                         color={props.colorOf(e)}
                         selected={props.selectedKey === key}
                         dim={!!moving}
@@ -317,7 +330,7 @@ export function TimeGrid(props: Props) {
                           left: `${(p.col / p.cols) * 100}%`,
                           width: `calc(${100 / p.cols}% - 2px)`,
                         }}
-                        onPointerDown={(ev) => (can ? begin(ev, { kind: "move", event: e, target: e, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false }) : ev.stopPropagation())}
+                        onPointerDown={(ev) => (slots && (!e.busy || e.myStatus === "declined" || e.status === "cancelled") ? undefined : can ? begin(ev, { kind: "move", event: e, target: e, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false }) : ev.stopPropagation())}
                         onClick={(ev) => (ev.stopPropagation(), !can && !slots && props.onSelect(e))}
                         onResize={can ? (ev, kind) => begin(ev, { kind, event: e, target: e, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false }) : undefined}
                         actions={slots ? undefined : menuOf(props.eventActions(e))}
@@ -326,20 +339,22 @@ export function TimeGrid(props: Props) {
                   })}
                   {live && sameDay(preview(live).start, d, tz) ? (
                     <Ghost
-                      tz={tz}
+                      tz={tz} hourCycle={hourCycle}
                       color={live.event ? props.colorOf(live.event) : DRAFT_COLOR}
                       title={live.event ? live.event.title : props.draft?.title || t("New event")}
                       {...preview(live)}
                       day={d}
                     />
                   ) : null}
-                  {ghost && sameDay(ghost.start, d, tz) ? <Ghost tz={tz} color={ghost.kind === "slot" ? "#4caf6e" : DRAFT_COLOR} title="" {...ghost} day={d} /> : null}
+                  {ghost && sameDay(ghost.start, d, tz) ? (ghost.kind === "slot" ? availableSlots([ghost], events) : [ghost]).map((range) => (
+                    <Ghost key={range.start} tz={tz} hourCycle={hourCycle} color={ghost.kind === "slot" ? "var(--primary)" : DRAFT_COLOR} title="" {...range} day={d} />
+                  )) : null}
                   {!ghost && !(live && !live.event) && props.draft && !props.draft.allDay && sameDay(props.draft.start, d, tz) ? (
                     <DraftBlock
                       actions={menuOf(props.draftActions())}
                       draft={props.draft}
                       day={d}
-                      tz={tz}
+                      tz={tz} hourCycle={hourCycle}
                       onPointerDown={(ev, kind) => begin(ev, { kind, event: null, target: props.draft!, ...grab(ev), x: ev.clientX, y: ev.clientY, moved: false })}
                     />
                   ) : null}
@@ -353,12 +368,12 @@ export function TimeGrid(props: Props) {
                           type="button"
                           onPointerDown={(ev) => ev.stopPropagation()}
                           onContextMenu={own}
-                          onClick={() => props.onSlots(slots!.filter((x) => x !== s))}
-                          className="group absolute inset-x-0.5 z-10 flex items-start justify-between rounded-md border border-emerald-500 bg-emerald-500/15 px-1.5 py-0.5 text-left text-[11px] font-medium text-emerald-700 dark:text-emerald-300"
+                          onClick={(ev) => (ev.stopPropagation(), props.onSlots(slots!.filter((x) => x !== s)))}
+                          className="group absolute inset-x-0.5 z-10 flex items-start justify-between overflow-hidden rounded-md border border-primary bg-primary/15 px-1.5 py-0.5 text-left text-[11px] font-medium text-primary focus-visible:ring-2 focus-visible:ring-ring"
                           style={{ top: (top / 60) * HOUR, height: ((bottom - top) / 60) * HOUR - 1 }}
-                          aria-label={t("Remove slot")}
+                          aria-label={`${t("Remove slot")}: ${fmtTime(s.start, tz, hourCycle)} – ${fmtTime(s.end, tz, hourCycle)}`}
                         >
-                          {fmtTime(s.start, tz)} – {fmtTime(s.end, tz)}
+                          {fmtTime(s.start, tz, hourCycle)} – {fmtTime(s.end, tz, hourCycle)}
                           <X className="size-3 opacity-0 group-hover:opacity-100" />
                         </button>
                       )
@@ -396,6 +411,7 @@ const solid = (color: string): React.CSSProperties => ({ background: color, colo
 function Block({
   e,
   tz,
+  hourCycle,
   color,
   selected,
   dim,
@@ -407,6 +423,7 @@ function Block({
 }: {
   e: EventView
   tz: string
+  hourCycle?: HourCycle
   color: string
   selected: boolean
   dim: boolean
@@ -423,7 +440,7 @@ function Block({
     <div
       role="button"
       tabIndex={0}
-      aria-label={`${title}, ${fmtTime(e.start, tz)}`}
+      aria-label={`${title}, ${fmtTime(e.start, tz, hourCycle)}`}
       onContextMenu={own}
       onPointerDown={onPointerDown}
       onClick={onClick}
@@ -439,8 +456,8 @@ function Block({
     >
       <div className={cn("truncate font-medium", short && "inline")}>{title}</div>
       <div className={cn("truncate tabular-nums opacity-75", short && "ml-1 inline")}>
-        {fmtTime(e.start, tz)}
-        {short ? "" : ` – ${fmtTime(e.end, tz)}`}
+        {fmtTime(e.start, tz, hourCycle)}
+        {short ? "" : ` – ${fmtTime(e.end, tz, hourCycle)}`}
       </div>
       {!short && e.location && e.role !== "busy" ? <div className="truncate opacity-75">{e.location}</div> : null}
       {onResize ? (
@@ -459,12 +476,14 @@ function DraftBlock({
   draft,
   day,
   tz,
+  hourCycle,
   actions,
   onPointerDown,
 }: {
   draft: Draft
   day: number
   tz: string
+  hourCycle?: HourCycle
   actions?: MenuAction[]
   onPointerDown: (e: React.PointerEvent, kind: "move" | "resize" | "resize-start") => void
 }) {
@@ -488,7 +507,7 @@ function DraftBlock({
     >
       <div className={cn("truncate font-medium", height < 30 && "inline")}>{draft.title || t("New event")}</div>
       <div className={cn("tabular-nums opacity-85", height < 30 && "ml-1 inline")}>
-        {fmtTime(draft.start, tz)} – {fmtTime(draft.end, tz)}
+        {fmtTime(draft.start, tz, hourCycle)} – {fmtTime(draft.end, tz, hourCycle)}
       </div>
       <div onPointerDown={(e) => onPointerDown(e, "resize-start")} className={cn(handle, "-top-1 items-start")} aria-hidden>
         <span className={pill} />
@@ -501,7 +520,7 @@ function DraftBlock({
   )
 }
 
-function Ghost({ start, end, day, tz, color, title }: { start: number; end: number; day: number; tz: string; color: string; title: string }) {
+function Ghost({ start, end, day, tz, hourCycle, color, title }: { start: number; end: number; day: number; tz: string; hourCycle?: HourCycle; color: string; title: string }) {
   const next = addDays(day, 1, tz)
   const top = start <= day ? 0 : minuteOfDay(start, tz)
   const bottom = end >= next ? 1440 : minuteOfDay(end, tz) || 1440
@@ -512,7 +531,7 @@ function Ghost({ start, end, day, tz, color, title }: { start: number; end: numb
     >
       {title ? <div className="truncate font-medium">{title}</div> : null}
       <div className="tabular-nums opacity-85">
-        {fmtTime(start, tz)} – {fmtTime(end, tz)}
+        {fmtTime(start, tz, hourCycle)} – {fmtTime(end, tz, hourCycle)}
       </div>
     </div>
   )

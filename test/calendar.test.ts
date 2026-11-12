@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { availabilityText, mergeSlots } from "../src/lib/calendar/availability";
+import { availableSlots, availabilityText, mergeSlots } from "../src/lib/calendar/availability";
 import { parseIcs, toIcs, type IcsEvent } from "../src/lib/calendar/ics";
 import { layoutDay } from "../src/lib/calendar/layout";
 import { expand, seriesEnd, splitRule, type Series } from "../src/lib/calendar/recurrence";
-import { addDays, fromWallTime, startOfWeek, wallTime } from "../src/lib/calendar/time";
+import { addDays, formatTime, fromWallTime, startOfWeek, wallTime } from "../src/lib/calendar/time";
+import { prefsSchema } from "../src/lib/validation-calendar";
 
 const WAW = "Europe/Warsaw";
 const at = (s: string) => Date.parse(s);
@@ -13,6 +14,20 @@ const hm = (ms: number, tz = WAW) => {
 };
 
 describe("time", () => {
+  it("uses the selected clock format, including midnight and noon", () => {
+    expect(formatTime(at("2026-11-12T13:05:00Z"), WAW, "en-US", "h23")).toBe("14:05");
+    expect(formatTime(at("2026-11-12T13:05:00Z"), WAW, "en-US", "h12")).toBe("2:05 PM");
+    expect(formatTime(at("2026-11-11T23:00:00Z"), WAW, "en-US", "h23")).toBe("00:00");
+    expect(formatTime(at("2026-11-11T23:00:00Z"), WAW, "en-US", "h12")).toBe("12:00 AM");
+    expect(formatTime(at("2026-11-12T11:00:00Z"), WAW, "en-US", "h12")).toBe("12:00 PM");
+  });
+
+  it("validates the saved format and keeps old partial preference requests valid", () => {
+    expect(prefsSchema.parse({ hourCycle: "h23" })).toEqual({ hourCycle: "h23" });
+    expect(prefsSchema.parse({ hourCycle: "h12" })).toEqual({ hourCycle: "h12" });
+    expect(prefsSchema.safeParse({ hourCycle: "h24" }).success).toBe(false);
+    expect(prefsSchema.parse({ weekStart: 1 })).toEqual({ weekStart: 1 });
+  });
   it("converts wall clock both ways across DST", () => {
     expect(fromWallTime({ year: 2026, month: 3, day: 28, hour: 9, minute: 0, second: 0 }, WAW)).toBe(at("2026-03-28T08:00:00Z"));
     expect(fromWallTime({ year: 2026, month: 3, day: 30, hour: 9, minute: 0, second: 0 }, WAW)).toBe(at("2026-03-30T07:00:00Z"));
@@ -89,6 +104,30 @@ describe("layout", () => {
 });
 
 describe("availability", () => {
+  it("copies availability using the selected time format", () => {
+    const slots = [{ start: at("2026-11-12T13:00:00Z"), end: at("2026-11-12T14:00:00Z") }];
+    expect(availabilityText(slots, WAW, "en-US", "h23")).toBe("Thu, Nov 12 · 14:00–15:00 GMT+1");
+    expect(availabilityText(slots, WAW, "en-US", "h12")).toBe("Thu, Nov 12 · 2:00 PM–3:00 PM GMT+1");
+  });
+  it("excludes overlapping busy blocks and preserves free, declined and cancelled events", () => {
+    const busy = (start: number, end: number) => ({ start, end, busy: true, status: "confirmed", myStatus: null });
+    const slots = [{ start: 0, end: 100 }, { start: 90, end: 120 }];
+    expect(availableSlots(slots, [
+      busy(20, 40), busy(30, 50), busy(80, 90),
+      { ...busy(0, 120), busy: false },
+      { ...busy(0, 120), status: "cancelled" },
+      { ...busy(0, 120), myStatus: "declined" },
+    ])).toEqual([{ start: 0, end: 20 }, { start: 50, end: 80 }, { start: 90, end: 120 }]);
+    expect(slots).toEqual([{ start: 0, end: 100 }, { start: 90, end: 120 }]);
+    expect(availableSlots(slots, [busy(-1, 150)])).toEqual([]);
+    expect(availableSlots([{ start: 0, end: 20 }], [busy(20, 40)])).toEqual([{ start: 0, end: 20 }]);
+  });
+
+  it("names the end date when the chosen zone moves a slot across midnight", () => {
+    const text = availabilityText([{ start: at("2026-11-17T22:30:00Z"), end: at("2026-11-18T00:30:00Z") }], WAW);
+    expect(text).toContain("Tue, Nov 17 · 11:30 PM–Wed, Nov 18 1:30 AM");
+  });
+
   it("merges slots and writes one line per day", () => {
     const slots = [
       { start: at("2026-11-17T09:30:00Z"), end: at("2026-11-17T10:00:00Z") },

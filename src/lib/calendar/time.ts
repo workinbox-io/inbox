@@ -14,6 +14,11 @@ export interface WallTime {
 }
 
 const DAY = 86_400_000;
+export type HourCycle = "h12" | "h23";
+
+export function formatTime(ms: number, tz: string, locale = "en-US", hourCycle?: HourCycle) {
+  return new Intl.DateTimeFormat(locale, { timeZone: tz, hour: "numeric", minute: "2-digit", hourCycle }).format(ms);
+}
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 function formatter(tz: string) {

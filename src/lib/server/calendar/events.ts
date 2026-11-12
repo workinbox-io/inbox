@@ -253,13 +253,13 @@ export async function orgUsersByEmail(orgId: string, emails: string[]) {
   return out;
 }
 
-export const DEFAULT_PREFS = { timezones: [] as string[], weekStart: 1, workStart: 540, workEnd: 1020, defaultReminder: 10 as number | null };
+export const DEFAULT_PREFS = { timezones: [] as string[], weekStart: 1, hourCycle: "h23" as const, workStart: 540, workEnd: 1020, defaultReminder: 10 as number | null };
 
 export async function getPrefs(userId: string) {
   if (!userId) return DEFAULT_PREFS;
   const [row] = await db.select().from(calendarPrefs).where(eq(calendarPrefs.userId, userId));
   return row
-    ? { timezones: row.timezones, weekStart: row.weekStart, workStart: row.workStart, workEnd: row.workEnd, defaultReminder: row.defaultReminder }
+    ? { timezones: row.timezones, weekStart: row.weekStart, hourCycle: row.hourCycle, workStart: row.workStart, workEnd: row.workEnd, defaultReminder: row.defaultReminder }
     : DEFAULT_PREFS;
 }
 
