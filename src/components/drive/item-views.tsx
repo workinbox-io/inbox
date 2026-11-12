@@ -192,7 +192,7 @@ export function ItemGrid(props: ItemViewProps) {
                   ) : (
                     <Icon className={cn("size-10", item.kind === "folder" ? "text-foreground/50" : "text-muted-foreground")} strokeWidth={1.5} />
                   )}
-                  <Check item={item} props={props} selected={selected} className={cn("bg-background/90 absolute top-1.5 left-1.5 rounded-sm p-0.5", !selected && "opacity-0 group-hover:opacity-100")} />
+                  <Check item={item} props={props} selected={selected} className={cn("absolute top-2 left-2 flex [&_[data-state=unchecked]]:bg-background", !selected && "opacity-0 group-hover:opacity-100")} />
                   {item.starred ? <Star className="absolute top-2 right-2 size-3.5 fill-amber-400 text-amber-400" aria-label={t("Starred")} /> : null}
                 </div>
                 <div className="flex min-w-0 items-center gap-1.5 px-0.5">

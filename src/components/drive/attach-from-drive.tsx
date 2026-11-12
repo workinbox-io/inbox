@@ -7,6 +7,7 @@ import { HardDrive } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Attachments } from "@/components/uploads/attachments"
 import { t } from "@/lib/i18n/panel"
+import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_FILES, resolveAttachmentType } from "@/lib/uploads"
 import { DrivePicker } from "./drive-picker"
 import { task } from "./task"
 
@@ -25,6 +26,9 @@ export function AttachFromDrive({ attachments }: { attachments: Attachments }) {
         title={t("Attach from Drive")}
         description={t("Files up to 10 MB are attached as copies.")}
         confirmLabel={t("Attach")}
+        // The composer's own rules, shown up front instead of as error chips after the download.
+        blocked={(f) => (f.size > ATTACHMENT_MAX_BYTES ? t("Over 10 MB") : resolveAttachmentType(f.mediaType, f.name) ? null : t("This file type can't be attached"))}
+        max={Math.max(0, ATTACHMENT_MAX_FILES - attachments.items.length)}
         onPick={async ({ files }) => {
           const job = task(files.length === 1 ? t("Attaching {name}…", { name: files[0]!.name }) : t("Attaching {count} files…", { count: files.length }), { progress: true })
           let loaded = 0
