@@ -103,6 +103,11 @@ export function fmt(ms: number, tz: string, opts: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat(appLocale(), { timeZone: tz, ...opts }).format(ms)
 }
 
+/** A date range in the locale's own shape ("10–16 November 2026", "27 Oct – 2 Nov 2026"). */
+export function fmtRange(from: number, to: number, tz: string, opts: Intl.DateTimeFormatOptions) {
+  return new Intl.DateTimeFormat(appLocale(), { timeZone: tz, ...opts }).formatRange(from, to)
+}
+
 export const fmtTime = (ms: number, tz: string) => fmt(ms, tz, { hour: "numeric", minute: "2-digit" })
 
 /** Events shown in the all-day row: all-day ones and those lasting a day or more. */

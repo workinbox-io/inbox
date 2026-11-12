@@ -4,7 +4,7 @@ import { addDays, sameDay, wallTime } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { ActionMenu, type MenuAction } from "@/components/workspace/action-menu"
-import { Chip, menuOf } from "./time-grid"
+import { Chip, menuOf, Weekday } from "./time-grid"
 import { eventKey, fmt, fmtTime, type Draft, type EventView } from "./shared"
 
 const SHOWN = 3
@@ -41,8 +41,8 @@ export function MonthGrid({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="grid grid-cols-7 border-b">
         {days.slice(0, 7).map((d) => (
-          <div key={d} className="text-muted-foreground border-l py-1.5 text-center text-xs uppercase">
-            {fmt(d, tz, { weekday: "short" })}
+          <div key={d} className="text-muted-foreground @container flex min-w-0 justify-center border-l py-1.5 text-xs">
+            <Weekday day={d} tz={tz} />
           </div>
         ))}
       </div>

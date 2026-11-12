@@ -139,7 +139,9 @@ export function CalendarRail({
           onMonthChange={setMonth}
           weekStartsOn={prefs.weekStart as 0 | 1 | 6}
           onSelect={(d) => d && onDate(parseDayKey(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, tz)!)}
-          className="-mx-2 p-0 [--cell-size:--spacing(6.5)]"
+          // Spans the (resizable) rail: columns stretch, days stay round cells centred in them.
+          classNames={{ root: "w-full" }}
+          className="-mx-2 p-0 [--cell-size:--spacing(7)] [&_[data-day]]:mx-auto [&_[data-day]]:w-(--cell-size) [&_[role=gridcell]]:aspect-auto [&_[role=gridcell]]:h-(--cell-size)"
         />
         <RailSection
           title={t("Calendars")}

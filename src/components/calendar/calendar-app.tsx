@@ -33,6 +33,7 @@ import {
   dayKey,
   eventKey,
   fmt,
+  fmtRange,
   LS,
   parseDayKey,
   personColor,
@@ -401,6 +402,8 @@ export function CalendarApp(props: CalendarAppProps) {
         : wallTime(days[0]!, tz).month === wallTime(days[6]!, tz).month
           ? fmt(days[0]!, tz, { month: "long", year: "numeric" })
           : `${fmt(days[0]!, tz, { month: "short" })} – ${fmt(days[6]!, tz, { month: "short", year: "numeric" })}`
+  // Shown instead when the header has room: the week's exact dates.
+  const longTitle = view === "week" ? fmtRange(days[0]!, days[6]!, tz, { day: "numeric", month: "long", year: "numeric" }) : title
 
   const panelOpen = !!(selected || draft)
   const panel = panelOpen ? (
@@ -444,7 +447,7 @@ export function CalendarApp(props: CalendarAppProps) {
   return (
     <AppFrame ref={frameRef} userView={!!props.account}>
       {desktop ? rail : null}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="@container/cal flex min-w-0 flex-1 flex-col">
         <header className="flex min-h-12 flex-wrap items-center gap-1 border-b px-2 py-1.5 md:px-3">
           <Button variant="outline" size="sm" onClick={() => setDate(Date.now())}>
             {t("Today")}
@@ -455,7 +458,15 @@ export function CalendarApp(props: CalendarAppProps) {
           <IconAction label={t("Next (j)")} onClick={() => setDate((d) => stepDate(d, view, 1, tz))}>
             <ChevronRight />
           </IconAction>
-          <h1 className={cn("order-last ml-1 min-w-0 basis-full truncate text-sm font-semibold sm:order-none sm:basis-auto sm:flex-1", loading && "opacity-60")}>{mounted ? title : ""}</h1>
+          <h1 className={cn("order-last ml-1 min-w-0 basis-full truncate text-sm font-semibold sm:order-none sm:basis-auto sm:flex-1", loading && "opacity-60")}>{mounted ? (
+              <>
+                <span className="@3xl/cal:hidden">{title}</span>
+                <span className="hidden @3xl/cal:inline">{longTitle}</span>
+              </>
+            ) : (
+              ""
+            )}
+          </h1>
           <IconAction label={t("Availability (a)")} onClick={() => setSlots((s) => (s ? null : []))}>
             <CalendarCheck className={cn(slots && "text-emerald-600")} />
           </IconAction>
@@ -518,7 +529,7 @@ export function CalendarApp(props: CalendarAppProps) {
         )}
         {slots ? <AvailabilityBar slots={slots} zones={[tz, ...prefs.timezones.slice(1)]} onClear={() => setSlots([])} onDone={() => setSlots(null)} /> : null}
       </div>
-      {desktop && panel ? <aside className="w-[360px] shrink-0 border-l">{panel}</aside> : null}
+      {desktop && panel ? <aside className="w-[clamp(340px,26vw,440px)] shrink-0 border-l">{panel}</aside> : null}
       {!desktop ? (
         <Sheet open={panelOpen} onOpenChange={(o) => !o && close()}>
           <SheetContent className="w-full gap-0 p-0 sm:max-w-md" showCloseButton={false}>

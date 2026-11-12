@@ -14,6 +14,17 @@ import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { atMinute, eventKey, fmt, fmtTime, HOUR, isAllDayRow, SNAP, type Draft, type EventView } from "./shared"
 
+/** The weekday as wide as its column allows ("M", "Mon", "Monday"); the parent must be an `@container`. */
+export function Weekday({ day, tz, className }: { day: number; tz: string; className?: string }) {
+  return (
+    <span className={cn("truncate uppercase", className)}>
+      <span className="@min-[3.5rem]:hidden">{fmt(day, tz, { weekday: "narrow" })}</span>
+      <span className="hidden @min-[3.5rem]:inline @min-[9rem]:hidden">{fmt(day, tz, { weekday: "short" })}</span>
+      <span className="hidden @min-[9rem]:inline">{fmt(day, tz, { weekday: "long" })}</span>
+    </span>
+  )
+}
+
 interface Props {
   days: number[]
   tz: string
@@ -152,10 +163,13 @@ export function TimeGrid(props: Props) {
           {days.map((d) => {
             const isToday = sameDay(d, today, tz)
             return (
-              <button key={d} type="button" onClick={() => props.onDay(d)} className="hover:bg-muted/50 flex items-baseline justify-center gap-1.5 border-l py-1.5 text-xs">
-                <span className="text-muted-foreground uppercase">{fmt(d, tz, { weekday: "short" })}</span>
-                <span className={cn("grid size-6 place-items-center rounded-full text-sm font-medium tabular-nums", isToday && "bg-primary text-primary-foreground")}>
-                  {wallTime(d, tz).day}
+              <button key={d} type="button" onClick={() => props.onDay(d)} className="hover:bg-muted/50 @container flex min-w-0 items-baseline justify-center border-l py-1.5 text-xs">
+                <span className="flex min-w-0 items-baseline justify-center gap-1.5">
+                  <Weekday day={d} tz={tz} className="text-muted-foreground" />
+                  <span className={cn("grid size-6 shrink-0 place-items-center rounded-full text-sm font-medium tabular-nums", isToday && "bg-primary text-primary-foreground")}>
+                    {wallTime(d, tz).day}
+                  </span>
+                  <span className="text-muted-foreground hidden truncate @min-[15rem]:inline">{fmt(d, tz, { month: "long" })}</span>
                 </span>
               </button>
             )
