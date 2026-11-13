@@ -5,7 +5,7 @@ import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 import { ActionMenu, type MenuAction } from "@/components/workspace/action-menu"
 import { Chip, menuOf, Weekday } from "./time-grid"
-import { eventKey, fmt, fmtTime, type Draft, type EventView } from "./shared"
+import { TODAY_CIRCLE, eventKey, fmt, fmtTime, type Draft, type EventView } from "./shared"
 
 const SHOWN = 3
 
@@ -64,7 +64,7 @@ export function MonthGrid({
                 onClick={() => onDay(d)}
                 className={cn(
                   "hover:bg-muted grid size-6 shrink-0 place-items-center self-start rounded-full text-xs tabular-nums",
-                  sameDay(d, now, tz) && "bg-primary text-primary-foreground hover:bg-primary",
+                  sameDay(d, now, tz) && cn(TODAY_CIRCLE, "font-semibold hover:bg-[#ff3b30] dark:hover:bg-[#ff453a]"),
                   w.month !== month && "text-muted-foreground",
                 )}
               >

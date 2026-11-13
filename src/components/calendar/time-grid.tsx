@@ -13,7 +13,7 @@ import { sunTimes, type SunLocation } from "@/lib/calendar/sun"
 import { addDays, minuteOfDay, sameDay, startOfDay, wallTime, zoneAbbr, type HourCycle } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
-import { atMinute, eventKey, fmt, fmtTime, HOUR, isAllDayRow, SNAP, type Draft, type EventView } from "./shared"
+import { TODAY_CIRCLE, atMinute, eventKey, fmt, fmtTime, HOUR, isAllDayRow, SNAP, type Draft, type EventView } from "./shared"
 
 /** The weekday as wide as its column allows ("M", "Mon", "Monday"); the parent must be an `@container`. */
 export function Weekday({ day, tz, className }: { day: number; tz: string; className?: string }) {
@@ -201,7 +201,7 @@ export function TimeGrid(props: Props) {
               <button key={d} type="button" onClick={() => props.onDay(d)} className="hover:bg-muted/50 @container flex min-w-0 items-baseline justify-center border-l py-1.5 text-xs">
                 <span className="flex min-w-0 items-baseline justify-center gap-1.5">
                   <Weekday day={d} tz={tz} className="text-muted-foreground" />
-                  <span className={cn("grid size-6 shrink-0 place-items-center rounded-full text-sm font-medium tabular-nums", isToday && "bg-primary text-primary-foreground")}>
+                  <span className={cn("grid size-6 shrink-0 place-items-center rounded-full text-sm font-medium tabular-nums", isToday && TODAY_CIRCLE)}>
                     {wallTime(d, tz).day}
                   </span>
                   <span className="text-muted-foreground hidden truncate @min-[15rem]:inline">{fmt(d, tz, { month: "long" })}</span>

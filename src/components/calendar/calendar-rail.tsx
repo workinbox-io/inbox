@@ -147,11 +147,17 @@ export function CalendarRail({
           onMonthChange={setMonth}
           weekStartsOn={prefs.weekStart as 0 | 1 | 6}
           modifiers={week ? { week } : undefined}
-          modifiersClassNames={{ week: "bg-muted rounded-none! first:rounded-l-(--cell-radius)! last:rounded-r-(--cell-radius)!" }}
+          modifiersClassNames={{ week: "bg-muted rounded-none! first:rounded-l-full! last:rounded-r-full!" }}
           onSelect={(d) => d && onDate(parseDayKey(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, tz)!)}
           // Spans the (resizable) rail: columns stretch, days stay round cells centred in them.
-          classNames={{ root: "w-full" }}
-          className="-mx-2 p-0 [--cell-size:--spacing(7)] [&_[data-day]]:mx-auto [&_[data-day]]:w-(--cell-size) [&_[role=gridcell]]:aspect-auto [&_[role=gridcell]]:h-(--cell-size)"
+          // Today: red text, a red circle when it's also the picked day (shared.ts, like the grid's headers).
+          classNames={{
+            root: "w-full",
+            today: `[&_button]:font-semibold [&_button]:text-[#ff3b30] dark:[&_button]:text-[#ff453a] [&_button[data-selected-single=true]]:bg-[#ff3b30] [&_button[data-selected-single=true]]:text-white dark:[&_button[data-selected-single=true]]:bg-[#ff453a]`,
+          }}
+          // Only the day buttons are fixed-size: react-day-picker puts data-day on the cells too, which must stretch so the
+          // week band runs unbroken.
+          className="-mx-2 p-0 [--cell-size:--spacing(7)] [&_button[data-day]]:mx-auto [&_button[data-day]]:w-(--cell-size) [&_[role=gridcell]]:aspect-auto [&_[role=gridcell]]:h-(--cell-size)"
         />
         <RailSection
           title={t("Calendars")}
