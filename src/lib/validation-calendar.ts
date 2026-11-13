@@ -78,6 +78,10 @@ export const calendarSchema = z.object({
     .max(2000)
     .transform((u) => u.replace(/^webcals?:\/\//i, "https://"))
     .pipe(z.string().url("Enter the calendar's address").startsWith("https://", "The address must start with https://"))
+    // Google's sharing link (…/calendar/u/0?cid=…) carries no key; only /calendar/ical/… addresses are feeds.
+    .refine((u) => !/^https:\/\/calendar\.google\.com\//i.test(u) || /\/calendar\/ical\//i.test(u), {
+      message: "That's Google's sharing link, not a feed. In Google Calendar's settings open the calendar, scroll to \"Integrate calendar\" and copy \"Secret address in iCal format\".",
+    })
     .optional(),
 });
 

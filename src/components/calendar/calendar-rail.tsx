@@ -503,9 +503,18 @@ export function CalendarFeedSettings() {
     <div className="grid gap-8">
       <section className="grid gap-3">
         <PrefHeading>{t("Google Calendar in Work Inbox")}</PrefHeading>
-        <p className="text-muted-foreground text-sm">
-          {t("In Google Calendar open Settings, pick a calendar and copy its \"Secret address in iCal format\". Its events show here read-only, refreshed about every 30 minutes.")}
-        </p>
+        <ol className="text-muted-foreground list-decimal space-y-1 pl-5 text-sm">
+          <li>
+            {t("Open")}{" "}
+            <a href="https://calendar.google.com/calendar/r/settings" target="_blank" rel="noreferrer" className="text-foreground underline underline-offset-2">
+              {t("Google Calendar settings")}
+            </a>{" "}
+            {t("on a computer (the phone app doesn't have this).")}
+          </li>
+          <li>{t("On the left, under \"Settings for my calendars\", click the calendar.")}</li>
+          <li>{t("Scroll down to \"Integrate calendar\" and copy \"Secret address in iCal format\", the last field. Not the sharing link: that one has ?cid= in it.")}</li>
+          <li>{t("Paste it below. Its events show here read-only, refreshed about every 30 minutes.")}</li>
+        </ol>
         {synced?.length ? (
           <PrefList>
             {synced.map((c) => (
