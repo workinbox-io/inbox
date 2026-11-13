@@ -13,7 +13,7 @@
   --primary-foreground: #ffffff;
   --secondary: #efefef;
   --muted: color-mix(in srgb, var(--ink) 4%, transparent);
-  --muted-foreground: #7c7c7c;
+  --muted-foreground: #707070;
   --accent: color-mix(in srgb, var(--ink) 5%, transparent);
   --border: color-mix(in srgb, var(--ink) 9%, transparent);
   --input: color-mix(in srgb, var(--ink) 13%, transparent);
@@ -25,7 +25,7 @@
   --sidebar-accent: color-mix(in srgb, var(--ink) 6%, transparent);
   --sidebar-border: color-mix(in srgb, var(--ink) 8%, transparent);
   --sidebar-ring: var(--ring);
-  --code-number: #7c7c7c;
+  --code-number: var(--muted-foreground);
   --selection: color-mix(in srgb, var(--ink) 14%, transparent);
   /* Charts keep colour, since ink would read as "no data". */
   --chart-1: #1a1a1a;

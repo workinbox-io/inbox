@@ -154,8 +154,5 @@ export const LS = {
   },
 }
 
-/**
- * Today, the way Apple Calendar marks it: a red circle with a white number (day headers, month and year views; the
- * rail's mini month spells the same red out: red text, the circle when today is the picked day). The now line's red.
- */
-export const TODAY_CIRCLE = "bg-[#ff3b30] text-white dark:bg-[#ff453a]"
+/** Shared today marker; the mini month uses the same tokens for its text and selected day. */
+export const TODAY_CIRCLE = "bg-calendar-today text-calendar-today-foreground hover:bg-calendar-today hover:text-calendar-today-foreground"

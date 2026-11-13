@@ -64,8 +64,8 @@ export function MonthGrid({
                 onClick={() => onDay(d)}
                 className={cn(
                   "hover:bg-muted grid size-6 shrink-0 place-items-center self-start rounded-full text-xs tabular-nums",
-                  sameDay(d, now, tz) && cn(TODAY_CIRCLE, "font-semibold hover:bg-[#ff3b30] dark:hover:bg-[#ff453a]"),
                   w.month !== month && "text-muted-foreground",
+                  sameDay(d, now, tz) && cn(TODAY_CIRCLE, "font-semibold"),
                 )}
               >
                 {w.day}

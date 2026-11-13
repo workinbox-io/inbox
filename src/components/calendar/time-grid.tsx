@@ -298,13 +298,12 @@ export function TimeGrid(props: Props) {
                   }) : null}
                   {sameDay(d, today, tz) ? (
                     <div className="pointer-events-none absolute inset-x-0 z-20 flex -translate-y-1/2 items-center" style={{ top: (nowMinute / 60) * HOUR }} role="img" aria-label={`${t("Current time")} · ${fmtTime(today, tz, hourCycle)}`}>
-                      {/* Apple Calendar's red (systemRed, its dark variant in dark mode) for the dot, the line and the time. */}
                       {/* The dot meets the line with an inverted corner radius: arcs (r 2) tangent to both, no hard corner. */}
-                      <svg className="absolute -left-1 h-2 w-3.5 fill-[#ff3b30] dark:fill-[#ff453a]" viewBox="0 0 14 8" aria-hidden="true">
+                      <svg className="fill-calendar-today absolute -left-1 h-2 w-3.5" viewBox="0 0 14 8" aria-hidden="true">
                         <path d="M7.555 2.167A2 2 0 0 0 9.333 3.25H14V4.75H9.333A2 2 0 0 0 7.555 5.833A4 4 0 1 1 7.555 2.167Z" />
                       </svg>
-                      <span className="h-[1.5px] flex-1 rounded-full bg-[#ff3b30] dark:bg-[#ff453a]" />
-                      <span className="mr-1 rounded-full bg-[#ff3b30] px-1.5 py-0.5 text-[10px] font-semibold text-white tabular-nums shadow-sm dark:bg-[#ff453a]">{fmtTime(today, tz, hourCycle)}</span>
+                      <span className="bg-calendar-today h-[1.5px] flex-1 rounded-full" />
+                      <span className="bg-calendar-today text-calendar-today-foreground mr-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums shadow-sm">{fmtTime(today, tz, hourCycle)}</span>
                     </div>
                   ) : null}
                   {mine.map((e) => {
@@ -396,14 +395,14 @@ export function TimeGrid(props: Props) {
 const ink = (color: string) => `color-mix(in oklab, ${color} 60%, var(--foreground))`
 
 function blockStyle(e: EventView, color: string, selected = false): React.CSSProperties {
-  if (selected) return { background: color, borderColor: color, color: "white" }
+  if (selected) return { ...solid(color), borderColor: color }
   if (e.role === "busy") return { background: `repeating-linear-gradient(135deg, ${tint(color, 22)} 0 5px, ${tint(color, 8)} 5px 10px)`, color: ink(color) }
   if (e.myStatus === "needs-action" || e.status === "tentative") return { background: tint(color, 6), borderColor: tint(color, 70), color: ink(color) }
   return { background: tint(color, 22), color: ink(color) }
 }
 
 /** The solid look of what's being dragged or drawn. */
-const solid = (color: string): React.CSSProperties => ({ background: color, color: "white" })
+const solid = (color: string): React.CSSProperties => ({ background: color, color: "var(--ink-dark)" })
 
 function Block({
   e,

@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
-import { TODAY_CIRCLE, fmt, rangeOf } from "./shared"
+import { fmt, rangeOf } from "./shared"
 
 /** Twelve compact months; open a month to see its events. */
 export function YearGrid({ date, tz, weekStart, now, onMonth }: {
@@ -40,7 +39,7 @@ export function YearGrid({ date, tz, weekStart, now, onMonth }: {
           root: "w-full",
           months: "grid grid-cols-1 gap-x-8 gap-y-6 @xl/cal:grid-cols-2 @3xl/cal:grid-cols-3 @5xl/cal:grid-cols-4",
           month: "flex min-w-0 flex-col gap-2",
-          today: cn("rounded-full font-semibold", TODAY_CIRCLE),
+          today: "[&_button]:rounded-full [&_button]:bg-calendar-today [&_button]:text-calendar-today-foreground [&_button]:font-semibold [&_button]:hover:bg-calendar-today [&_button]:hover:text-calendar-today-foreground",
         }}
       />
     </div>

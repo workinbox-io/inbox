@@ -29,7 +29,7 @@ function ConfirmContent({ title, description, confirmLabel = "Delete", onConfirm
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
         <AlertDialogAction
-          className="bg-destructive text-white hover:bg-destructive/90"
+          variant="destructive"
           onClick={() => void onConfirm()}
         >
           {confirmLabel}

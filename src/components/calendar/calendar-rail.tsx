@@ -153,7 +153,7 @@ export function CalendarRail({
           // Today: red text, a red circle when it's also the picked day (shared.ts, like the grid's headers).
           classNames={{
             root: "w-full",
-            today: `[&_button]:font-semibold [&_button]:text-[#ff3b30] dark:[&_button]:text-[#ff453a] [&_button[data-selected-single=true]]:bg-[#ff3b30] [&_button[data-selected-single=true]]:text-white dark:[&_button[data-selected-single=true]]:bg-[#ff453a]`,
+            today: "[&_button]:font-semibold [&_button]:text-calendar-today [&_button[data-selected-single=true]]:bg-calendar-today [&_button[data-selected-single=true]]:text-calendar-today-foreground",
           }}
           // Only the day buttons are fixed-size: react-day-picker puts data-day on the cells too, which must stretch so the
           // week band runs unbroken.

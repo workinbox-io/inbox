@@ -37,6 +37,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-calendar-today: var(--calendar-today);
+  --color-calendar-today-foreground: var(--calendar-today-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -87,8 +89,10 @@
   --muted-foreground: #6d6d6d;
   --accent: color-mix(in srgb, var(--ink) 6%, transparent);
   --accent-foreground: var(--ink);
-  --destructive: var(--color-red-500);
-  --destructive-foreground: var(--color-red-700);
+  --destructive: var(--color-red-700);
+  --destructive-foreground: #ffffff;
+  --calendar-today: var(--destructive);
+  --calendar-today-foreground: var(--destructive-foreground);
   --border: color-mix(in srgb, var(--ink) 12%, transparent);
   --input: color-mix(in srgb, var(--ink) 16%, transparent);
   --ring: #3ba6f1;
@@ -134,8 +138,10 @@
   --muted-foreground: #969696;
   --accent: color-mix(in srgb, var(--ink) 6%, transparent);
   --accent-foreground: var(--ink);
-  --destructive: color-mix(in srgb, var(--color-red-500) 90%, var(--color-white));
-  --destructive-foreground: var(--color-red-400);
+  --destructive: var(--color-red-400);
+  --destructive-foreground: var(--ink-dark);
+  --calendar-today: var(--destructive);
+  --calendar-today-foreground: var(--destructive-foreground);
   --border: color-mix(in srgb, var(--ink) 14%, transparent);
   --input: color-mix(in srgb, var(--ink) 16%, transparent);
   --ring: #3ba6f1;
