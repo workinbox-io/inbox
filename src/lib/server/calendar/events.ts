@@ -171,7 +171,7 @@ export interface ListQuery {
 export async function listEvents(v: CalendarViewer, q: ListQuery): Promise<EventView[]> {
   if (q.to - q.from > 400 * 86_400_000) throw new HttpError(422, "Ask for at most a year at a time");
   const calendars = await visibleCalendars(v);
-  const roles = new Map(calendars.map((c) => [c.id, c.role]));
+  const roles = new Map(calendars.map((c) => [c.id, c.sourceUrl ? ("view" as const) : c.role]));
   const shown = q.calendars ? calendars.filter((c) => q.calendars!.includes(c.id)) : calendars;
   const hidden = new Set(calendars.filter((c) => !shown.includes(c)).map((c) => c.id));
   const orgWhere = eq(calendarEvents.orgId, v.orgId);

@@ -22,6 +22,12 @@ export const calendars = sqliteTable(
     personal: integer("personal", { mode: "boolean" }).notNull().default(false),
     sharing: text("sharing", { enum: ["private", "people", "team"] }).notNull().default("private"),
     teamRole: text("team_role", { enum: ["view", "edit"] }).notNull().default("view"),
+    /** Subscribed calendars (Google's secret iCal address…): events are pulled from here and are read-only. Secret, never sent to the browser. */
+    sourceUrl: text("source_url"),
+    syncedAt: time("synced_at"),
+    /** Hash of the last feed (DTSTAMP lines dropped), so an unchanged feed writes nothing. */
+    syncHash: text("sync_hash"),
+    syncError: text("sync_error"),
     createdAt: createdAt(),
   },
   (t) => [index("calendars_org_idx").on(t.orgId), index("calendars_owner_idx").on(t.ownerId)],

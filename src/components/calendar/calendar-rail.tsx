@@ -4,7 +4,7 @@
  * .ics import).
  */
 import * as React from "react"
-import { CalendarPlus, Download, Globe, Link as LinkIcon, Palette, Pencil, Plus, Settings2, Share2, Trash2, UserMinus, UserPlus } from "lucide-react"
+import { CalendarPlus, Download, RefreshCw, Globe, Palette, Pencil, Plus, Settings2, Share2, Trash2, UserMinus, UserPlus } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
 import { useNotePeople } from "@/components/notes/editor/people"
@@ -26,7 +26,8 @@ import { api } from "@/lib/api-client"
 import { isTimeZone, wallTime } from "@/lib/calendar/time"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
-import { onSettingsSaved, openSettings } from "@/components/settings/open-settings"
+import { notifySaved, onSettingsSaved, openSettings } from "@/components/settings/open-settings"
+import { PrefHeading, PrefList, PrefRow } from "@/components/mailbox/pref-ui"
 import { CALENDAR_COLORS, parseDayKey, personColor, type CalendarView, type Prefs, type ViewMode } from "./shared"
 
 const pad = (n: number) => String(n).padStart(2, "0")
@@ -168,7 +169,7 @@ export function CalendarRail({
                 actions={[
                   { label: t("Calendar settings"), icon: Settings2, onSelect: () => onSettingsOpen(true) },
                   { separator: true },
-                  { label: t("Subscribe in another app (.ics)"), icon: LinkIcon, onSelect: () => openSettings("calendar-feed") },
+                  { label: t("Sync with Google Calendar…"), icon: RefreshCw, onSelect: () => openSettings("calendar-feed") },
                   { label: t("Import .ics file"), icon: Download, onSelect: onImport },
                 ]}
               />
@@ -183,7 +184,14 @@ export function CalendarRail({
               <RailItem
                 key={c.id}
                 label={c.name}
-                title={c.name}
+                title={
+                  c.sync
+                    ? c.sync.error
+                      ? `${c.name}: ${c.sync.error}`
+                      : t("{name}: synced {time}, read-only here", { name: c.name, time: c.sync.at ? new Date(c.sync.at).toLocaleString() : "" })
+                    : c.name
+                }
+                trailing={c.sync?.error ? <span className="bg-destructive size-1.5 shrink-0 rounded-full" aria-label={t("Sync failed")} /> : undefined}
                 active={false}
                 onClick={() => onToggle(c.id)}
                 leading={
@@ -439,14 +447,28 @@ export function CalendarSettingsForm({ prefs, tz, onSaved }: { prefs: Prefs; tz:
   )
 }
 
-/** The private .ics link: the calendar's "Subscribe" section of the settings dialog. */
+/**
+ * Settings → Calendar → Google Calendar, both ways: Google calendars synced in (read-only, refreshed every 30 minutes
+ * by the server) and the private .ics link Google subscribes to.
+ */
 export function CalendarFeedSettings() {
   const [url, setUrl] = React.useState<string | null | undefined>(undefined)
+  const [synced, setSynced] = React.useState<CalendarView[] | undefined>(undefined)
+  const [address, setAddress] = React.useState("")
+  const [adding, setAdding] = React.useState(false)
+  const loadSynced = React.useCallback(
+    () =>
+      api<{ calendars: CalendarView[] }>("GET", "/api/app/calendar/calendars")
+        .then((r) => setSynced(r.calendars.filter((c) => c.sync)))
+        .catch((e) => toast.error((e as Error).message)),
+    [],
+  )
   React.useEffect(() => {
     api<{ url: string | null }>("GET", "/api/app/calendar/feed")
       .then((r) => setUrl(r.url))
       .catch((e) => (toast.error((e as Error).message), setUrl(null)))
-  }, [])
+    void loadSynced()
+  }, [loadSynced])
   async function make() {
     try {
       setUrl((await api<{ url: string | null }>("POST", "/api/app/calendar/feed")).url)
@@ -454,8 +476,81 @@ export function CalendarFeedSettings() {
       toast.error((e as Error).message)
     }
   }
+  async function add(e: React.FormEvent) {
+    e.preventDefault()
+    setAdding(true)
+    try {
+      await api("POST", "/api/app/calendar/calendars", { name: "Google Calendar", color: "green", url: address })
+      setAddress("")
+      await loadSynced()
+      notifySaved({ kind: "calendars" })
+    } catch (err) {
+      toast.error((err as Error).message)
+    } finally {
+      setAdding(false)
+    }
+  }
+  async function remove(c: CalendarView) {
+    try {
+      await api("DELETE", `/api/app/calendar/calendars/${c.id}`)
+      await loadSynced()
+      notifySaved({ kind: "calendars" })
+    } catch (err) {
+      toast.error((err as Error).message)
+    }
+  }
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-8">
+      <section className="grid gap-3">
+        <PrefHeading>{t("Google Calendar in Work Inbox")}</PrefHeading>
+        <p className="text-muted-foreground text-sm">
+          {t("In Google Calendar open Settings, pick a calendar and copy its \"Secret address in iCal format\". Its events show here read-only, refreshed about every 30 minutes.")}
+        </p>
+        {synced?.length ? (
+          <PrefList>
+            {synced.map((c) => (
+              <PrefRow
+                key={c.id}
+                icon={RefreshCw}
+                title={c.name}
+                description={
+                  c.sync?.error ? (
+                    <span className="text-destructive">{c.sync.error}</span>
+                  ) : c.sync?.at ? (
+                    t("Synced {time}", { time: new Date(c.sync.at).toLocaleString() })
+                  ) : (
+                    t("Waiting for the first sync")
+                  )
+                }
+              >
+                {c.manage ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => void remove(c)}>
+                    {t("Remove")}
+                  </Button>
+                ) : null}
+              </PrefRow>
+            ))}
+          </PrefList>
+        ) : null}
+        <form onSubmit={add} className="flex gap-2">
+          <Input
+            type="url"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="https://calendar.google.com/calendar/ical/…/basic.ics"
+            aria-label={t("Secret address in iCal format")}
+            required
+          />
+          <Button type="submit" disabled={adding || !address.trim()}>
+            {adding ? t("Adding…") : t("Add")}
+          </Button>
+        </form>
+      </section>
+      <section className="grid gap-3">
+        <PrefHeading>{t("Work Inbox in Google Calendar")}</PrefHeading>
+        <p className="text-muted-foreground text-sm">
+          {t("In Google Calendar choose Other calendars, + and From URL, then paste this link. Apple Calendar and Outlook take it too. It's secret: anyone with it sees your events.")}
+        </p>
         {url ? (
           <div className="flex gap-2">
             <Input readOnly value={url} onFocus={(e) => e.target.select()} />
@@ -480,6 +575,7 @@ export function CalendarFeedSettings() {
             </Button>
           )}
         </div>
+      </section>
     </div>
   )
 }

@@ -86,6 +86,7 @@ export async function requireCalendar(v: CalendarViewer, id: string, need: Calen
   if (!role) throw new HttpError(404, "Not found");
   const manage = managesCalendar(calendar, v, role);
   if (need === "manage" ? !manage : !atLeast(role, need)) throw new HttpError(403, "You can't change this calendar");
+  if (calendar.sourceUrl && need !== "view" && need !== "manage") throw new HttpError(403, "This calendar is synced from another app: change its events there");
   return { calendar, role, manage };
 }
 
@@ -98,6 +99,8 @@ export async function requireEvent(v: CalendarViewer, id: string, need: Calendar
   if (!event) throw new HttpError(404, "Not found");
   const [calendar] = await db.select().from(calendars).where(eq(calendars.id, event.calendarId));
   let role = calendar ? calendarRole(calendar, v, (await grantsFor(v, [calendar.id])).get(calendar.id) ?? null) : null;
+  // Subscribed calendars are read-only here: their events are rewritten on every sync.
+  if (role && calendar.sourceUrl) role = "view";
   const [attendee] = v.userId
     ? await db
         .select()

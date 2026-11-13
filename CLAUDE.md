@@ -169,6 +169,9 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `original_start`), `calendar_attendees` (stored once on the master; `user_id` set for org people, who see the event
   without a copy), `calendar_prefs` (time zones, week start, working hours, default reminder), `calendar_feeds`,
   `calendar_reminder_log`.
+- Google Calendar sync (one way in): a calendar with `source_url` (Google's secret iCal address, never sent to the
+  browser) is read-only; `syncSubscribedCalendars` (every-minute cron, 5 due per run, every 30 min) pulls it through
+  `writeIcs(…, prune)` in `lib/server/calendar/import.ts`, skipping unchanged feeds by `sync_hash`. Out = the .ics feed.
 - Pure logic `lib/calendar/*` (tested in `test/calendar*.test.ts`): `time.ts` (zones through Intl, no date library),
   `recurrence.ts` (ical.js iterates the RRULE in floating wall time, UNTIL checked by us; `splitRule` for "this and
   following"), `ics.ts` (in/out, iTIP methods), `layout.ts`, `availability.ts`, `free-time.ts`, `import.ts`.

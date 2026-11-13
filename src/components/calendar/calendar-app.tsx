@@ -8,6 +8,7 @@ import * as React from "react"
 import { CalendarCheck, CalendarDays, CalendarPlus, Check, ChevronLeft, ChevronRight, CircleHelp, Copy, ExternalLink, PanelRightOpen, Settings2, Sunrise, Trash2, UserPlus, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { AccountMenu, type MailUser } from "@/components/mailbox/account-menu"
+import { onSettingsSaved } from "@/components/settings/open-settings"
 import { Button } from "@/components/ui/button"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
@@ -159,6 +160,9 @@ export function CalendarApp(props: CalendarAppProps) {
       toast.error((e as Error).message)
     }
   }, [])
+
+  // A Google calendar added or removed in Settings.
+  React.useEffect(() => onSettingsSaved((saved) => saved.kind === "calendars" && void reloadCalendars()), [reloadCalendars])
 
   // ---------- opening and drafting ----------
 

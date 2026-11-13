@@ -16,7 +16,7 @@ import {
   Forward,
   HardDrive,
   KeyRound,
-  Link as LinkIcon,
+  RefreshCw,
   Mail,
   PenLine,
   ScrollText,
@@ -48,7 +48,7 @@ import { t } from "@/lib/i18n/panel"
 import type { MailboxSignature, SignatureBrand } from "@/lib/mail/signature"
 import { replaceUrl } from "@/lib/panel-history"
 import { cn } from "@/lib/utils"
-import { OPEN_SETTINGS, SETTINGS_SAVED, type SettingsSaved, type SettingsSection } from "./open-settings"
+import { notifySaved, OPEN_SETTINGS, type SettingsSection } from "./open-settings"
 
 /** What a section loads (lib/server/settings.ts). */
 type DataKey = "mailbox" | "calendar" | "account" | "organization" | "team" | "api-keys" | "audit" | "mail-admin" | "ai-apps"
@@ -83,7 +83,7 @@ function groups(canManage: boolean): [string, SectionDef[]][] {
       t("Calendar"),
       [
         { id: "calendar", label: t("Time zones and week"), icon: CalendarClock, data: "calendar", description: t("Your time zone, up to two more next to the hours, the time format and the first day of the week.") },
-        { id: "calendar-feed", label: t("Subscribe (.ics)"), icon: LinkIcon, description: t("Add this link in Google Calendar, Apple Calendar or Outlook (\"From URL\"). It's read-only and secret: anyone with it sees your events.") },
+        { id: "calendar-feed", label: t("Google Calendar"), icon: RefreshCw, description: t("See your Google calendars here, and this calendar in Google.") },
       ],
     ],
     [
@@ -114,7 +114,7 @@ function groups(canManage: boolean): [string, SectionDef[]][] {
   return all.map(([label, items]) => [label, items.filter((s) => canManage || !s.manage)] as [string, SectionDef[]]).filter(([, items]) => items.length)
 }
 
-const saved = (detail: SettingsSaved) => window.dispatchEvent(new CustomEvent(SETTINGS_SAVED, { detail }))
+const saved = notifySaved
 
 /** The dialog, listening for openSettings() and ?settings=. */
 export function SettingsHost({ canManage }: { canManage: boolean }) {

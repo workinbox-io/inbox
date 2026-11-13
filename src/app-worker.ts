@@ -9,6 +9,7 @@ import { recoverOutbox, handleDeliveryEvent } from "@/lib/server/mail/outbox";
 import { sweepInboundMail } from "@/lib/server/mail/ses-inbound";
 import { noteSync } from "@/lib/server/notes/sync";
 import { sendEventReminders } from "@/lib/server/calendar/reminders";
+import { syncSubscribedCalendars } from "@/lib/server/calendar/import";
 import { reportError } from "@/lib/server/errors";
 
 // Durable Objects must be exported from the entry module (wrangler.jsonc → durable_objects).
@@ -48,5 +49,5 @@ export default {
       }
     },
   },
-  crons: { "* * * * *": { wakeDueSnoozed, recoverOutbox, backfillMailBodies, backfillSentRaw, sendEventReminders: () => sendEventReminders() }, "41 * * * *": { sweepInboundMail } },
+  crons: { "* * * * *": { wakeDueSnoozed, recoverOutbox, backfillMailBodies, backfillSentRaw, sendEventReminders: () => sendEventReminders(), syncSubscribedCalendars }, "41 * * * *": { sweepInboundMail } },
 } satisfies AppWorker as AppWorker;

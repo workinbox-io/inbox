@@ -71,9 +71,17 @@ export const rsvpSchema = z.object({ status: z.enum(["accepted", "declined", "te
 export const calendarSchema = z.object({
   name: z.string().trim().min(1, "Enter a name").max(80),
   color: z.enum(COLORS).default("blue"),
+  /** Subscribe: an .ics address (Google's "Secret address in iCal format"); webcal:// is read as https://. */
+  url: z
+    .string()
+    .trim()
+    .max(2000)
+    .transform((u) => u.replace(/^webcals?:\/\//i, "https://"))
+    .pipe(z.string().url("Enter the calendar's address").startsWith("https://", "The address must start with https://"))
+    .optional(),
 });
 
-export const calendarUpdateSchema = calendarSchema.partial();
+export const calendarUpdateSchema = calendarSchema.omit({ url: true }).partial();
 
 export const prefsSchema = z.object({
   hourCycle: z.enum(["h12", "h23"]),

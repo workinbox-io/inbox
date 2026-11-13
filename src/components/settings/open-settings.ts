@@ -30,6 +30,9 @@ export const SETTINGS_SAVED = "workinbox:settings-saved"
 export type SettingsSaved =
   | { kind: "signatures"; signatures: Record<string, unknown> }
   | { kind: "calendar-prefs"; prefs: unknown }
+  | { kind: "calendars" }
+
+export const notifySaved = (detail: SettingsSaved) => window.dispatchEvent(new CustomEvent(SETTINGS_SAVED, { detail }))
 
 export function openSettings(section?: SettingsSection, opts: { mailbox?: string } = {}) {
   window.dispatchEvent(new CustomEvent(OPEN_SETTINGS, { detail: { section, ...opts } }))

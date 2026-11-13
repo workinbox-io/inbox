@@ -2,6 +2,7 @@
 import { and, calendarAccess, calendars, db, eq, inArray, member, user } from "@/db";
 import { HttpError } from "@/lib/server/api";
 import type { NoteShare } from "@/lib/validation-notes";
+import { syncCalendar } from "./import";
 import { requireCalendar, visibleCalendars, type Calendar, type CalendarRole, type CalendarViewer } from "./access";
 
 export interface CalendarView {
@@ -15,6 +16,8 @@ export interface CalendarView {
   role: CalendarRole;
   manage: boolean;
   people: { userId: string; role: "view" | "edit"; name: string; email: string }[];
+  /** Synced from an .ics address (Google Calendar…), read-only; the address itself stays on the server. */
+  sync: { at: number | null; error: string | null } | null;
 }
 
 async function withPeople(v: CalendarViewer, list: (Calendar & { role: CalendarRole; manage?: boolean })[]): Promise<CalendarView[]> {
@@ -34,8 +37,9 @@ async function withPeople(v: CalendarViewer, list: (Calendar & { role: CalendarR
     ownerId: c.ownerId,
     sharing: c.sharing,
     teamRole: c.teamRole,
-    role: c.role,
+    role: c.sourceUrl ? "view" : c.role,
     manage: c.manage ?? c.role === "owner",
+    sync: c.sourceUrl ? { at: c.syncedAt?.getTime() ?? null, error: c.syncError } : null,
     people: grants.filter((g) => g.calendarId === c.id).map(({ calendarId: _, ...g }) => g),
   }));
 }
@@ -49,11 +53,18 @@ export async function getCalendar(v: CalendarViewer, id: string) {
   return (await withPeople(v, [{ ...calendar, role, manage }]))[0];
 }
 
-export async function createCalendar(v: CalendarViewer, input: { name: string; color: string }) {
+export async function createCalendar(v: CalendarViewer, input: { name: string; color: string; url?: string }) {
   const [made] = await db
     .insert(calendars)
-    .values({ orgId: v.orgId, ownerId: v.userId || null, name: input.name, color: input.color, sharing: v.userId ? "private" : "team" })
+    .values({ orgId: v.orgId, ownerId: v.userId || null, name: input.name, color: input.color, sharing: v.userId ? "private" : "team", sourceUrl: input.url ?? null })
     .returning();
+  if (input.url) {
+    const error = await syncCalendar(made);
+    if (error) {
+      await db.delete(calendars).where(eq(calendars.id, made.id));
+      throw new HttpError(422, error);
+    }
+  }
   return getCalendar(v, made.id);
 }
 
