@@ -1,13 +1,13 @@
 ---
 /**
- * The members' app switcher (MailLayout has no dashboard sidebar): Mail, Calendar, Notes, Contacts and Drive. Owners and admins switch
+ * The members' app switcher (MailLayout has no dashboard sidebar): Mail, Chat, Calendar, Notes, Contacts and Drive. Owners and admins switch
  * through the dashboard sidebar instead.
  */
 import { t } from "@/lib/i18n/panel";
 import { siteConfig } from "@/config/site";
 
 interface Props {
-  current: "mail" | "notes" | "contacts" | "drive" | "calendar";
+  current: "mail" | "chat" | "notes" | "contacts" | "drive" | "calendar";
 }
 const { current } = Astro.props;
 const apps = [
@@ -16,6 +16,13 @@ const apps = [
     href: "/app/mail",
     label: t("Mail"),
     icon: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  },
+  {
+    key: "chat",
+    href: "/app/chat",
+    label: t("Chat"),
+    // lucide messages-square
+    icon: '<path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/>',
   },
   {
     key: "calendar",

@@ -8,12 +8,14 @@ import { backfillSentRaw } from "@/lib/server/mail/raw";
 import { recoverOutbox, handleDeliveryEvent } from "@/lib/server/mail/outbox";
 import { sweepInboundMail } from "@/lib/server/mail/ses-inbound";
 import { noteSync } from "@/lib/server/notes/sync";
+import { chatSync } from "@/lib/server/chat/sync";
 import { sendEventReminders } from "@/lib/server/calendar/reminders";
 import { syncSubscribedCalendars } from "@/lib/server/calendar/import";
 import { reportError } from "@/lib/server/errors";
 
 // Durable Objects must be exported from the entry module (wrangler.jsonc → durable_objects).
 export { NoteRoom } from "@/notes/room";
+export { ChatRoom } from "@/chat/room";
 
 export interface AppWorker {
   fetch?(request: Request): Response | undefined | Promise<Response | undefined>;
@@ -23,8 +25,13 @@ export interface AppWorker {
 }
 
 export default {
-  // Shared notes' WebSockets go straight to the note's Durable Object (lib/server/notes/sync.ts).
-  fetch: (request) => (new URL(request.url).pathname.startsWith("/notes-sync/") ? noteSync(request) : undefined),
+  // Shared notes' and chat's WebSockets go straight to their Durable Objects (lib/server/notes/sync.ts, lib/server/chat/sync.ts).
+  fetch: (request) => {
+    const path = new URL(request.url).pathname;
+    if (path.startsWith("/notes-sync/")) return noteSync(request);
+    if (path === "/chat-sync") return chatSync(request);
+    return undefined;
+  },
   // Organizations' mailboxes before the staff mailboxes (lib/server/mail/store.ts).
   email: handleOrgMail,
   queues: {

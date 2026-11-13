@@ -16,3 +16,4 @@ export * from "./notes";
 export * from "./contacts";
 export * from "./drive";
 export * from "./calendar";
+export * from "./chat";

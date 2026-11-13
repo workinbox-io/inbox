@@ -50,8 +50,9 @@
   "send_email": [{ "name": "EMAIL" }],
   "ai": { "binding": "AI" },
   // Shared notes: one object per note holds the live Yjs document (src/notes/room.ts).
-  "durable_objects": { "bindings": [{ "name": "NOTE_ROOM", "class_name": "NoteRoom" }] },
-  "migrations": [{ "tag": "notes-v1", "new_sqlite_classes": ["NoteRoom"] }],
+  // Chat: one object per organization fans out live events (src/chat/room.ts).
+  "durable_objects": { "bindings": [{ "name": "NOTE_ROOM", "class_name": "NoteRoom" }, { "name": "CHAT_ROOM", "class_name": "ChatRoom" }] },
+  "migrations": [{ "tag": "notes-v1", "new_sqlite_classes": ["NoteRoom"] }, { "tag": "chat-v1", "new_sqlite_classes": ["ChatRoom"] }],
   "queues": {
     "producers": [{ "binding": "JOBS", "queue": "inbox-jobs" }],
     "consumers": [{ "queue": "inbox-jobs", "max_retries": 5, "max_batch_size": 10, "dead_letter_queue": "inbox-jobs-dlq" },

@@ -109,6 +109,30 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Template files changed here: `wrangler.jsonc` (`NOTE_ROOM` binding and DO migration), `astro.config.mjs`
   (`optimizeDeps`). The WebSocket route and the `NoteRoom` export are in `src/app-worker.ts`.
 
+## Chat (product)
+
+- Slack-like team chat. Tables `src/db/schema/chat.ts`: `chat_channels` (`kind` channel|dm, `private`, DMs keyed by
+  `dm_key` = sorted member ids, `name` repeats it), `chat_members` (`last_read_at` drives unread, `muted`),
+  `chat_messages` (`parent_id` = thread root, `reply_count`, soft `deleted_at`; mentions stored as `<@userId>` in
+  `text`), `chat_reactions`, `chat_mentions`, `chat_saved`, `chat_pins`, `chat_follows` (Threads view).
+- Access `lib/server/chat/access.ts`: public channels for everyone in the org, private ones and DMs for members only
+  (owners/admins included out). `#general` is made lazily and everyone joins it on first load; posting in a public
+  channel joins it. API keys get 403 (no person to post as).
+- Pure rules `lib/chat/*` (`format.ts` tokens + mention encode/decode, `rules.ts`, `ticket.ts`), tested in
+  `test/chat.test.ts`. Server `lib/server/chat/{channels,messages}.ts`.
+- Live: one `ChatRoom` Durable Object per org (`src/chat/room.ts`, partyserver, hibernating, stores nothing).
+  `POST /api/app/chat/ticket` → `/chat-sync?ticket=` (`lib/server/chat/sync.ts`, hooked in `src/app-worker.ts`);
+  every write calls `publish(orgId, event, audience)`; presence = open sockets (tabs send away/active); typing goes
+  through `POST …/channels/[id]/typing` so private ids never leak. Push (`pushToUser`, `kind: "chat"`) for DMs and
+  mentions to people without a socket; `public/mail-sw.js` reads the text from `/api/app/chat/push`.
+- UI `/app/chat[/<channelId>]` (`?view=threads|mentions|saved`, `?thread=`, `?m=`): `components/chat/chat-app.tsx`
+  (rail, conversation, thread pane, ⌘K jump, dialogs), `message-row.tsx`, `composer.tsx` (@ suggestions, ⌘B/I/E,
+  attachments via `/api/app/attachments`), `use-chat-socket.ts`.
+- API `/api/app/chat` (rail data), `/channels`, `/channels/[id]` (GET page `?before=&q=`, PATCH one `action`),
+  `/channels/[id]/typing`, `/dm`, `/messages`, `/messages/[id]` (GET thread, PATCH edit|react|save|pin, DELETE),
+  `/views`, `/people`, `/ticket`, `/push`. MCP `src/mcp/chat.ts` (`chat_list_channels`, `chat_read_channel`,
+  `chat_search`, `chat_post`). Template files changed: `wrangler.jsonc` (`CHAT_ROOM`, migration `chat-v1`).
+
 ## Contacts (product)
 
 - One team address book per org, everyone reads and edits it (no private contacts). Tables in

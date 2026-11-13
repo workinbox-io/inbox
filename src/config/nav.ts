@@ -1,9 +1,10 @@
 /** Dashboard navigation: the sidebar, and the ⌘K palette's pages and actions. */
-import { BookOpen, BookUser, CalendarDays, CalendarPlus, CreditCard, FolderPlus, HardDrive, LayoutDashboard, Mail, NotebookPen, PenSquare, Settings, SquarePen } from "lucide-react";
+import { BookOpen, BookUser, CalendarDays, CalendarPlus, CreditCard, FolderPlus, HardDrive, LayoutDashboard, Mail, MessagesSquare, MessageSquarePlus, NotebookPen, PenSquare, Settings, SquarePen } from "lucide-react";
 
 export const APP_NAV = [
   { href: "/app", label: "Overview", icon: LayoutDashboard },
   { href: "/app/mail", label: "Mail", icon: Mail },
+  { href: "/app/chat", label: "Chat", icon: MessagesSquare },
   { href: "/app/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/app/notes", label: "Notes", icon: NotebookPen },
   { href: "/app/contacts", label: "Contacts", icon: BookUser },
@@ -18,6 +19,7 @@ export const APP_HELP = [{ href: "/docs", label: "Documentation", icon: BookOpen
 /** Extra entries in the command palette. */
 export const APP_ACTIONS = [
   { href: "/app/mail?compose=1", label: "New e-mail", icon: PenSquare },
+  { href: "/app/chat", label: "New message", icon: MessageSquarePlus },
   { href: "/app/calendar?new=1", label: "New event", icon: CalendarPlus },
   { href: "/app/notes?new=1", label: "New note", icon: SquarePen },
   { href: "/app/drive?new=folder", label: "New drive folder", icon: FolderPlus },
