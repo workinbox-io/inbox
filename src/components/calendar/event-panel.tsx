@@ -8,7 +8,7 @@ import { AlignLeft, ArrowUpRight, Bell, CalendarDays, Clock, MapPin, NotebookPen
 import { toast } from "@yusufceng1z/ding-react"
 import { ConfirmDialog } from "@/components/app/confirm-button"
 import { UserAvatar } from "@/components/app/user-avatar"
-import { AddressInput, ComposeFrame, type AddressSuggestion } from "@/components/mail/compose"
+import { AddressInput, ComposeFooter, ComposeFrame, type AddressSuggestion } from "@/components/mail/compose"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -134,6 +134,7 @@ export function EventPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [event, tz],
   )
+  const formId = React.useId()
   const [f, setF] = React.useState(start)
   const [busy, setBusy] = React.useState(false)
   React.useEffect(() => setF(start), [start])
@@ -238,13 +239,17 @@ export function EventPanel({
         </Button>
       </header> : null}
       <form
+        id={formId}
         className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto p-4"
         onSubmit={(e) => {
           e.preventDefault()
-          void save()
+          if (!busy) void save()
         }}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void save()
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault()
+            if (dirty && range && !busy) e.currentTarget.requestSubmit()
+          }
         }}
       >
         <input
@@ -391,17 +396,16 @@ export function EventPanel({
           </div>
         </Row>
 
-        {editable ? (
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" size="sm" onClick={requestClose}>
-              {t("Cancel")}
-            </Button>
-            <Button type="submit" size="sm" disabled={!dirty || !range || busy}>
-              {event ? t("Save") : t("Create")}
-            </Button>
-          </div>
-        ) : null}
       </form>
+      {editable ? (
+        <ComposeFooter>
+          <Button type="button" variant="ghost" size="sm" onClick={requestClose}>{t("Cancel")}</Button>
+          <span className="flex-1" />
+          <Button type="submit" form={formId} size="sm" loading={busy} disabled={!dirty || !range || busy}>
+            {event ? t("Save changes") : t("Create event")}
+          </Button>
+        </ComposeFooter>
+      ) : null}
       <ConfirmDialog
         open={discarding}
         onOpenChange={setDiscarding}

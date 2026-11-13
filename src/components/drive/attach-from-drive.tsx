@@ -1,24 +1,40 @@
 /**
- * "Attach from Drive" in the mail composer: picks drive files, fetches them and hands them to the composer's own
- * uploader, so the usual attachment rules (types, 10 MB, five files) and the outbox apply unchanged.
+ * One attachment menu for computer and Drive files. Drive copies use the same uploader,
+ * attachment limits and outbox as files from the computer.
  */
 import * as React from "react"
-import { HardDrive } from "lucide-react"
+import { ChevronDown, HardDrive, Laptop, Paperclip } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Attachments } from "@/components/uploads/attachments"
 import { t } from "@/lib/i18n/panel"
-import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_FILES, resolveAttachmentType } from "@/lib/uploads"
+import { ATTACHMENT_ACCEPT, ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_FILES, resolveAttachmentType } from "@/lib/uploads"
 import { DrivePicker } from "./drive-picker"
 import { task } from "./task"
 
-export function AttachFromDrive({ attachments }: { attachments: Attachments }) {
+export function MailAttachmentMenu({ attachments }: { attachments: Attachments }) {
   const [open, setOpen] = React.useState(false)
+  const input = React.useRef<HTMLInputElement>(null)
   if (!attachments.enabled) return null
   return (
     <>
-      <Button type="button" variant="ghost" size="sm" className="text-muted-foreground h-7 px-2 text-xs" onClick={() => setOpen(true)}>
-        <HardDrive /> {t("Attach from Drive")}
-      </Button>
+      <input ref={input} type="file" multiple hidden accept={ATTACHMENT_ACCEPT} aria-label={t("Attach from computer")} onChange={(e) => {
+        if (e.currentTarget.files) attachments.add(e.currentTarget.files)
+        e.currentTarget.value = ""
+      }} />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" variant="ghost" size="sm" aria-label={t("Attach files")} title={t("Attach files")}>
+            <Paperclip data-icon="inline-start" /><span className="hidden sm:inline">{t("Attach")}</span><ChevronDown data-icon="inline-end" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="top" onCloseAutoFocus={(e) => { if (open) e.preventDefault() }}>
+          <DropdownMenuGroup>
+            <DropdownMenuItem onSelect={() => input.current?.click()}><Laptop />{t("From computer")}</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setOpen(true)}><HardDrive />{t("From Drive")}</DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <DrivePicker
         open={open}
         onOpenChange={setOpen}

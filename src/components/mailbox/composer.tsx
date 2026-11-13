@@ -17,7 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AttachmentDropZone, uploadWithProgress, useAttachments, type Attachments, type UploadFn } from "@/components/uploads/attachments"
 import { AddressInput, ComposeBody, ComposeFrame, EMAIL, FieldRow, type AddressSuggestion } from "@/components/mail/compose"
-import { AttachFromDrive } from "@/components/drive/attach-from-drive"
+import { MailAttachmentMenu } from "@/components/drive/attach-from-drive"
 import { NEW_DRAFT, readDraft, writeDraft } from "./drafts"
 import { useTemplates, type MailTemplate } from "./mail-replies"
 import { openSettings } from "@/components/settings/open-settings"
@@ -241,22 +241,20 @@ function MailForm({
         onChange={(text) => set({ text })}
         bodyClassName={bodyClassName}
         note={note}
-        footer={
+        footer={signatureHtml ? <SignaturePreview html={signatureHtml} on={!draft.noSignature} onChange={(on) => set({ noSignature: !on })} /> : null}
+        actions={
           <>
-            {signatureHtml ? <SignaturePreview html={signatureHtml} on={!draft.noSignature} onChange={(on) => set({ noSignature: !on })} /> : null}
-            <div className="flex items-center gap-1 px-3 pb-1">
-              <AttachFromDrive attachments={attachments} />
-              <TemplatesMenu
-                mailbox={draft.from}
-                onPick={(tpl) => {
-                  const el = body.current
-                  const at = el && document.activeElement === el ? el.selectionStart : draft.text.trim() ? draft.text.length : 0
-                  const text = draft.text.trim() ? draft.text.slice(0, at) + tpl.text + draft.text.slice(at) : tpl.text
-                  set({ text, ...(showSubject && !draft.subject.trim() && tpl.subject ? { subject: tpl.subject } : {}) })
-                  requestAnimationFrame(() => body.current?.focus())
-                }}
-              />
-            </div>
+            <MailAttachmentMenu attachments={attachments} />
+            <TemplatesMenu
+              mailbox={draft.from}
+              onPick={(tpl) => {
+                const el = body.current
+                const at = el && document.activeElement === el ? el.selectionStart : draft.text.trim() ? draft.text.length : 0
+                const text = draft.text.trim() ? draft.text.slice(0, at) + tpl.text + draft.text.slice(at) : tpl.text
+                set({ text, ...(showSubject && !draft.subject.trim() && tpl.subject ? { subject: tpl.subject } : {}) })
+                requestAnimationFrame(() => body.current?.focus())
+              }}
+            />
           </>
         }
         attachments={attachments}
@@ -280,8 +278,8 @@ function TemplatesMenu({ mailbox, onPick }: { mailbox: string; onPick: (t: MailT
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="text-muted-foreground">
-          <FileText /> Templates
+        <Button type="button" variant="ghost" size="sm" aria-label="Templates" title="Templates">
+          <FileText data-icon="inline-start" /><span className="hidden sm:inline">Templates</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="max-h-72 w-64 overflow-y-auto">

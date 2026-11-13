@@ -2,7 +2,7 @@
 import * as React from "react"
 import { Copy, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
-import { ComposeFrame } from "@/components/mail/compose"
+import { ComposeFooter, ComposeFrame } from "@/components/mail/compose"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { availabilityText, type Slot } from "@/lib/calendar/availability"
@@ -59,12 +59,12 @@ export function AvailabilityBar({ slots: selection, zones, hourCycle, disabled, 
           ) : null}
           <p className="text-muted-foreground text-xs">{t("Busy events in visible calendars are excluded. These times are not reserved.")}</p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-3">
-          <Button size="sm" onClick={copy} disabled={disabled || !slots.length}><Copy data-icon="inline-start" />{t("Copy availability")}</Button>
+        <ComposeFooter>
           <Button size="sm" variant="ghost" onClick={onClear} disabled={!slots.length}>{t("Clear")}</Button>
           <span className="flex-1" />
-          <Button size="sm" variant="outline" onClick={onDone}>{t("Done")}</Button>
-        </div>
+          <Button size="sm" variant="ghost" onClick={onDone}>{t("Done")}</Button>
+          <Button size="sm" onClick={copy} disabled={disabled || !slots.length}><Copy data-icon="inline-start" />{t("Copy availability")}</Button>
+        </ComposeFooter>
       </section>
     </ComposeFrame>
   )

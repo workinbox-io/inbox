@@ -1,5 +1,5 @@
 import * as React from "react"
-import { FileIcon, Loader2, Paperclip, Plus, X } from "lucide-react"
+import { FileIcon, Loader2, Paperclip, Plus, X, type LucideIcon } from "lucide-react"
 
 import {
   ATTACHMENT_ACCEPT,
@@ -144,8 +144,8 @@ export function useAttachments(upload: UploadFn | undefined, labels: AttachmentL
 
 export type Attachments = ReturnType<typeof useAttachments>
 
-/** "+" button with its hidden file input. */
-export function AttachButton({ attachments, label, className }: { attachments: Attachments; label: string; className?: string }) {
+/** Attachment button with its hidden file input. */
+export function AttachButton({ attachments, label, className, icon: Icon = Plus }: { attachments: Attachments; label: string; className?: string; icon?: LucideIcon }) {
   const input = React.useRef<HTMLInputElement>(null)
   if (!attachments.enabled) return null
   return (
@@ -169,7 +169,7 @@ export function AttachButton({ attachments, label, className }: { attachments: A
         onClick={() => input.current?.click()}
         className={cn("text-muted-foreground hover:text-foreground bg-foreground/[0.06] hover:bg-foreground/10 flex size-8 items-center justify-center rounded-full transition-colors", className)}
       >
-        <Plus className="size-[18px]" />
+        <Icon className="size-[18px]" />
       </button>
     </>
   )

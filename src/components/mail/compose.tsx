@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
-import { Maximize2, Minimize2, Minus, Send, Trash2, Users, X, type LucideIcon } from "lucide-react"
+import { ChevronUp, Maximize2, Minimize2, Minus, Paperclip, Send, Trash2, Users, X, type LucideIcon } from "lucide-react"
 
 import { splitAddresses } from "@/lib/admin-mail/rules"
 import { cn } from "@/lib/utils"
@@ -177,6 +177,7 @@ export function ComposeBody({
   bodyClassName,
   note,
   footer,
+  actions,
   attachments,
   disabled,
   sendLabel = "Send",
@@ -191,6 +192,8 @@ export function ComposeBody({
   note?: React.ReactNode
   /** Under the text, above the note (e.g. the signature preview). */
   footer?: React.ReactNode
+  /** Attachment sources and tools for this mail experience. */
+  actions?: React.ReactNode
   attachments: Attachments
   disabled: boolean
   sendLabel?: string
@@ -200,38 +203,42 @@ export function ComposeBody({
   const mac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform)
   return (
     <>
-      <Textarea
-        ref={bodyRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        aria-label="Message"
-        className={cn("min-h-32 flex-1 resize-none rounded-none border-0 px-4 py-3 text-[15px] leading-6 shadow-none focus-visible:ring-0 dark:bg-transparent", bodyClassName)}
-        onKeyDown={(e) => {
-          if (e.key !== "Enter" || !(e.metaKey || e.ctrlKey) || e.nativeEvent.isComposing) return
-          e.preventDefault()
-          if (!disabled) onSend()
-        }}
-      />
-      {footer}
-      {note ? <p className="text-muted-foreground px-4 pb-2 text-xs">{note}</p> : null}
-      <AttachmentStrip attachments={attachments} removeLabel="Remove" className="px-4" />
-      <div className="flex items-center justify-between gap-2 border-t px-3 py-2">
-        <span className="flex items-center gap-1">
-          <Button type="button" size="sm" className="rounded-full px-4" disabled={disabled} onClick={onSend}>
-            <Send /> {sendLabel}
-          </Button>
-          <span className="text-muted-foreground ml-1 hidden text-xs sm:inline">{mac ? "⌘" : "Ctrl"}+Enter</span>
-        </span>
-        <span className="flex items-center gap-1">
-          <AttachButton attachments={attachments} label="Attach a file" />
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onDiscard} aria-label="Discard draft" title="Discard draft">
-            <Trash2 />
-          </Button>
-        </span>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <Textarea
+          ref={bodyRef}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          aria-label="Message"
+          className={cn("min-h-32 flex-1 resize-none rounded-none border-0 px-4 py-3 text-[15px] leading-6 shadow-none focus-visible:ring-0 dark:bg-transparent", bodyClassName)}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter" || !(e.metaKey || e.ctrlKey) || e.nativeEvent.isComposing) return
+            e.preventDefault()
+            if (!disabled) onSend()
+          }}
+        />
+        {footer}
+        {note ? <p className="text-muted-foreground px-4 pb-2 text-xs">{note}</p> : null}
+        <AttachmentStrip attachments={attachments} removeLabel="Remove" className="px-4" />
       </div>
+      <ComposeFooter>
+        {actions ?? <AttachButton attachments={attachments} label="Attach a file" icon={Paperclip} />}
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onDiscard} aria-label="Discard draft" title="Discard draft">
+          <Trash2 />
+        </Button>
+        <span className="flex-1" />
+        <span className="text-muted-foreground hidden text-xs sm:inline">{mac ? "⌘" : "Ctrl"}+Enter</span>
+        <Button type="button" size="sm" disabled={disabled} onClick={onSend}>
+          <Send data-icon="inline-start" /> {sendLabel}
+        </Button>
+      </ComposeFooter>
     </>
   )
+}
+
+/** The pinned action row shared by compose windows and event panels. */
+export function ComposeFooter({ children }: { children: React.ReactNode }) {
+  return <footer className="bg-background flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-t px-4 py-3">{children}</footer>
 }
 
 /**
@@ -258,6 +265,23 @@ export function ComposeFrame({
   children: React.ReactNode
 }) {
   const [size, setSize] = React.useState<"normal" | "min" | "max">("normal")
+  const frameRef = React.useRef<HTMLDivElement>(null)
+  const beforeResize = React.useRef<number | null>(null)
+  const bodyId = React.useId()
+  function resize(next: typeof size) {
+    const frame = frameRef.current
+    beforeResize.current = size !== "max" && next !== "max" ? frame?.getBoundingClientRect().height ?? null : null
+    frame?.getAnimations().forEach((animation) => animation.cancel())
+    setSize(next)
+  }
+  React.useLayoutEffect(() => {
+    const frame = frameRef.current
+    const before = beforeResize.current
+    beforeResize.current = null
+    if (!frame || before === null || matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const animation = frame.animate({ height: [`${before}px`, `${frame.offsetHeight}px`] }, { duration: 180, easing: "ease-out" })
+    return () => animation.cancel()
+  }, [size])
   React.useEffect(() => { if (open) setSize("normal") }, [open, openKey])
   return (
     <DialogPrimitive.Root open={open} modal={false} onOpenChange={(next) => !next && onClose()}>
@@ -271,29 +295,38 @@ export function ComposeFrame({
           onEscapeKeyDown={(e) => e.stopPropagation()}
         >
           <div
+            ref={frameRef}
             data-compose-window=""
             inert={!open || undefined}
             aria-label={title}
             className={cn(
-              "bg-background fixed z-50 flex flex-col overflow-hidden border shadow-2xl motion-safe:data-[state=open]:animate-in motion-safe:data-[state=open]:fade-in motion-safe:data-[state=open]:slide-in-from-bottom-8 motion-safe:data-[state=open]:duration-200 motion-safe:data-[state=closed]:animate-out motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=closed]:slide-out-to-bottom-8 motion-safe:data-[state=closed]:duration-150",
+              "bg-background fixed z-50 flex flex-col overflow-hidden border-x border-t shadow-2xl motion-safe:data-[state=open]:animate-in motion-safe:data-[state=open]:fade-in motion-safe:data-[state=open]:slide-in-from-bottom-4 motion-safe:data-[state=open]:duration-200 motion-safe:data-[state=closed]:animate-out motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=closed]:slide-out-to-bottom-4 motion-safe:data-[state=closed]:duration-150",
               dockedOnMobile ? "max-md:inset-x-2 max-md:bottom-0 max-md:max-h-[55svh] max-md:rounded-t-2xl" : "max-md:inset-0",
               size === "max" ? "md:inset-6 md:rounded-2xl" : "md:right-6 md:bottom-0 md:w-[600px] md:rounded-t-2xl",
-              size === "min" ? "md:h-auto" : size === "normal" ? "md:h-[min(640px,85svh)]" : "",
+              size === "min" ? "h-12" : size === "normal" ? "md:h-[min(640px,85svh)]" : "",
             )}
           >
-            <div className="bg-muted/60 flex cursor-default items-center gap-2 px-4 py-2" onDoubleClick={() => setSize((s) => (s === "min" ? "normal" : "min"))}>
-              <DialogPrimitive.Title asChild><span className="min-w-0 flex-1 truncate text-sm font-medium">{title}</span></DialogPrimitive.Title>
-              <Button variant="ghost" size="icon-xs" className={cn(!dockedOnMobile && "max-md:hidden")} onClick={() => setSize((s) => (s === "min" ? "normal" : "min"))} aria-label={size === "min" ? "Expand" : "Minimize"}>
-                <Minus />
-              </Button>
-              <Button variant="ghost" size="icon-xs" className="max-md:hidden" onClick={() => setSize((s) => (s === "max" ? "normal" : "max"))} aria-label={size === "max" ? "Smaller" : "Full screen"}>
-                {size === "max" ? <Minimize2 /> : <Maximize2 />}
-              </Button>
-              <Button variant="ghost" size="icon-xs" onClick={onClose} aria-label={closeLabel} title={closeLabel}>
-                <X />
-              </Button>
+            <div className={cn("bg-muted/40 flex h-12 shrink-0 items-center gap-2 px-3", size !== "min" && "border-b")}>
+              <DialogPrimitive.Title asChild>
+                {size === "min" ? (
+                  <Button variant="ghost" className="min-w-0 flex-1 justify-start px-2" onClick={() => resize("normal")} aria-expanded={false} aria-controls={bodyId} title="Expand">
+                    <span className="truncate">{title}</span>
+                  </Button>
+                ) : <span className="min-w-0 flex-1 truncate px-2 text-sm font-medium">{title}</span>}
+              </DialogPrimitive.Title>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <Button variant="ghost" size="icon-sm" className={cn(!dockedOnMobile && "max-md:hidden")} onClick={() => resize(size === "min" ? "normal" : "min")} aria-label={size === "min" ? "Expand" : "Minimize"} title={size === "min" ? "Expand" : "Minimize"}>
+                  {size === "min" ? <ChevronUp /> : <Minus />}
+                </Button>
+                <Button variant="ghost" size="icon-sm" className="max-md:hidden" onClick={() => resize(size === "max" ? "normal" : "max")} aria-label={size === "max" ? "Smaller" : "Full screen"} title={size === "max" ? "Smaller" : "Full screen"}>
+                  {size === "max" ? <Minimize2 /> : <Maximize2 />}
+                </Button>
+                <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={closeLabel} title={closeLabel}>
+                  <X />
+                </Button>
+              </div>
             </div>
-            <div className={cn("min-h-0 flex-1 flex-col", size === "min" ? "hidden" : "flex")}>
+            <div id={bodyId} inert={size === "min" || undefined} aria-hidden={size === "min" || undefined} className={cn("flex min-h-0 flex-1 flex-col overflow-hidden motion-safe:transition-opacity motion-safe:duration-150", size === "min" && "opacity-0")}>
               {children}
             </div>
           </div>
