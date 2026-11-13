@@ -1,5 +1,5 @@
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { createdAt, id, time } from "./core";
+import { createdAt, id, time, updatedAt } from "./core";
 import { mailboxes, mailMessages, mailThreads } from "./mail";
 
 export const mailStorageUsage = sqliteTable("mail_storage_usage", {
@@ -38,3 +38,19 @@ export const mailFilterRuns = sqliteTable("mail_filter_runs", {
   filterId: text("filter_id").notNull().references(() => mailFilters.id, { onDelete: "cascade" }),
   createdAt: createdAt(),
 }, t => [primaryKey({ columns: [t.messageId, t.filterId] })]);
+/** Out of office per mailbox: one reply per sender every few days (lib/mail/auto-reply.ts). */
+export const mailAutoReplies = sqliteTable("mail_auto_replies", {
+  mailboxId: text("mailbox_id").primaryKey().references(() => mailboxes.id, { onDelete: "cascade" }),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+  subject: text("subject").notNull().default(""), text: text("text").notNull().default(""),
+  startsAt: time("starts_at"), endsAt: time("ends_at"), updatedAt: updatedAt(),
+});
+export const mailAutoReplyLog = sqliteTable("mail_auto_reply_log", {
+  mailboxId: text("mailbox_id").notNull().references(() => mailboxes.id, { onDelete: "cascade" }),
+  sender: text("sender").notNull(), sentAt: time("sent_at").notNull(),
+}, t => [primaryKey({ columns: [t.mailboxId, t.sender] })]);
+/** Canned replies, per mailbox so a shared mailbox's team shares them. */
+export const mailTemplates = sqliteTable("mail_templates", {
+  id: id(), mailboxId: text("mailbox_id").notNull().references(() => mailboxes.id, { onDelete: "cascade" }),
+  name: text("name").notNull(), subject: text("subject").notNull().default(""), text: text("text").notNull(), createdAt: createdAt(),
+}, t => [index("mail_templates_mailbox_idx").on(t.mailboxId)]);

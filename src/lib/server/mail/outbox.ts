@@ -81,7 +81,7 @@ export async function queueMailSend(input: SendInput, boxes: Mailbox[], fallback
   if (paused) throw new HttpError(403, `Sending is paused: too many ${paused === "bounces" ? "bounced messages" : "spam complaints"} in the last ${REPUTATION_DAYS} days. It resumes on its own as they age out; check the addresses you write to or contact support.`);
   const caps = await orgSendingCaps(mailbox.orgId);
   if (!options.actorUserId && !options.apiKeyId && !input.automatedForward) options.actorUserId = mailbox.userId ?? undefined;
-  if (!options.actorUserId && !options.apiKeyId && !input.automatedForward) throw new HttpError(403, "A sending identity is required");
+  if (!options.actorUserId && !options.apiKeyId && !input.automatedForward && !input.autoReply) throw new HttpError(403, "A sending identity is required");
   let sendAt: number, key: string;
   try { sendAt = scheduledTime(input.sendAt); key = validateIdempotencyKey(options.idempotencyKey ?? input.idempotencyKey); } catch (e) { throw new HttpError(422, (e as Error).message); }
   const digest = await fingerprint({ input, mailbox: mailbox.id, actor: options.actorUserId, key: options.apiKeyId });

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AtSign, ChevronDown, Plus, Reply, ReplyAll, Forward, Type, User, Users, Clock, X } from "lucide-react"
+import { AtSign, ChevronDown, FileText, Plus, Reply, ReplyAll, Forward, Settings2, Type, User, Users, Clock, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 
 import { api } from "@/lib/api-client"
@@ -13,12 +13,14 @@ import { cn } from "@/lib/utils"
 import { guardLeaving } from "@/lib/panel-history"
 import { Button } from "@/components/ui/button"
 import { DateTimePicker, type DateTimePreset } from "@/components/ui/date-time-picker"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AttachmentDropZone, uploadWithProgress, useAttachments, type Attachments, type UploadFn } from "@/components/uploads/attachments"
 import { AddressInput, ComposeBody, ComposeFrame, EMAIL, FieldRow, type AddressSuggestion } from "@/components/mail/compose"
 import { AttachFromDrive } from "@/components/drive/attach-from-drive"
 import { NEW_DRAFT, readDraft, writeDraft } from "./drafts"
+import { useTemplates, type MailTemplate } from "./mail-replies"
+import { openSettings } from "@/components/settings/open-settings"
 import type { Draft, MailMessage, MailThread, ReplyMode } from "./types"
 
 /** The team address book (/api/app/contacts/suggest) behind the To and Cc fields. */
@@ -242,8 +244,18 @@ function MailForm({
         footer={
           <>
             {signatureHtml ? <SignaturePreview html={signatureHtml} on={!draft.noSignature} onChange={(on) => set({ noSignature: !on })} /> : null}
-            <div className="px-3 pb-1">
+            <div className="flex items-center gap-1 px-3 pb-1">
               <AttachFromDrive attachments={attachments} />
+              <TemplatesMenu
+                mailbox={draft.from}
+                onPick={(tpl) => {
+                  const el = body.current
+                  const at = el && document.activeElement === el ? el.selectionStart : draft.text.trim() ? draft.text.length : 0
+                  const text = draft.text.trim() ? draft.text.slice(0, at) + tpl.text + draft.text.slice(at) : tpl.text
+                  set({ text, ...(showSubject && !draft.subject.trim() && tpl.subject ? { subject: tpl.subject } : {}) })
+                  requestAnimationFrame(() => body.current?.focus())
+                }}
+              />
             </div>
           </>
         }
@@ -259,6 +271,40 @@ function MailForm({
 
 const MODE_LABEL: Record<ReplyMode, string> = { reply: "Reply", replyAll: "Reply all", forward: "Forward" }
 const MODE_ICON = { reply: Reply, replyAll: ReplyAll, forward: Forward }
+
+/** Inserts one of the sending mailbox's templates (Settings → Mail → Templates); loaded when first opened. */
+function TemplatesMenu({ mailbox, onPick }: { mailbox: string; onPick: (t: MailTemplate) => void }) {
+  const [open, setOpen] = React.useState(false)
+  const { templates } = useTemplates(open)
+  const mine = templates?.filter((t) => t.mailbox === mailbox)
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="ghost" size="sm" className="text-muted-foreground">
+          <FileText /> Templates
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="max-h-72 w-64 overflow-y-auto">
+        {!mine ? (
+          <DropdownMenuItem disabled>Loading…</DropdownMenuItem>
+        ) : mine.length ? (
+          mine.map((t) => (
+            <DropdownMenuItem key={t.id} onSelect={() => onPick(t)} className="flex-col items-start gap-0">
+              <span className="truncate">{t.name}</span>
+              <span className="text-muted-foreground w-full truncate text-xs">{t.text.split("\n")[0]}</span>
+            </DropdownMenuItem>
+          ))
+        ) : (
+          <DropdownMenuItem disabled>No templates for {mailbox}</DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => openSettings("templates", { mailbox })}>
+          <Settings2 /> Manage templates
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 /** The signature under the text, as recipients will see it (on white), with a box to leave it out. */
 function SignaturePreview({ html, on, onChange }: { html: string; on: boolean; onChange: (on: boolean) => void }) {

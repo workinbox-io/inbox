@@ -8,6 +8,8 @@ export type SettingsSection =
   | "labels"
   | "filters"
   | "forwarding"
+  | "auto-reply"
+  | "templates"
   | "storage"
   | "calendar"
   | "calendar-feed"

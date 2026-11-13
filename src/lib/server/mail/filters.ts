@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { and, asc, db, eq, inArray, mailboxes, mailMessages, mailThreads, sql } from "@/db";
-import { mailLabels, mailThreadLabels, mailFilters, mailForwardTargets, mailFilterRuns } from "@/db/schema/mail-storage";
+import { mailLabels, mailThreadLabels, mailFilters, mailForwardTargets, mailFilterRuns, mailTemplates } from "@/db/schema/mail-storage";
 import { isAutomatedMail } from "@/lib/mail/threading";
 import { HttpError } from "@/lib/server/api";
 import { matchesMailFilter } from "@/lib/mail/filters";
@@ -37,6 +37,20 @@ export async function assignLabel(boxes: Mailbox[], input: { labelId: string; th
   if(input.remove) await db.delete(mailThreadLabels).where(and(eq(mailThreadLabels.labelId,label.id),inArray(mailThreadLabels.threadId,input.threadIds)));
   else await db.insert(mailThreadLabels).values(threads.map(t=>({threadId:t.id,labelId:label.id}))).onConflictDoNothing();
   await stampLabelThreads(label.mailboxId,threads.map(t=>t.id));
+}
+export async function listTemplates(boxes: Mailbox[]) {
+  if (!boxes.length) return [];
+  const rows = await db.select().from(mailTemplates).where(inArray(mailTemplates.mailboxId, boxes.map(b => b.id))).orderBy(asc(mailTemplates.name));
+  return rows.map(r => ({ ...r, mailbox: boxes.find(b => b.id === r.mailboxId)!.address }));
+}
+export async function saveTemplate(boxes: Mailbox[], input: { id?: string; mailboxId: string; name: string; subject: string; text: string }) {
+  own(input.mailboxId, boxes); const { id, ...values } = input;
+  if (id) { const [row] = await db.update(mailTemplates).set(values).where(and(eq(mailTemplates.id,id),eq(mailTemplates.mailboxId,input.mailboxId))).returning(); if (!row) throw new HttpError(404,"Not found"); return row; }
+  const [row] = await db.insert(mailTemplates).values(values).returning(); return row;
+}
+export async function deleteTemplate(boxes: Mailbox[], id: string) {
+  if (!boxes.length) throw new HttpError(404,"Not found");
+  await db.delete(mailTemplates).where(and(eq(mailTemplates.id,id),inArray(mailTemplates.mailboxId,boxes.map(b=>b.id))));
 }
 export async function listFilters(boxes: Mailbox[]) {
   if(!boxes.length)return {filters:[],targets:[]}; const ids=boxes.map(b=>b.id);

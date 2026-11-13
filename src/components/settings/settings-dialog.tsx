@@ -24,6 +24,8 @@ import {
   Tag,
   UserRound,
   Users,
+  FileText,
+  Plane,
 } from "lucide-react"
 
 import { AccountSettings } from "@/components/app/account-settings"
@@ -38,6 +40,7 @@ import { ExternalAccounts } from "@/components/mailbox/external-accounts"
 import { AppearanceSection, MailboxPicker, NotificationsSection, SignatureSection } from "@/components/mailbox/mail-preferences"
 import { FiltersSection, ForwardingSection, LabelsSection, StorageSection, useMailboxRules } from "@/components/mailbox/mail-rules"
 import { MailSettings } from "@/components/mailbox/mail-settings"
+import { AutoReplySection, TemplatesSection } from "@/components/mailbox/mail-replies"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { api } from "@/lib/api-client"
@@ -70,6 +73,8 @@ function groups(canManage: boolean): [string, SectionDef[]][] {
         { id: "signature", label: t("Signature"), icon: PenLine, data: "mailbox", perMailbox: true, description: t("Goes under new e-mails, replies and forwards, with your organization's logo and colours. Untick it in a message to send without it.") },
         { id: "labels", label: t("Labels"), icon: Tag, data: "mailbox", perMailbox: true, description: t("Group threads your own way. Apply them from the list or with a filter.") },
         { id: "filters", label: t("Filters"), icon: Filter, data: "mailbox", perMailbox: true, description: t("Run top to bottom on every new message. A filter acts when all its conditions match.") },
+        { id: "auto-reply", label: t("Out of office"), icon: Plane, data: "mailbox", perMailbox: true, description: t("Answer new mail automatically while you're away.") },
+        { id: "templates", label: t("Templates"), icon: FileText, data: "mailbox", perMailbox: true, description: t("Answers you write often, ready to insert in the composer. Everyone on this mailbox shares them.") },
         { id: "forwarding", label: t("Forwarding"), icon: Forward, data: "mailbox", perMailbox: true, description: t("Addresses a filter may forward mail to, once their owner confirms.") },
         { id: "storage", label: t("Storage"), icon: HardDrive, data: "mailbox", perMailbox: true, description: t("How much of the mailbox's space is in use.") },
       ],
@@ -257,6 +262,8 @@ function Body({ def, data, mailbox }: { def: SectionDef; data: Record<string, an
     case "labels":
     case "filters":
     case "forwarding":
+    case "auto-reply":
+    case "templates":
     case "storage":
       return mailbox ? <MailboxBody section={def.id} data={data as MailboxData} mailbox={mailbox} /> : <p className="text-muted-foreground text-sm">{t("You don't have a mailbox yet.")}</p>
     case "calendar":
@@ -321,6 +328,8 @@ function MailboxBody({ section, data, mailbox }: { section: SettingsSection; dat
   if (section === "labels") return <LabelsSection rules={rules} />
   if (section === "filters") return <FiltersSection rules={rules} />
   if (section === "forwarding") return <ForwardingSection rules={rules} />
+  if (section === "auto-reply") return <AutoReplySection key={mailbox} rules={rules} />
+  if (section === "templates") return <TemplatesSection key={mailbox} rules={rules} />
   return <StorageSection rules={rules} />
 }
 

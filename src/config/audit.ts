@@ -7,6 +7,8 @@ export const AUDIT_ACTIONS = {
   "mail_storage.quota": "Changed mailbox storage limit",
   "mail_label.change": "Changed mail labels",
   "mail_filter.change": "Changed mail filters",
+  "mail_template.change": "Changed mail templates",
+  "mail_auto_reply.change": "Changed an out-of-office reply",
   "mail_forward.request": "Requested forwarding confirmation",
   "api_key.mail_access": "Changed API key mail access",
   "api_key.create": "Created API key",

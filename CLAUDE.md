@@ -29,6 +29,10 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `mail_signature_brands`) plus each mailbox's card (`mailboxes.signature_card`: name, role, phone; `signature` = its
   free lines). `lib/mail/signature.ts` renders text + e-mail-safe HTML; `prepareMailSend` appends it unless
   `signature: false` (composer checkbox) or an automated forward. The composer only previews it (ComposeBody `footer`).
+- Out of office (`mail_auto_replies`, log `mail_auto_reply_log`) and templates (`mail_templates`), per mailbox: rule in
+  `lib/mail/auto-reply.ts`, `maybeAutoReply` (`lib/server/mail/auto-reply.ts`) runs after filters in `handleOrgMail` and
+  sends with `autoReply: true` (`Auto-Submitted: auto-replied`, no quote); templates in `lib/server/mail/filters.ts`,
+  settings sections and the composer's Templates menu in `components/mailbox/mail-replies.tsx`.
 - Drafts: per person on the server (`mail_drafts`, key = thread id for a reply, `new`, or `d-<uuid>`;
   `lib/server/mail/drafts.ts`, `/api/app/mail/drafts[/key]`). The browser keeps a copy for instant reads and syncs it
   (`components/mailbox/drafts.ts`: debounced PUT/DELETE, `syncDrafts()` on load, newest wins). Drafts and Outbox are

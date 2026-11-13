@@ -204,8 +204,10 @@ What a team switching from Google Workspace or Microsoft 365 would still miss, b
 
 Must have before selling to larger teams:
 - ⬜ The app in more languages, Polish first (the i18n is in place, `config/languages.ts` lists English only)
-- ⬜ Mail: out-of-office replies, templates (canned replies), rules that reply; shared mailboxes with assignment,
-  status (open/done) and internal comments (collision-free answering, like Front)
+- ✅ Mail: out-of-office replies (per mailbox, dated, once per sender every 4 days, never to lists or automatic mail)
+  and templates (canned replies per mailbox, inserted from the composer)
+- ⬜ Mail: rules that reply; shared mailboxes with assignment, status (open/done) and internal comments
+  (collision-free answering, like Front)
 - ⬜ SSO (SAML/OIDC, Google and Microsoft sign-in for admins) and SCIM provisioning (Business, "Soon" on pricing)
 - ⬜ Passkeys; admin-enforced 2FA; sign out a person everywhere; device and session list for admins
 - ⬜ Organization export (mail as .mbox, contacts, notes as Markdown, the drive as ZIP) and leaving cleanly

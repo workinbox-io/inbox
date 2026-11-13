@@ -304,6 +304,11 @@ export async function handleOrgMail(message: IncomingMail, imported?: ImportedMa
   else if (!imported) {
     logIn("stored", { to: message.to, from: fromEmail, mailbox: mailbox.id, message: storedMessageId, thread: threadId, spam, size: raw.byteLength });
     await applyMailFilters(mailbox, storedMessageId, message.headers, spam);
+    // An out-of-office reply never fails delivery of the mail it answers.
+    if (!spam)
+      await (await import("./auto-reply")).maybeAutoReply(mailbox, storedMessageId, threadId, fromEmail, message.headers).catch(async (e) =>
+        (await import("@/lib/server/errors")).reportError("queue", e, { orgId: mailbox.orgId, where: "mail.autoReply" }),
+      );
     if (!spam) {
       const { handleCalendarMail, isCalendarFile } = await import("@/lib/server/calendar/inbound");
       const invites = parsed.attachments.filter((a) => isCalendarFile(a.mimeType, a.filename));
@@ -601,6 +606,8 @@ export interface SendInput {
   files?: AttachmentInput[];
   sendAt?: number;
   automatedForward?: boolean;
+  /** The mailbox's out-of-office reply (lib/server/mail/auto-reply.ts): marked Auto-Submitted, no quote. */
+  autoReply?: boolean;
   idempotencyKey?: string;
   /** iMIP invitation part (lib/server/calendar/invites.ts). */
   calendar?: { method: "REQUEST" | "CANCEL" | "REPLY"; ics: string };
@@ -621,12 +628,13 @@ export async function prepareMailSend(input: SendInput, boxes: Mailbox[], sender
   const history = thread ? await db.select().from(m).where(eq(m.threadId, thread.id)).orderBy(desc(m.createdAt)).limit(30) : [];
   const lastInRow = history.find((x) => x.direction === "in");
   const lastIn = lastInRow ? await hydrateHtml(lastInRow) : undefined;
-  const subject = (forward ? forwardSubject(input.subject || forward.subject) : thread ? replySubject(thread.subject) : input.subject?.trim()) || "(no subject)";
+  const subject = (forward ? forwardSubject(input.subject || forward.subject) : input.autoReply && input.subject?.trim() ? input.subject.trim() : thread ? replySubject(thread.subject) : input.subject?.trim()) || "(no subject)";
   const ids = history.flatMap((x) => (x.messageId ? [x.messageId] : [])).reverse();
   const headers: Record<string, string> = ids.length ? { "In-Reply-To": ids.at(-1)!, References: ids.slice(-10).join(" ") } : {};
   if (input.automatedForward) headers["X-WorkInbox-Forwarded"] = "1";
+  if (input.autoReply) headers["Auto-Submitted"] = "auto-replied";
   const signature = input.signature === false || input.automatedForward ? null : await mailboxSignature(mailbox);
-  const { text, html } = renderMail(input.text, { quote: forward ? undefined : lastIn, forward, signature });
+  const { text, html } = renderMail(input.text, { quote: forward || input.autoReply ? undefined : lastIn, forward, signature });
   const files = [...(forward?.files ?? []).map((f) => ({ url: f.url, mediaType: f.mediaType, filename: f.filename })), ...(input.files ?? [])];
   const fromName = mailbox.displayName || senderFallbackName;
 
@@ -672,7 +680,7 @@ export async function persistOutboxMail(mailbox: Mailbox, payload: OutboxPayload
   ]);
   const [message] = await db.select().from(m).where(eq(m.id, messageId));
   // The team address book learns who we write to; it must never fail a send that already went out.
-  if (!email.headers?.["X-WorkInbox-Forwarded"]) {
+  if (!email.headers?.["X-WorkInbox-Forwarded"] && !email.headers?.["Auto-Submitted"]) {
     const { recordSent } = await import("@/lib/server/contacts");
     await recordSent(mailbox.orgId, [email.to, ...(email.cc ?? [])]).catch(async (e) => (await import("@/lib/server/errors")).reportError("queue", e, { orgId: mailbox.orgId, where: "contacts.recordSent" }));
   }
