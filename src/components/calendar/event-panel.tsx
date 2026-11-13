@@ -69,7 +69,7 @@ function initial(e: EventView | null, d: Draft | null, tz: string, calendarId: s
   // All-day events end at the next midnight; the form shows the last day.
   const end = allDay ? addDays(e?.end ?? d!.end, -1, tz) : (e?.end ?? d!.end)
   return {
-    title: e?.title ?? "",
+    title: e?.title ?? d?.title ?? "",
     description: e?.description ?? "",
     location: e?.location ?? "",
     url: e?.url ?? "",

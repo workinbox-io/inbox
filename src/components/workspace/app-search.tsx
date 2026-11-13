@@ -1,12 +1,12 @@
 import * as React from "react"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { CommandPalette, useCommandPaletteShortcut, type CommandPaletteGroup } from "@/components/ui/command-palette"
+import { CommandPalette, openAppSearch, useCommandPaletteShortcut, type CommandPaletteGroup } from "@/components/ui/command-palette"
 import { APP_ACTIONS, APP_HELP, APP_NAV } from "@/config/nav"
 import { t } from "@/lib/i18n/panel"
 
 /** The workspace apps the user view switches between (AppRail's list). */
-const USER_APPS = new Set(["/app/mail", "/app/calendar", "/app/notes", "/app/contacts", "/app/drive"])
+export const USER_APPS = new Set(["/app/mail", "/app/calendar", "/app/notes", "/app/contacts", "/app/drive"])
 
 /**
  * The user view's ⌘K: the button in AppTopBar and the palette with the apps and "new" actions. On phones it is also
@@ -40,7 +40,7 @@ export function AppSearch() {
         variant="outline"
         size="sm"
         className="text-muted-foreground w-9 justify-start gap-2 px-0 max-sm:justify-center sm:w-64 sm:px-3"
-        onClick={() => setOpen(true)}
+        onClick={() => openAppSearch(() => setOpen(true))}
       >
         <Search />
         <span className="max-sm:sr-only">{t("Search…")}</span>

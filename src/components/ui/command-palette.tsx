@@ -60,6 +60,11 @@ const sizeClasses = {
   wide: "sm:max-w-2xl",
 }
 
+/** Let the current workspace app provide its own commands before opening the global menu. */
+export function openAppSearch(fallback: () => void) {
+  if (window.dispatchEvent(new Event("app:search-commands", { cancelable: true }))) fallback()
+}
+
 /** Bind Command/Ctrl+K to a controlled command palette without stealing input shortcuts. */
 function useCommandPaletteShortcut(
   onOpenChange: React.Dispatch<React.SetStateAction<boolean>>,
@@ -79,7 +84,7 @@ function useCommandPaletteShortcut(
       ) return
 
       event.preventDefault()
-      onOpenChange((open) => !open)
+      openAppSearch(() => onOpenChange((open) => !open))
     }
 
     document.addEventListener("keydown", onKeyDown)

@@ -21,6 +21,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import {
   CommandPalette,
+  openAppSearch,
   useCommandPaletteShortcut,
   type CommandPaletteGroup,
 } from "@/components/ui/command-palette"
@@ -121,7 +122,7 @@ export function AppShell({ pathname: initialPathname, user, isAdmin, adminMail, 
   React.useEffect(() => watchUnread(setMailUnread), [])
   useCommandPaletteShortcut(setPaletteOpen)
   React.useEffect(() => {
-    const open = () => setPaletteOpen(true)
+    const open = () => openAppSearch(() => setPaletteOpen(true))
     // The palette lives in the persisted island: close it once the next page is in, however it was reached.
     const close = () => setPaletteOpen(false)
     window.addEventListener(SEARCH_EVENT, open)

@@ -24,6 +24,7 @@ import { replaceUrl } from "@/lib/panel-history"
 import { cn } from "@/lib/utils"
 import { AvailabilityBar } from "./availability-bar"
 import { CalendarRail, CalendarSettingsDialog } from "./calendar-rail"
+import { CalendarCommands } from "./calendar-commands"
 import { EventPanel, NewEventWindow, useScopePrompt, type EventBody } from "./event-panel"
 import { MonthGrid } from "./month-grid"
 import {
@@ -562,6 +563,18 @@ export function CalendarApp(props: CalendarAppProps) {
             ]}
           />
           <div className="col-start-2 row-start-1 flex min-w-0 flex-wrap items-center justify-end gap-1 @3xl/cal:col-start-3">
+          <CalendarCommands
+            tz={tz}
+            prefs={prefs}
+            writable={calendars.some((c) => c.role === "owner" || c.role === "edit")}
+            userView={!!props.account}
+            onDraft={(d) => { close(); setDate(d.start); if (view === "year") setView("week"); newDraft(d) }}
+            onNew={() => newEvent()}
+            onToday={() => setDate(Date.now())}
+            onView={chooseView}
+            onSettings={() => setSettingsOpen(true)}
+            onAvailability={toggleAvailability}
+          />
           <Button size="sm" variant={slots ? "secondary" : "ghost"} aria-pressed={slots !== null} onClick={toggleAvailability} title={t("Availability (a)")}>
             <CalendarCheck data-icon="inline-start" />
             <span className="hidden sm:inline">{t("Availability")}</span>
