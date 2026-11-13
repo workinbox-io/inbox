@@ -24,6 +24,8 @@ export interface NoteDetail extends NoteSummary {
   /** The saved Plate document (shown until the live one syncs). */
   value: import("platejs").Value
   people: { userId: string; role: "view" | "edit"; name: string; email: string }[]
+  /** Meeting notes: the event (`event` = the calendar's ?event= key), its title and start. */
+  meeting: { event: string; title: string; start: number } | null
   createdAt: string
 }
 

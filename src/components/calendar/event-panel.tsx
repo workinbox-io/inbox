@@ -4,7 +4,8 @@
  * apply to. Invited people answer with Yes / Maybe / No.
  */
 import * as React from "react"
-import { AlignLeft, Bell, CalendarDays, Clock, MapPin, Repeat, Trash2, Users, Video, X } from "lucide-react"
+import { AlignLeft, ArrowUpRight, Bell, CalendarDays, Clock, MapPin, NotebookPen, Repeat, Trash2, Users, Video, X } from "lucide-react"
+import { toast } from "@yusufceng1z/ding-react"
 import { ConfirmDialog } from "@/components/app/confirm-button"
 import { UserAvatar } from "@/components/app/user-avatar"
 import { AddressInput, ComposeFrame, type AddressSuggestion } from "@/components/mail/compose"
@@ -343,12 +344,14 @@ export function EventPanel({
           </div>
         </Row>
 
+        {event && event.role !== "busy" ? <MeetingNotes event={event} /> : null}
+
         <Row icon={MapPin}>
           <Input className={field} value={f.location} disabled={!editable} onChange={(e) => set({ location: e.target.value })} placeholder={t("Location")} maxLength={500} />
         </Row>
 
         <Row icon={AlignLeft}>
-          <Textarea value={f.description} disabled={!editable} onChange={(e) => set({ description: e.target.value })} placeholder={t("Notes")} rows={4} />
+          <Textarea value={f.description} disabled={!editable} onChange={(e) => set({ description: e.target.value })} placeholder={t("Description")} rows={4} />
         </Row>
 
         <Row icon={Bell}>
@@ -421,6 +424,47 @@ export function NewEventWindow({ draft, open, ...props }: Omit<React.ComponentPr
   const [lastDraft, setLastDraft] = React.useState(draft)
   if (draft && draft !== lastDraft) setLastDraft(draft)
   return lastDraft ? <EventPanel {...props} event={null} draft={draft ?? lastDraft} open={open} /> : null
+}
+
+/** "Meeting notes": opens the event's note (shared with its people), making it the first time. */
+function MeetingNotes({ event }: { event: EventView }) {
+  const path = `/api/app/calendar/events/${event.id}/notes${event.occurrence ? `?occurrence=${event.occurrence}` : ""}`
+  const [note, setNote] = React.useState<{ id: string; title: string } | null | undefined>(undefined)
+  const [busy, setBusy] = React.useState(false)
+  React.useEffect(() => {
+    let live = true
+    setNote(undefined)
+    api<{ note: { id: string; title: string } | null }>("GET", path)
+      .then((r) => live && setNote(r.note))
+      .catch(() => live && setNote(null))
+    return () => {
+      live = false
+    }
+  }, [path])
+  async function open() {
+    setBusy(true)
+    try {
+      const r = await api<{ note: { id: string } }>("POST", path)
+      location.assign(`/app/notes/${r.note.id}`)
+    } catch (e) {
+      toast.error((e as Error).message)
+      setBusy(false)
+    }
+  }
+  return (
+    <Row icon={NotebookPen}>
+      {/* Looks like the rows' fields around it: a placeholder until the note exists, then a link to it. */}
+      <button
+        type="button"
+        disabled={note === undefined || busy}
+        onClick={() => void open()}
+        className="border-input hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 flex h-8 w-full min-w-0 items-center gap-2 rounded-xl border bg-transparent px-3 text-left text-sm outline-none transition-[color,box-shadow] focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50"
+      >
+        <span className={cn("min-w-0 flex-1 truncate", !note && "text-muted-foreground/60 dark:text-muted-foreground/50")}>{note ? t("Meeting notes") : t("Take meeting notes")}</span>
+        {note ? <ArrowUpRight className="text-muted-foreground size-4 shrink-0" /> : null}
+      </button>
+    </Row>
+  )
 }
 
 function Row({ icon: Icon, children }: { icon: typeof Clock; children: React.ReactNode }) {

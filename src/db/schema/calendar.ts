@@ -5,6 +5,7 @@
  */
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createdAt, id, organization, time, updatedAt, user } from "./core";
+import { notes } from "./notes";
 
 export const calendars = sqliteTable(
   "calendars",
@@ -148,4 +149,20 @@ export const calendarReminderLog = sqliteTable(
     key: text("key").primaryKey(),
     sentAt: createdAt(),
   },
+);
+
+/** Meeting notes: one note per event, or per occurrence of a series (`occurrence` = its original start, 0 otherwise). */
+export const calendarEventNotes = sqliteTable(
+  "calendar_event_notes",
+  {
+    /** The series' master, or the single event. */
+    eventId: text("event_id")
+      .notNull()
+      .references(() => calendarEvents.id, { onDelete: "cascade" }),
+    occurrence: integer("occurrence").notNull().default(0),
+    noteId: text("note_id")
+      .notNull()
+      .references(() => notes.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.eventId, t.occurrence] }), uniqueIndex("calendar_event_notes_note_idx").on(t.noteId)],
 );

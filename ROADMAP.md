@@ -15,8 +15,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
    - The hourly SES sweep's first run (`[ses-inbound]` in the Worker logs)
    - The calendar: an invitation to Gmail and Outlook shows their own RSVP buttons, the answer comes back and updates
      the attendee; a CANCEL by mail; a colleague's calendar overlaid with real events; a reminder push on a phone
-2. ⬜ Calendar toward Notion Calendar (phase 3, "Next"): meeting notes from an event, then ⌘K with events typed in
-   plain words and the smaller gaps
+2. ⬜ Calendar toward Notion Calendar (phase 3, "Next"): ⌘K with events typed in plain words, then the smaller gaps
+   (meeting notes shipped 2026-11-13)
 3. ⬜ ChatGPT directory: submit the app (`chatgpt-app/`), then the `/chatgpt` page and the `/vs` row once OpenAI approves
 4. ⬜ Drive follow-ups: a link instead of a large attachment, resized thumbnails, copies of large folders through the queue
 
@@ -113,8 +113,8 @@ Shipped 2026-11-12 (`b9f9510`, `40aa9aa`, then UI polish up to `08c1d0c`), deplo
 
 Next, toward Notion Calendar (2026-11-12), in this order:
 
-1. ⬜ Meeting notes: "Meeting notes" on an event makes a note linked to it, shared with its attendees; the event shows
-   the note and the note links back (Notion Calendar attaches Notion pages; we have our own notes)
+1. ✅ Meeting notes: "Meeting notes" on an event makes a note linked to it (one per occurrence of a series), shared
+   with its attendees, organizer and creator; the event shows the note and the note links back (2026-11-13)
 2. ⬜ ⌘K for the calendar and events typed in plain words ("lunch with Ola tomorrow 1pm")
 3. ⬜ Smaller gaps:
    - hide weekends; 2–4 day views; hour height (zoom)

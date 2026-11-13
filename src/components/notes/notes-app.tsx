@@ -7,6 +7,7 @@ import * as React from "react"
 import { tapllEvent } from "@/lib/tapll"
 import {
   Archive,
+  CalendarDays,
   ArchiveRestore,
   Copy,
   ExternalLink,
@@ -644,6 +645,16 @@ function NotePane({
             {note.archived && <span className="bg-muted rounded px-1.5 py-0.5 font-medium">{t("Archived")}</span>}
             {note.role === "view" && !note.archived && <span className="bg-muted rounded px-1.5 py-0.5 font-medium">{t("View only")}</span>}
           </span>
+        ) : null}
+        {note?.meeting ? (
+          <a
+            href={`/app/calendar?event=${note.meeting.event}`}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted flex min-w-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-xs"
+            title={t("Open the meeting in the calendar")}
+          >
+            <CalendarDays className="size-3.5 shrink-0" />
+            <span className="truncate">{note.meeting.title || t("Meeting")}</span>
+          </a>
         ) : null}
         <div className="ml-auto flex items-center gap-0.5">
           <PresenceStack people={presence} />

@@ -173,6 +173,10 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `scope` this|following|all, RSVP, prefs), `calendars.ts`, `invites.ts` (iMIP via `queueMailSend` from the
   organizer's personal mailbox, outside attendees only), `feed.ts`, `import.ts`, `reminders.ts` (every-minute cron;
   push via `pushToUser`, the service worker `public/mail-sw.js` reads the title with the session).
+- Meeting notes: `calendar_event_notes` (master id + occurrence, 0 for single events → note), `lib/server/calendar/meeting-notes.ts`
+  (`meetingNote`: POST makes a `people` note for the org attendees, organizer and creator, and adds whoever opens it
+  later; `noteMeeting` = the note's link back, `meeting` in `getNote`). API `/api/app/calendar/events/[id]/notes`
+  (`?occurrence=`), button in `EventPanel` (`MeetingNotes`), link in the note's header.
 - Public feed `/cal/<token>.ics` (`pages/cal/[token].ics.ts`, token = only credential, misses rate-limited).
 - API `/api/app/calendar/{events,events/[id],events/[id]/rsvp,calendars,calendars/[id]/share,prefs,feed,import}`,
   `/api/v1/calendar/events` re-exports. MCP `src/mcp/calendar.ts` (`calendar_list_events`, `calendar_find_free_time`,

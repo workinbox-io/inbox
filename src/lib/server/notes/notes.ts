@@ -13,6 +13,7 @@ import { env } from "cloudflare:workers";
 import type { Value } from "platejs";
 import { grantsFor, requireNote, roleOf, visibleNotes, type Note, type NotesViewer } from "./access";
 import { applyToRoom, destroyRoom, kickRoom } from "./sync";
+import { noteMeeting } from "@/lib/server/calendar/meeting-notes";
 
 export interface NoteSummary {
   id: string;
@@ -91,6 +92,8 @@ export async function getNote(v: NotesViewer, id: string) {
     value,
     markdown: valueToMarkdown(value),
     people,
+    /** The calendar event it's the meeting notes of. */
+    meeting: await noteMeeting(id),
     createdAt: note.createdAt.toISOString(),
   };
 }
