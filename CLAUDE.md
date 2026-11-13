@@ -127,7 +127,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   mentions to people without a socket; `public/mail-sw.js` reads the text from `/api/app/chat/push`.
 - UI `/app/chat[/<channelId>]` (`?view=threads|mentions|saved`, `?thread=`, `?m=`): `components/chat/chat-app.tsx`
   (rail, conversation, thread pane, ⌘K jump, dialogs), `message-row.tsx`, `composer.tsx` (@ suggestions, ⌘B/I/E,
-  attachments via `/api/app/attachments`), `use-chat-socket.ts`.
+  attachments via `/api/app/attachments`), `use-chat-socket.ts`. App badge (rail + sidebar): unread DMs + mentions from
+  `/api/app/chat/unread`, `watchChatUnread`/`publishChatUnread` in `lib/mail/unread-badge.ts`.
 - API `/api/app/chat` (rail data), `/channels`, `/channels/[id]` (GET page `?before=&q=`, PATCH one `action`),
   `/channels/[id]/typing`, `/dm`, `/messages`, `/messages/[id]` (GET thread, PATCH edit|react|save|pin, DELETE),
   `/views`, `/people`, `/ticket`, `/push`. MCP `src/mcp/chat.ts` (`chat_list_channels`, `chat_read_channel`,

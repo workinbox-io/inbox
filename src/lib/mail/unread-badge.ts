@@ -1,11 +1,16 @@
 /**
- * The "Mail" unread badge in the dashboard sidebar and the user view's app rail. Mail itself publishes its counts
- * (instant after reading); elsewhere the badge polls while the tab is visible.
+ * The "Mail" and "Chat" unread badges in the dashboard sidebar and the user view's app rail. The app itself publishes
+ * its count (instant after reading); elsewhere the badge polls while the tab is visible.
  */
 const UNREAD_EVENT = "mail:unread"
+const CHAT_EVENT = "chat:unread"
 
 export function publishUnread(total: number) {
   window.dispatchEvent(new CustomEvent(UNREAD_EVENT, { detail: total }))
+}
+
+export function publishChatUnread(total: number) {
+  window.dispatchEvent(new CustomEvent(CHAT_EVENT, { detail: total }))
 }
 
 export function badgeText(n: number) {
@@ -13,10 +18,15 @@ export function badgeText(n: number) {
 }
 
 /** Calls `cb` with the total now, every minute while visible, on tab focus and whenever Mail publishes. */
-export function watchUnread(cb: (total: number) => void) {
+export const watchUnread = (cb: (total: number) => void) => watchCount("/api/app/mail/unread", UNREAD_EVENT, cb)
+
+/** Chat: direct messages and mentions, muted conversations left out. */
+export const watchChatUnread = (cb: (total: number) => void) => watchCount("/api/app/chat/unread", CHAT_EVENT, cb)
+
+function watchCount(url: string, event: string, cb: (total: number) => void) {
   const fetchNow = () => {
     if (document.visibilityState !== "visible") return
-    fetch("/api/app/mail/unread")
+    fetch(url)
       .then((r) => (r.ok ? (r.json() as Promise<{ total: number }>) : null))
       .then((d: { total: number } | null) => d && cb(d.total))
       .catch(() => {})
@@ -25,10 +35,10 @@ export function watchUnread(cb: (total: number) => void) {
   fetchNow()
   const timer = setInterval(fetchNow, 60_000)
   document.addEventListener("visibilitychange", fetchNow)
-  window.addEventListener(UNREAD_EVENT, onEvent)
+  window.addEventListener(event, onEvent)
   return () => {
     clearInterval(timer)
     document.removeEventListener("visibilitychange", fetchNow)
-    window.removeEventListener(UNREAD_EVENT, onEvent)
+    window.removeEventListener(event, onEvent)
   }
 }

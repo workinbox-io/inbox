@@ -69,8 +69,8 @@ const apps = [
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={app.icon} />
         <span role="tooltip" class="bg-foreground text-background pointer-events-none absolute top-1/2 left-full z-50 ml-2 -translate-y-1/2 rounded-md px-3 py-1.5 text-xs whitespace-nowrap opacity-0 transition-opacity delay-0 group-hover:opacity-100 group-hover:delay-300 group-focus-visible:opacity-100">{app.label}</span>
-        {app.key === "mail" && (
-          <span data-mail-unread hidden class="bg-primary text-primary-foreground absolute -top-1 -right-1 min-w-4 rounded-full px-1 text-center text-[10px] leading-4 font-semibold tabular-nums" />
+        {(app.key === "mail" || app.key === "chat") && (
+          <span data-unread={app.key} hidden class="bg-primary text-primary-foreground absolute -top-1 -right-1 min-w-4 rounded-full px-1 text-center text-[10px] leading-4 font-semibold tabular-nums" />
         )}
       </a>
     ))
@@ -78,12 +78,14 @@ const apps = [
 </nav>
 
 <script>
-  import { badgeText, watchUnread } from "@/lib/mail/unread-badge";
+  import { badgeText, watchChatUnread, watchUnread } from "@/lib/mail/unread-badge";
 
-  const badge = document.querySelector<HTMLElement>("[data-mail-unread]");
-  if (badge)
-    watchUnread((n) => {
-      badge.textContent = badgeText(n);
-      badge.hidden = !n;
-    });
+  for (const [key, watch] of [["mail", watchUnread], ["chat", watchChatUnread]] as const) {
+    const badge = document.querySelector<HTMLElement>(`[data-unread="${key}"]`);
+    if (badge)
+      watch((n) => {
+        badge.textContent = badgeText(n);
+        badge.hidden = !n;
+      });
+  }
 </script>

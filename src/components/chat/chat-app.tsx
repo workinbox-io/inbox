@@ -44,6 +44,7 @@ import { decodeMentions, encodeMentions, plainChat } from "@/lib/chat/format"
 import { startsGroup, unreadMarker } from "@/lib/chat/rules"
 import type { ChatChannel, ChatEvent, ChatFile, ChatHit, ChatMessage, ChatPerson, ChatView } from "@/lib/chat/types"
 import { t } from "@/lib/i18n/panel"
+import { publishChatUnread } from "@/lib/mail/unread-badge"
 import { pushUrl, replaceUrl } from "@/lib/panel-history"
 import { cn } from "@/lib/utils"
 import { Composer, type ComposerHandle } from "./composer"
@@ -551,6 +552,10 @@ export function ChatApp(props: ChatAppProps) {
     window.addEventListener("keydown", onKey, true)
     return () => window.removeEventListener("keydown", onKey, true)
   })
+
+  // The app rail's and sidebar's "Chat" badge follows the rail here without waiting for its poll.
+  const badge = channels.reduce((n, c) => n + c.mentions + (c.kind === "dm" && !c.muted ? c.unread : 0), 0)
+  React.useEffect(() => publishChatUnread(badge), [badge])
 
   // ---- Rendering ----------------------------------------------------------------------------------------------
 

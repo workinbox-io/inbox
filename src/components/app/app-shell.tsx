@@ -29,7 +29,7 @@ import { APP_HELP, APP_NAV, APP_ACTIONS } from "@/config/nav"
 import { siteConfig } from "@/config/site"
 import { NavUser } from "./nav-user"
 import { t } from "@/lib/i18n/panel"
-import { badgeText, watchUnread } from "@/lib/mail/unread-badge"
+import { badgeText, watchChatUnread, watchUnread } from "@/lib/mail/unread-badge"
 
 /**
  * The dashboard's sidebar, command palette and toasts: one island that AppLayout keeps across
@@ -120,6 +120,8 @@ export function AppShell({ pathname: initialPathname, user, isAdmin, adminMail, 
   const [paletteOpen, setPaletteOpen] = React.useState(false)
   const [mailUnread, setMailUnread] = React.useState(0)
   React.useEffect(() => watchUnread(setMailUnread), [])
+  const [chatUnread, setChatUnread] = React.useState(0)
+  React.useEffect(() => watchChatUnread(setChatUnread), [])
   useCommandPaletteShortcut(setPaletteOpen)
   React.useEffect(() => {
     const open = () => openAppSearch(() => setPaletteOpen(true))
@@ -180,6 +182,9 @@ export function AppShell({ pathname: initialPathname, user, isAdmin, adminMail, 
                       </SidebarMenuButton>
                       {item.href === "/app/mail" && mailUnread ? (
                         <SidebarMenuBadge className="text-primary-foreground bg-primary">{badgeText(mailUnread)}</SidebarMenuBadge>
+                      ) : null}
+                      {item.href === "/app/chat" && chatUnread ? (
+                        <SidebarMenuBadge className="text-primary-foreground bg-primary">{badgeText(chatUnread)}</SidebarMenuBadge>
                       ) : null}
                       {item.href === ADMIN_MAIL_NAV.href && adminMail?.unread ? (
                         <SidebarMenuBadge className="text-primary-foreground bg-primary">{adminMail.unread > 99 ? "99+" : adminMail.unread}</SidebarMenuBadge>

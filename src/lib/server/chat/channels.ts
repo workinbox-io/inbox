@@ -223,3 +223,9 @@ export async function typing(v: ChatViewer, id: string, parentId: string | null)
   const to = await audience(channel);
   await publish(v.orgId, { type: "typing", channelId: id, parentId, userId: v.userId }, to?.filter((u) => u !== v.userId));
 }
+
+/** The app badge, like Slack's: unread direct messages plus mentions, muted conversations left out (mentions still count). */
+export async function unreadTotal(v: ChatViewer) {
+  const channels = await listChannels(v);
+  return channels.reduce((n, c) => n + c.mentions + (c.kind === "dm" && !c.muted ? c.unread : 0), 0);
+}
