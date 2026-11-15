@@ -24,8 +24,9 @@
   body[data-theme="dark"] .chip { border-color: #333; }
   .chip.cf { color: #c25e07; border-color: rgba(243,128,32,.35); }
   body[data-theme="dark"] .chip.cf { color: #ffa45c; }
-  .shot { position: absolute; left: 660px; top: 64px; width: 860px; border: 1px solid #e2e2e2; overflow: hidden; }
-  body[data-theme="dark"] .shot { border-color: #333; }
+  .shot { position: absolute; width: 640px; border: 1px solid #d6d6d6; overflow: hidden; background: #fff; box-shadow: -12px 12px 0 rgba(0,0,0,.05); }
+  body[data-theme="dark"] .shot { border-color: #3a3a3a; background: #141414; box-shadow: -12px 12px 0 rgba(0,0,0,.35); }
+  .s1 { left: 820px; top: 40px; } .s2 { left: 740px; top: 150px; } .s3 { left: 660px; top: 260px; }
   .shot img { display: block; width: 100%; }
 </style>
 </head>
@@ -39,11 +40,13 @@
       <span class="chip">MCP</span><span class="chip">AGPL-3.0</span>
     </div>
   </div>
-  <div class="shot"><img id="shot" src="../../public/marketing/mail-thread.webp" alt="" /></div>
+  <div class="shot s1"><img data-name="calendar" alt="" /></div>
+  <div class="shot s2"><img data-name="drive" alt="" /></div>
+  <div class="shot s3"><img data-name="mail-thread" alt="" /></div>
   <script>
     const theme = new URLSearchParams(location.search).get("theme") ?? "light";
     document.body.dataset.theme = theme;
-    if (theme === "dark") document.getElementById("shot").src = "../../public/marketing/mail-thread-dark.webp";
+    for (const img of document.querySelectorAll("[data-name]")) img.src = `../../public/marketing/${img.dataset.name}${theme === "dark" ? "-dark" : ""}.webp`;
   </script>
 </body>
 </html>
