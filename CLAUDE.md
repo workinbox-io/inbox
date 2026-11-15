@@ -253,6 +253,9 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - Screens on the site are the real app: `pnpm shots [--seed] [name]` (`scripts/marketing-shots.ts`, needs `pnpm dev`)
   seeds the demo org (acme.test) through the local email handler and the notes API, then saves `public/marketing/*.webp`
   and `*-dark.webp`.
+- Positioning: an equal suite of six apps (mail, chat, notes, calendar, drive, contacts), listed once in `config/apps.ts`
+  (Product menu, footer, home cards and tour, llms.txt). Each has a page on `components/site/AppPage.astro`:
+  `/custom-domain-email`, `/team-chat`, `/shared-notes`, `/team-calendar`, `/shared-drive`, `/shared-contacts`.
 - Pages: home (`pages/index.astro`), `/pricing`, `/shared-mailbox`, `/google-workspace-alternative`, `/vs` and
   `/vs/<slug>` from `config/compare.ts` (competitor facts from their own pages with `checked` and `sources`; re-check
   before editing, keep "pick them if" and our gaps honest). `/llms.txt` is generated from `config/plans.ts` and

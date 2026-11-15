@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/banner/banner-dark.png" />
-  <img alt="Work Inbox: team email on your own domain, open source" src="docs/banner/banner.png" />
+  <img alt="Work Inbox: your team's workspace, open source" src="docs/banner/banner.png" />
 </picture>
 
 # Work Inbox
@@ -8,41 +8,46 @@
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/workinbox-io/inbox/actions/workflows/ci.yml/badge.svg)](https://github.com/workinbox-io/inbox/actions/workflows/ci.yml)
 
-Open-source team email on your own domain, with chat, shared notes, calendar, contacts and drive, running on
-Cloudflare. A Google Workspace alternative for small teams: hosted at [workinbox.io](https://workinbox.io), or
-self-hosted on your own Cloudflare account.
+The open-source workspace for your team: email on your own domain, chat, shared notes, calendars, a shared drive and
+contacts, in one app on Cloudflare. A Google Workspace alternative for small teams: hosted at
+[workinbox.io](https://workinbox.io), or self-hosted on your own Cloudflare account.
 
 [Website](https://workinbox.io) · [Docs](https://workinbox.io/docs) · [Self-hosting guide](https://workinbox.io/docs/self-host) · [Roadmap](ROADMAP.md)
 
-## What it does
+## What's inside
 
-- **Mail on your domains**: a personal mailbox per person, shared mailboxes (support@, sales@) answered by several
-  people from the shared address, unlimited aliases, a catch-all per domain, plus addressing, a spam score, filters,
-  labels, out of office, templates, signatures, snooze, undo send, search operators (`from:`, `has:attachment`,
-  `is:unread`…) and keyboard shortcuts.
-- **Chat**: channels, DMs, threads, mentions, reactions and live presence.
-- **Shared notes**: live co-editing (Plate + Yjs on Durable Objects), checklists, tables, images, @mentions; private,
-  shared with people, or with the whole team.
-- **Calendar**: personal and shared calendars, recurring events, invitations to people outside the team, free time,
-  reminders, Google Calendar sync in and an .ics feed out.
-- **Contacts**: one team address book filled from sent mail, CSV/vCard import and export, suggestions in the composer.
-- **Drive**: folders and files shared with people or the team, previews, public links with a password and expiry,
-  attach from and save to mail.
-- **Importing old mail**: .mbox or .eml files (Gmail Takeout included).
-- **AI apps and API**: an MCP server for Claude, ChatGPT, Claude Code and Cursor, and a REST API.
+Six apps that share the same people, sign-in, search and ⌘K:
 
-Not yet: IMAP access, CalDAV and mobile apps.
+- **[Mail](https://workinbox.io/custom-domain-email)**: a personal mailbox per person on your domain, shared mailboxes
+  (support@, sales@) answered from the shared address, unlimited aliases, a catch-all, filters, labels, signatures,
+  out of office, snooze, scheduled and undo send, search operators and keyboard shortcuts. Import from .mbox/.eml.
+- **[Chat](https://workinbox.io/team-chat)**: public and private channels, direct messages, threads, mentions,
+  reactions, pins, files, live presence and notifications.
+- **[Notes](https://workinbox.io/shared-notes)**: live co-editing (Plate + Yjs on Durable Objects), checklists, tables,
+  images, @mentions; private, shared with people, or with the whole team.
+- **[Calendar](https://workinbox.io/team-calendar)**: personal and shared calendars, colleagues side by side, recurring
+  events, time zones, e-mail invitations, meeting notes, Google Calendar sync in and an .ics feed out.
+- **[Drive](https://workinbox.io/shared-drive)**: folders and files shared with people or the team, previews, public
+  links with a password and expiry, attach from and save to mail.
+- **[Contacts](https://workinbox.io/shared-contacts)**: one team address book filled from sent mail, groups, CSV/vCard
+  import and export.
+
+Plus an MCP server for Claude, ChatGPT, Claude Code and Cursor across the apps, and a REST API.
+
+Not yet: IMAP access, CalDAV, voice and video calls, and native mobile apps (the web app installs on phones).
 
 ## Screenshots
 
 | | |
 |---|---|
-| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/mail-thread-dark.webp" /><img alt="Mail" src="public/marketing/mail-thread.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/shared-mailbox-dark.webp" /><img alt="Shared mailbox" src="public/marketing/shared-mailbox.webp" /></picture> |
-| **Mail**: threads, the sender's card, one inbox for every mailbox | **Shared mailboxes**: support@ answered by the whole team |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/notes-dark.webp" /><img alt="Notes" src="public/marketing/notes.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/contacts-dark.webp" /><img alt="Contacts" src="public/marketing/contacts.webp" /></picture> |
-| **Notes**: live co-editing | **Contacts**: the team's address book |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/drive-dark.webp" /><img alt="Drive" src="public/marketing/drive.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/mail-settings-dark.webp" /><img alt="Domains and mailboxes" src="public/marketing/mail-settings.webp" /></picture> |
-| **Drive**: files, sharing, public links | **Domains**: DNS records and checks, mailboxes, aliases |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/mail-thread-dark.webp" /><img alt="Mail" src="public/marketing/mail-thread.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/chat-dark.webp" /><img alt="Chat" src="public/marketing/chat.webp" /></picture> |
+| **Mail**: threads, the sender's card, every mailbox in one list | **Chat**: channels, threads and reactions |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/notes-dark.webp" /><img alt="Notes" src="public/marketing/notes.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/calendar-dark.webp" /><img alt="Calendar" src="public/marketing/calendar.webp" /></picture> |
+| **Notes**: live co-editing | **Calendar**: the team's week |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/drive-dark.webp" /><img alt="Drive" src="public/marketing/drive.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/contacts-dark.webp" /><img alt="Contacts" src="public/marketing/contacts.webp" /></picture> |
+| **Drive**: files, sharing, public links | **Contacts**: the team's address book |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/shared-mailbox-dark.webp" /><img alt="Shared mailbox" src="public/marketing/shared-mailbox.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/mail-settings-dark.webp" /><img alt="Domains" src="public/marketing/mail-settings.webp" /></picture> |
+| **Shared mailboxes**: support@ answered by the team | **Domains**: DNS records and checks, mailboxes, aliases |
 
 ## Self-hosting
 

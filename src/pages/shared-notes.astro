@@ -1,0 +1,39 @@
+---
+/** Shared notes ("shared notes", 1,300 US searches, KD 12; "collaborative notes" 320), OpenSEO 2026-11-15. */
+import AppPage from "@/components/site/AppPage.astro";
+import { Archive, AtSign, CheckSquare, FolderTree, Image, Lock, MousePointer2, Table, Users } from "lucide-react";
+
+export const prerender = true;
+---
+
+<AppPage
+  slug="shared-notes"
+  title="Shared notes your team writes together, live"
+  description="Collaborative notes with live cursors, checklists, tables, images and @mentions, shared with people or the whole team. Open source, part of the Work Inbox workspace."
+  h1={["Notes written together,", "live."]}
+  lead="Meeting notes, plans, checklists and how-tos the team edits at the same time, with named cursors and live selections. Private, shared with chosen people, or with everyone."
+  url="workinbox.io/app/notes"
+  alt="A shared note with decisions, a checklist and open questions, and the formatting toolbar"
+  features={[
+    { icon: MousePointer2, title: "Live co-editing", text: "See who's in the note, their cursors and selections, as they type." },
+    { icon: CheckSquare, title: "Checklists and lists", text: "To-dos you tick off, numbered and bulleted lists, headings and quotes." },
+    { icon: Table, title: "Tables and code", text: "Tables, inline code, links, colours and alignment from the toolbar or the / menu." },
+    { icon: Image, title: "Images", text: "Paste or drop images straight into a note." },
+    { icon: AtSign, title: "@mentions", text: "Mention a colleague in the text to bring them in." },
+    { icon: Lock, title: "Private, people or team", text: "Keep a note to yourself, share it to view or edit, or with the whole team." },
+    { icon: FolderTree, title: "Folders and pins", text: "Sort notes into folders, pin the ones you open every day." },
+    { icon: Archive, title: "Archive", text: "Archive what's done to keep the list short; restore it any time." },
+    { icon: Users, title: "Claude and ChatGPT", text: "Search, read, create and update notes from your AI app.", href: "/docs/mcp" },
+  ]}
+  compare={["notes", "price"]}
+  together={[
+    { title: "Meeting notes from the calendar", text: "One click on an event makes a shared note for the people in it, linked both ways." },
+    { title: "Mail links to notes", text: "Point a customer thread to the note with the decisions instead of retyping them." },
+    { title: "Same search and ⌘K", text: "Open a note or start a new one from anywhere in the workspace." },
+  ]}
+  faq={[
+    { question: "Is it a Notion alternative?", answer: "For shared team notes, yes: live editing, checklists, tables, images, mentions and sharing. There are no databases or public pages." },
+    { question: "Who can see a note?", answer: "Whoever you share it with. A private note is yours alone, admins included; a team note is visible to everyone in the organization." },
+    { question: "Can I export notes?", answer: "Yes. The API and the AI apps read every note as Markdown." },
+  ]}
+/>
