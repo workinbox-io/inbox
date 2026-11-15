@@ -209,12 +209,13 @@ const jsonLd = [
 ---
 
 <MarketingLayout title="The open-source workspace for your team" description={siteConfig.description} jsonLd={jsonLd} ink>
-  <!-- Hero: ink band under the see-through header, the isometric living-room startup (pixel scene "house") as a full-width strip. -->
+  <!-- Hero: ink band under the see-through header, the packing room with its conveyor belt (pixel scene "belt") as a full-width strip. -->
   <section class="mk-band mk-under-header relative isolate overflow-hidden">
     <div class="mk-wrap pt-8 sm:pt-12">
       <h1 class="mk-h1 max-w-4xl">Your team's workspace,<br /> open source</h1>
       <p class="mk-lead mt-6 max-w-2xl lg:max-w-xl">
-        Email on your own domain, chat, notes, calendars, a shared drive and contacts, in one app. Free for up to {FREE_PEOPLE} people, then from
+        Everything your team works on, in one box: email on your own domain, chat, notes, calendars, a shared drive and
+        contacts. Free for up to {FREE_PEOPLE} people, then from
         €{lowest} per person a month, or free on your own Cloudflare account.
       </p>
       <div class="mt-9 flex flex-wrap items-center gap-3">
@@ -224,10 +225,23 @@ const jsonLd = [
       <CommandBox hint class="mt-6" />
       <p class="mk-cap mt-6">Open source · AGPL-3.0 · runs on Cloudflare</p>
     </div>
-    <!-- The living room as a full-width strip under the text, its floor at the bottom of the band. Phones show its
-         middle (the table), twice as large. -->
-    <div class="mt-8 sm:mt-10">
-      <PixelScene scene="house" class="max-md:-ml-[50%] max-md:w-[200%]!" />
+    <!-- The packing room as a full-width strip under the text: boxes on a conveyor belt catching mail, messages, notes,
+         events, files and contacts. Each chute links to its app (hover lights it up). Phones show the middle (the
+         chutes), twice as large. -->
+    <div class="relative mt-8 sm:mt-10 max-md:-ml-[50%] max-md:w-[200%]" data-belt>
+      <PixelScene scene="belt" />
+      {
+        APPS.map((a, i) => (
+          <a
+            href={`/${a.slug}`}
+            data-chute={i}
+            aria-label={a.label}
+            title={a.label}
+            class="absolute top-[12%] h-[16%] w-[4%] -translate-x-1/2"
+            style={`left: ${((140 + i * 36) / 480) * 100}%`}
+          />
+        ))
+      }
     </div>
   </section>
 
@@ -554,6 +568,20 @@ const jsonLd = [
 </style>
 
 <script>
+  // The hero's belt: a chute under the pointer lights up its app.
+  const belt = document.querySelector<HTMLElement>("[data-belt]");
+  const beltScene = belt?.querySelector<HTMLCanvasElement>("canvas");
+  if (belt && beltScene) {
+    for (const chute of belt.querySelectorAll<HTMLElement>("[data-chute]")) {
+      const on = () => (beltScene.dataset.state = chute.dataset.chute);
+      const off = () => (beltScene.dataset.state = "");
+      chute.addEventListener("pointerenter", on);
+      chute.addEventListener("focus", on);
+      chute.addEventListener("pointerleave", off);
+      chute.addEventListener("blur", off);
+    }
+  }
+
   // Setup steps: Run moves to the next step and the scene fills; after the last one it starts over.
   const setup = document.querySelector<HTMLElement>("[data-setup]");
   if (setup) {
