@@ -32,6 +32,9 @@ const ITEM = {
   file: sprite(["wwww.", "w33ww", "wwwww", "w333w", "wwwww", "wwwww"]),
   contact: sprite(["wwwwwww", "w.33..w", "w.33.ww", "w3333.w", "wwwwwww"]),
   box: sprite(["5.5.5", "55555", "5...5", "55555"]),
+  at: sprite([".555.", "5.5.5", "5.555", ".5..."]),
+  star: sprite(["..w..", ".www.", "wwwww", ".w.w."]),
+  spam: sprite(["wwwwwww", "w33w33w", "www3www", "wwwwwww", "www3www"]),
 };
 
 /** 3×5 digits for the counter screen. */
@@ -360,16 +363,19 @@ export const SCENES: Record<string, Scene> = {
    * The home hero, a full-width strip: the workspace's packing room at night. A machine on the left folds boxes from a
    * stack of flat cardboard onto the belt; six chutes, one per app (mail, chat, notes, calendar, files, contacts), each
    * drop their thing into every box passing under them; the taping machine closes the full box and it leaves through
-   * the strip curtain on the right. The screen counts boxes shipped; someone at a desk in front keeps an eye on it all.
+   * the strip curtain on the right. The screen counts boxes shipped, a forklift takes each full pallet away, someone
+   * walks the line with a clipboard and someone at a desk keeps an eye on it all. Now and then a spam mail bounces off
+   * into the bin, and some boxes leave with a star. `state` is the chute the pointer is over (its app lights up).
    * Every box moves `gap` px per `gap / v` s, so the drops line up by construction.
    */
   belt: {
     w: 480,
     h: 100,
     surface: "band",
-    draw(p, t) {
+    draw(p, t, state) {
       const floor = 86;
       const top = 64; // the belt's surface
+      const hovered = state === "" ? -1 : Number(state);
       const v = 16; // belt speed, px/s
       const gap = 48; // one box every 3 s
       const bw = 20;
@@ -381,6 +387,7 @@ export const SCENES: Record<string, Scene> = {
       const chutes = [140, 176, 212, 248, 284, 320];
       const items: Sprite[] = [S.envelope, ITEM.chat, ITEM.note, ITEM.calendar, ITEM.file, ITEM.contact];
       const fall = 1.1;
+      const bin = 112; // the spam bin, in front of the belt
       t += 40; // a still frame (reduced motion) with things mid-air and boxes all along the belt
 
       // Room: striped wallpaper, a skirting board, floor boards, string lights.
@@ -427,12 +434,12 @@ export const SCENES: Record<string, Scene> = {
       chutes.forEach((cx, j) => {
         p.rect(cx - 2, 13, 4, 11, "2");
         p.rect(cx - 2, 13, 1, 11, "3");
-        p.rect(cx - 7, 15, 14, 9, "3");
-        p.rect(cx - 6, 16, 12, 7, "1");
+        p.rect(cx - 7, 15, 14, 9, hovered === j ? "w" : "3");
+        p.rect(cx - 6, 16, 12, 7, hovered === j ? "2" : "1");
         const icon = items[j]!;
         p.draw(icon, cx - Math.floor(icon.w / 2), 16 + Math.floor((7 - icon.h) / 2));
         for (let i = 0; i < 4; i++) p.rect(cx - 6 + i, 24 + i, 12 - i * 2, 1, i === 0 ? "3" : "2");
-        p.rect(cx + 5, 25, 2, 2, busy[j] ? "w" : "2");
+        p.rect(cx + 5, 25, 2, 2, busy[j] || hovered === j ? "w" : "2");
       });
 
       // The box folder: a magazine of flat boxes over the start of the belt, a pusher going back and forth.
@@ -487,28 +494,42 @@ export const SCENES: Record<string, Scene> = {
         p.rect(x, by, bw, h, "4");
         p.rect(x, by, bw, 1, "3");
         p.rect(x + bw - 1, by + 1, 1, h - 1, "3");
-        if (h === bh) {
-          p.rect(x + 3, y + 8, 6, 1, "3");
-          p.rect(x + 3, y + 10, 4, 1, "3");
-        }
+        if (h === bh) p.draw(ITEM.box, x + 3, y + 7, { "5": "3" });
+        const spam = wrap(n, 9) === 4; // this box's mail is spam: it bounces off into the bin
         const filled = chutes.filter((cx) => cx <= c).length;
         if (done) {
+          // Taped, a shipping label with the team's @, and now and then a star.
           p.rect(x + bw / 2 - 1, by, 2, 6, "w");
-          p.rect(x + 12, y + 8, 5, 3, "w");
+          p.rect(x + 11, y + 6, 7, 6, "w");
+          p.draw(ITEM.at, x + 12, y + 7, { "5": "3" });
+          if (wrap(n, 7) === 3) p.draw(ITEM.star, x + 3, y + 1);
         } else if (h === bh) {
           p.rect(x - 3, by - 2, 5, 1, "3");
           p.rect(x - 1, by - 1, 2, 1, "3");
           p.rect(x + bw - 2, by - 2, 5, 1, "3");
           p.rect(x + bw - 1, by - 1, 2, 1, "3");
-          for (let j = 0; j < filled; j++) p.rect(x + 3 + j * 2 + (j > 2 ? 1 : 0), by - 1 - (j % 2), 2, 1 + (j % 2), j % 2 ? "w" : "4");
+          for (let j = 0; j < filled; j++) if (!(spam && j === 0)) p.rect(x + 3 + j * 2 + (j > 2 ? 1 : 0), by - 1 - (j % 2), 2, 1 + (j % 2), j % 2 ? "w" : "4");
         }
         // What's falling into this box right now.
         chutes.forEach((cx, j) => {
           const left = (cx - c) / v;
+          const item = spam && j === 0 ? ITEM.spam : items[j]!;
+          const land = y - item.h + 3;
+          if (spam && j === 0 && left <= 0 && left > -0.8) {
+            // Spam: off the flap and into the bin in front.
+            const k = -left / 0.8;
+            p.draw(item, cx - 3 + (bin - cx) * k, land - 3 + (floor - 14 - land) * k - Math.sin(Math.PI * k) * 16);
+            return;
+          }
           if (left <= 0 || left >= fall) return;
           const k = 1 - left / fall;
-          const item = items[j]!;
-          p.draw(item, cx - Math.floor(item.w / 2), Math.round(28 + (y - 28 - item.h + 3) * k * k));
+          const iy = Math.round(28 + (land - 28) * k * k);
+          // A faint trail behind anything falling fast.
+          if (k > 0.35) {
+            p.dot(cx, iy - 3, "2");
+            p.dot(cx, iy - 6, "1");
+          }
+          p.draw(item, cx - Math.floor(item.w / 2), iy);
         });
       }
 
@@ -537,22 +558,80 @@ export const SCENES: Record<string, Scene> = {
       p.rect(348, 31, 12, 1, "2");
       p.rect(350, 33, 8, 1, "2");
 
-      // In front, on a pallet: this batch of shipped boxes, one more each time the counter ticks, cleared every six.
-      p.rect(392, floor - 3, 42, 3, "3");
-      for (const x of [394, 411, 428]) p.rect(x, floor - 3, 3, 3, "2");
-      const stacked = wrap(shipped, 6) + 1;
-      for (let i = 0; i < stacked; i++) {
-        const sx = 394 + (i % 3) * 13;
-        const sy = floor - 3 - 7 * (Math.floor(i / 3) + 1);
+      // In front: a pallet filling with shipped boxes, six to a pallet. When it's full a forklift drives in from the
+      // right, lifts it and takes it away; the next box starts a new pallet.
+      const batch = wrap((t * v - (tx - bw / 2)) / gap, 6); // boxes shipped in this batch, fractional
+      const crate = (sx: number, sy: number) => {
         p.rect(sx, sy, 12, 7, "4");
         p.rect(sx, sy, 12, 1, "3");
         p.rect(sx + 11, sy + 1, 1, 6, "3");
         p.rect(sx + 5, sy, 2, 3, "w");
+      };
+      const pallet = (px: number, py: number, count: number) => {
+        p.rect(px, py, 42, 3, "3");
+        for (const dx of [2, 19, 36]) p.rect(px + dx, py, 3, 3, "2");
+        for (let i = 0; i < count; i++) crate(px + 2 + (i % 3) * 13, py - 7 * (Math.floor(i / 3) + 1));
+      };
+      const forklift = (fx: number, lift: number) => {
+        // Mast and forks on the left, the cab and its driver on the right, two wheels.
+        p.rect(fx, floor - 34, 2, 31, "2");
+        p.rect(fx + 3, floor - 34, 1, 31, "2");
+        p.rect(fx - 22, floor - 4 - lift, 24, 2, "3");
+        p.rect(fx + 4, floor - 16, 18, 10, "3");
+        p.rect(fx + 8, floor - 30, 12, 2, "2");
+        p.rect(fx + 8, floor - 30, 1, 14, "2");
+        p.rect(fx + 19, floor - 30, 1, 14, "2");
+        p.rect(fx + 11, floor - 24, 5, 5, "5");
+        p.rect(fx + 11, floor - 25, 5, 2, "4");
+        p.rect(fx + 10, floor - 19, 7, 3, "4");
+        for (const wx of [fx + 7, fx + 18]) {
+          p.rect(wx - 2, floor - 5, 5, 5, "1");
+          p.dot(wx, floor - 3, "3");
+        }
+      };
+      if (batch < 1) {
+        // Driving off with the full pallet.
+        const k = batch;
+        const fx = 436 + Math.round(ease(k) * 70);
+        pallet(fx - 22, floor - 6, 6);
+        forklift(fx, 3);
+      } else {
+        pallet(392, floor - 3, Math.min(6, Math.floor(batch)));
+        if (batch > 5.2) forklift(436 + Math.round((1 - ease((batch - 5.2) / 0.8)) * 70), 0);
       }
+
+      // The spam bin in front of the belt, its lid lifting when something lands in it.
+      p.rect(bin - 7, floor - 12, 14, 12, "2");
+      p.rect(bin - 7, floor - 12, 14, 1, "3");
+      for (let x = bin - 5; x < bin + 6; x += 3) p.rect(x, floor - 10, 1, 8, "1");
+      const open = boxes.some((n) => wrap(n, 9) === 4 && (chutes[0]! - (boxAt(n) + bw / 2)) / v <= 0 && (chutes[0]! - (boxAt(n) + bw / 2)) / v > -0.9);
+      p.rect(bin - 8, floor - 14 - (open ? 2 : 0), 16, 2, "3");
+
+      // Someone walks the line with a clipboard, there and back, legs swinging.
+      const walk = wrap(t, 36) / 18;
+      const wx = Math.round(170 + (walk < 1 ? ease(walk) : 1 - ease(walk - 1)) * 140);
+      const stride = Math.floor(t * 4) % 2;
+      p.rect(wx + 3 + (stride ? 1 : -1), floor - 12, 3, 12, "3");
+      p.rect(wx + 8 + (stride ? -1 : 1), floor - 12, 3, 12, "3");
+      p.rect(wx + 2 + (stride ? 1 : -1), floor - 1, 5, 1, "2");
+      p.rect(wx + 7 + (stride ? -1 : 1), floor - 1, 5, 1, "2");
+      p.rect(wx + 1, floor - 26, 12, 14, "4");
+      p.rect(wx + 6, floor - 28, 2, 2, "5");
+      p.rect(wx + 4, floor - 34, 6, 6, "5");
+      p.rect(wx + 4, floor - 35, 6, 2, "3");
+      const facing = walk < 1 ? 1 : -1;
+      p.rect(facing > 0 ? wx + 12 : wx - 3, floor - 22, 5, 7, "w");
+      p.rect(facing > 0 ? wx + 13 : wx - 2, floor - 20, 3, 1, "3");
 
       // In front: someone at a desk with a laptop and a mug, watching the boxes go.
       desk(p, 6, floor, t, 0, "5");
       p.rect(28, floor - 14, 3, 3, "w");
+      // Their chair and legs, as at the living room's table.
+      p.rect(13, floor - 9, 12, 2, "1");
+      p.rect(15, floor - 9, 3, 9, "2");
+      p.rect(20, floor - 9, 3, 9, "2");
+      p.rect(14, floor - 1, 4, 1, "3");
+      p.rect(20, floor - 1, 4, 1, "3");
       p.draw(S.plant, 462, floor - 10);
     },
   },

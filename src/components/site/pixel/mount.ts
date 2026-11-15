@@ -2,6 +2,7 @@
  * Starts every `canvas[data-scene]` on the page: draws at 24 frames a second while on screen, once with reduced motion.
  * The canvas is drawn at a whole multiple of the scene (at least its size on screen), so every scene pixel is the same
  * size; scaling a 240 px canvas straight to 1100 px would make some pixels a device pixel wider than others.
+ * A scene's clock runs at `data-speed` times real time (default 1), so a page can speed one up without a jump.
  */
 import { Pix, palette } from "./pixel";
 import { SCENES } from "./scenes";
@@ -40,12 +41,19 @@ export function mountScenes(root: ParentNode = document) {
     const draw = (t: number) => scene.draw(pix, t, canvas.dataset.state ?? "");
     let visible = false;
     let last = 0;
-    const start = performance.now() - 4000;
-    const frame = (now: number) => {
+    let clock = 4;
+    let tick = performance.now();
+    const now = () => {
+      const at = performance.now();
+      clock += ((at - tick) / 1000) * (Number(canvas.dataset.speed) || 1);
+      tick = at;
+      return clock;
+    };
+    const frame = (at: number) => {
       if (!visible || reduced.matches) return;
-      if (now - last >= 1000 / FPS) {
-        last = now;
-        draw((now - start) / 1000);
+      if (at - last >= 1000 / FPS) {
+        last = at;
+        draw(now());
       }
       requestAnimationFrame(frame);
     };
@@ -57,7 +65,7 @@ export function mountScenes(root: ParentNode = document) {
     new ResizeObserver(() => {
       const before = canvas.width;
       fit();
-      if (canvas.width !== before) draw(reduced.matches ? 4 : (performance.now() - start) / 1000);
+      if (canvas.width !== before) draw(reduced.matches ? 4 : now());
     }).observe(canvas);
     new IntersectionObserver(([entry]) => {
       const was = visible;
@@ -67,8 +75,8 @@ export function mountScenes(root: ParentNode = document) {
     // Theme switches (html.dark) and the setup steps (data-state) redraw right away.
     new MutationObserver(() => {
       readPalette();
-      draw(reduced.matches ? 4 : (performance.now() - start) / 1000);
+      draw(reduced.matches ? 4 : now());
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    new MutationObserver(() => draw(reduced.matches ? 4 : (performance.now() - start) / 1000)).observe(canvas, { attributes: true, attributeFilter: ["data-state"] });
+    new MutationObserver(() => draw(reduced.matches ? 4 : now())).observe(canvas, { attributes: true, attributeFilter: ["data-state"] });
   }
 }
