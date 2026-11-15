@@ -568,7 +568,7 @@ const jsonLd = [
 </style>
 
 <script>
-  // The hero's belt: a chute under the pointer lights up its app; scrolling runs the belt faster for a moment.
+  // The hero's belt: a chute under the pointer lights up its app.
   const belt = document.querySelector<HTMLElement>("[data-belt]");
   const beltScene = belt?.querySelector<HTMLCanvasElement>("canvas");
   if (belt && beltScene) {
@@ -580,16 +580,6 @@ const jsonLd = [
       chute.addEventListener("pointerleave", off);
       chute.addEventListener("blur", off);
     }
-    let calm: number | undefined;
-    addEventListener(
-      "scroll",
-      () => {
-        beltScene.dataset.speed = "3";
-        clearTimeout(calm);
-        calm = window.setTimeout(() => (beltScene.dataset.speed = "1"), 250);
-      },
-      { passive: true },
-    );
   }
 
   // Setup steps: Run moves to the next step and the scene fills; after the last one it starts over.
