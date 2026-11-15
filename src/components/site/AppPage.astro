@@ -1,0 +1,88 @@
+---
+/**
+ * One app of the workspace as a landing page (pages/custom-domain-email, team-chat, shared-notes, team-calendar,
+ * shared-drive, shared-contacts): hero, the real screen, what it does, optional comparison, how it works with the
+ * other apps, questions. Same parts as pages/shared-mailbox.astro. Claim only what ships.
+ */
+import { ArrowRight, Bot } from "lucide-react";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import PageHero from "./PageHero.astro";
+import ClosingBand from "./ClosingBand.astro";
+import BrowserFrame from "./BrowserFrame.astro";
+import Shot from "./Shot.astro";
+import Faq from "./Faq.astro";
+import Stage from "./craft/Stage.astro";
+import FeatureLedger, { type LedgerItem } from "./craft/FeatureLedger.astro";
+import ComparisonTable from "./ComparisonTable.astro";
+import { APPS } from "@/config/apps";
+import { COMPETITORS, type RowKey } from "@/config/compare";
+
+interface Props {
+  slug: string;
+  title: string;
+  description: string;
+  /** Plain part of the headline, then the soft-ink part. */
+  h1: [string, string];
+  lead: string;
+  url: string;
+  alt: string;
+  features: LedgerItem[];
+  /** How this app works with the others. */
+  together: LedgerItem[];
+  faq: { question: string; answer: string }[];
+  compare?: RowKey[];
+  /** Under the features: what it doesn't do yet. */
+  notYet?: string;
+}
+const { slug, title, description, h1, lead, url, alt, features, together, faq, compare, notYet } = Astro.props;
+const app = APPS.find((a) => a.slug === slug)!;
+const others = APPS.filter((a) => a.slug !== slug);
+const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) };
+const h2 = "text-[clamp(1.7rem,3vw,2.4rem)]";
+---
+
+<MarketingLayout title={title} description={description} jsonLd={jsonLd} ink>
+  <PageHero>
+    <p class="mk-cap">Work Inbox · {app.label}</p>
+    <h1 class="mk-h1 mt-4 max-w-4xl">{h1[0]} <em>{h1[1]}</em></h1>
+    <p class="mk-lead mt-6 max-w-2xl">{lead}</p>
+    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <a href="/signup" class="mk-btn">Start free <ArrowRight className="size-5" /></a>
+      <a href="/docs/self-host" class="mk-link">Self-host for free</a>
+    </div>
+  </PageHero>
+  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
+    <div class="mt-14"><Stage><BrowserFrame url={url}><Shot name={app.shot} alt={alt} eager /></BrowserFrame></Stage></div>
+
+    <section class="pt-20">
+      <h2 class={h2}>What it does</h2>
+      <FeatureLedger items={features} cols={3} class="mt-10" />
+      {notYet && <p class="mt-6 text-sm text-foreground/70">Not yet: {notYet}</p>}
+    </section>
+
+    {
+      compare && (
+        <section class="pt-20">
+          <h2 class={h2}>Compared with the big suites</h2>
+          <p class="mt-2 text-sm text-foreground/60">From each vendor's own pages; the comparison pages link the sources.</p>
+          <div class="mt-6"><ComparisonTable competitors={COMPETITORS.slice(0, 4)} rows={compare} /></div>
+        </section>
+      )
+    }
+
+    <section class="pt-20">
+      <h2 class={h2}>Part of one workspace</h2>
+      <p class="mt-2 max-w-2xl text-lg text-(--muted-foreground)">
+        {app.label} shares the people, the search and the ⌘K of the rest of Work Inbox. One sign-in, one price per person.
+      </p>
+      <FeatureLedger items={together} cols={3} class="mt-10" />
+      <FeatureLedger items={[...others.map((a) => ({ icon: a.icon, title: a.label, text: a.description, href: `/${a.slug}` })), { icon: Bot, title: "AI apps", text: "Claude and ChatGPT read and act across the workspace.", href: "/docs/mcp" }]} cols={3} class="mt-14" />
+    </section>
+
+    <section class="pt-20">
+      <h2 class={h2}>Questions</h2>
+      <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
+    </section>
+  </div>
+  <ClosingBand />
+</MarketingLayout>

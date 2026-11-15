@@ -5,6 +5,7 @@
  * a closing band. Pixel scenes are ours (components/site/pixel); the tour shows real screens of the app.
  * Only claim what ships; IMAP stays under "Coming next".
  */
+import { APPS } from "@/config/apps";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import Shot from "@/components/site/Shot.astro";
@@ -22,23 +23,18 @@ export const prerender = true;
 
 const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly)) / 100;
 
-const tabs = [
-  { id: "inbox", label: "Inbox", url: "workinbox.io/app/mail", name: "mail-thread", alt: "Work Inbox mail: folders, the inbox of anna@ and support@, an open message and the sender panel" },
-  { id: "shared", label: "Shared mailbox", url: "workinbox.io/app/mail", name: "shared-mailbox", alt: "The shared mailbox support@ with a customer question open" },
-  { id: "notes", label: "Notes", url: "workinbox.io/app/notes", name: "notes", alt: "A shared note with decisions, a checklist and open questions, and the formatting toolbar" },
-  { id: "contacts", label: "Contacts", url: "workinbox.io/app/contacts", name: "contacts", alt: "The team address book: a group of partners and a contact with their details and the latest conversation" },
-  { id: "drive", label: "Drive", url: "workinbox.io/app/drive", name: "drive", alt: "The shared drive: folders and files in a list, with a folder's details, access and public links" },
-  { id: "domains", label: "Domains", url: "workinbox.io/app/settings/mail", name: "mail-settings", alt: "Mail settings: the domain's DNS records with a Check DNS button, the catch-all choice and the mailboxes" },
-];
+const tabs = APPS.map((a) => ({ id: a.slug, label: a.label, url: `workinbox.io/app/${a.shot === "mail-thread" ? "mail" : a.shot}`, name: a.shot, alt: `Work Inbox ${a.label}: ${a.description}`, href: `/${a.slug}` }));
 
 /** The "…and more" line under the setup. */
 const extras = [
-  { text: "two-factor authentication", href: "/security" },
-  { text: "search with from:, to:, has:attachment and is:unread" },
+  { text: "shared mailboxes like support@", href: "/shared-mailbox" },
+  { text: "meeting notes from a calendar event" },
+  { text: "attach from Drive and save to Drive" },
+  { text: "threads and mentions in chat" },
+  { text: "public links with a password" },
+  { text: "one ⌘K across every app" },
   { text: "keyboard shortcuts" },
-  { text: "spam scores and sender rules" },
-  { text: "the original .eml of every message" },
-  { text: "aliases, a catch-all and plus addressing" },
+  { text: "two-factor authentication", href: "/security" },
   { text: "Claude and ChatGPT", href: "/docs/mcp" },
   { text: "a REST API", href: "/docs/api" },
 ];
@@ -46,32 +42,35 @@ const extras = [
 const cards = [
   {
     scene: "mailboxes" as const,
-    caption: "acme.com · mailboxes",
-    command: "anna@ ben@ chris@ → 3 inboxes",
-    title: "Every address on your domain",
-    text: "A personal mailbox for each person, aliases that land where you say, and a catch-all for the rest.",
+    caption: "mail · acme.com",
+    command: "anna@ ben@ support@ → 3 inboxes",
+    title: "Email on your domain",
+    text: "A mailbox for each person, shared ones like support@ answered by the team, aliases and a catch-all.",
+    href: "/custom-domain-email",
   },
   {
-    scene: "shared" as const,
-    caption: "support@acme.com · shared",
-    command: "4 people answer support@",
-    title: "Shared mailboxes, free",
-    text: "support@ or sales@ that the whole team answers, from the shared address. No extra licence.",
-    href: "/shared-mailbox",
+    scene: "chat" as const,
+    caption: "chat · #spring-campaign",
+    command: "diana is typing…",
+    title: "Team chat",
+    text: "Channels, direct messages and threads, with mentions, reactions and files. Live, with notifications.",
+    href: "/team-chat",
   },
   {
     scene: "notes" as const,
     caption: "notes · launch plan",
     command: "anna and ben are editing",
     title: "Notes written together",
-    text: "See who's here and what they're editing. Shared meeting notes, checklists and how-tos, with named cursors and live selections.",
+    text: "Meeting notes, checklists and how-tos the team edits at once, with named cursors and live selections.",
+    href: "/shared-notes",
   },
   {
-    scene: "contacts" as const,
-    caption: "contacts · partners",
-    command: "marta@brightloop.io → saved",
-    title: "One address book",
-    text: "Filled from the mail your team sends, with Google, Outlook and vCard import, and suggestions as you type.",
+    scene: "calendar" as const,
+    caption: "calendar · this week",
+    command: "kickoff wed 11:00 → 3 people",
+    title: "Shared calendars",
+    text: "A calendar per person and shared ones, colleagues side by side, invitations that work with Gmail and Outlook.",
+    href: "/team-calendar",
   },
   {
     scene: "drive" as const,
@@ -79,14 +78,15 @@ const cards = [
     command: "contract.pdf → shared with the team",
     title: "A drive you share",
     text: "Folders for people or the whole team, previews, and public links with a password. Attach files straight to mail.",
+    href: "/shared-drive",
   },
   {
-    scene: "ai" as const,
-    caption: "claude · chatgpt",
-    command: "reply to marta → draft → Send",
-    title: "Mail from Claude or ChatGPT",
-    text: "Search and read mail, notes and files from your AI app. Replies come back as drafts you send yourself.",
-    href: "/docs/mcp",
+    scene: "contacts" as const,
+    caption: "contacts · partners",
+    command: "marta@brightloop.io → saved",
+    title: "One address book",
+    text: "Filled from the mail your team sends, with Google, Outlook and vCard import, and suggestions as you type.",
+    href: "/shared-contacts",
   },
 ];
 
@@ -119,7 +119,7 @@ const next = [
 const steps = [
   { command: "add domain acme.com", status: "acme.com: MX, DKIM and DMARC check out", text: "On Cloudflare, Connect Cloudflare adds the records with an API token; anywhere else, add them at your DNS provider. No domain yet? Start on a free yourname.workinbox.io address." },
   { command: "add people anna ben chris", status: "3 people, each with a mailbox · free up to 5", text: "Each person gets a mailbox on the domain and a temporary password to sign in with." },
-  { command: "share support@ with everyone", status: "support@ shared with 3 people · mail flowing", text: "Create support@ or sales@ and pick who answers it. Shared mailboxes cost nothing." },
+  { command: "open the workspace", status: "mail, #general, a shared drive and calendars for 3 people", text: "Everyone signs in to the same workspace: their mailbox, the team's chat, notes, calendars, drive and contacts. Add shared mailboxes like support@ for free." },
 ];
 
 const money = (amount: number, currency: string) =>
@@ -168,8 +168,12 @@ const faq = [
     answer: "On Cloudflare: messages in D1 and each original message (.eml) and its attachments in R2. Self-hosted, all of it lives on your own Cloudflare account.",
   },
   {
-    question: "What about calendar, contacts and files?",
-    answer: "All three ship today. Contacts: one address book for the whole team, filled from the mail you send, with Google, Outlook and vCard import, and suggestions as you type. Drive: folders and files shared with people or the whole team, previews, public links with a password, and attachments straight from and into mail. Calendar too: a calendar per person and shared ones, colleagues’ calendars side by side, recurring events, several time zones, and e-mail invitations whose answers come back to the event.",
+    question: "What's in the workspace?",
+    answer: "Six apps that share the same people, sign-in and search: mail on your domains, team chat (channels, DMs, threads), shared notes with live editing, calendars (personal and shared, invitations, time zones), a shared drive (previews, public links) and one team address book. Claude and ChatGPT can work across all of them.",
+  },
+  {
+    question: "Can it replace Slack and Notion too?",
+    answer: "For everyday team chat and shared notes, yes: channels, DMs, threads, mentions and files; notes with live editing, checklists, tables and mentions. There are no voice or video calls and no Notion-style databases.",
   },
   {
     question: "Is there a free trial?",
@@ -187,7 +191,7 @@ const jsonLd = [
     name: siteConfig.name,
     description: siteConfig.description,
     applicationCategory: "BusinessApplication",
-    applicationSubCategory: "Email",
+    applicationSubCategory: "Productivity suite",
     operatingSystem: "Web",
     url: url("/"),
     offers: { "@type": "AggregateOffer", lowPrice: Math.min(...prices), highPrice: Math.max(...prices), priceCurrency: CURRENCY, offerCount: prices.length },
@@ -200,13 +204,13 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout title="Open-source team email on your own domain" description={siteConfig.description} jsonLd={jsonLd} ink>
+<MarketingLayout title="The open-source workspace for your team" description={siteConfig.description} jsonLd={jsonLd} ink>
   <!-- Hero: ink band under the see-through header, the isometric living-room startup (pixel scene "house") as a full-width strip. -->
   <section class="mk-band mk-under-header relative isolate overflow-hidden">
     <div class="mk-wrap pt-8 sm:pt-12">
-      <h1 class="mk-h1 max-w-4xl">Your team's email,<br /> on your own domain</h1>
+      <h1 class="mk-h1 max-w-4xl">Your team's workspace,<br /> open source</h1>
       <p class="mk-lead mt-6 max-w-2xl lg:max-w-xl">
-        Personal and shared mailboxes and aliases, with notes, contacts and a drive your team shares. Free for up to {FREE_PEOPLE} people, then from
+        Email on your own domain, chat, notes, calendars, a shared drive and contacts, in one app. Free for up to {FREE_PEOPLE} people, then from
         €{lowest} per person a month, or free on your own Cloudflare account.
       </p>
       <div class="mt-9 flex flex-wrap items-center gap-3">
@@ -234,7 +238,7 @@ const jsonLd = [
             <p class="mk-cap mt-2">$ <PersonReferences text={c.command} /></p>
             <h2 class="mk-h3 mt-6">{c.title}</h2>
             <p class="mt-3 text-lg leading-7 text-(--muted-foreground)">
-              {c.text} {c.href && <a href={c.href} class="mk-link text-(--foreground)">How it works</a>}
+              {c.text} {c.href && <a href={c.href} class="mk-link text-(--foreground)">More</a>}
             </p>
           </div>
         ))
@@ -245,7 +249,7 @@ const jsonLd = [
   <!-- Setup: a step widget next to a scene that fills as the steps run. -->
   <section id="setup" class="mk-wrap scroll-mt-20 pb-16 sm:pb-24">
     <h2 class="mk-h2">Set up in minutes, pay per person</h2>
-    <p class="mk-lead mt-3">Add the domain, add your people, share support@. Free for up to {FREE_PEOPLE} people.</p>
+    <p class="mk-lead mt-3">Add the domain, add your people, and the whole workspace is ready. Free for up to {FREE_PEOPLE} people.</p>
     <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12" data-setup={JSON.stringify(steps)}>
       <div class="flex min-h-64 flex-col bg-(--mk-grey) p-6 sm:p-8">
         <p class="mk-cap" data-setup-count>Step 1 of {steps.length}</p>
@@ -412,7 +416,7 @@ const jsonLd = [
     <div class="mk-wrap mk-section grid gap-14 lg:grid-cols-2 lg:gap-16">
       <div>
         <p class="font-[family-name:var(--mk-font-display)] text-[clamp(1.75rem,2.6vw,2.4rem)] leading-tight font-medium tracking-tight text-balance">
-          Every line that touches your mail is public. Run it on your own Cloudflare account, or let us run the same code.
+          Every line that touches your mail, chats and files is public. Run it on your own Cloudflare account, or let us run the same code.
         </p>
         <p class="mt-8 flex items-center gap-4">
           <PixelIcon rows={ICONS.shared} class="size-14" />

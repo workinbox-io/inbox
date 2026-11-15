@@ -542,6 +542,62 @@ export const SCENES: Record<string, Scene> = {
       if (added < 9) fly(p, S.doc, [87, floor - 20], [13 + added * 4, 46], (cyc % 1.1) / 0.9, 14);
     },
   },
+  /** Card: a channel on the wall screen, messages from three people stacking up, someone typing. */
+  chat: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(10, 4, 74, 44, "5");
+      p.rect(12, 6, 70, 40, "0");
+      p.rect(12, 6, 14, 40, "1");
+      for (let r = 0; r < 4; r++) p.rect(15, 10 + r * 5, r === 1 ? 9 : 7, 1, r === 1 ? "5" : "3");
+      const cyc = wrap(t, 9);
+      const lines: [ColorKey, number][] = [["5", 34], ["4", 26], ["3", 40], ["5", 20]];
+      const shown = Math.min(4, Math.floor(cyc / 1.4) + 1);
+      lines.slice(0, shown).forEach(([c, w], i) => {
+        const y = 10 + i * 8;
+        p.rect(30, y, 4, 4, c);
+        p.rect(36, y, 12, 1, "4");
+        p.rect(36, y + 2, w, 1, "2");
+      });
+      // The next message is being typed: three dots in the composer.
+      if (shown < 4) for (let d = 0; d < 3; d++) p.rect(32 + d * 3, 41, 2, 2, Math.floor(t * 3) % 3 === d ? "5" : "3");
+      p.draw(S.standing, 90, floor - 10);
+      p.draw(S.plant, 106, floor - 10);
+    },
+  },
+  /** Card: a week on the wall, meetings filling the days, one of them with the whole team. */
+  calendar: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(8, 4, 76, 46, "4");
+      p.rect(10, 6, 72, 42, "0");
+      p.rect(10, 6, 72, 5, "1");
+      for (let d = 0; d < 5; d++) {
+        const x = 12 + d * 14;
+        p.rect(x + 4, 8, 4, 1, "4");
+        if (d) p.rect(x - 2, 11, 1, 37, "2");
+      }
+      const blocks: [number, number, number, ColorKey][] = [
+        [0, 14, 5, "3"], [1, 13, 14, "4"], [2, 20, 9, "5"], [2, 33, 6, "3"], [3, 20, 6, "4"], [3, 34, 11, "3"], [4, 27, 9, "5"],
+      ];
+      const cyc = wrap(t, 9);
+      const shown = Math.min(blocks.length, Math.floor(cyc / 0.9) + 1);
+      blocks.slice(0, shown).forEach(([d, y, h, c]) => {
+        p.rect(12 + d * 14, y, 12, h, c);
+        p.rect(13 + d * 14, y + 1, 6, 1, "0");
+      });
+      p.draw(S.standing, 92, floor - 10);
+      p.draw(S.plant, 106, floor - 10);
+    },
+  },
   /** Card: an AI app on the wall screen; its reply waits as a draft until someone presses Send. */
   ai: {
     w: 120,

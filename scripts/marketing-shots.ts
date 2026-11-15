@@ -142,6 +142,13 @@ const SHOTS: Shot[] = [
     },
   },
   {
+    file: "chat.webp",
+    path: (db) => `/app/chat/${(db.prepare("select id from chat_channels where org_id = ? and name = ?").get(ORG_ID, CHANNEL) as { id: string }).id}`,
+    view: "user",
+    prepare: (page) => page.waitForTimeout(2000),
+  },
+  { file: "calendar.webp", path: "/app/calendar", view: "user", prepare: (page) => page.waitForTimeout(2000) },
+  {
     file: "mail-settings.webp",
     path: "/app/settings/mail",
     view: "admin",
@@ -236,6 +243,71 @@ async function seed(db: DatabaseSync, api: Api, cookie: string) {
   console.log(`seeded ${MAIL.length} messages, ${NOTES.length} notes, ${CONTACTS.length} contacts and ${FILES.length} files`);
 }
 
+type Person = { id: string; api: Api };
+const CHANNEL = "spring-campaign";
+
+/** #spring-campaign, made fresh on every --seed: messages from three people, a thread and reactions. */
+async function seedChat(db: DatabaseSync, p: { anna: Person; diana: Person; tomasz: Person }) {
+  // Other test channels go to the archive; the demo channel is rebuilt (its messages go with it).
+  db.prepare("update chat_channels set archived_at = ? where org_id = ? and kind = 'channel' and name not in ('general', ?) and archived_at is null").run(Date.now(), ORG_ID, CHANNEL);
+  db.prepare("delete from chat_channels where org_id = ? and kind = 'channel' and name = ?").run(ORG_ID, CHANNEL);
+  const channel = await p.anna.api<{ id: string }>("POST", "/api/app/chat/channels", { name: CHANNEL, topic: "Brightloop's spring campaign: kickoff on the 18th", memberIds: [p.diana.id, p.tomasz.id] });
+  const say = (who: Person, text: string, parentId?: string) => who.api<{ id: string }>("POST", "/api/app/chat/messages", { channelId: channel.id, text, parentId });
+  const at = (m: { id: string }, ago: number) => db.prepare("update chat_messages set created_at = ? where id = ?").run(Date.now() - ago * 60_000, m.id);
+
+  const m1 = await say(p.anna, "Brightloop signed the contract 🎉 Kickoff is on the 18th, I put the notes from the call in \"Client call: Brightloop\".");
+  at(m1, 95);
+  const m2 = await say(p.diana, `Great! <@${p.anna.id}> do we have their brand assets yet? I'd like to start on the landing page.`);
+  at(m2, 80);
+  const m3 = await say(p.anna, "Marta sends them by Friday. I'll drop them in Drive → Brightloop.");
+  at(m3, 74);
+  const m4 = await say(p.tomasz, "I'm drafting the timeline today. Two questions for the kickoff:\n1. Landing page in German too?\n2. Who approves the final copy on their side?");
+  at(m4, 41);
+  const r1 = await say(p.diana, "German would add about a week, I'd keep it for phase two.", m4.id);
+  at(r1, 35);
+  const r2 = await say(p.anna, "Agreed. I'll ask Marta about the approver.", m4.id);
+  at(r2, 30);
+  const m5 = await say(p.diana, "First draft of the hero is in the shared folder, comments welcome 👀");
+  at(m5, 12);
+  await p.tomasz.api("PATCH", `/api/app/chat/messages/${m1.id}`, { action: "react", emoji: "🎉" });
+  await p.diana.api("PATCH", `/api/app/chat/messages/${m1.id}`, { action: "react", emoji: "🎉" });
+  await p.anna.api("PATCH", `/api/app/chat/messages/${m5.id}`, { action: "react", emoji: "👀" });
+  await p.anna.api("PATCH", `/api/app/chat/channels/${channel.id}`, { action: "read" });
+  console.log(`seeded #${CHANNEL}`);
+}
+
+/** This week in Anna's calendar, Monday to Friday, with Diana and Tomasz invited (people in the org: no mail goes out). */
+const EVENTS: { title: string; day: number; from: number; to: number; rrule?: string; location?: string; team?: boolean }[] = [
+  { title: "Weekly check-in", day: 0, from: 10, to: 10.5, rrule: "FREQ=WEEKLY;BYDAY=MO", team: true },
+  { title: "Focus: landing page", day: 1, from: 9, to: 12 },
+  { title: "Kickoff: Brightloop spring campaign", day: 2, from: 11, to: 12.5, location: "Room 2 / video", team: true },
+  { title: "Lunch with Marta", day: 2, from: 13, to: 14, location: "Bistro Wola" },
+  { title: "Design review", day: 3, from: 11, to: 12, team: true },
+  { title: "Support rota", day: 3, from: 15, to: 17 },
+  { title: "Q4 planning", day: 4, from: 14, to: 15.5, team: true },
+];
+
+async function seedCalendar(db: DatabaseSync, api: Api, ownerId: string) {
+  const cal = db.prepare("select id from calendars where org_id = ? and owner_id = ? and personal = 1").get(ORG_ID, ownerId) as { id: string } | undefined;
+  if (!cal) throw new Error("Anna's calendar is missing: open /app/calendar once");
+  const monday = new Date();
+  monday.setHours(0, 0, 0, 0);
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  // Other events of these two weeks in the org's own calendars (not subscribed feeds) would crowd the week: drop them.
+  const from = monday.getTime() - 7 * 86_400_000;
+  db.prepare("delete from calendar_events where org_id = ? and starts_at between ? and ? and calendar_id in (select id from calendars where org_id = ? and source_url is null)").run(ORG_ID, from, from + 21 * 86_400_000, ORG_ID);
+  db.prepare("delete from calendar_events where org_id = ? and title in (" + EVENTS.map(() => "?").join(",") + ")").run(ORG_ID, ...EVENTS.map((e) => e.title));
+  const team = [`diana@${DOMAIN}`, `tomasz@${DOMAIN}`].map((email) => ({ email }));
+  const at = (day: number, hour: number) => monday.getTime() + day * 86_400_000 + hour * 3_600_000;
+  for (const e of EVENTS) {
+    await api("POST", "/api/app/calendar/events", {
+      calendarId: cal.id, title: e.title, start: at(e.day, e.from), end: at(e.day, e.to), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      rrule: e.rrule ?? null, location: e.location ?? "", attendees: e.team ? team : [],
+    });
+  }
+  console.log(`seeded ${EVENTS.length} events`);
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const only = args.find((a) => !a.startsWith("--"));
@@ -247,18 +319,33 @@ async function main() {
   const owner = db.prepare("select user_id from member where organization_id = ? and role = 'owner'").get(ORG_ID) as { user_id: string } | undefined;
   if (!owner) throw new Error(`Org ${ORG_ID} not found in the local D1 (set SHOTS_ORG)`);
 
+  const sessions: string[] = [];
   // A session like Better Auth's own: the cookie is the token plus its HMAC.
-  const token = randomBytes(24).toString("base64url");
-  const sessionId = randomUUID();
-  const now = Date.now();
-  db.prepare("insert into session (id, expires_at, token, user_id, active_organization_id, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)").run(sessionId, now + 3_600_000, token, owner.user_id, ORG_ID, now, now);
-  const signed = encodeURIComponent(`${token}.${createHmac("sha256", secret()).update(token).digest("base64")}`);
+  const signIn = (userId: string) => {
+    const token = randomBytes(24).toString("base64url");
+    const id = randomUUID();
+    const now = Date.now();
+    db.prepare("insert into session (id, expires_at, token, user_id, active_organization_id, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)").run(id, now + 3_600_000, token, userId, ORG_ID, now, now);
+    sessions.push(id);
+    return encodeURIComponent(`${token}.${createHmac("sha256", secret()).update(token).digest("base64")}`);
+  };
+  const signed = signIn(owner.user_id);
 
   const browser = await chromium.launch();
   try {
     const cookie = `better-auth.session_token=${signed}`;
     const api = apiAs(cookie);
-    if (args.includes("--seed")) await seed(db, api, cookie);
+    if (args.includes("--seed")) {
+      await seed(db, api, cookie);
+      const colleague = (email: string) => {
+        const row = db.prepare("select u.id from user u join member m on m.user_id = u.id where m.organization_id = ? and u.email = ?").get(ORG_ID, email) as { id: string } | undefined;
+        if (!row) throw new Error(`${email} is not in the demo org`);
+        return { id: row.id, api: apiAs(`better-auth.session_token=${signIn(row.id)}`) };
+      };
+      const people = { anna: { id: owner.user_id, api }, diana: colleague(`diana@${DOMAIN}`), tomasz: colleague(`tomasz@${DOMAIN}`) };
+      await seedChat(db, people);
+      await seedCalendar(db, api, owner.user_id);
+    }
     // Each shot in both themes: <name>.webp (light, docs and comparisons) and <name>-dark.webp (the dark marketing pages).
     for (const [shot, scheme] of shots.flatMap((s) => (["light", "dark"] as const).map((c) => [s, c] as const))) {
       const viewport = shot.viewport ?? { width: 1440, height: 900 };
@@ -286,7 +373,7 @@ async function main() {
     }
   } finally {
     await browser.close();
-    db.prepare("delete from session where id = ?").run(sessionId);
+    for (const id of sessions) db.prepare("delete from session where id = ?").run(id);
     db.close();
   }
 }

@@ -1,5 +1,6 @@
 ---
 import { siteConfig } from "@/config/site";
+import { APPS } from "@/config/apps";
 import { COMPETITORS } from "@/config/compare";
 import Logo from "./Logo.astro";
 
@@ -8,7 +9,7 @@ const columns = [
   {
     label: "Product",
     links: [
-      { href: "/#features", label: "Features" },
+      ...APPS.map((a) => ({ href: `/${a.slug}`, label: a.label })),
       { href: "/shared-mailbox", label: "Shared mailboxes" },
       { href: "/google-workspace-alternative", label: "Google Workspace alternative" },
       { href: "/cloudflare-email-routing", label: "Cloudflare Email Routing inbox" },

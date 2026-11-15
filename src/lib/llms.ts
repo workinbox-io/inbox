@@ -1,3 +1,4 @@
+import { APPS } from "@/config/apps";
 import { COMPETITORS } from "@/config/compare";
 import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, PLANS, TRIAL_DAYS, amount, planFeatures } from "@/config/plans";
 import { siteConfig } from "@/config/site";
@@ -46,6 +47,7 @@ export async function llmsTxt(site: URL) {
     "## Product",
     "",
     link("/", "Home", "overview, screens of the app, features, roadmap, pricing and FAQ"),
+    ...APPS.map((a) => link(`/${a.slug}`, a.label, a.description)),
     link("/security", "Security", "two-factor authentication, individual mailbox access, sessions and integration access"),
     link("/pricing", "Pricing", "plans per person, the self-hosted option"),
     link("/shared-mailbox", "Shared mailboxes", "how support@ and sales@ work, compared with Google, Microsoft, Zoho and Proton"),
