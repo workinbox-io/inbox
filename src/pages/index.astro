@@ -14,6 +14,7 @@ import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import Shot from "@/components/site/Shot.astro";
 import Faq from "@/components/site/Faq.astro";
 import PixelScene from "@/components/site/pixel/PixelScene.astro";
+import HeroBelt from "@/components/site/hero-belt/HeroBelt.astro";
 import PixelIcon from "@/components/site/pixel/PixelIcon.astro";
 import PersonReferences from "@/components/site/PersonReferences.astro";
 import CommandBox from "@/components/site/CommandBox.astro";
@@ -209,7 +210,7 @@ const jsonLd = [
 ---
 
 <MarketingLayout title="The open-source workspace for your team" description={siteConfig.description} jsonLd={jsonLd} ink>
-  <!-- Hero: ink band under the see-through header, the isometric living-room startup (pixel scene "house") as a full-width strip. -->
+  <!-- Hero: ink band under the see-through header, the conveyor belt (HeroBelt) as a full-width strip. -->
   <section class="mk-band mk-under-header relative isolate overflow-hidden">
     <div class="mk-wrap pt-8 sm:pt-12">
       <h1 class="mk-h1 max-w-4xl">Your team's workspace,<br /> open source</h1>
@@ -224,11 +225,8 @@ const jsonLd = [
       <CommandBox hint class="mt-6" />
       <p class="mk-cap mt-6">Open source · AGPL-3.0 · runs on Cloudflare</p>
     </div>
-    <!-- The living room as a full-width strip under the text, its floor at the bottom of the band. Phones show its
-         middle (the table), twice as large. -->
-    <div class="mt-8 sm:mt-10">
-      <PixelScene scene="house" class="max-md:-ml-[50%] max-md:w-[200%]!" />
-    </div>
+    <!-- Boxes on a conveyor belt, mail, messages, notes, events, files and contacts dropping into them. -->
+    <div class="mt-6 sm:mt-8"><HeroBelt /></div>
   </section>
 
   <!-- Six cards, each a small scene in a frame. -->
