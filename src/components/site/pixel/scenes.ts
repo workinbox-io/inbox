@@ -24,6 +24,24 @@ const S = {
   ],
 };
 
+/** What drops into the boxes in the hero, bright on the ink band (the envelope is S.envelope). */
+const ITEM = {
+  chat: sprite(["wwwwwww", "w3w3w3w", "wwwwwww", ".ww....", "w......"]),
+  note: sprite(["w.w.w", "wwwww", "w333w", "wwwww", "w33ww", "wwwww"]),
+  calendar: sprite([".3.3.", "wwwww", "33333", "w3w3w", "wwwww", "w3www"]),
+  file: sprite(["wwww.", "w33ww", "wwwww", "w333w", "wwwww", "wwwww"]),
+  contact: sprite(["wwwwwww", "w.33..w", "w.33.ww", "w3333.w", "wwwwwww"]),
+  box: sprite(["5.5.5", "55555", "5...5", "55555"]),
+};
+
+/** 3×5 digits for the counter screen. */
+const DIGITS = [
+  ["555", "5.5", "5.5", "5.5", "555"], [".5.", "55.", ".5.", ".5.", "555"], ["555", "..5", "555", "5..", "555"],
+  ["555", "..5", ".55", "..5", "555"], ["5.5", "5.5", "555", "..5", "..5"], ["555", "5..", "555", "..5", "555"],
+  ["555", "5..", "555", "5.5", "555"], ["555", "..5", ".5.", ".5.", ".5."], ["555", "5.5", "555", "5.5", "555"],
+  ["555", "5.5", "555", "..5", "555"],
+].map(sprite);
+
 const wrap = (v: number, n: number) => ((v % n) + n) % n;
 const ease = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x));
 
@@ -336,6 +354,206 @@ export const SCENES: Record<string, Scene> = {
       p.rect(442, floor - 50, 4, 1, "4");
       p.rect(440, floor - 49, 8, 12, "2");
       p.rect(442, floor - 37, 4, 2, "2");
+    },
+  },
+  /**
+   * The home hero, a full-width strip: the workspace's packing room at night. A machine on the left folds boxes from a
+   * stack of flat cardboard onto the belt; six chutes, one per app (mail, chat, notes, calendar, files, contacts), each
+   * drop their thing into every box passing under them; the taping machine closes the full box and it leaves through
+   * the strip curtain on the right. The screen counts boxes shipped; someone at a desk in front keeps an eye on it all.
+   * Every box moves `gap` px per `gap / v` s, so the drops line up by construction.
+   */
+  belt: {
+    w: 480,
+    h: 100,
+    surface: "band",
+    draw(p, t) {
+      const floor = 86;
+      const top = 64; // the belt's surface
+      const v = 16; // belt speed, px/s
+      const gap = 48; // one box every 3 s
+      const bw = 20;
+      const bh = 14;
+      const y = top - bh;
+      const x0 = 58; // where the folder puts boxes down
+      const tx = 380; // the taping machine
+      const exit = 440; // the strip curtain
+      const chutes = [140, 176, 212, 248, 284, 320];
+      const items: Sprite[] = [S.envelope, ITEM.chat, ITEM.note, ITEM.calendar, ITEM.file, ITEM.contact];
+      const fall = 1.1;
+      t += 40; // a still frame (reduced motion) with things mid-air and boxes all along the belt
+
+      // Room: striped wallpaper, a skirting board, floor boards, string lights.
+      p.rect(0, 0, p.w, p.h, "0");
+      for (let x = 3; x < p.w; x += 8) p.dither(x, 14, 1, floor - 14, "0", "1", 0.5);
+      boards(p, floor);
+      p.rect(0, floor - 2, p.w, 2, "1");
+      for (let x = 0; x < p.w; x++) p.dot(x, 3 + Math.round(4 * Math.sin((Math.PI * (x % 50)) / 50)), "1");
+      for (let i = 0; i * 10 + 5 < p.w; i++) {
+        const x = i * 10 + 5;
+        const on = (Math.floor(t * 2) + i * 3) % 7;
+        p.rect(x, 4 + Math.round(4 * Math.sin((Math.PI * (x % 50)) / 50)), 2, 2, on === 0 ? "w" : on < 3 ? "4" : "3");
+      }
+
+      // A window on the street.
+      nightSky(p, 8, 16, 36, 26, [34, 22], 5);
+      skyline(p, 8, 44, 42, 9, 7);
+      p.rect(6, 14, 40, 2, "3");
+      p.rect(6, 14, 2, 28, "3");
+      p.rect(44, 14, 2, 28, "3");
+      p.rect(25, 14, 2, 28, "3");
+      p.rect(4, 42, 44, 2, "3");
+
+      // The feed pipe along the ceiling and its six chutes, each with its app's sign and a lamp that lights as it drops.
+      p.rect(118, 10, 222, 3, "2");
+      p.rect(118, 10, 222, 1, "3");
+      p.rect(118, 0, 3, 10, "2");
+      for (let x = 130; x < 340; x += 18) p.rect(x, 9, 2, 5, "3");
+      const busy = chutes.map(() => false);
+      const boxAt = (n: number) => Math.round(t * v - n * gap);
+      const last = Math.floor((t * v - x0 + bw) / gap);
+      const boxes: number[] = [];
+      for (let n = last - 12; n <= last; n++) {
+        const x = boxAt(n);
+        if (x >= x0 - bw && x < p.w) boxes.push(n);
+      }
+      for (const n of boxes) {
+        const c = boxAt(n) + bw / 2;
+        chutes.forEach((cx, j) => {
+          const left = (cx - c) / v;
+          if (left > 0 && left < fall * 0.5) busy[j] = true;
+        });
+      }
+      chutes.forEach((cx, j) => {
+        p.rect(cx - 2, 13, 4, 11, "2");
+        p.rect(cx - 2, 13, 1, 11, "3");
+        p.rect(cx - 7, 15, 14, 9, "3");
+        p.rect(cx - 6, 16, 12, 7, "1");
+        const icon = items[j]!;
+        p.draw(icon, cx - Math.floor(icon.w / 2), 16 + Math.floor((7 - icon.h) / 2));
+        for (let i = 0; i < 4; i++) p.rect(cx - 6 + i, 24 + i, 12 - i * 2, 1, i === 0 ? "3" : "2");
+        p.rect(cx + 5, 25, 2, 2, busy[j] ? "w" : "2");
+      });
+
+      // The box folder: a magazine of flat boxes over the start of the belt, a pusher going back and forth.
+      p.rect(x0 - 8, 26, 30, 4, "3");
+      for (let i = 0; i < 6; i++) p.rect(x0 - 6 + (i % 2), 30 + i * 3, 26, 2, i % 2 ? "3" : "4");
+      p.rect(x0 - 10, 26, 2, top - 26, "3");
+      p.rect(x0 + 20, 26, 2, 22, "3");
+      const push = Math.round(Math.max(0, Math.sin(((t * v) / gap) * Math.PI * 2)) * 4);
+      p.rect(x0 - 16 + push, 46, 6, 3, "4");
+      p.rect(x0 - 20, 46, 4 + push, 1, "3");
+
+      // The belt: end drums, the tread moving with the boxes, rollers turning, legs to the floor.
+      p.rect(x0 - 12, top, p.w - x0 + 12, 3, "2");
+      const shift = Math.floor(wrap(t * v, 8));
+      for (let x = x0 - 12 + shift; x < p.w; x += 8) p.rect(x, top, 4, 1, "3");
+      p.rect(x0 - 12, top + 3, p.w - x0 + 12, 1, "1");
+      const ring = (cx: number, cy: number, r: number, c: ColorKey) => {
+        for (let k = 0; k < r * 8; k++) p.dot(cx + Math.round(Math.cos((k / (r * 8)) * Math.PI * 2) * r), cy + Math.round(Math.sin((k / (r * 8)) * Math.PI * 2) * r), c);
+      };
+      const turn = (t * v) / 3;
+      for (let x = x0; x < p.w; x += 16) {
+        ring(x, top + 8, 3, "2");
+        p.dot(x + Math.round(Math.cos(turn) * 2), top + 8 + Math.round(Math.sin(turn) * 2), "3");
+      }
+      ring(x0 - 12, top + 4, 4, "3");
+      p.dot(x0 - 12 + Math.round(Math.cos(turn) * 3), top + 4 + Math.round(Math.sin(turn) * 3), "4");
+      for (let x = x0 + 8; x < p.w; x += 64) {
+        p.rect(x, top + 12, 2, floor - top - 12, "2");
+        p.rect(x - 3, floor - 1, 8, 1, "3");
+      }
+      p.rect(x0 - 8, top + 12, p.w - x0 + 8, 1, "2");
+
+      // The taping machine: an arch over the belt, a roll that turns while it tapes.
+      const taping = boxes.some((n) => Math.abs(boxAt(n) + bw / 2 - tx) < bw / 2);
+      p.rect(tx - 16, 32, 32, 4, "3");
+      p.rect(tx - 16, 32, 2, top - 32, "3");
+      p.rect(tx + 14, 32, 2, top - 32, "3");
+      ring(tx, 41, 4, "4");
+      ring(tx, 41, 2, "2");
+      const spin = taping ? t * 8 : 0;
+      p.dot(tx + Math.round(Math.cos(spin) * 3), 41 + Math.round(Math.sin(spin) * 3), "w");
+      if (taping) p.rect(tx - 1, 45, 2, y - 45, "w");
+
+      // The boxes: unfolded at the start, filled under the chutes, taped shut under the arch.
+      for (const n of boxes) {
+        const x = boxAt(n);
+        if (x < x0 - 2) continue;
+        const c = x + bw / 2;
+        const h = Math.min(bh, 3 + Math.round(((x - x0 + 2) / 10) * (bh - 3)));
+        const by = top - h;
+        const done = c >= tx;
+        p.rect(x, by, bw, h, "4");
+        p.rect(x, by, bw, 1, "3");
+        p.rect(x + bw - 1, by + 1, 1, h - 1, "3");
+        if (h === bh) {
+          p.rect(x + 3, y + 8, 6, 1, "3");
+          p.rect(x + 3, y + 10, 4, 1, "3");
+        }
+        const filled = chutes.filter((cx) => cx <= c).length;
+        if (done) {
+          p.rect(x + bw / 2 - 1, by, 2, 6, "w");
+          p.rect(x + 12, y + 8, 5, 3, "w");
+        } else if (h === bh) {
+          p.rect(x - 3, by - 2, 5, 1, "3");
+          p.rect(x - 1, by - 1, 2, 1, "3");
+          p.rect(x + bw - 2, by - 2, 5, 1, "3");
+          p.rect(x + bw - 1, by - 1, 2, 1, "3");
+          for (let j = 0; j < filled; j++) p.rect(x + 3 + j * 2 + (j > 2 ? 1 : 0), by - 1 - (j % 2), 2, 1 + (j % 2), j % 2 ? "w" : "4");
+        }
+        // What's falling into this box right now.
+        chutes.forEach((cx, j) => {
+          const left = (cx - c) / v;
+          if (left <= 0 || left >= fall) return;
+          const k = 1 - left / fall;
+          const item = items[j]!;
+          p.draw(item, cx - Math.floor(item.w / 2), Math.round(28 + (y - 28 - item.h + 3) * k * k));
+        });
+      }
+
+      // The strip curtain the boxes leave through, its strips pushed aside as one goes by.
+      p.rect(exit - 2, 30, 36, 4, "3");
+      p.rect(exit - 2, 30, 2, floor - 30, "3");
+      const through = boxes.find((n) => boxAt(n) + bw > exit && boxAt(n) < exit + 30);
+      for (let i = 0; i < 8; i++) {
+        const sx = exit + 2 + i * 4;
+        const bend = through !== undefined && Math.abs(boxAt(through) + bw - sx) < 8 ? 2 : 0;
+        p.rect(sx, 34, 2, top - 34 - 6, i % 2 ? "2" : "3");
+        p.rect(sx + bend, top - 6, 2, 6, i % 2 ? "2" : "3");
+      }
+
+      // The screen over the curtain: boxes shipped so far, ticking up as each one is taped.
+      const shipped = 1200 + Math.floor((t * v - (tx - bw / 2)) / gap);
+      p.rect(392, 14, 40, 14, "3");
+      p.rect(393, 15, 38, 12, "1");
+      p.draw(ITEM.box, 396, 17);
+      String(shipped).padStart(4, "0").split("").forEach((d, i) => p.draw(DIGITS[Number(d)]!, 408 + i * 5, 18, { "5": taping ? "w" : "4" }));
+
+      // A poster on the wall between the chutes and the taper.
+      p.rect(344, 16, 20, 22, "3");
+      p.rect(345, 17, 18, 20, "1");
+      p.draw(S.at, 350, 21, { "5": "4" });
+      p.rect(348, 31, 12, 1, "2");
+      p.rect(350, 33, 8, 1, "2");
+
+      // In front, on a pallet: this batch of shipped boxes, one more each time the counter ticks, cleared every six.
+      p.rect(392, floor - 3, 42, 3, "3");
+      for (const x of [394, 411, 428]) p.rect(x, floor - 3, 3, 3, "2");
+      const stacked = wrap(shipped, 6) + 1;
+      for (let i = 0; i < stacked; i++) {
+        const sx = 394 + (i % 3) * 13;
+        const sy = floor - 3 - 7 * (Math.floor(i / 3) + 1);
+        p.rect(sx, sy, 12, 7, "4");
+        p.rect(sx, sy, 12, 1, "3");
+        p.rect(sx + 11, sy + 1, 1, 6, "3");
+        p.rect(sx + 5, sy, 2, 3, "w");
+      }
+
+      // In front: someone at a desk with a laptop and a mug, watching the boxes go.
+      desk(p, 6, floor, t, 0, "5");
+      p.rect(28, floor - 14, 3, 3, "w");
+      p.draw(S.plant, 462, floor - 10);
     },
   },
   /** The office building from the street at night, mail flying in at its windows. */
