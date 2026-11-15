@@ -1,7 +1,7 @@
 ---
 /** Mail on your own domain ("custom domain email", 3,600 US searches, KD 28; "business email" 18,100), OpenSEO 2026-11-15. */
 import AppPage from "@/components/site/AppPage.astro";
-import { AtSign, FileDown, Inbox, PenLine, Search, ShieldCheck, Users, Clock, Bot } from "lucide-react";
+import { AtSign, FileDown, Inbox, MonitorSmartphone, PenLine, Search, ShieldCheck, Users, Clock, Bot } from "lucide-react";
 import { FREE_PEOPLE, PLANS } from "@/config/plans";
 
 export const prerender = true;
@@ -24,9 +24,10 @@ export const prerender = true;
     { icon: PenLine, title: "Signatures and templates", text: "Signatures from a company template, reply templates and out of office per mailbox." },
     { icon: Clock, title: "Snooze, schedule, undo", text: "Snooze a thread, schedule a send, undo it; drafts follow you across devices." },
     { icon: FileDown, title: "Bring your old mail", text: "Import .mbox (Google Takeout) or .eml files; every message keeps its original .eml." },
+    { icon: MonitorSmartphone, title: "Any mail app", text: "IMAP and SMTP for Apple Mail, Outlook, Thunderbird and your phone, a password per device.", href: "/docs/mail-clients" },
     { icon: Bot, title: "Claude and ChatGPT", text: "Search and read mail from your AI app; replies come back as drafts you send yourself.", href: "/docs/mcp" },
   ]}
-  notYet="IMAP for Apple Mail, Outlook or phone apps. The web app installs on phones and computers."
+  notYet="native mobile apps: use your phone's mail app over IMAP, or install the web app."
   compare={["shared", "aliases", "imap", "price"]}
   together={[
     { title: "Contacts fill themselves", text: "Everyone you write to lands in the team's address book, suggested as you type." },
@@ -37,6 +38,6 @@ export const prerender = true;
     { question: "Do I have to move my domain to Cloudflare?", answer: "No. On Cloudflare, Connect Cloudflare adds the records with an API token. Anywhere else, add the MX, DKIM and DMARC records the setup shows and click Check DNS." },
     { question: "Do I need my own domain?", answer: "No. Claim a free address like yourname.workinbox.io in Settings → Mail and start right away; add your own domain later." },
     { question: "What does it cost?", answer: `The first ${FREE_PEOPLE} people are free. After that you pay per person with a personal mailbox; shared mailboxes, aliases and the catch-all cost nothing. Self-hosting is free.` },
-    { question: "Can I use Outlook or my phone's mail app?", answer: "Not yet: there's no IMAP today. Use the web app, which installs on phones and computers. An IMAP gateway is on the roadmap." },
+    { question: "Can I use Outlook or my phone's mail app?", answer: "Yes: every mailbox works over IMAP and SMTP with a password per device. Settings → Mail clients shows the server and creates the password." },
   ]}
 />

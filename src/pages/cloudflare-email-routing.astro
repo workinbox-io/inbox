@@ -42,7 +42,7 @@ const hosted = [
 const faq = [
   { question: "Can I reply from my domain with Cloudflare Email Routing?", answer: "Not with Email Routing alone: it only receives and forwards. To reply from the address you need something that sends, and an inbox to keep the conversation in. Work Inbox is both: mail to your domain lands in a mailbox, and replies go out from the same address, signed for your domain." },
   { question: "Can I keep Email Routing turned on?", answer: "Yes, when you self-host: Work Inbox runs in the same Cloudflare account, Email Routing sends every address to it with a catch-all rule, and Cloudflare Email Service sends. Hosted, Work Inbox receives the mail itself, so Email Routing is turned off for that domain and its MX records are replaced." },
-  { question: "What about Gmail's \"Send mail as\"?", answer: "It needs an SMTP server for your domain, and Email Routing has none. Work Inbox has no SMTP or IMAP access yet either: you read and answer the mail in its web app, which installs on phones." },
+  { question: "What about Gmail's \"Send mail as\"?", answer: "It needs an SMTP server for your domain, and Email Routing has none. Work Inbox is that server: each mailbox has IMAP and SMTP for mail apps, with a password per device, besides its own web app." },
   { question: "What does it cost?", answer: `Hosted, up to ${FREE_PEOPLE} people are free for good, with shared mailboxes, aliases and notes; a bigger team pays from ${starter} a person a month. Self-hosted, Work Inbox is free and you pay Cloudflare for what it uses.` },
   ...agentic.faq,
 ];

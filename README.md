@@ -34,7 +34,8 @@ Six apps that share the same people, sign-in, search and ⌘K:
 
 Plus an MCP server for Claude, ChatGPT, Claude Code and Cursor across the apps, and a REST API.
 
-Not yet: IMAP access, CalDAV, voice and video calls, and native mobile apps (the web app installs on phones).
+Mail also works in Apple Mail, Outlook, Thunderbird and phone mail apps over IMAP and SMTP (self-hosted: with the
+optional mail bridge in `infra/mail`). Not yet: CalDAV, voice and video calls, and native mobile apps.
 
 ## Screenshots
 
