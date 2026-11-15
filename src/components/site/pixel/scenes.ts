@@ -490,25 +490,35 @@ export const SCENES: Record<string, Scene> = {
         const c = x + bw / 2;
         const h = Math.min(bh, 3 + Math.round(((x - x0 + 2) / 10) * (bh - 3)));
         const by = top - h;
-        const done = c >= tx;
         p.rect(x, by, bw, h, "4");
         p.rect(x, by, bw, 1, "3");
         p.rect(x + bw - 1, by + 1, 1, h - 1, "3");
         if (h === bh) p.draw(ITEM.box, x + 3, y + 7, { "5": "3" });
         const spam = wrap(n, 9) === 4; // this box's mail is spam: it bounces off into the bin
         const filled = chutes.filter((cx) => cx <= c).length;
-        if (done) {
-          // Taped, a shipping label with the team's @, and now and then a star.
-          p.rect(x + bw / 2 - 1, by, 2, 6, "w");
-          p.rect(x + 11, y + 6, 7, 6, "w");
-          p.draw(ITEM.at, x + 12, y + 7, { "5": "3" });
-          if (wrap(n, 7) === 3) p.draw(ITEM.star, x + 3, y + 1);
-        } else if (h === bh) {
-          p.rect(x - 3, by - 2, 5, 1, "3");
-          p.rect(x - 1, by - 1, 2, 1, "3");
-          p.rect(x + bw - 2, by - 2, 5, 1, "3");
-          p.rect(x + bw - 1, by - 1, 2, 1, "3");
-          for (let j = 0; j < filled; j++) if (!(spam && j === 0)) p.rect(x + 3 + j * 2 + (j > 2 ? 1 : 0), by - 1 - (j % 2), 2, 1 + (j % 2), j % 2 ? "w" : "4");
+        if (h === bh) {
+          // The flaps: they swing open once the box is folded, stand wide under the chutes, rise and fold flat onto
+          // the lid on the way into the taper. The angle is measured from lying flat (0) to wide open (150°).
+          const opened = ease((x - x0 - 8) / 14);
+          const shut = ease((c - (tx - 22)) / 20);
+          const ang = ((5 * Math.PI) / 6) * opened * (1 - shut);
+          const inside = ang > Math.PI / 2; // past upright we see the flap's inner side
+          const L = bw / 2;
+          for (const [hx, dir] of [[x, 1], [x + bw - 1, -1]] as const) {
+            const tip: [number, number] = [hx + dir * Math.cos(ang) * L, by - 1 - Math.sin(ang) * L];
+            seg(p, [hx, by - 1], tip, inside ? "3" : "4");
+            seg(p, [hx, by], [tip[0], tip[1] + 1], inside ? "2" : "3");
+          }
+          if (ang > 1) for (let j = 0; j < filled; j++) if (!(spam && j === 0)) p.rect(x + 3 + j * 2 + (j > 2 ? 1 : 0), by - 1 - (j % 2), 2, 1 + (j % 2), j % 2 ? "w" : "4");
+          // Under the taper: tape across the lid and down the front as the roll turns, then the label goes on.
+          const taped = Math.min(1, Math.max(0, (c - tx + 4) / 10));
+          if (taped > 0) p.rect(x + bw / 2 - 1, by - 1, 2, 1 + Math.round(6 * taped), "w");
+          if (c >= tx + 12) {
+            const slap = Math.min(1, (c - tx - 12) / 4);
+            p.rect(x + 11, y + 6 + Math.round((1 - slap) * -3), 7, 6, "w");
+            p.draw(ITEM.at, x + 12, y + 7 + Math.round((1 - slap) * -3), { "5": "3" });
+            if (wrap(n, 7) === 3) p.draw(ITEM.star, x + 3, y + 1);
+          }
         }
         // What's falling into this box right now.
         chutes.forEach((cx, j) => {
