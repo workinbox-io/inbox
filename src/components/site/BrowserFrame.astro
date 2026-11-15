@@ -1,0 +1,119 @@
+---
+/**
+ * A browser window around a screenshot or a mock, flat and square for the boat.dev look: window squares, back and forward, the address with a lock,
+ * share, new tab and tabs (`data-url` lets a page swap the address, like the homepage tour). `fixed` keeps a 16:10 page (screenshots at 1440x900), off for mocks with their own height.
+ */
+import { ChevronLeft, ChevronRight, Copy, Lock, PanelLeft, Plus, RotateCw, Share } from "lucide-react";
+
+interface Props {
+  url: string;
+  class?: string;
+  fixed?: boolean;
+}
+const { url, class: className, fixed = true } = Astro.props;
+---
+
+<div class:list={["win", className]}>
+  <div class="win-bar" aria-hidden="true">
+    <span class="win-lights"><i></i><i></i><i></i></span>
+    <span class="win-tools hidden sm:flex">
+      <PanelLeft className="size-4" />
+      <ChevronLeft className="size-4" />
+      <ChevronRight className="size-4 opacity-40" />
+    </span>
+    <span class="win-url">
+      <Lock className="size-3 shrink-0" />
+      <span class="truncate" data-url>{url}</span>
+      <span class="win-reload hidden sm:block"><RotateCw className="size-3" /></span>
+    </span>
+    <span class="win-tools hidden sm:flex">
+      <Share className="size-4" />
+      <Plus className="size-4" />
+      <Copy className="size-4" />
+    </span>
+  </div>
+  <div class:list={["win-page", fixed && "win-fixed"]}>
+    <slot />
+  </div>
+</div>
+
+<style>
+  /* Flat and square with a 1px frame, like the rest of the marketing site. */
+  .win {
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--mk-frame, var(--border));
+  }
+  .win-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 2.75rem;
+    padding: 0 1rem;
+    font-family: var(--mk-font-mono, inherit);
+    color: color-mix(in srgb, var(--foreground) 55%, transparent);
+    background: color-mix(in srgb, var(--foreground) 4%, var(--card));
+    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  }
+  .win-lights {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.5rem;
+  }
+  .win-lights i {
+    width: 0.6rem;
+    height: 0.6rem;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 35%, transparent);
+  }
+  .win-tools {
+    flex-shrink: 0;
+    align-items: center;
+    gap: 1rem;
+  }
+  .win-url {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-width: 0;
+    max-width: 32rem;
+    height: 1.9rem;
+    margin: 0 auto;
+    padding: 0 2rem;
+    font-size: 0.8rem;
+    color: color-mix(in srgb, var(--foreground) 75%, transparent);
+    background: color-mix(in srgb, var(--foreground) 6%, var(--card));
+  }
+  .win-reload {
+    position: absolute;
+    right: 0.75rem;
+    line-height: 0;
+  }
+  .win-fixed {
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+  }
+  .win-fixed > :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top left;
+  }
+  @media (max-width: 640px) {
+    .win-bar {
+      height: 2.5rem;
+      gap: 0.6rem;
+      padding: 0 0.7rem;
+    }
+    .win-lights i {
+      width: 0.6rem;
+      height: 0.6rem;
+    }
+    .win-url {
+      height: 1.6rem;
+      font-size: 0.7rem;
+    }
+  }
+</style>

@@ -1,0 +1,32 @@
+/** Dashboard navigation: the sidebar, and the ⌘K palette's pages and actions. */
+import { BookOpen, BookUser, CalendarDays, CalendarPlus, CreditCard, FolderPlus, HardDrive, LayoutDashboard, Mail, MessagesSquare, MessageSquarePlus, NotebookPen, PenSquare, Settings, SquarePen } from "lucide-react";
+
+export const APP_NAV = [
+  { href: "/app", label: "Overview", icon: LayoutDashboard },
+  { href: "/app/mail", label: "Mail", icon: Mail },
+  { href: "/app/chat", label: "Chat", icon: MessagesSquare },
+  { href: "/app/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/app/notes", label: "Notes", icon: NotebookPen },
+  { href: "/app/contacts", label: "Contacts", icon: BookUser },
+  { href: "/app/drive", label: "Drive", icon: HardDrive },
+  { href: "/app/billing", label: "Billing", icon: CreditCard },
+  { href: "/app/settings", label: "Settings", icon: Settings },
+];
+
+/** The six apps available in the user view, in the same order as the dashboard. */
+export const WORKSPACE_NAV = APP_NAV.filter((n) => ["/app/mail", "/app/chat", "/app/calendar", "/app/notes", "/app/contacts", "/app/drive"].includes(n.href));
+
+/** Pinned to the bottom of the sidebar. */
+export const APP_HELP = [{ href: "/docs", label: "Documentation", icon: BookOpen }];
+
+/** Extra entries in the command palette. */
+export const APP_ACTIONS = [
+  { href: "/app/mail?compose=1", label: "New e-mail", icon: PenSquare },
+  { href: "/app/chat", label: "New message", icon: MessageSquarePlus },
+  { href: "/app/calendar?new=1", label: "New event", icon: CalendarPlus },
+  { href: "/app/notes?new=1", label: "New note", icon: SquarePen },
+  { href: "/app/drive?new=folder", label: "New drive folder", icon: FolderPlus },
+];
+
+/** Your settings pages, shown after Account and Organization (components/app/settings-nav.tsx). */
+export const APP_SETTINGS: { href: string; label: string }[] = [{ href: "/app/settings/mail", label: "Mail" }];

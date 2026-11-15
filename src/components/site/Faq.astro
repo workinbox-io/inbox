@@ -1,0 +1,45 @@
+---
+/** Questions as native <details> rows between hairlines, a mono + / − in front. */
+interface Props {
+  items: { question: string; answer: string }[];
+}
+const { items } = Astro.props;
+---
+
+<div class="border-t border-(--border)">
+  {
+    items.map((item, i) => (
+      <details name="faq" open={i === 0} class="group border-b border-(--border)">
+        <summary class="flex cursor-pointer list-none items-start gap-4 py-5 text-lg outline-none focus-visible:underline [&::-webkit-details-marker]:hidden">
+          <span class="mk-mono w-4 shrink-0 text-(--muted-foreground) group-open:hidden" aria-hidden="true">+</span>
+          <span class="mk-mono hidden w-4 shrink-0 text-(--muted-foreground) group-open:inline" aria-hidden="true">−</span>
+          <span class="flex-1 font-medium text-balance">{item.question}</span>
+        </summary>
+        <div class="faq-answer"><p class="pb-6 pl-8 leading-7 text-pretty text-(--muted-foreground)">{item.answer}</p></div>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  details::details-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 250ms ease, content-visibility 250ms allow-discrete;
+  }
+
+  details[open]::details-content {
+    grid-template-rows: 1fr;
+  }
+
+  .faq-answer {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    details::details-content {
+      transition: none;
+    }
+  }
+</style>

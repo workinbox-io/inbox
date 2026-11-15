@@ -1,0 +1,74 @@
+---
+/**
+ * A flat node tile: icon or image, label and a mono sublabel, and a status light in
+ * the corner. A tile can also hold file rows (a bucket), a sheet of paper that rises when it sends a
+ * file and a check badge. `.ring` is the tint that washes over the tile when something arrives.
+ */
+import Icon from "./Icon.astro"
+import type { IconName } from "./icons"
+import { txt, type Txt } from "./steps"
+
+interface Props {
+  id: string
+  x: number
+  y: number
+  w: number
+  h: number
+  label?: string
+  sub?: string
+  icon?: IconName
+  logo?: string
+  paper?: boolean
+  rows?: { text: Txt; meta?: string }[]
+  check?: boolean
+  layout: "wide" | "phone"
+}
+const { id, x, y, w, h, label, sub, icon, logo, paper, rows = [], check, layout } = Astro.props
+const P = 18
+const RX = 14
+---
+
+<g class="sb-tile" data-node={id}>
+  {
+    paper && (
+      <g class="trav sb-paper">
+        <rect class="paper" x={x + w / 2 - 23} y={y - 28} width="46" height="62" rx="4" />
+        <path class="line" d={`M${x + w / 2 - 15} ${y - 12}h30M${x + w / 2 - 15} ${y - 2}h30M${x + w / 2 - 15} ${y + 8}h20`} />
+      </g>
+    )
+  }
+  <rect class="node" x={x} y={y} width={w} height={h} rx={RX}></rect>
+  <rect class="ring" x={x} y={y} width={w} height={h} rx={RX}></rect>
+  {icon && <Icon name={icon} x={x + P} y={y + P} size={24} />}
+  {logo && <image href={logo} x={x + P} y={y + P - 1} width="26" height="26"></image>}
+  <circle class="led-glow" cx={x + w - P - 2} cy={y + P + 6} r="8"></circle>
+  <circle class="led" cx={x + w - P - 2} cy={y + P + 6} r="3.5"></circle>
+  <circle class="led-on" cx={x + w - P - 2} cy={y + P + 6} r="3.5"></circle>
+  {
+    rows.map((r, i) => (
+      <g class="sb-row">
+        <rect class="row-bg" x={x + 12} y={y + 52 + i * 28} width={w - 24} height="24" rx="8" />
+        <Icon name="file" x={x + 20} y={y + 57 + i * 28} size={14} class="ico ico-row" />
+        <text class="m" x={x + 40} y={y + 64.5 + i * 28} dominant-baseline="central" style="fill:var(--foreground)">
+          {txt(r.text, layout)}
+        </text>
+        {r.meta && x + w - 22 - r.meta.length * 7.2 > x + 40 + txt(r.text, layout).length * 7.2 + 10 && (
+          <text class="m" x={x + w - 22} y={y + 64.5 + i * 28} text-anchor="end" dominant-baseline="central">
+            {r.meta}
+          </text>
+        )}
+      </g>
+    ))
+  }
+  {label && <text x={x + P} y={y + h - 34}>{label}</text>}
+  {sub !== undefined && <Icon name="file" x={x + P} y={y + h - 26} size={12} class="ico ico-p sb-subicon" />}
+  {sub !== undefined && <text class="sub sb-sub" x={x + P} y={y + h - 15}>{sub}</text>}
+  {
+    check && (
+      <g class="sb-check">
+        <circle cx={x + w - 6} cy={y + 6} r="13" fill="#10b981"></circle>
+        <Icon name="check" x={x + w - 14} y={y - 2} size={16} class="ico ico-w" />
+      </g>
+    )
+  }
+</g>

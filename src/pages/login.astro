@@ -1,0 +1,17 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { AuthForm } from "@/components/auth/auth-form";
+import { getAuth } from "@/lib/server/auth";
+
+const nextParam = Astro.url.searchParams.get("next") ?? "/app";
+const next = /^\/(?!\/)/.test(nextParam) ? nextParam : "/app";
+const email = Astro.url.searchParams.get("email") ?? undefined;
+
+// Already signed in: skip the form. Unless an app's OAuth request asks to sign in again (signed `sig`).
+const oauth = Astro.url.searchParams.has("sig");
+if (!oauth && (await getAuth().api.getSession({ headers: Astro.request.headers }))) return Astro.redirect(next);
+---
+
+<AuthLayout title="Sign in" noindex>
+  <AuthForm client:load mode="login" next={next} email={email} />
+</AuthLayout>

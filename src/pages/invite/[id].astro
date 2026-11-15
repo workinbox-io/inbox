@@ -1,0 +1,82 @@
+---
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { InviteActions } from "@/components/auth/invite-actions";
+import { db, eq, invitation, organization, user } from "@/db";
+import { getAuth } from "@/lib/server/auth";
+
+// Landing page for the link in the invitation e-mail. Public; the invitation id is the secret.
+const id = Astro.params.id ?? "";
+const [row] = await db
+  .select({ invitation, orgName: organization.name, inviterName: user.name })
+  .from(invitation)
+  .innerJoin(organization, eq(invitation.organizationId, organization.id))
+  .innerJoin(user, eq(invitation.inviterId, user.id))
+  .where(eq(invitation.id, id));
+const session = await getAuth().api.getSession({ headers: Astro.request.headers });
+
+const here = `/invite/${id}`;
+const state = !row
+  ? "missing"
+  : row.invitation.status !== "pending"
+    ? "used"
+    : row.invitation.expiresAt < new Date()
+      ? "expired"
+      : !session
+        ? "signed-out"
+        : session.user.email.toLowerCase() !== row.invitation.email.toLowerCase()
+          ? "wrong-account"
+          : "ready";
+
+const title = {
+  missing: "Invitation not found",
+  used: "Invitation no longer valid",
+  expired: "Invitation expired",
+  "signed-out": `Join ${row?.orgName}`,
+  "wrong-account": "Wrong account",
+  ready: `Join ${row?.orgName}`,
+}[state];
+
+const description = {
+  missing: "This link doesn't match any invitation. Check that you copied the whole link.",
+  used: "This invitation was already accepted, declined or revoked. Ask for a new one if you still need access.",
+  expired: "Invitations work for 7 days. Ask the person who invited you to send a new one.",
+  "signed-out": `${row?.inviterName} invited ${row?.invitation.email} to join ${row?.orgName}. Create an account or sign in with that address to accept.`,
+  "wrong-account": `This invitation is for ${row?.invitation.email}, but you're signed in as ${session?.user.email}. Sign out and sign in with the invited address.`,
+  ready: `${row?.inviterName} invited you to join as ${row?.invitation.role === "admin" ? "an admin" : "a member"}.`,
+}[state];
+---
+
+<AuthLayout title={title}>
+  <Card className="w-full max-w-sm">
+    <CardHeader>
+      <CardTitle className="text-xl">{title}</CardTitle>
+      <CardDescription>{description}</CardDescription>
+    </CardHeader>
+    <CardFooter className="flex-col gap-2">
+      {
+        state === "ready" ? (
+          <InviteActions client:load invitationId={id} />
+        ) : state === "signed-out" ? (
+          <>
+            <Button asChild className="w-full">
+              <a href={`/signup?next=${encodeURIComponent(here)}&email=${encodeURIComponent(row!.invitation.email)}`}>Create account</a>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <a href={`/login?next=${encodeURIComponent(here)}&email=${encodeURIComponent(row!.invitation.email)}`}>Sign in</a>
+            </Button>
+          </>
+        ) : state === "wrong-account" ? (
+          <Button asChild variant="outline" className="w-full">
+            <a href="/api/auth/sign-out-redirect">Sign out</a>
+          </Button>
+        ) : (
+          <Button asChild variant="outline" className="w-full">
+            <a href={session ? "/app" : "/"}>{session ? "Open dashboard" : "Go to homepage"}</a>
+          </Button>
+        )
+      }
+    </CardFooter>
+  </Card>
+</AuthLayout>

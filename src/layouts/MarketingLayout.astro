@@ -1,0 +1,50 @@
+---
+import "@/styles/marketing.css";
+import BaseLayout from "./BaseLayout.astro";
+import SiteHeader from "@/components/site/SiteHeader.astro";
+import SiteFooter from "@/components/site/SiteFooter.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Structured data for search engines, rendered as JSON-LD. */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Docs pages hide the footer to keep the reading column clean. */
+  footer?: boolean;
+  /** "paper" is the marketing look (.mk, styles/marketing.css); "plain" keeps the app style for docs, legal and error pages. */
+  look?: "paper" | "plain";
+  /** The page opens with an ink band (.mk-band) under a see-through header. */
+  ink?: boolean;
+}
+const { title, description, jsonLd, footer = true, look = "paper", ink = false } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} jsonLd={jsonLd}>
+  <div class:list={["relative z-10 flex min-h-svh flex-col [--header-height:calc(var(--spacing)*14)] sm:[--header-height:calc(var(--spacing)*16)]", look === "paper" && "mk"]}>
+    <SiteHeader ink={ink} />
+    <main class="flex min-h-0 flex-1 flex-col"><slot /></main>
+    {footer ? <SiteFooter /> : null}
+  </div>
+</BaseLayout>
+
+<script>
+  // Scroll reveal: .reveal elements fade and rise the first time they enter the viewport.
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("is-inview");
+        observer.unobserve(entry.target);
+      }
+    },
+    { rootMargin: "0px 0px -5% 0px", threshold: 0.01 },
+  );
+  for (const el of document.querySelectorAll(".reveal")) observer.observe(el);
+
+  // GSAP motion (data-split, data-reveal, data-magnetic) only on the paper pages, after load, and not with reduced motion.
+  if (document.querySelector(".mk") && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const start = () => void import("@/scripts/marketing-motion");
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
+  }
+</script>

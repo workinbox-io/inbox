@@ -1,0 +1,4 @@
+@workinboxBridge path /orgs/* /health
+handle @workinboxBridge {
+    reverse_proxy workinbox-mail-bridge:8090
+}

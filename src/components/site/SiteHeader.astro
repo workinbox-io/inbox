@@ -1,0 +1,292 @@
+---
+import { ArrowRight, Menu } from "lucide-react";
+import { siteConfig, type NavItem, type NavLink } from "@/config/site";
+import Logo from "./Logo.astro";
+
+interface Props {
+  /** The page opens with an ink band: the header is see-through over it until the page scrolls. */
+  ink?: boolean;
+}
+const { ink = false } = Astro.props;
+const path = pagePath(Astro.url.pathname);
+const isActive = (href: string) => !href.includes("#") && (path === href || path.startsWith(`${href}/`));
+const nav: NavItem[] = siteConfig.navItems;
+const withIcon = (it: NavLink) => ({ ...it, Icon: it.icon });
+const description = (it: NavLink) => it.description;
+const iconTile = "grid size-5 shrink-0 place-items-center rounded-md bg-primary/15 text-primary";
+const chevron = `<svg class="size-3.5 transition-transform in-aria-expanded:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>`;
+
+const menuButton =
+  "text-muted-foreground hover:text-foreground aria-expanded:text-foreground inline-flex items-center gap-1 text-sm font-medium whitespace-nowrap transition-colors";
+const panelOuter = "mega-content";
+const panelInner = "mega-inner";
+const item =
+  "hover:bg-accent focus-visible:bg-accent flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium whitespace-nowrap outline-none transition-colors";
+const footerLink = "mega-footer";
+const summary =
+  "flex cursor-pointer list-none items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium [&::-webkit-details-marker]:hidden";
+import { pagePath } from "@/lib/page-path";
+---
+
+<header
+  id="site-header"
+  data-scrolled="false"
+  data-ink={ink ? "true" : undefined}
+  class="mk-header group sticky top-0 z-50 h-14 w-full sm:h-16"
+>
+  <div class="mk-wrap relative flex h-14 items-center justify-between sm:h-16">
+    <div class="relative z-10 flex items-center gap-7">
+      <a href="/" class="flex items-center gap-2" aria-label={siteConfig.name}>
+        <Logo class="size-9" />
+        <span class="font-[family-name:var(--mk-font-display)] text-[1.25rem] font-semibold tracking-[-0.04em] whitespace-nowrap sm:text-[1.55rem]">{siteConfig.name}</span>
+      </a>
+      <nav data-desktop-nav aria-label="Main" class="hidden items-center gap-5 lg:flex">
+        {
+          nav.map((n, i) =>
+            "items" in n ? (
+              <div class="relative" data-menu>
+                <button type="button" class={menuButton} aria-expanded="false" aria-haspopup="true" id={`menu-trigger-${i}`} aria-controls={`menu-${i}`}>
+                  {n.label} <Fragment set:html={chevron} />
+                </button>
+                <div id={`menu-${i}`} data-panel aria-labelledby={`menu-trigger-${i}`} inert class={panelOuter}>
+                  <div class={panelInner}>
+                    <ul class="mega-grid">
+                      {n.items.map(withIcon).map((it) => (
+                        <li>
+                          <a href={it.href} class="mega-link">
+                            {(it.logo || it.Icon) && <span class="mega-icon" aria-hidden="true">
+                              {it.logo ? <img src={it.logo} alt="" width="24" height="24" class="size-6 object-contain" loading="lazy" /> : null}
+                              {it.Icon ? <it.Icon className="size-5" /> : null}
+                            </span>}
+                            <span class="min-w-0"><span class="mega-title">{it.label}</span>{it.description && <span class="mega-description">{description(it)}</span>}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    {(n.footer || n.secondaryFooter) && <div class="mega-footer-row">
+                      {n.footer && <a href={n.footer.href} class={footerLink}>{n.footer.label} <ArrowRight className="size-4" /></a>}
+                      {n.secondaryFooter && <a href={n.secondaryFooter.href} class="mega-demo">{n.secondaryFooter.prefix}<span>{n.secondaryFooter.label} <ArrowRight className="size-3.5" /></span></a>}
+                    </div>}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <a
+                href={n.href}
+                data-active={isActive(n.href)}
+                class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-sm font-medium whitespace-nowrap transition-colors"
+              >
+                {n.label}
+              </a>
+            ),
+          )
+        }
+      </nav>
+    </div>
+    <div class="relative z-10 flex items-center gap-2">
+      {/* The public code (siteConfig.repoUrl): Work Inbox is open source. */}
+      <a
+        href={siteConfig.repoUrl}
+        target="_blank"
+        rel="noopener"
+        aria-label="Work Inbox on GitHub"
+        title="Work Inbox on GitHub"
+        class="text-muted-foreground hover:text-foreground hover:bg-accent hidden h-8 items-center justify-center gap-1.5 rounded-full px-2 text-sm font-medium transition-colors sm:inline-flex"
+      >
+        <svg class="size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2 0-.3-.5-1.5.2-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.5.4.9 1.1.9 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"></path></svg>
+        <span class="hidden xl:inline">GitHub</span>
+      </a>
+      <button
+        type="button"
+        data-theme-toggle
+        aria-label="Theme: system, light or dark"
+        title="Theme: system, light or dark"
+        class="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-8 items-center justify-center rounded-full transition-colors"
+      >
+        <svg class="hidden size-4 in-data-[theme-mode=system]:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+        <svg class="hidden size-4 in-data-[theme-mode=light]:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+        <svg class="hidden size-4 in-data-[theme-mode=dark]:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+      </button>
+      <a href="/login" data-auth-signin class="text-muted-foreground hover:text-foreground hidden px-2 text-sm font-medium whitespace-nowrap transition-colors lg:inline">
+        Sign in
+      </a>
+      <a
+        href="/signup"
+        data-auth-cta
+        class="mk-btn mk-btn-sm max-sm:px-3"
+      >
+        <span data-auth-label>Start free</span>
+        <ArrowRight className="size-4 max-sm:hidden" />
+      </a>
+      <button
+        type="button"
+        data-mobile-toggle
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="Menu"
+        class="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-8 items-center justify-center rounded-full transition-colors lg:hidden"
+      >
+        <Menu className="size-4.5" />
+      </button>
+    </div>
+
+    <div data-mega-viewport class="mega-viewport" inert></div>
+
+    <div
+      id="mobile-menu"
+      data-mobile-panel
+      inert
+      class="border-border bg-popover invisible absolute top-full right-0 left-0 z-50 mt-2 max-h-[75vh] translate-y-1 overflow-y-auto rounded-3xl border p-3 opacity-0 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.3)] backdrop-blur-xl transition-[opacity,transform,visibility] duration-200 data-[open=true]:visible data-[open=true]:translate-y-0 data-[open=true]:opacity-100 lg:hidden"
+    >
+      {
+        nav.map((n) =>
+          "items" in n ? (
+            <details>
+              <summary class={summary}>
+                {n.label} <Fragment set:html={chevron} />
+              </summary>
+              <ul class="pb-2">
+                {n.items.map(withIcon).map((it) => (
+                  <li>
+                    <a href={it.href} class={item + " whitespace-normal"}>
+                      {it.logo ? <img src={it.logo} alt="" width="20" height="20" class="size-5 shrink-0 rounded-md bg-white p-0.5" loading="lazy" /> : null}
+                      {it.Icon ? <span class={iconTile}><it.Icon className="size-3.5" /></span> : null}
+                      <span><span class="block">{it.label}</span>{it.description && <span class="text-muted-foreground mt-0.5 block text-xs font-normal">{description(it)}</span>}</span>
+                    </a>
+                  </li>
+                ))}
+                {n.footer ? (
+                  <li>
+                    <a href={n.footer.href} class={item + " text-primary"}>
+                      {n.footer.label} <ArrowRight className="size-4" />
+                    </a>
+                  </li>
+                ) : null}
+                {n.secondaryFooter && <li><a href={n.secondaryFooter.href} class={item}>{n.secondaryFooter.label} <ArrowRight className="size-4" /></a></li>}
+              </ul>
+            </details>
+          ) : (
+            <a href={n.href} class={item}>
+              {n.label}
+            </a>
+          ),
+        )
+      }
+      <a href={siteConfig.repoUrl} target="_blank" rel="noopener" class={item}>GitHub</a>
+      <a href="/login" data-auth-signin class={item}>Sign in</a>
+    </div>
+  </div>
+</header>
+
+<script>
+  import { installSiteNavigation } from "@/scripts/site-navigation";
+
+  const header = document.getElementById("site-header")!;
+  const onScroll = () => header.setAttribute("data-scrolled", String(window.scrollY > 24));
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  // The marketing pages are prerendered, so swap the auth links once we know there's a session.
+  fetch("/api/auth/get-session", { credentials: "same-origin" })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (!data?.user) return;
+      document.querySelector("[data-auth-signin]")?.remove();
+      const cta = document.querySelector<HTMLAnchorElement>("[data-auth-cta]");
+      if (cta) {
+        cta.href = "/app";
+        cta.querySelector("[data-auth-label]")!.textContent = "Dashboard";
+      }
+    })
+    .catch(() => {});
+
+  const closeAll = installSiteNavigation(header);
+
+  // Mobile menu.
+  const toggle = document.querySelector<HTMLButtonElement>("[data-mobile-toggle]")!;
+  const mobile = document.querySelector<HTMLElement>("[data-mobile-panel]")!;
+  const setMobile = (open: boolean) => {
+    toggle.setAttribute("aria-expanded", String(open));
+    mobile.dataset.open = String(open);
+    mobile.inert = !open;
+  };
+  toggle.addEventListener("click", () => setMobile(toggle.getAttribute("aria-expanded") !== "true"));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeAll();
+      setMobile(false);
+    }
+  });
+  document.addEventListener("click", (e) => {
+    const t = e.target as Element;
+    if (!t.closest("[data-mobile-panel]") && !t.closest("[data-mobile-toggle]")) setMobile(false);
+  });
+
+  for (const button of document.querySelectorAll("[data-theme-toggle]")) {
+    // System → light → dark → system (see BaseLayout).
+    button.addEventListener("click", () => window.setThemeMode(window.nextThemeMode()));
+  }
+</script>
+
+<style>
+  /* A plain bar: the page colour with a hairline once scrolled; over an ink band it is see-through and light. */
+  .mk-header {
+    background: color-mix(in srgb, var(--mk-bg) 92%, transparent);
+    backdrop-filter: blur(12px);
+    transition: background-color 0.2s, box-shadow 0.2s;
+  }
+  .mk-header[data-scrolled="true"] {
+    box-shadow: 0 1px 0 var(--border);
+  }
+  .mk-header[data-ink][data-scrolled="false"] {
+    --foreground: #fefefe;
+    --muted-foreground: rgb(254 254 254 / 0.72);
+    --accent: rgb(254 254 254 / 0.08);
+    --mk-accent: #fefefe;
+    --mk-accent-2: #ffffff;
+    --mk-on-accent: #141414;
+    color: var(--foreground);
+    background: transparent;
+    backdrop-filter: none;
+  }
+  /* Menus open on the page colour, not the band's. */
+  .mk-header :is(.mega-viewport, [data-mobile-panel]) {
+    --foreground: var(--mk-ink);
+    --muted-foreground: color-mix(in srgb, var(--mk-ink) 65%, transparent);
+    --accent: color-mix(in srgb, var(--mk-ink) 6%, transparent);
+    color: var(--foreground);
+  }
+  .mega-viewport {
+    position: absolute;
+    top: calc(100% + 0.65rem);
+    left: 0;
+    width: min(620px, calc(100vw - 2rem));
+    height: 0;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(6px);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--popover);
+    transition: left 300ms cubic-bezier(0.22, 1, 0.36, 1), height 300ms cubic-bezier(0.22, 1, 0.36, 1), opacity 160ms, transform 200ms, visibility 200ms;
+  }
+  .mega-viewport[data-open="true"] { visibility: visible; opacity: 1; transform: none; }
+  .mega-content { position: absolute; top: 0; left: 0; width: 100%; visibility: hidden; }
+  .mega-content[data-active="true"], .mega-content[data-leaving="true"] { visibility: visible; }
+  .mega-content[inert] { pointer-events: none; }
+  .mega-inner { padding: 0.5rem; }
+  .mega-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.25rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: 1rem; background: var(--background); }
+  .mega-link { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.65rem; border-radius: 0.75rem; transition: background 160ms; }
+  .mega-link:hover, .mega-link:focus-visible { background: var(--accent); }
+  .mega-link:focus-visible, .mega-footer:focus-visible, .mega-demo:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  .mega-icon { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; flex-shrink: 0; border: 1px solid var(--border); border-radius: 0.65rem; color: var(--foreground); }
+  .mega-title { display: block; font-size: 0.875rem; font-weight: 600; line-height: 1.4; }
+  .mega-description { display: block; margin-top: 0.2rem; font-size: 0.75rem; line-height: 1.5; color: var(--muted-foreground); }
+  .mega-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 0.65rem 0.35rem; font-size: 0.75rem; }
+  .mega-footer, .mega-demo span { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 500; }
+  .mega-footer { color: var(--primary); }
+  .mega-demo { color: var(--muted-foreground); }
+  .mega-demo span { margin-left: 0.4rem; color: var(--foreground); }
+  @media (max-width: 1023px) { .mega-viewport { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .mega-viewport { transition: none; } }
+</style>

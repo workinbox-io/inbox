@@ -1,0 +1,15 @@
+**/node_modules
+.git
+.wrangler
+.astro
+dist
+**/.env
+**/.env.*
+!**/.env.example
+**/*.vars
+**/*.sqlite*
+.aws
+.agents
+.codex
+
+infra/mail/tls/

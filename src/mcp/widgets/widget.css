@@ -1,0 +1,35 @@
+/*
+ * Shared widget styles. Hosts pass their design tokens as CSS variables (useHostStyles); the
+ * fallbacks keep widgets readable in hosts that don't.
+ */
+:root {
+  color-scheme: light dark;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--font-text-sm-size, 14px);
+  line-height: var(--font-text-sm-line-height, 1.45);
+  color: var(--color-text-primary, CanvasText);
+  background: transparent;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+.widget { display: grid; gap: 12px; padding: 4px; }
+.header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.title { font-size: var(--font-heading-xs-size, 15px); font-weight: var(--font-weight-semibold, 600); margin: 0; }
+.muted { color: var(--color-text-secondary, GrayText); }
+.list { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; overflow: hidden;
+  border: var(--border-width-regular, 1px) solid var(--color-border-primary, color-mix(in srgb, CanvasText 12%, transparent));
+  border-radius: var(--border-radius-lg, 12px); }
+.item { display: grid; gap: 2px; padding: 10px 14px; background: var(--color-background-primary, Canvas); }
+.item + .item { border-top: var(--border-width-regular, 1px) solid var(--color-border-secondary, color-mix(in srgb, CanvasText 8%, transparent)); }
+.name { font-weight: var(--font-weight-medium, 500); }
+.form { display: flex; gap: 8px; }
+.input { flex: 1; min-width: 0; padding: 7px 10px; font: inherit; color: inherit;
+  background: var(--color-background-primary, Canvas);
+  border: var(--border-width-regular, 1px) solid var(--color-border-primary, color-mix(in srgb, CanvasText 18%, transparent));
+  border-radius: var(--border-radius-md, 8px); }
+.input:focus { outline: 2px solid var(--color-ring-primary, Highlight); outline-offset: 1px; }
+.button { padding: 7px 12px; font: inherit; font-weight: var(--font-weight-medium, 500); cursor: pointer; border: 0;
+  color: var(--color-text-inverse, Canvas); background: var(--color-background-inverse, CanvasText);
+  border-radius: var(--border-radius-md, 8px); }
+.button:disabled { opacity: 0.5; cursor: default; }
+.error { color: var(--color-text-danger, #c0392b); margin: 0; }

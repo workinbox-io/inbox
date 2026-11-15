@@ -1,0 +1,20 @@
+{
+  "name": "workinbox-mail-bridge",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:e2e": "node test/run-e2e.mjs"
+  },
+  "dependencies": {
+    "imapflow": "^2.11.0",
+    "ipaddr.js": "^2.2.0",
+    "nodemailer": "^10.5.0",
+    "smtp-server": "^3.21.4",
+    "zod": "^4.0.0"
+  }
+}

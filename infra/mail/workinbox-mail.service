@@ -1,0 +1,18 @@
+[Unit]
+Description=Workinbox isolated mail bridge and protocol engine
+Requires=docker.service
+After=docker.service network-online.target
+RequiresMountsFor=/opt/workinbox-mail/state
+ConditionPathIsMountPoint=/opt/workinbox-mail/state
+
+[Service]
+Type=exec
+WorkingDirectory=/opt/workinbox-mail/source/infra/mail
+ExecStart=/usr/bin/docker compose --env-file .env -f compose.yml -f compose.cloudfile.yml -f compose.public.yml up --no-build --abort-on-container-exit
+ExecStop=/usr/bin/docker compose --env-file .env -f compose.yml -f compose.cloudfile.yml -f compose.public.yml stop bridge stalwart
+Restart=always
+RestartSec=10s
+TimeoutStopSec=120s
+
+[Install]
+WantedBy=multi-user.target

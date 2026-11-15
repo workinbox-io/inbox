@@ -1,0 +1,27 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PanelRouter from "@/components/app/panel-router";
+import { AppLoading } from "@/components/app/app-loading";
+import { appPage, appNotFound } from "@/lib/server/app-page";
+import { HttpError } from "@/lib/server/api";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("Referrer-Policy", "no-referrer");
+let initial;
+try {
+  const page = await appPage(Astro, Astro.url);
+  if ("redirect" in page) return Astro.redirect(page.redirect!);
+  // The document and JSON endpoint use exactly the same wire representation.
+  initial = JSON.parse(JSON.stringify(page));
+} catch (error) {
+  if (error instanceof HttpError && error.status === 404) {
+    Astro.response.status = 404;
+    initial = await appNotFound(Astro);
+  } else throw error;
+}
+---
+<BaseLayout title={initial.title} lang={Astro.locals.locale} noindex>
+  <PanelRouter client:only="react" initial={initial}>
+    <div slot="fallback"><AppLoading className="min-h-svh" /></div>
+  </PanelRouter>
+</BaseLayout>

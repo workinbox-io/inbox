@@ -1,0 +1,613 @@
+/**
+ * Work Inbox's pixel scenes (our own drawings): a startup in a living room at night for the hero bands, the office building from
+ * the street for the closing band, and small office scenes for the cards on the page. See pixel.ts for
+ * the palette keys. Random values are drawn in a fixed order every frame, so nothing jumps between frames.
+ */
+import { type ColorKey, type Pix, type Scene, type Sprite, dithered, random, sprite } from "./pixel";
+
+import { office } from "./office";
+
+const S = {
+  envelope: sprite(["wwwwwww", "w3www3w", "ww3w3ww", "www3www", "wwwwwww"]),
+  plane: sprite(["w.......", "4ww.....", ".44www..", "..wwwwww", ".4ww....", "4w......"]),
+  // An envelope on the page: outlined, since the page is white.
+  letter: sprite(["5555555", "5500055", "5050505", "5005005", "5555555"]),
+  postbox: sprite(["wwwwww", "w3333w", "wwwwww", "wwwwww", "wwwwww", ".3..3.", ".3..3."]),
+  // A page with a folded corner, outlined like the letter.
+  doc: sprite(["55555..", "5000055", "5033005", "5000005", "5033305", "5000005", "5555555"]),
+  at: sprite([".55555.", "5.....5", "5..55.5", "5.5.5.5", "5..5555", "5......", ".55555."]),
+  plant: sprite(["..3...3..", ".333.333.", "3.33333.3", ".3333333.", "..33333..", "...333...", "....3....", "..22222..", "..22222..", "...222..."]),
+  standing: sprite(["..55..", ".5555.", ".5555.", "..55..", ".4444.", "444444", "444444", "444444", ".4..4.", ".4..4."]),
+  walk: [
+    sprite([".55.", ".55.", ".44.", "4444", ".44.", ".44.", ".4.4", ".4.4"]),
+    sprite([".55.", ".55.", ".44.", "4444", ".44.", ".44.", "..4.", "..4."]),
+  ],
+};
+
+const wrap = (v: number, n: number) => ((v % n) + n) % n;
+const ease = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x * x * (3 - 2 * x));
+
+/** A night sky in a box: still stars and, optionally, a moon with a halo. */
+function nightSky(p: Pix, x0: number, y0: number, w: number, h: number, moon: [number, number] | null, seed: number) {
+  const rnd = random(seed);
+  p.rect(x0, y0, w, h, "0");
+  for (let i = 0; i < Math.round((w * h) / 220); i++) {
+    const x = x0 + Math.floor(rnd() * w);
+    const y = y0 + Math.floor(rnd() * h * 0.7);
+    const bright = rnd() > 0.75;
+    p.dot(x, y, bright ? "3" : "2");
+  }
+  if (!moon) return;
+  const [mx, my] = moon;
+  for (let y = Math.max(y0, my - 10); y <= Math.min(y0 + h - 1, my + 10); y++) {
+    for (let x = Math.max(x0, mx - 10); x <= Math.min(x0 + w - 1, mx + 10); x++) {
+      const d = Math.hypot(x - mx, y - my);
+      if (d <= 3.6) p.dot(x, y, "w");
+      else if (d < 10 && dithered((1 - (d - 3.6) / 6.4) * 0.5, x, y)) p.dot(x, y, "1");
+    }
+  }
+}
+
+/** Slow clouds inside a box, moving one whole pixel at a time. */
+function clouds(p: Pix, t: number, x0: number, y0: number, w: number, h: number, seed: number) {
+  const rnd = random(seed);
+  for (let i = 0; i < 4; i++) {
+    const len = 10 + Math.floor(rnd() * 18);
+    const y = y0 + 2 + Math.floor(rnd() * h * 0.6);
+    const start = rnd() * w;
+    const speed = 0.6 + rnd() * 0.6;
+    const x = x0 + Math.floor(wrap(start + t * speed, w + len)) - len;
+    const left = Math.max(x, x0);
+    const right = Math.min(x + len, x0 + w);
+    if (right > left) p.rect(left, y, right - left, 1, "1");
+    if (right - 3 > left + 3) p.rect(left + 3, y + 1, right - left - 6, 1, "1");
+  }
+}
+
+/** A row of city blocks with still lit windows, from x0 to x1 standing on `base`. */
+function skyline(p: Pix, x0: number, x1: number, base: number, maxH: number, seed: number) {
+  const rnd = random(seed);
+  let x = x0;
+  while (x < x1) {
+    const w = 5 + Math.floor(rnd() * 7);
+    const h = 5 + Math.floor(rnd() * (maxH - 5));
+    const right = Math.min(x + w, x1);
+    p.rect(x, base - h, right - x, h, "1");
+    for (let wy = base - h + 2; wy < base - 1; wy += 3) {
+      for (let wx = x + 1; wx < right - 1; wx += 2) if (rnd() > 0.62) p.dot(wx, wy, "3");
+    }
+    x = right + (rnd() > 0.7 ? 1 : 0);
+  }
+}
+
+/** A desk seen from the front: someone behind a laptop (or nobody) and a mug; the laptop's logo lights up with new mail. */
+function desk(p: Pix, x: number, floor: number, t: number, i: number, who: ColorKey | null, mail = false) {
+  const top = floor - 11;
+  if (who) {
+    // Shoulders wider than the laptop, a neck and a head with hair; the head nods now and then.
+    const bob = 0;
+    const body: ColorKey = who === "5" ? "4" : "3";
+    p.rect(x + 5, top - 9, 16, 9, body);
+    p.rect(x + 4, top - 7, 1, 7, body);
+    p.rect(x + 21, top - 7, 1, 7, body);
+    p.rect(x + 12, top - 11 + bob, 2, 2, who);
+    p.rect(x + 10, top - 16 + bob, 6, 5, who);
+    p.rect(x + 10, top - 17 + bob, 6, 2, body);
+    // Hands typing: one up, one down, swapping a few times a second.
+    const tap = Math.floor(t * 3 + i) % 2;
+    p.rect(x + 7, top - 3 - tap, 3, 2, who);
+    p.rect(x + 16, top - 2 - (1 - tap), 3, 2, who);
+    // The laptop's back; its logo lights up when mail comes in.
+    p.rect(x + 8, top - 7, 10, 7, "2");
+    p.rect(x + 12, top - 5, 2, 2, mail ? "w" : "3");
+    p.rect(x + 6, top - 1, 14, 1, "3");
+    p.rect(x + 21, top - 3, 2, 3, "2");
+  }
+  p.rect(x, top, 26, 2, "4");
+  p.rect(x + 1, top + 2, 1, floor - top - 2, "3");
+  p.rect(x + 24, top + 2, 1, floor - top - 2, "3");
+}
+
+/** A floor of boards from `floor` down. */
+function boards(p: Pix, floor: number) {
+  p.rect(0, floor, p.w, p.h - floor, "1");
+  for (let y = floor + 2; y < p.h; y += 3) {
+    const off = (y * 7) % 13;
+    for (let x = 26 - off; x < p.w; x += 26) p.rect(x, y, 1, 1, "2");
+  }
+  p.rect(0, floor, p.w, 1, "2");
+}
+
+/** A sprite flying from a to b on an arc, for progress 0…1. */
+function fly(p: Pix, s: Sprite, a: [number, number], b: [number, number], k: number, lift = 12) {
+  if (k <= 0 || k >= 1) return;
+  const e = ease(k);
+  p.draw(s, a[0] + (b[0] - a[0]) * e - Math.floor(s.w / 2), a[1] + (b[1] - a[1]) * e - Math.sin(Math.PI * e) * lift - Math.floor(s.h / 2));
+}
+
+/** An office wall on the page over a floor of boards. */
+function pageRoom(p: Pix, floor: number) {
+  p.rect(0, 0, p.w, p.h, "0");
+  p.dither(0, 0, p.w, floor, "0", "1", 0.18);
+  boards(p, floor);
+}
+
+/** A straight line between two scene points. */
+function seg(p: Pix, a: [number, number], b: [number, number], c: ColorKey) {
+  const n = Math.max(1, Math.round(Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]))));
+  for (let i = 0; i <= n; i++) p.dot(Math.round(a[0] + ((b[0] - a[0]) * i) / n), Math.round(a[1] + ((b[1] - a[1]) * i) / n), c);
+}
+
+/** Someone standing, seen from the front, as tall as the people at the desks. */
+function standing(p: Pix, x: number, floor: number, skin: ColorKey, body: ColorKey) {
+  p.rect(x + 3, floor - 12, 3, 12, "3");
+  p.rect(x + 8, floor - 12, 3, 12, "3");
+  p.rect(x + 1, floor - 26, 12, 14, body);
+  p.rect(x + 6, floor - 28, 2, 2, skin);
+  p.rect(x + 4, floor - 34, 6, 6, skin);
+  p.rect(x + 4, floor - 35, 6, 2, body);
+}
+
+export const SCENES: Record<string, Scene> = {
+  office,
+  /**
+   * The home hero, a full-width strip: a startup run from a living room at night, seen from the front. Kitchen, a
+   * window on the street, someone coding on the couch, the folding table with two laptops under a whiteboard (mail goes
+   * from one to the other, a paper plane comes back), a TV with a game on, beige towers as the server, pizza boxes.
+   */
+  house: {
+    w: 480,
+    h: 100,
+    surface: "band",
+    draw(p, t) {
+      const floor = 86;
+      p.rect(0, 0, p.w, p.h, "0");
+      // Striped wallpaper, a skirting board, floor boards and a rug under the table.
+      for (let x = 3; x < p.w; x += 8) p.dither(x, 14, 1, floor - 14, "0", "1", 0.5);
+      boards(p, floor);
+      p.rect(0, floor - 2, p.w, 2, "1");
+      p.rect(178, floor + 3, 76, 7, "2");
+      for (let x = 180; x < 254; x += 4) p.dot(x, floor + 10, "2");
+
+      // String lights sagging between hooks along the ceiling, bulbs twinkling.
+      for (let x = 0; x < p.w; x++) p.dot(x, 3 + Math.round(4 * Math.sin((Math.PI * (x % 50)) / 50)), "1");
+      for (let i = 0; i * 10 + 5 < p.w; i++) {
+        const x = i * 10 + 5;
+        const on = (Math.floor(t * 2) + i * 3) % 7;
+        p.rect(x, 4 + Math.round(4 * Math.sin((Math.PI * (x % 50)) / 50)), 2, 2, on === 0 ? "w" : on < 3 ? "4" : "3");
+      }
+
+      // Kitchen: fridge with magnets, a counter with a coffee machine, someone waiting for their coffee.
+      p.rect(8, floor - 52, 20, 52, "3");
+      p.rect(8, floor - 34, 20, 1, "2");
+      p.rect(24, floor - 48, 1, 10, "2");
+      p.rect(24, floor - 30, 1, 14, "2");
+      for (const [x, y] of [[12, 40], [18, 44], [14, 58]] as const) p.rect(x, y, 2, 2, "5");
+      p.rect(30, floor - 24, 40, 3, "4");
+      p.rect(31, floor - 21, 38, 21, "2");
+      p.rect(50, floor - 21, 1, 21, "1");
+      p.rect(44, floor - 14, 3, 1, "3");
+      p.rect(54, floor - 14, 3, 1, "3");
+      p.rect(33, floor - 36, 10, 12, "3");
+      p.rect(35, floor - 33, 6, 2, "1");
+      p.rect(37, floor - 28, 3, 4, "w");
+      for (let i = 0; i < 3; i++) {
+        const k = wrap(t * 1.5 + i / 3, 1);
+        p.dot(38 + Math.round(Math.sin((k + i) * 6)), floor - 30 - Math.round(k * 8), "2");
+      }
+      standing(p, 53, floor, "5", "4");
+      p.rect(51, floor - 20, 3, 3, "w");
+
+      // Window on the street: night sky, the moon, low houses and a palm.
+      nightSky(p, 74, 14, 40, 44, [104, 24], 5);
+      skyline(p, 74, 114, 58, 10, 7);
+      seg(p, [84, 58], [86, 34], "1");
+      for (const [dx, dy] of [[-6, 3], [-5, -1], [0, -3], [5, -1], [6, 3]] as const) seg(p, [86, 34], [86 + dx, 34 + dy], "1");
+      p.rect(72, 12, 44, 2, "3");
+      p.rect(72, 12, 2, 46, "3");
+      p.rect(114, 12, 2, 46, "3");
+      p.rect(93, 12, 2, 46, "3");
+      p.rect(70, 58, 48, 2, "3");
+
+      // The couch: someone coding with a laptop on their knees, a cushion; a lava lamp on a crate next to it.
+      p.rect(122, floor - 26, 50, 12, "2");
+      p.rect(122, floor - 14, 50, 8, "3");
+      p.rect(118, floor - 20, 5, 14, "2");
+      p.rect(171, floor - 20, 5, 14, "2");
+      p.rect(124, floor - 6, 2, 6, "2");
+      p.rect(168, floor - 6, 2, 6, "2");
+      p.rect(156, floor - 22, 10, 8, "1");
+      p.rect(134, floor - 30, 12, 16, "4");
+      p.rect(139, floor - 32, 2, 2, "5");
+      p.rect(137, floor - 38, 6, 6, "5");
+      p.rect(137, floor - 39, 6, 2, "4");
+      p.rect(132, floor - 22, 16, 7, "2");
+      p.rect(139, floor - 20, 2, 2, "3");
+      p.rect(135, floor - 14, 3, 13, "2");
+      p.rect(142, floor - 14, 3, 13, "2");
+      p.rect(134, floor - 1, 5, 1, "3");
+      p.rect(141, floor - 1, 5, 1, "3");
+      const tap = Math.floor(t * 4) % 2;
+      p.rect(130, floor - 18 - tap, 2, 2, "5");
+      p.rect(148, floor - 17 - (1 - tap), 2, 2, "5");
+      p.rect(180, floor - 12, 12, 12, "2");
+      p.rect(180, floor - 8, 12, 1, "1");
+      p.rect(183, floor - 15, 6, 3, "3");
+      p.rect(184, floor - 30, 4, 15, "1");
+      p.rect(183, floor - 32, 6, 2, "3");
+      p.rect(185, floor - 17 - Math.round(wrap(t * 2.5, 11)), 2, 2, "4");
+      p.rect(184, floor - 24 + Math.round(3 * Math.sin(t * 1.3)), 3, 2, "4");
+
+      // Whiteboard over the table: sender, arrow, inbox, and a growth line drawn again and again.
+      p.rect(196, 16, 60, 34, "3");
+      p.rect(198, 18, 56, 30, "4");
+      p.rect(201, 21, 8, 6, "2");
+      seg(p, [211, 24], [219, 24], "2");
+      p.dot(218, 23, "2");
+      p.dot(218, 25, "2");
+      p.rect(221, 21, 8, 6, "2");
+      p.rect(222, 24, 6, 1, "4");
+      const pts: [number, number][] = [[202, 44], [212, 42], [220, 43], [230, 37], [238, 38], [250, 28]];
+      const drawn = Math.min(1, wrap(t, 6) / 4) * (pts.length - 1);
+      for (let i = 0; i < Math.floor(drawn); i++) seg(p, pts[i]!, pts[i + 1]!, "1");
+      const part = drawn - Math.floor(drawn);
+      if (part > 0 && Math.floor(drawn) < pts.length - 1) {
+        const [ax, ay] = pts[Math.floor(drawn)]!;
+        const [bx, by] = pts[Math.floor(drawn) + 1]!;
+        seg(p, [ax, ay], [ax + (bx - ax) * part, ay + (by - ay) * part], "1");
+      }
+
+      // The folding table: two people, their laptops' backs to us. Every 8 s mail goes left to right; the logo on the
+      // right laptop lights up while it's read, and a paper plane comes back.
+      const cycle = wrap(t, 8);
+      desk(p, 196, floor, t, 0, "5");
+      desk(p, 226, floor, t, 1, "4", cycle > 3.6 && cycle < 5.4);
+      for (const x of [196, 226]) {
+        p.rect(x + 7, floor - 9, 12, 2, "1");
+        p.rect(x + 9, floor - 9, 3, 9, "2");
+        p.rect(x + 14, floor - 9, 3, 9, "2");
+        p.rect(x + 8, floor - 1, 4, 1, "3");
+        p.rect(x + 14, floor - 1, 4, 1, "3");
+      }
+      p.rect(222, floor - 11, 4, 2, "4");
+      p.rect(223, floor - 14, 2, 3, "w");
+      fly(p, S.envelope, [209, floor - 30], [239, floor - 20], (cycle - 2.2) / 1.4, 12);
+      fly(p, S.plane, [239, floor - 32], [209, floor - 32], (cycle - 5.6) / 1.4, 10);
+
+      // TV with a game (a runner jumping over blocks), the console's light, a beanbag.
+      p.rect(264, floor - 12, 44, 12, "2");
+      p.rect(264, floor - 7, 44, 1, "1");
+      p.rect(270, floor - 10, 10, 3, "3");
+      p.dot(278, floor - 9, Math.floor(t * 2) % 2 ? "w" : "2");
+      p.rect(268, floor - 42, 36, 28, "3");
+      p.rect(270, floor - 40, 32, 22, "1");
+      p.rect(270, floor - 22, 32, 1, "2");
+      const scroll = wrap(t * 14, 32);
+      for (const o of [0, 16]) p.rect(270 + Math.round(wrap(o - scroll, 32)), floor - 25, 2, 3, "3");
+      const jump = Math.max(0, Math.sin(wrap(t * 14, 16) / 16 * Math.PI * 2 - 0.6)) * 5;
+      p.rect(276, floor - 26 - Math.round(jump), 2, 4, "w");
+      p.rect(285, floor - 14, 2, 2, "3");
+      p.rect(312, floor - 9, 16, 9, "2");
+      p.rect(314, floor - 12, 12, 3, "2");
+      p.rect(316, floor - 9, 8, 2, "1");
+
+      // The server: two beige towers with blinking lights, a router on top, cables to the wall.
+      for (const [i, x] of [336, 350].entries()) {
+        p.rect(x, floor - 30, 12, 30, "4");
+        p.rect(x + 2, floor - 27, 8, 2, "3");
+        p.rect(x + 2, floor - 23, 8, 1, "3");
+        p.dot(x + 3, floor - 18, (Math.floor(t * 6) + i) % 3 ? "w" : "3");
+        p.dot(x + 6, floor - 18, (Math.floor(t * 5) + i * 2) % 4 ? "3" : "w");
+        p.rect(x + 2, floor - 10, 8, 6, "3");
+      }
+      p.rect(338, floor - 33, 10, 3, "2");
+      p.rect(346, floor - 38, 1, 5, "2");
+      p.dot(340, floor - 32, Math.floor(t * 3) % 2 ? "w" : "3");
+      seg(p, [348, floor - 2], [362, floor - 1], "2");
+
+      // A tower of pizza boxes and a plant in the corner.
+      for (let i = 0; i < 6; i++) {
+        const x = 366 + ((i * 3) % 4) - 1;
+        p.rect(x, floor - 4 - i * 4, 18, 4, i % 2 ? "3" : "2");
+        p.rect(x, floor - 4 - i * 4, 18, 1, "4");
+      }
+      p.draw(S.plant, 388, floor - 10);
+
+      // By the front door: a bike against the wall, a hoodie on a hook, sneakers on the mat.
+      for (const cx of [412, 436]) {
+        for (let a = 0; a < 40; a++) p.dot(cx + Math.round(7 * Math.cos((a / 40) * Math.PI * 2)), floor - 8 + Math.round(7 * Math.sin((a / 40) * Math.PI * 2)), "3");
+        p.dot(cx, floor - 8, "3");
+      }
+      seg(p, [412, floor - 8], [422, floor - 8], "4");
+      seg(p, [422, floor - 8], [419, floor - 20], "4");
+      seg(p, [419, floor - 18], [432, floor - 18], "4");
+      seg(p, [432, floor - 18], [436, floor - 8], "4");
+      seg(p, [432, floor - 18], [431, floor - 22], "4");
+      p.rect(429, floor - 23, 5, 1, "4");
+      p.rect(417, floor - 21, 5, 1, "4");
+      p.rect(450, floor - 58, 26, 58, "3");
+      p.rect(452, floor - 56, 22, 56, "2");
+      p.rect(455, floor - 52, 16, 20, "1");
+      p.rect(455, floor - 28, 16, 20, "1");
+      p.rect(470, floor - 30, 2, 2, "4");
+      p.rect(446, floor, 34, 2, "2");
+      p.rect(454, floor - 2, 5, 2, "4");
+      p.rect(460, floor - 2, 5, 2, "4");
+      p.rect(442, floor - 50, 4, 1, "4");
+      p.rect(440, floor - 49, 8, 12, "2");
+      p.rect(442, floor - 37, 4, 2, "2");
+    },
+  },
+  /** The office building from the street at night, mail flying in at its windows. */
+  cta: {
+    w: 240,
+    h: 80,
+    surface: "band",
+    draw(p, t) {
+      const street = 66;
+      nightSky(p, 0, 0, p.w, street, [204, 14], 41);
+      clouds(p, t, 0, 0, p.w, 30, 43);
+      skyline(p, 0, 74, street, 26, 45);
+      skyline(p, 168, 240, street, 30, 47);
+      // The building: four floors of windows, people in some, an @ on the roof.
+      const bx = 82;
+      const bw = 76;
+      p.rect(bx, 16, bw, street - 16, "2");
+      p.rect(bx - 2, 14, bw + 4, 2, "3");
+      p.draw(S.at, bx + bw / 2 - 3, 5, { "5": "w" });
+      const rnd = random(49);
+      for (let f = 0; f < 4; f++) {
+        for (let c = 0; c < 6; c++) {
+          const wx = bx + 4 + c * 12;
+          const wy = 20 + f * 10;
+          const lit = rnd() > 0.3;
+          const someone = rnd() > 0.6;
+          p.rect(wx, wy, 8, 6, lit ? "4" : "1");
+          if (lit && someone) {
+            p.rect(wx + 3, wy + 1, 2, 2, "2");
+            p.rect(wx + 2, wy + 3, 4, 3, "2");
+          }
+        }
+      }
+      // The door, a post box and a street lamp.
+      p.rect(bx + bw / 2 - 5, street - 9, 10, 9, "4");
+      p.rect(bx + bw / 2 - 1, street - 9, 1, 9, "2");
+      p.draw(S.postbox, bx + bw / 2 + 8, street - 7);
+      p.rect(48, street - 22, 1, 22, "2");
+      p.rect(46, street - 23, 5, 2, "w");
+      for (let y = street - 21; y < street; y++) {
+        const half = 2 + Math.floor((y - street + 21) * 0.4);
+        for (let dx = -half; dx <= half; dx++) if (dithered(0.22, 48 + dx, y)) p.dot(48 + dx, y, "1");
+      }
+      p.rect(0, street, p.w, p.h - street, "1");
+      p.rect(0, street, p.w, 1, "3");
+      for (let x = 0; x < p.w; x += 14) p.rect(x, street + 8, 7, 1, "2");
+      // Mail flying in at the windows, people walking home.
+      for (let i = 0; i < 4; i++) {
+        const from: [number, number] = i % 2 ? [250, 10 + i * 6] : [-10, 12 + i * 6];
+        fly(p, S.envelope, from, [bx + 8 + i * 18, 23 + (i % 3) * 10], wrap(t - i * 1.5, 6) / 2.4, 10);
+      }
+      for (let i = 0; i < 2; i++) {
+        const x = Math.floor(i === 0 ? wrap(t * 6, p.w + 20) - 10 : p.w - (wrap(t * 5 + 90, p.w + 20) - 10));
+        p.draw(S.walk[Math.floor(t * 4 + i) % 2]!, x, street - 7, { "5": "4", "4": "3" });
+      }
+    },
+  },
+  /** Card: a personal mailbox for each person, mail landing on their laptops. */
+  mailboxes: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 56;
+      pageRoom(p, floor);
+      [6, 47, 88].forEach((x, i) => {
+        const k = wrap(t - i * 1.1, 3.3);
+        desk(p, x, floor, t, i, (["5", "4", "5"] as const)[i]!, k > 1.3 && k < 2.4);
+        if (k < 1.3) p.draw(S.letter, x + 10, -6 + ease(k / 1.3) * 30);
+      });
+    },
+  },
+  /** Card: the team at one table, support@ on the screen, its mail going round. */
+  shared: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(42, 5, 36, 22, "5");
+      p.rect(44, 7, 32, 18, "0");
+      p.draw(S.at, 47, 12);
+      for (let r = 0; r < 3; r++) p.rect(57, 11 + r * 4, 15 - r * 3, 1, "3");
+      p.rect(59, 27, 2, 4, "4");
+      const people: [number, ColorKey][] = [
+        [18, "5"],
+        [32, "4"],
+        [82, "5"],
+        [96, "3"],
+      ];
+      people.forEach(([x, c], i) => p.draw(S.standing, x, floor - 18, { "5": c, "4": c === "5" ? "4" : "3" }));
+      p.rect(12, floor - 10, 96, 2, "4");
+      p.rect(20, floor - 8, 1, 8, "3");
+      p.rect(99, floor - 8, 1, 8, "3");
+      people.forEach(([x], i) => fly(p, S.letter, [60, 18], [x + 3, floor - 20], wrap(t - i * 0.9, 3.6) / 1.2, 10));
+    },
+  },
+  /** Card: a shared note with presence, named cursors and a live selection. */
+  notes: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      // Tiny bitmap labels stay on the same pixel grid as the other illustrations.
+      const glyphs: Record<string, string[]> = {
+        A: [".5.", "5.5", "555", "5.5", "5.5"], B: ["55.", "5.5", "55.", "5.5", "55."],
+        C: [".55", "5..", "5..", "5..", ".55"], E: ["555", "5..", "55.", "5..", "555"],
+        H: ["5.5", "5.5", "555", "5.5", "5.5"], L: ["5..", "5..", "5..", "5..", "555"],
+        N: ["5.5", "555", "555", "555", "5.5"], P: ["55.", "5.5", "55.", "5..", "5.."],
+        U: ["5.5", "5.5", "5.5", "5.5", "555"],
+      };
+      const label = (text: string, x: number, y: number, color: ColorKey) => {
+        [...text].forEach((letter, i) => {
+          if (glyphs[letter]) p.draw(sprite(glyphs[letter]!), x + i * 4, y, { "5": color });
+        });
+      };
+      p.rect(0, 0, 120, 66, "0");
+      p.rect(5, 4, 110, 59, "1");
+      p.rect(4, 3, 110, 59, "4");
+      p.rect(5, 4, 108, 57, "0");
+      label("LAUNCH PLAN", 10, 8, "5");
+      p.rect(5, 17, 108, 1, "2");
+      p.rect(90, 6, 9, 9, "5");
+      p.rect(101, 6, 9, 9, "3");
+      label("A", 93, 8, "0");
+      label("B", 104, 8, "0");
+      p.rect(12, 23, 57, 2, "5");
+      p.rect(12, 33, 18, 1, "3");
+      p.rect(33, 30, 43, 7, "2");
+      p.rect(35, 33, 38, 1, "4");
+      p.rect(76, 29, 1, 9, "4");
+      p.rect(76, 22, 15, 7, "4");
+      label("BEN", 78, 23, "0");
+      p.rect(12, 42, 4, 4, "3");
+      p.dot(13, 43, "0");
+      p.rect(20, 43, 51, 1, "3");
+      p.rect(12, 52, 4, 4, "3");
+      p.rect(13, 53, 2, 2, "0");
+      const end = 55 + Math.floor((Math.sin(t * 1.5) + 1) * 4);
+      p.rect(20, 53, end - 20, 1, "4");
+      p.rect(end, 49, 1, 9, "5");
+      p.rect(end, 42, 19, 7, "5");
+      label("ANNA", end + 2, 43, "0");
+    },
+  },
+  /** Card: the team's address book, a pinboard of cards that fills as mail goes out. */
+  contacts: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(8, 4, 72, 42, "4");
+      p.rect(10, 6, 68, 38, "1");
+      const faces: ColorKey[] = ["5", "4", "3", "5", "3", "4"];
+      const slot = (i: number): [number, number] => [13 + (i % 3) * 22, 9 + Math.floor(i / 3) * 17];
+      const cyc = wrap(t, 10.5);
+      const filled = Math.min(6, Math.floor(cyc / 1.5));
+      for (let i = 0; i < filled; i++) {
+        const [x, y] = slot(i);
+        p.rect(x, y, 18, 14, "3");
+        p.rect(x + 1, y + 1, 16, 12, "0");
+        p.rect(x + 3, y + 3, 4, 4, faces[i]!);
+        p.rect(x + 9, y + 4, 6, 1, "4");
+        p.rect(x + 9, y + 7, 4, 1, "2");
+        p.rect(x + 3, y + 10, 12, 1, "2");
+      }
+      // Whoever sends the mail stands by the board; each letter becomes a card.
+      p.draw(S.standing, 90, floor - 10);
+      p.draw(S.plant, 106, floor - 10);
+      if (filled < 6) {
+        const [x, y] = slot(filled);
+        fly(p, S.letter, [94, floor - 12], [x + 9, y + 7], (cyc % 1.5) / 1.2, 12);
+      }
+    },
+  },
+  /** Card: a shelf of folders the team shares, files filing in from a laptop. */
+  drive: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(8, 6, 58, 52, "4");
+      p.rect(10, 8, 54, 48, "1");
+      const colors: ColorKey[] = ["3", "4", "5", "2"];
+      const cyc = wrap(t, 11);
+      const added = Math.min(9, Math.floor(cyc / 1.1));
+      [26, 44, 56].forEach((base, r) => {
+        if (r < 2) p.rect(10, base, 54, 2, "4");
+        const count = r < 2 ? 12 : added;
+        for (let j = 0; j < count; j++) {
+          const h = 10 + ((j * 7 + r * 3) % 5);
+          const x = 12 + j * 4;
+          p.rect(x, base - h, 3, h, colors[(j + r) % 4]!);
+          p.dot(x + 1, base - h + 2, "0");
+        }
+      });
+      desk(p, 74, floor, t, 0, "5");
+      p.draw(S.plant, 106, floor - 10);
+      if (added < 9) fly(p, S.doc, [87, floor - 20], [13 + added * 4, 46], (cyc % 1.1) / 0.9, 14);
+    },
+  },
+  /** Card: an AI app on the wall screen; its reply waits as a draft until someone presses Send. */
+  ai: {
+    w: 120,
+    h: 66,
+    surface: "page",
+    draw(p, t) {
+      const floor = 58;
+      pageRoom(p, floor);
+      p.rect(10, 4, 74, 44, "5");
+      p.rect(12, 6, 70, 40, "0");
+      const cyc = wrap(t, 8);
+      const bubbles: [number, number, number, ColorKey][] = [
+        [16, 10, 30, "3"],
+        [48, 17, 30, "4"],
+      ];
+      bubbles.forEach(([x, y, w, c], i) => {
+        if (cyc < 0.4 + i * 1.2) return;
+        p.rect(x, y, w, 5, c);
+        p.rect(x + 2, y + 2, w - 8, 1, "0");
+      });
+      if (cyc > 2.8) {
+        // The draft card: a letter and its Send button, pressed a moment later.
+        p.rect(16, 26, 62, 15, "4");
+        p.rect(17, 27, 60, 13, "0");
+        p.draw(S.letter, 20, 31);
+        p.rect(30, 31, 22, 1, "3");
+        p.rect(30, 34, 16, 1, "2");
+        p.rect(62, 31, 12, 5, cyc > 4.6 ? "5" : "3");
+      }
+      p.draw(S.standing, 90, floor - 10);
+      p.draw(S.plant, 106, floor - 10);
+      fly(p, S.letter, [68, 33], [124, 4], (cyc - 4.8) / 1.6, 10);
+    },
+  },
+  /** Setup steps (data-state 0…3): the company's door and @, the people at their desks, the shared screen and mail. */
+  setup: {
+    w: 200,
+    h: 80,
+    surface: "page",
+    draw(p, t, state) {
+      const step = Number(state) || 0;
+      const floor = 66;
+      pageRoom(p, floor);
+      const ghost = (on: boolean): Partial<Record<ColorKey, ColorKey>> | undefined => (on ? undefined : { "5": "1", "4": "1", "3": "1", "2": "1", w: "1" });
+      // 1: the door with the @ of your domain.
+      const door = ghost(step >= 1);
+      p.rect(12, floor - 34, 24, 34, door?.["4"] ?? "4");
+      p.rect(15, floor - 31, 18, 31, door ? "0" : "2");
+      p.draw(S.at, 21, floor - 44, door);
+      // 2: the people at their desks.
+      [52, 88].forEach((x, i) => {
+        if (step >= 2) desk(p, x, floor, t, i, i ? "4" : "5", step >= 3 && wrap(t - i, 2.6) > 1.6);
+        else {
+          p.rect(x, floor - 11, 26, 2, "1");
+          p.rect(x + 8, floor - 17, 10, 6, "1");
+        }
+      });
+      // 3: support@ on the wall screen, shared by both, and the mail flows.
+      const screen = ghost(step >= 3);
+      p.rect(138, 10, 44, 28, screen?.["5"] ?? "5");
+      p.rect(140, 12, 40, 24, "0");
+      p.draw(S.at, 144, 18, screen);
+      for (let r = 0; r < 3; r++) p.rect(155, 17 + r * 5, 20 - r * 4, 1, screen?.["3"] ?? "3");
+      p.draw(S.plant, 186, floor - 10, ghost(step >= 2));
+      if (step >= 1) fly(p, S.letter, [24, floor - 30], step >= 3 ? [160, 24] : [65, floor - 20], wrap(t, 2.6) / 1.6, 16);
+      if (step >= 3) [52, 88].forEach((x, i) => fly(p, S.letter, [160, 24], [x + 13, floor - 20], wrap(t - 0.8 - i * 0.7, 2.6) / 1.2, 10));
+    },
+  },
+};

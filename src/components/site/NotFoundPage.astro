@@ -1,0 +1,59 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import PixelIcon from "./pixel/PixelIcon.astro";
+
+const envelope = [
+  "....................", "..5555555555555555..", ".55..............55.",
+  ".5.55..........55.5.", ".5...55......55...5.", ".5.....55..55.....5.",
+  ".5.......55.......5.", ".5.....55..55.....5.", ".5...55......55...5.",
+  ".5.55..........55.5.", ".55..............55.", "..5555555555555555..",
+];
+---
+
+<MarketingLayout title="Page not found" description="This page may have moved, or the address might have a typo." footer={false}>
+  <section class="mk-wrap lost-page">
+    <div class="lost-copy">
+      <p class="mk-cap lost-label"><span aria-hidden="true">↳</span> 404 / ADDRESS NOT FOUND</p>
+      <h1 class="mk-h1">This page<br />got lost.</h1>
+      <p class="mk-lead">Even good mail takes a wrong turn sometimes. The page you’re looking for may have moved, or the address might have a typo.</p>
+      <div class="lost-actions">
+        <a href="/" class="mk-btn">Back to home <span aria-hidden="true">↗</span></a>
+        <a href="/app/mail" class="mk-btn mk-btn-ghost">Open your inbox</a>
+      </div>
+      <p class="mk-cap lost-help">Looking for something specific? <a href="/docs" class="mk-link">Try the docs</a>.</p>
+    </div>
+    <div class="lost-art" aria-hidden="true">
+      <span class="lost-number">404</span>
+      <div class="lost-letter">
+        <div class="letter-heading mk-cap"><span>WORK INBOX</span><span class="letter-stamp">RETURN TO SENDER</span></div>
+        <div class="letter-envelope"><PixelIcon rows={envelope} class="w-32" /></div>
+        <div class="letter-footer"><span class="mk-cap">NO PAGE AT THIS ADDRESS</span><span class="letter-lines"></span></div>
+      </div>
+      <span class="lost-caption mk-cap">A wrong turn. A fresh start.</span>
+    </div>
+  </section>
+  <div class="lost-bottom mk-cap"><span>Work Inbox / 404</span><a href="/docs" class="mk-link">Find your way back ↗</a></div>
+</MarketingLayout>
+
+<style>
+  .lost-page { display: grid; flex: 1; align-items: center; gap: 3rem; padding-block: clamp(3rem, 8vh, 7rem); }
+  .lost-copy { max-width: 32rem; }
+  .lost-label { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; font-size: .7rem; letter-spacing: .09em; }
+  .lost-copy h1 { margin-bottom: 1.5rem; }
+  .lost-copy .mk-lead { max-width: 28rem; font-size: 1.05rem; }
+  .lost-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
+  .lost-help { margin-top: 2rem; font-size: .75rem; }
+  .lost-art { position: relative; display: grid; min-width: 0; min-height: 21rem; place-items: center; }
+  .lost-number { position: absolute; top: -1rem; font-family: var(--mk-font-mono); font-size: clamp(7rem, 17vw, 15rem); line-height: 1; letter-spacing: -.08em; color: var(--border); }
+  .lost-letter { position: relative; width: min(90%, 25rem); border: 1px solid var(--mk-frame); background: var(--card); transform: rotate(-7deg); }
+  .letter-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 1.25rem; font-size: .6rem; letter-spacing: .07em; }
+  .letter-stamp { border: 1px dashed var(--mk-frame); padding: .6rem; font-size: .5rem; transform: rotate(5deg); }
+  .letter-envelope { display: flex; justify-content: center; padding: 1.25rem 0 2.25rem; color: var(--foreground); }
+  .letter-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--border); padding: 1rem 1.25rem; }
+  .letter-footer .mk-cap { font-size: .55rem; letter-spacing: .06em; }
+  .letter-lines { width: 3rem; height: 1.5rem; background: repeating-linear-gradient(to bottom, transparent 0 5px, var(--border) 5px 6px); }
+  .lost-caption { position: absolute; bottom: -.5rem; font-size: .65rem; letter-spacing: .02em; }
+  .lost-bottom { display: flex; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--border); padding: 1.25rem max(1.5rem, calc((100vw - 1200px) / 2)); font-size: .65rem; }
+  @media (min-width: 900px) { .lost-page { grid-template-columns: 1fr 1fr; gap: 4rem; min-height: calc(100svh - 8.5rem); } .lost-art { min-height: 27rem; } }
+  @media (max-width: 480px) { .lost-actions { flex-direction: column; } .lost-art { min-height: 22rem; } .letter-heading { padding: 1rem; } .lost-bottom { padding-inline: 1.5rem; } }
+</style>

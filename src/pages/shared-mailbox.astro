@@ -1,0 +1,76 @@
+---
+/**
+ * Landing page for "shared mailbox" (1,000 US searches a month, CPC about $72) and "shared inbox" (390), OpenSEO 2026-11-09.
+ * Explains how shared mailboxes work in Work Inbox (lib/server/mail/access.ts: members granted in mailbox_access, every
+ * shared mailbox for owners and admins) and how other products handle them (config/compare.ts, row "shared").
+ */
+import { ArrowRight } from "lucide-react";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import PageHero from "@/components/site/PageHero.astro";
+import ClosingBand from "@/components/site/ClosingBand.astro";
+import BrowserFrame from "@/components/site/BrowserFrame.astro";
+import Shot from "@/components/site/Shot.astro";
+import Faq from "@/components/site/Faq.astro";
+import Stage from "@/components/site/craft/Stage.astro";
+import FeatureLedger from "@/components/site/craft/FeatureLedger.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import { COMPETITORS } from "@/config/compare";
+import { PLANS } from "@/config/plans";
+import { Eye, Forward, Inbox, KeyRound, Reply, Users } from "lucide-react";
+
+export const prerender = true;
+
+const how = [
+  { icon: Inbox, title: "A real mailbox", text: "support@ has its own inbox, folders, unread count and spam filter, next to each person's own mailbox." },
+  { icon: Users, title: "You choose who answers", text: "Add the people who handle it. Owners and admins see every shared mailbox; members see the ones they're given." },
+  { icon: Reply, title: "Replies from the shared address", text: "Customers see support@, not the name of whoever answered, and the thread stays in one place for everyone." },
+  { icon: KeyRound, title: "No shared password", text: "Everyone signs in as themselves. Each person can enable two-factor authentication for password sign-in. Taking someone off is one click." },
+  { icon: Forward, title: "Aliases into it", text: "help@ and hello@ can land in support@. A catch-all can send everything unknown there too." },
+  { icon: Eye, title: "One view or many", text: "Read one mailbox at a time, or tick several to see your own mail and support@ in a single list." },
+];
+
+const faq = [
+  { question: "What is a shared mailbox?", answer: "A mailbox for an address like support@ or sales@ that several people open with their own accounts. Unlike forwarding, everyone sees the same threads and replies go out from the shared address." },
+  { question: "What does a shared mailbox cost in Work Inbox?", answer: `Nothing. You pay per person with a personal mailbox, from €${PLANS.starter.priceMonthly / 100} a month, and create as many shared mailboxes as you need.` },
+  { question: "What's the difference between a shared mailbox and an alias?", answer: "An alias is another address for a mailbox that already exists, for example hello@ delivering into support@. A shared mailbox is a mailbox of its own that several people work in." },
+  { question: "Can I see who has access?", answer: "Yes. Settings → Mail lists every mailbox; a shared one shows its members, and you can add or remove people there." },
+];
+
+const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) };
+---
+
+<MarketingLayout title="Shared mailbox for your team's support@ and sales@" description="Shared mailboxes for support@, sales@ and invoices@ on your own domain: the whole team answers from one address, everyone signs in as themselves, and shared mailboxes are free on every plan." jsonLd={jsonLd} ink>
+  <PageHero>
+    <h1 class="mk-h1 max-w-4xl">One support@, <em>the whole team on it.</em></h1>
+    <p class="mk-lead mt-6 max-w-2xl">
+      Stop forwarding mail around and sharing one password. In Work Inbox, support@ is a mailbox several people open with
+      their own accounts, and replies go out from support@. Shared mailboxes are free on every plan.
+    </p>
+    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <a href="/signup" class="mk-btn">Start free <ArrowRight className="size-5" /></a>
+      <a href="/pricing" class="mk-link">See pricing</a>
+    </div>
+  </PageHero>
+  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
+
+    <div class="mt-14"><Stage><BrowserFrame url="workinbox.io/app/mail"><Shot name="shared-mailbox" alt="support@ open as a shared mailbox, with a customer question" eager /></BrowserFrame></Stage></div>
+
+    <section class="pt-20">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">How it works</h2>
+      <FeatureLedger items={how} cols={3} class="mt-10" />
+      <p class="mt-6 text-sm text-foreground/70"><a href="/security" class="mk-link">How individual logins and two-factor authentication protect access</a></p>
+    </section>
+
+    <section class="pt-20">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Shared mailboxes elsewhere</h2>
+      <p class="mt-2 text-sm text-foreground/60">From each vendor's own pages; the comparison pages link the sources.</p>
+      <div class="mt-6"><ComparisonTable competitors={COMPETITORS.slice(0, 4)} rows={["shared", "aliases", "price"]} /></div>
+    </section>
+
+    <section class="pt-20">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Questions</h2>
+      <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
+    </section>
+  </div>
+  <ClosingBand />
+</MarketingLayout>

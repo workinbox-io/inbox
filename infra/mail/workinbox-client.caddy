@@ -1,0 +1,3 @@
+mail.workinbox.io {
+    redir https://workinbox.io{uri}
+}

@@ -1,0 +1,21 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { verifyForwardTarget } from "@/lib/server/mail/filters";
+let message="Open the confirmation link from your email.";
+let verified=false;
+if(Astro.request.method==="POST"){
+  try {const form=await Astro.request.formData();await verifyForwardTarget(String(form.get("id")??""),String(form.get("token")??""));verified=true;message="Forwarding address confirmed. You may close this page.";}
+  catch {message="This confirmation link is invalid or expired.";}
+}
+---
+<BaseLayout title="Confirm mail forwarding" noindex>
+  <main class="mx-auto flex max-w-lg flex-col gap-6 px-6 py-24">
+    <h1 class="text-2xl font-semibold">Confirm mail forwarding</h1>
+    <p>{message}</p>
+    {!verified && Astro.request.method!=="POST" && <form method="post">
+      <input type="hidden" name="id" value={Astro.url.searchParams.get("id")} />
+      <input type="hidden" name="token" value={Astro.url.searchParams.get("token")} />
+      <button type="submit" class="bg-primary text-primary-foreground rounded-md px-4 py-2">Confirm this forwarding address</button>
+    </form>}
+  </main>
+</BaseLayout>

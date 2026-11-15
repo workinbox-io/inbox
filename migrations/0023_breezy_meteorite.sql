@@ -1,0 +1,1 @@
+ALTER TABLE `calendar_prefs` ADD `hour_cycle` text DEFAULT 'h23' NOT NULL;
