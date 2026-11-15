@@ -1,11 +1,14 @@
 ---
 /**
- * The home page, laid out after boat.dev in our ink: an ink hero with a pixel harbour, six feature cards, the setup
- * in three steps, what a team pays next to the big suites, a pricing calculator, open source and what's next, FAQ and
- * a closing band. Pixel scenes are ours (components/site/pixel); the tour shows real screens of the app.
- * Only claim what ships; what's next stays under "soon".
+ * The home page, laid out after boat.dev in our ink: an ink hero, the six apps, the real screens, who it's for,
+ * switching in an afternoon, AI apps across the workspace, Google and Microsoft side by side, the pricing calculator,
+ * what you own, FAQ and a closing band. Sections picked after Zoho, Proton, Nextcloud and Twake's homepages. Pixel scenes are ours (components/site/pixel); the tour shows real screens of the app.
+ * Only claim what ships; no testimonials or numbers we can't show.
  */
 import { APPS } from "@/config/apps";
+import FeatureLedger from "@/components/site/craft/FeatureLedger.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import { CalendarDays, Code, Globe, Contact, Download, FileSearch, FolderUp, KeyRound, ListChecks, Mail, MonitorSmartphone, NotebookPen, ScrollText, Send, Server } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import Shot from "@/components/site/Shot.astro";
@@ -25,18 +28,39 @@ const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly)) / 100;
 
 const tabs = APPS.map((a) => ({ id: a.slug, label: a.label, url: `workinbox.io/app/${a.shot === "mail-thread" ? "mail" : a.shot}`, name: a.shot, alt: `Work Inbox ${a.label}: ${a.description}`, href: `/${a.slug}` }));
 
-/** The "…and more" line under the setup. */
-const extras = [
-  { text: "shared mailboxes like support@", href: "/shared-mailbox" },
-  { text: "meeting notes from a calendar event" },
-  { text: "attach from Drive and save to Drive" },
-  { text: "threads and mentions in chat" },
-  { text: "public links with a password" },
-  { text: "one ⌘K across every app" },
-  { text: "keyboard shortcuts" },
-  { text: "two-factor authentication", href: "/security" },
-  { text: "Claude and ChatGPT", href: "/docs/mcp" },
-  { text: "a REST API", href: "/docs/api" },
+/** Who it's for: three teams, each pointed at the apps it would open first. */
+const audiences = [
+  { icon: "contacts", title: "Agencies and studios", text: "hello@ answered by the whole team, clients in contact groups, files sent with a public link, meeting notes made from the calendar.", links: [["Mail", "/custom-domain-email"], ["Contacts", "/shared-contacts"], ["Drive", "/shared-drive"]] },
+  { icon: "shared", title: "Support teams", text: "support@ as a shared mailbox everyone opens with their own login, reply templates and out of office, a chat thread to ask a colleague.", links: [["Shared mailboxes", "/shared-mailbox"], ["Chat", "/team-chat"]] },
+  { icon: "mail", title: "Small companies leaving Google", text: "The same apps for a fraction of the price, your old mail, contacts and calendars brought along, and phones that keep using their mail app.", links: [["Google Workspace alternative", "/google-workspace-alternative"], ["Calendar", "/team-calendar"]] },
+] as const;
+
+/** Switching: what comes along, beside the setup steps. */
+const imports = [
+  { icon: Globe, title: "Your domain", text: "It stays where it is: Connect Cloudflare adds the records, anywhere else you paste them. Or start on yourname.workinbox.io." },
+  { icon: Mail, title: "Mail", text: "Upload the .mbox from Google Takeout or .eml files: dates, threads and Gmail's labels stay, duplicates are skipped." },
+  { icon: Contact, title: "Contacts", text: "Google or Outlook CSV and vCard files; addresses already in the book merge instead of doubling." },
+  { icon: CalendarDays, title: "Calendars", text: "Sync a Google Calendar in while you move, and import .ics files." },
+  { icon: FolderUp, title: "Files", text: "Drop whole folders from your computer into the shared drive." },
+  { icon: MonitorSmartphone, title: "Mail apps", text: "Apple Mail, Outlook and phones keep working over IMAP and SMTP.", href: "/docs/mail-clients" },
+];
+
+/** What AI apps can do through the MCP server (src/mcp). */
+const aiCan = [
+  { icon: FileSearch, title: "Find and read", text: "Search mail, chat, notes, contacts and drive files, and read whole threads." },
+  { icon: CalendarDays, title: "Plan", text: "List the week's events and find free time in your calendar." },
+  { icon: NotebookPen, title: "Write", text: "Create and update notes and contacts, post to a chat channel (Pro and Business)." },
+  { icon: Send, title: "Draft, never send", text: "Replies come back as drafts with a Send button: mail leaves only when you press it." },
+];
+
+/** What a team owns, in the ink band. */
+const own = [
+  { icon: Code, title: "The code", text: "AGPL-3.0, public on GitHub: the hosted service runs the same code.", href: siteConfig.repoUrl },
+  { icon: Server, title: "Where it runs", text: "Hosted by us, or on your own Cloudflare account with every feature and no fee.", href: "/docs/self-host" },
+  { icon: Download, title: "Your data, out", text: "Mail over IMAP and the original .eml of every message, contacts as vCard or CSV, calendars as .ics, files as ZIP." },
+  { icon: KeyRound, title: "Everyone signs in as themselves", text: "No shared passwords, two-factor sign-in, a password per mail app.", href: "/security" },
+  { icon: ScrollText, title: "An audit log", text: "Who changed what, on Pro and Business." },
+  { icon: ListChecks, title: "Every app on every plan", text: "One price per person; shared mailboxes, aliases and AI reading are free on every plan." },
 ];
 
 const cards = [
@@ -90,7 +114,7 @@ const cards = [
   },
 ];
 
-/** Pixel icons for what ships and what's next (PixelIcon: 5 is ink, 3 lighter). */
+/** Pixel icons (PixelIcon: 5 is ink, 3 lighter). */
 const ICONS = {
   mail: ["555555555555", "55........55", "5.5......5.5", "5..5....5..5", "5...5..5...5", "5....55....5", "5..........5", "555555555555"],
   shared: ["..55555555..", ".5555555555.", "555555555555", "553333333355", "555555555555", "555555555555", "555555555555", ".....55.....", ".....55.....", "...555555..."],
@@ -102,25 +126,11 @@ const ICONS = {
   drive: ["55555.....", "5...55555.", "5555555555", "5........5", "5........5", "5........5", "5555555555"],
   imap: ["5555555", "5.....5", "5.....5", "5.....5", "5.....5", "5555555", "5..5..5", "5555555"],
 };
-const shipped = [
-  { icon: ICONS.mail, label: "Mail" },
-  { icon: ICONS.shared, label: "Shared mailboxes" },
-  { icon: ICONS.notes, label: "Live notes" },
-  { icon: ICONS.chat, label: "Team chat" },
-  { icon: ICONS.contacts, label: "Contacts" },
-  { icon: ICONS.drive, label: "Drive" },
-  { icon: ICONS.calendar, label: "Calendar" },
-  { icon: ICONS.imap, label: "IMAP and SMTP" },
-  { icon: ICONS.ai, label: "Claude, ChatGPT" },
-];
-const next = [
-  { icon: ICONS.calendar, label: "CalDAV" },
-];
 
 const steps = [
   { command: "add domain acme.com", status: "acme.com: MX, DKIM and DMARC check out", text: "On Cloudflare, Connect Cloudflare adds the records with an API token; anywhere else, add them at your DNS provider. No domain yet? Start on a free yourname.workinbox.io address." },
   { command: "add people anna ben chris", status: "3 people, each with a mailbox · free up to 5", text: "Each person gets a mailbox on the domain and a temporary password to sign in with." },
-  { command: "open the workspace", status: "mail, #general, a shared drive and calendars for 3 people", text: "Everyone signs in to the same workspace: their mailbox, the team's chat, notes, calendars, drive and contacts. Add shared mailboxes like support@ for free." },
+  { command: "import from google", status: "mail, contacts and calendars moved · mail apps connected", text: "Upload Google Takeout's .mbox, import the contacts, sync the calendars. Everyone opens the same workspace: mail, chat, notes, calendars, drive and contacts." },
 ];
 
 const money = (amount: number, currency: string) =>
@@ -132,6 +142,7 @@ const race = [
   { name: siteConfig.name, plan: PLANS.starter.name, amount: (seatsFor(TEAM) * PLANS.starter.priceMonthly) / 100, currency: CURRENCY, ours: true, href: "/pricing" },
   ...COMPETITORS.flatMap((c) => (c.entry ? [{ name: c.name, plan: c.entry.plan, amount: Math.round(TEAM * c.entry.usd * 100) / 100, currency: "USD", ours: false, href: `/vs/${c.slug}` }] : [])),
 ].sort((a, b) => a.amount - b.amount);
+const bigSuites = COMPETITORS.filter((c) => c.slug === "google-workspace" || c.slug === "microsoft-365");
 const raceMax = Math.max(...race.map((r) => r.amount));
 const checked = COMPETITORS.find((c) => c.entry)?.checked;
 
@@ -161,16 +172,8 @@ const faq = [
     answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}, and the first ${FREE_PEOPLE} people are free. Shared mailboxes, aliases and the catch-all are free on every plan.`,
   },
   {
-    question: "Can I bring my old mail from Gmail or Outlook?",
-    answer: "Yes. Export it (Google Takeout gives an .mbox file; Outlook, Zoho and most others export .eml files) and upload it in Settings → Mail → Import mail. It arrives read, with its dates and threads; Gmail's inbox stays in the inbox and the rest is archived.",
-  },
-  {
     question: "Where is my mail stored?",
     answer: "On Cloudflare: messages in D1 and each original message (.eml) and its attachments in R2. Self-hosted, all of it lives on your own Cloudflare account.",
-  },
-  {
-    question: "What's in the workspace?",
-    answer: "Six apps that share the same people, sign-in and search: mail on your domains, team chat (channels, DMs, threads), shared notes with live editing, calendars (personal and shared, invitations, time zones), a shared drive (previews, public links) and one team address book. Claude and ChatGPT can work across all of them.",
   },
   {
     question: "Can it replace Slack and Notion too?",
@@ -247,43 +250,6 @@ const jsonLd = [
     </div>
   </section>
 
-  <!-- Setup: a step widget next to a scene that fills as the steps run. -->
-  <section id="setup" class="mk-wrap scroll-mt-20 pb-16 sm:pb-24">
-    <h2 class="mk-h2">Set up in minutes, pay per person</h2>
-    <p class="mk-lead mt-3">Add the domain, add your people, and the whole workspace is ready. Free for up to {FREE_PEOPLE} people.</p>
-    <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12" data-setup={JSON.stringify(steps)}>
-      <div class="flex min-h-64 flex-col bg-(--mk-grey) p-6 sm:p-8">
-        <p class="mk-cap" data-setup-count>Step 1 of {steps.length}</p>
-        <p class="mt-3 font-[family-name:var(--mk-font-mono)] text-xl sm:text-2xl">
-          <span class="opacity-50">$</span> <span data-setup-command><PersonReferences text={steps[0]!.command} /></span><span class="setup-caret" aria-hidden="true"></span>
-        </p>
-        {steps.map(step => <template data-setup-command-template><PersonReferences text={step.command} /></template>)}
-        <p class="mt-3 text-(--muted-foreground)" data-setup-text>{steps[0]!.text}</p>
-        <div class="mt-auto pt-6">
-          <button type="button" class="mk-btn" data-setup-run>Run</button>
-        </div>
-      </div>
-      <div>
-        <p class="mk-cap">your organization</p>
-        <div class="mk-frame mt-2">
-          <PixelScene scene="setup" state="0" />
-          <p class="flex items-center gap-3 bg-(--mk-band) px-4 py-3 font-[family-name:var(--mk-font-mono)] text-sm text-white" aria-live="polite">
-            <span class="size-2.5 shrink-0 rounded-full bg-white/50" data-setup-dot></span>
-            <span data-setup-status>No domain yet: nothing billed</span>
-          </p>
-        </div>
-      </div>
-    </div>
-    <p class="mt-10 max-w-4xl text-lg leading-8 text-(--muted-foreground)">
-      …and more:{" "}
-      {extras.map((e, i) => (
-        <>
-          {e.href ? <a href={e.href} class="mk-link text-(--foreground)">{e.text}</a> : e.text}{i < extras.length - 1 ? ", " : "."}
-        </>
-      ))}
-    </p>
-  </section>
-
   <!-- The real app: screens behind mono tabs. -->
   <section id="tour" class="mk-wrap scroll-mt-20 pb-20 sm:pb-28" data-tabs>
     <div class="flex flex-wrap items-end justify-between gap-4">
@@ -314,7 +280,78 @@ const jsonLd = [
     </div>
   </section>
 
-  <!-- Grey band: what a team of ten pays, a race of envelopes. -->
+  <!-- Who it's for: three teams, the apps each opens first. -->
+  <section id="who" class="mk-wrap scroll-mt-20 pb-20 sm:pb-28">
+    <h2 class="mk-h2">Made for small teams</h2>
+    <p class="mk-lead mt-3 max-w-3xl">From two people to a few dozen, on one domain or several.</p>
+    <div class="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
+      {
+        audiences.map((a) => (
+          <div data-reveal class="mk-frame flex flex-col p-6">
+            <PixelIcon rows={ICONS[a.icon]} class="h-10 w-auto self-start" />
+            <h3 class="mk-h3 mt-6">{a.title}</h3>
+            <p class="mt-3 text-lg leading-7 text-(--muted-foreground)">{a.text}</p>
+            <p class="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-6">
+              {a.links.map(([label, href]) => <a href={href} class="mk-link">{label}</a>)}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Switching: a step widget next to a scene that fills as the steps run, then what comes along. -->
+  <section id="setup" class="mk-wrap scroll-mt-20 pb-16 sm:pb-24">
+    <h2 class="mk-h2">Switch in an afternoon</h2>
+    <p class="mk-lead mt-3 max-w-3xl">Add the domain, add your people, bring your data. Free for up to {FREE_PEOPLE} people, no card.</p>
+    <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12" data-setup={JSON.stringify(steps)}>
+      <div class="flex min-h-64 flex-col bg-(--mk-grey) p-6 sm:p-8">
+        <p class="mk-cap" data-setup-count>Step 1 of {steps.length}</p>
+        <p class="mt-3 font-[family-name:var(--mk-font-mono)] text-xl sm:text-2xl">
+          <span class="opacity-50">$</span> <span data-setup-command><PersonReferences text={steps[0]!.command} /></span><span class="setup-caret" aria-hidden="true"></span>
+        </p>
+        {steps.map(step => <template data-setup-command-template><PersonReferences text={step.command} /></template>)}
+        <p class="mt-3 text-(--muted-foreground)" data-setup-text>{steps[0]!.text}</p>
+        <div class="mt-auto pt-6">
+          <button type="button" class="mk-btn" data-setup-run>Run</button>
+        </div>
+      </div>
+      <div>
+        <p class="mk-cap">your organization</p>
+        <div class="mk-frame mt-2">
+          <PixelScene scene="setup" state="0" />
+          <p class="flex items-center gap-3 bg-(--mk-band) px-4 py-3 font-[family-name:var(--mk-font-mono)] text-sm text-white" aria-live="polite">
+            <span class="size-2.5 shrink-0 rounded-full bg-white/50" data-setup-dot></span>
+            <span data-setup-status>No domain yet: nothing billed</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <h3 class="mt-16 text-xl">What comes along</h3>
+    <FeatureLedger items={imports} cols={3} class="mt-6" />
+    <p class="mt-6"><a href="/docs/quickstart" class="mk-link">The quickstart, step by step</a></p>
+  </section>
+
+  <!-- AI apps: what Claude and ChatGPT can do across the workspace. -->
+  <section id="ai" class="mk-wrap scroll-mt-20 pb-20 sm:pb-28">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+      <div>
+        <h2 class="mk-h2">Your AI, across the workspace</h2>
+        <p class="mk-lead mt-3">
+          Connect Claude, ChatGPT, Claude Code or Cursor once. They work with your mail, chat, notes, calendar, contacts and
+          files, with your access and nothing more.
+        </p>
+        <p class="mt-6"><a href="/docs/mcp" class="mk-link">Connect an AI app</a></p>
+      </div>
+      <div>
+        <p class="mk-cap">claude · chatgpt</p>
+        <div class="mk-frame mt-2"><PixelScene scene="ai" /></div>
+      </div>
+    </div>
+    <FeatureLedger items={aiCan} cols={4} class="mt-12" />
+  </section>
+
+  <!-- Grey band: Google and Microsoft side by side, a race of envelopes for the price, then the facts. -->
   <section id="compare" class="mk-band-grey scroll-mt-16">
     <div class="mk-wrap mk-section grid gap-12 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-16" data-race>
       <div>
@@ -343,6 +380,10 @@ const jsonLd = [
           ))
         }
       </ol>
+    </div>
+    <div class="mk-wrap pb-20 sm:pb-28">
+      <h3 class="text-xl">Next to Google Workspace and Microsoft 365</h3>
+      <div class="mt-6"><ComparisonTable competitors={bigSuites} rows={["selfHost", "shared", "imap", "ai", "suite"]} /></div>
     </div>
   </section>
 
@@ -413,28 +454,20 @@ const jsonLd = [
     </div>
   </section>
 
-  <!-- Ink band: open source, and what ships and what's next. -->
-  <section id="next" class="mk-band scroll-mt-16">
-    <div class="mk-wrap mk-section grid gap-14 lg:grid-cols-2 lg:gap-16">
-      <div>
-        <p class="font-[family-name:var(--mk-font-display)] text-[clamp(1.75rem,2.6vw,2.4rem)] leading-tight font-medium tracking-tight text-balance">
-          Every line that touches your mail, chats and files is public. Run it on your own Cloudflare account, or let us run the same code.
-        </p>
-        <p class="mt-8 flex items-center gap-4">
-          <PixelIcon rows={ICONS.shared} class="size-14" />
-          <span>
-            <span class="block font-medium">Work Inbox is open source</span>
-            <a href={siteConfig.repoUrl} class="mk-link text-(--muted-foreground)">{siteConfig.repoUrl.replace("https://", "")}</a>
-          </span>
-        </p>
-      </div>
-      <ul class="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4">
+  <!-- Ink band: what the team owns. -->
+  <section id="own" class="mk-band scroll-mt-16">
+    <div class="mk-wrap mk-section">
+      <p class="max-w-4xl font-[family-name:var(--mk-font-display)] text-[clamp(1.75rem,2.6vw,2.4rem)] leading-tight font-medium tracking-tight text-balance">
+        Yours to own. Every line that touches your mail, chats and files is public. Run it on your own Cloudflare account,
+        or let us run the same code.
+      </p>
+      <ul class="mt-12 grid gap-px bg-white/15 sm:grid-cols-2 lg:grid-cols-3">
         {
-          [...shipped.map((s) => ({ ...s, soon: false })), ...next.map((s) => ({ ...s, soon: true }))].map((s) => (
-            <li class:list={[s.soon && "opacity-55"]}>
-              <PixelIcon rows={s.icon} class="h-14 w-auto" />
-              <p class="mk-cap mt-3 text-(--foreground)!">{s.label}</p>
-              <p class="mk-cap">{s.soon ? "soon" : "today"}</p>
+          own.map((o) => (
+            <li class="bg-(--mk-band) p-6">
+              <o.icon className="size-5 opacity-70" />
+              <p class="mt-4 font-medium">{o.href ? <a href={o.href} class="mk-link">{o.title}</a> : o.title}</p>
+              <p class="mt-2 text-white/65">{o.text}</p>
             </li>
           ))
         }
