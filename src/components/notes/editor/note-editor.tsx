@@ -254,7 +254,7 @@ export function NoteEditor({ noteId, user, onTicket, onLost, onPresence, initial
 
 const CONTENT_CLASS = "min-h-[50svh] pb-[30svh] text-[15px] leading-7 outline-none [&_strong]:font-semibold"
 const TITLE_CLASS =
-  "mb-2 w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
+  "mb-2 block w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/50"
 
 /** The saved copy, read-only with the same plugins and components, while the live document connects. */
 function SavedNote({ initial }: { initial?: { title: string; value: Value } }) {
