@@ -43,6 +43,8 @@ import { SidePanel } from "@/components/workspace/split-view"
 import { Kbd, shortcutsPaused, useAppLayout } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
 import { decodeMentions, encodeMentions, plainChat } from "@/lib/chat/format"
+import { parseRefs, replaceRef } from "@/lib/mentions"
+import { useMentionAccess } from "@/components/workspace/mentions"
 import { startsGroup, unreadMarker } from "@/lib/chat/rules"
 import type { ChatChannel, ChatEvent, ChatFile, ChatHit, ChatMessage, ChatPerson, ChatView } from "@/lib/chat/types"
 import { t } from "@/lib/i18n/panel"
@@ -86,6 +88,7 @@ export function ChatApp(props: ChatAppProps) {
   const [channels, setChannels] = React.useState(props.channels)
   const [counts, setCounts] = React.useState(props.counts)
   const [people] = React.useState(props.people)
+  const mentionAccess = useMentionAccess()
   const peopleById = React.useMemo(() => new Map(people.map((p) => [p.id, p])), [people])
   const nameOf = React.useCallback((id: string) => peopleById.get(id)?.name, [peopleById])
   const initial = props.selectedId ?? channels.find((c) => c.name === "general" && c.kind === "channel")?.id ?? channels[0]?.id ?? ""
@@ -431,8 +434,9 @@ export function ChatApp(props: ChatAppProps) {
     },
     onPin: (m) => void patch(m, { action: "pin", pinned: !m.pinned }),
     onEdit: async (m, text) => {
-      if (encodeMentions(text, people) === m.text) return
-      await patch(m, { action: "edit", text: encodeMentions(text, people) })
+      const next = encodeMentions(text, people, parseRefs(m.text))
+      if (next === m.text) return
+      await patch(m, { action: "edit", text: next })
     },
     onDelete: async (m) => {
       try {
@@ -455,12 +459,17 @@ export function ChatApp(props: ChatAppProps) {
   const send = async (text: string, files: ChatFile[], parentId: string | null) => {
     if (!channelId) return
     try {
-      const m = await api<ChatMessage>("POST", "/api/app/chat/messages", { channelId, parentId, text: encodeMentions(text, people), files })
+      let body = encodeMentions(text, people)
+      // Mentioned something some of the channel can't open: the sender picks access or a link first.
+      const linked = await mentionAccess.check(parseRefs(body), { channelId })
+      if (!linked) throw new Error("cancelled")
+      for (const r of linked) body = replaceRef(body, r)
+      const m = await api<ChatMessage>("POST", "/api/app/chat/messages", { channelId, parentId, text: body, files })
       atBottom.current = true
       onEvent({ type: "message", message: m })
       if (!channel?.joined) void refreshChannels()
     } catch (e) {
-      toast.error((e as Error).message)
+      if ((e as Error).message !== "cancelled") toast.error((e as Error).message)
       throw e
     }
   }
@@ -910,7 +919,6 @@ export function ChatApp(props: ChatAppProps) {
           <Composer
             ref={composer}
             draftId={channel.id}
-            people={people}
             placeholder={channel.kind === "dm" ? t("Message {name}").replace("{name}", channelName(channel)) : t("Message #{name}").replace("{name}", channel.name)}
             onSend={(text, files) => send(text, files, null)}
             onTyping={() => sendTyping(null)}
@@ -1062,7 +1070,7 @@ export function ChatApp(props: ChatAppProps) {
             {typingLine(`thread:${threadId}`) ? `${typingLine(`thread:${threadId}`)}…` : null}
           </p>
           {channel.joined ? (
-            <Composer ref={threadComposer} compact draftId={`thread:${threadId}`} people={people} placeholder={t("Reply…")} onSend={(text, files) => send(text, files, threadId)} onTyping={() => sendTyping(threadId)} />
+            <Composer ref={threadComposer} compact draftId={`thread:${threadId}`} placeholder={t("Reply…")} onSend={(text, files) => send(text, files, threadId)} onTyping={() => sendTyping(threadId)} />
           ) : null}
         </div>
       </aside>
@@ -1077,6 +1085,7 @@ export function ChatApp(props: ChatAppProps) {
           {wide ? <SidePanel open={!!threadPane} width={380}>{threadPane}</SidePanel> : threadPane}
         </div>
       ) : null}
+      {mentionAccess.dialog}
       <NewChannelDialog open={creating} onOpenChange={setCreating} onCreate={createChannel} />
       {channel && editingTopic ? <TopicDialog channel={channel} onClose={() => setEditingTopic(false)} onSave={(body) => channelPatch(channel, { action: "update", ...body }).then(() => setEditingTopic(false))} /> : null}
     </AppFrame>

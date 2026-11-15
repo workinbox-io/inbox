@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea"
 import { ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { FileBadge, FileViewer, type ViewerFile } from "@/components/workspace/file-viewer"
+import { MentionChip } from "@/components/workspace/mentions"
 import { tokenize } from "@/lib/chat/format"
 import { CHAT_EMOJI, QUICK_EMOJI } from "@/lib/chat/rules"
 import type { ChatMessage, ChatPerson } from "@/lib/chat/types"
@@ -59,6 +60,8 @@ export function RichText({ text, people, me }: { text: string; people: Map<strin
               </span>
             )
           }
+          case "ref":
+            return <MentionChip key={i} value={tok.ref} />
           default:
             return <React.Fragment key={i}>{tok.text}</React.Fragment>
         }

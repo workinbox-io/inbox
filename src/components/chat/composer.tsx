@@ -1,15 +1,17 @@
 /**
  * The chat composer: grows with the text, Enter sends and Shift+Enter breaks the line, ⌘B/⌘I/⌘E wrap the selection,
- * "@" suggests people (written as @Full Name, turned into ids on send), files upload right away
+ * "@" suggests people, files, notes, events, contacts, threads and channels (written as @Title, turned into
+ * tokens from what was picked on send, lib/mentions.ts), files upload right away
  * (components/uploads/attachments.tsx). The draft is kept per conversation in this browser.
  */
 import * as React from "react"
 import { AtSign, Bold, Code, Italic, Paperclip, SendHorizontal } from "lucide-react"
-import { UserAvatar } from "@/components/app/user-avatar"
 import { Button } from "@/components/ui/button"
 import { AttachButton, AttachmentDropZone, AttachmentStrip, uploadWithProgress, useAttachments, type UploadFn } from "@/components/uploads/attachments"
+import { MentionList, useMentionSearch } from "@/components/workspace/mentions"
 import { Kbd } from "@/components/workspace/ui"
-import type { ChatFile, ChatPerson } from "@/lib/chat/types"
+import type { ChatFile } from "@/lib/chat/types"
+import { encodePicked, refToken, type Mentionable } from "@/lib/mentions"
 import { t } from "@/lib/i18n/panel"
 import { cn } from "@/lib/utils"
 
@@ -37,7 +39,6 @@ export interface ComposerHandle {
 export function Composer({
   draftId,
   placeholder,
-  people,
   compact,
   onSend,
   onTyping,
@@ -47,7 +48,6 @@ export function Composer({
   /** Where the draft is kept: the channel id, or `thread:<id>`. */
   draftId: string
   placeholder: string
-  people: ChatPerson[]
   compact?: boolean
   onSend: (text: string, files: ChatFile[]) => Promise<void>
   onTyping: () => void
@@ -59,6 +59,8 @@ export function Composer({
   const [sending, setSending] = React.useState(false)
   const [mention, setMention] = React.useState<{ query: string; start: number; index: number } | null>(null)
   const area = React.useRef<HTMLTextAreaElement>(null)
+  // shortcut: what was picked lives in memory, so after a reload a typed "@Title" stays text (people still match by name).
+  const picked = React.useRef<{ label: string; token: string }[]>([])
   const attachments = useAttachments(upload, {
     attach: t("Attach files"),
     remove: t("Remove"),
@@ -70,7 +72,10 @@ export function Composer({
   })
 
   React.useImperativeHandle(ref, () => ({ focus: () => area.current?.focus({ preventScroll: true }) }), [])
-  React.useEffect(() => setValue(readDraft(draftId)), [draftId])
+  React.useEffect(() => {
+    setValue(readDraft(draftId))
+    picked.current = []
+  }, [draftId])
 
   React.useLayoutEffect(() => {
     const el = area.current
@@ -85,20 +90,20 @@ export function Composer({
     if (next) onTyping()
     const at = caret ?? next.length
     const before = next.slice(0, at)
-    const m = /(^|\s)@([\p{L}\p{N} .'-]{0,30})$/u.exec(before)
+    const m = /(^|\s)@([\p{L}\p{N} ._'-]{0,30})$/u.exec(before)
     setMention(m && !m[2]!.includes("  ") ? { query: m[2]!, start: at - m[2]!.length - 1, index: 0 } : null)
   }
 
-  const suggestions = mention
-    ? people.filter((p) => p.name.toLowerCase().includes(mention.query.toLowerCase()) || p.email.toLowerCase().startsWith(mention.query.toLowerCase())).slice(0, 6)
-    : []
+  const suggestions = useMentionSearch(mention ? mention.query : null).slice(0, 12)
 
-  const pick = (p: ChatPerson) => {
+  const pick = (m: Mentionable) => {
     if (!mention) return
     const el = area.current
     const caret = el?.selectionStart ?? value.length
-    const next = `${value.slice(0, mention.start)}@${p.name} ${value.slice(caret)}`
-    const pos = mention.start + p.name.length + 2
+    const label = m.title.replace(/[|<>\n]+/g, " ").trim()
+    picked.current.push({ label, token: m.kind === "person" ? `<@${m.id}>` : refToken({ kind: m.kind, id: m.id, title: label }) })
+    const next = `${value.slice(0, mention.start)}@${label} ${value.slice(caret)}`
+    const pos = mention.start + label.length + 2
     setValue(next)
     writeDraft(draftId, next)
     setMention(null)
@@ -126,7 +131,8 @@ export function Composer({
     setSending(true)
     try {
       const files = attachments.items.flatMap((f) => (f.status === "done" && f.result ? [{ url: f.result.url, name: f.result.filename, size: f.size, type: f.result.mediaType }] : []))
-      await onSend(value, files)
+      await onSend(encodePicked(value, picked.current), files)
+      picked.current = []
       setValue("")
       writeDraft(draftId, "")
       attachments.clear()
@@ -141,26 +147,14 @@ export function Composer({
   return (
     <AttachmentDropZone attachments={attachments} label={t("Drop files to attach")}>
       <div className="bg-card focus-within:border-ring/60 focus-within:ring-ring/15 relative rounded-xl border shadow-xs transition-shadow focus-within:ring-[3px]">
-        {suggestions.length ? (
-          <ul role="listbox" aria-label={t("People")} className="bg-popover absolute bottom-full left-2 z-20 mb-1 w-64 overflow-hidden rounded-lg border p-1 shadow-md">
-            {suggestions.map((p, i) => (
-              <li
-                key={p.id}
-                role="option"
-                aria-selected={i === mention!.index}
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  pick(p)
-                }}
-                onMouseMove={() => i !== mention!.index && setMention({ ...mention!, index: i })}
-                className={cn("flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-[13px]", i === mention!.index && "bg-accent")}
-              >
-                <UserAvatar seed={p.email} size={18} />
-                <span className="truncate font-medium">{p.name}</span>
-                <span className="text-muted-foreground ml-auto truncate text-xs">{p.email}</span>
-              </li>
-            ))}
-          </ul>
+        {suggestions.length && mention ? (
+          <MentionList
+            items={suggestions}
+            active={Math.min(mention.index, suggestions.length - 1)}
+            onPick={pick}
+            onHover={(index) => setMention({ ...mention, index })}
+            className="absolute bottom-full left-2 z-20 mb-1"
+          />
         ) : null}
         <textarea
           ref={area}
@@ -179,7 +173,7 @@ export function Composer({
               }
               if (e.key === "Enter" || e.key === "Tab") {
                 e.preventDefault()
-                pick(suggestions[mention.index]!)
+                pick(suggestions[Math.min(mention.index, suggestions.length - 1)]!)
                 return
               }
               if (e.key === "Escape") {
@@ -223,7 +217,8 @@ export function Composer({
           <button
             type="button"
             className={tool}
-            aria-label={t("Mention someone")}
+            aria-label={t("Mention someone or something")}
+            title={t("Mention people, files, notes, events…")}
             onClick={() => {
               const next = `${value}${value && !value.endsWith(" ") ? " " : ""}@`
               change(next)

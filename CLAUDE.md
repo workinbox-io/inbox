@@ -237,6 +237,26 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 - ChatGPT directory: `chatgpt-app/` (plugin ZIP sources, demo `.mbox`, release steps in its README). OpenAI's rules:
   explicit annotations (`persists` = saves without write scope), no internal ids in results, no upsells in tool text.
 
+## Mentions: "@ anything" (product)
+
+- One picker for people, Drive files/folders, notes, events, contacts, mail threads and channels, in Chat (textarea,
+  `components/chat/composer.tsx`) and Mail (Plate editor `components/mailbox/mail-editor.tsx`, replaces the textarea in
+  org mail; admin-mail keeps it). UI kit `components/workspace/mentions.tsx`: `MentionIcon` (avatar / `FileBadge` /
+  app icon), `MentionChip`, `useMentionSearch`, `MentionList`, `useMentionAccess` (the dialog on send).
+- Tokens (`lib/mentions.ts`, pure, `test/mentions.test.ts`): people stay `<@userId>`, the rest `<@kind:id|Title>` or
+  `<@kind:id|Title|https://…/s|n/token>` when a link was made. Composers encode what was picked (label → token), never
+  by re-reading names. Only our own `/s/` and `/n/` links survive on a chip (`sanitizeRefs`, `ownLink`).
+- Mail body: the draft and send carry `doc` (Plate JSON) next to `text`; `lib/mail/doc-render.ts` (`docToHtml`,
+  `docToText`, whitelist, escaped) renders it in `renderMail`. Mentions become links with an emoji (clients block SVG).
+  A draft patch with new `text` (MCP) drops `doc`.
+- Server `lib/server/mentions.ts`: `searchMentionables` (`GET /api/app/mentions?q=&kinds=`), `missingAccess` (who in the
+  channel or among To/Cc can't open each ref, `POST …/mentions/access`), `shareRef` (`POST …/mentions/share`: `grant` =
+  view access / invite to the event / add to the channel; `live` / `snapshot` = public link). Grants and links need
+  manage rights. Threads and contacts get no links.
+- Snapshots: `drive_links.mode = snapshot` copies the file to `drive-snapshots/<org>/<linkId>` (counted in the quota,
+  deleted with the link or the item); `note_links` (`/n/<token>`, `lib/server/notes/links.ts`) keep the note's content.
+- Chips open `/app/open/<kind>/<id>` (`pages/app/open`), which redirects to the right app.
+
 ## Marketing site and SEO/GEO (product)
 
 - Look after boat.dev in our ink (`styles/marketing.css`, scoped to `.mk` by `MarketingLayout look="paper"`; docs,

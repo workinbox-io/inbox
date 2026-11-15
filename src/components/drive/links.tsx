@@ -88,6 +88,7 @@ export function PublicLinks({ itemId }: { itemId: string }) {
             <li key={l.id} className="flex items-center gap-2 rounded-md px-1 py-1 text-sm">
               {l.hasPassword ? <Lock className="text-muted-foreground size-3.5 shrink-0" aria-label={t("Password")} /> : <Link2 className="text-muted-foreground size-3.5 shrink-0" />}
               <span className="min-w-0 flex-1 truncate font-mono text-xs">{linkUrl(l.token).replace(/^https?:\/\//, "")}</span>
+              {l.mode === "snapshot" ? <span className="bg-muted shrink-0 rounded px-1.5 text-[11px] font-medium" title={t("A copy of the file as it was when the link was made")}>{t("Snapshot")}</span> : null}
               <span className="text-muted-foreground shrink-0 text-xs">{l.expiresAt ? t("until {date}", { date: new Date(l.expiresAt).toLocaleDateString() }) : t("no expiry")}</span>
               <Button
                 variant="ghost"

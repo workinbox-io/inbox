@@ -10,6 +10,7 @@ import { ancestorIds, isWithin } from "@/lib/drive/access";
 import { HttpError } from "@/lib/server/api";
 import { randomBase64Url } from "@/lib/server/crypto";
 import { requireItem, type DriveItem, type DriveViewer } from "./access";
+import { requireDriveSpace } from "./quota";
 
 export const LINK_UNLOCK_MS = 12 * 3600_000;
 
@@ -17,6 +18,7 @@ const linkView = (l: typeof driveLinks.$inferSelect) => ({
   id: l.id,
   token: l.token,
   hasPassword: !!l.passwordHash,
+  mode: l.mode,
   expiresAt: l.expiresAt?.toISOString() ?? null,
   createdAt: l.createdAt.toISOString(),
 });
@@ -28,12 +30,26 @@ export async function listLinks(v: DriveViewer, itemId: string) {
   return rows.map(linkView);
 }
 
-export async function createLink(v: DriveViewer, itemId: string, input: { password?: string; expiresAt?: number | null }) {
+/** `snapshot`: copies the file now, so the link keeps showing this version (counted in the drive's storage). */
+export async function createLink(v: DriveViewer, itemId: string, input: { password?: string; expiresAt?: number | null; snapshot?: boolean }) {
   const { item } = await requireItem(v, itemId, "manage");
   if (input.expiresAt && input.expiresAt <= Date.now()) throw new HttpError(422, "Pick an expiry date in the future");
+  const id = crypto.randomUUID();
+  let snapshot = {};
+  if (input.snapshot) {
+    if (item.kind !== "file" || !item.r2Key) throw new HttpError(422, "Only files can be shared as a snapshot");
+    await requireDriveSpace(v.orgId, item.size);
+    const object = await env.FILES.get(item.r2Key);
+    if (!object) throw new HttpError(404, "Not found");
+    const key = `drive-snapshots/${v.orgId}/${id}`;
+    await env.FILES.put(key, object.body, { httpMetadata: object.httpMetadata });
+    snapshot = { mode: "snapshot" as const, snapshotKey: key, snapshotName: item.name, snapshotType: item.mediaType, snapshotSize: item.size };
+  }
   const [row] = await db
     .insert(driveLinks)
     .values({
+      id,
+      ...snapshot,
       orgId: v.orgId,
       itemId,
       token: randomBase64Url(16),
@@ -50,6 +66,7 @@ export async function deleteLink(v: DriveViewer, linkId: string) {
   if (!row) throw new HttpError(404, "Not found");
   const { item } = await requireItem(v, row.itemId, "manage", { trashed: true });
   await db.delete(driveLinks).where(eq(driveLinks.id, linkId));
+  if (row.snapshotKey) await env.FILES.delete(row.snapshotKey);
   return item;
 }
 
@@ -88,6 +105,9 @@ export async function openLink(token: string, opts: { itemId?: string | null; co
   const [root] = await db.select().from(driveItems).where(eq(driveItems.id, link.itemId));
   if (!root) return { state: "missing" };
   if (link.passwordHash && !(await unlocked(token, opts.cookie))) return { state: "locked", name: root.name };
+  // A snapshot serves the copy made with the link, under the name it had then, even if the file changed or went.
+  if (link.snapshotKey)
+    return { state: "open", link, root, item: { ...root, name: link.snapshotName ?? root.name, mediaType: link.snapshotType, size: link.snapshotSize ?? 0, r2Key: link.snapshotKey, trashedAt: null } };
   let item = root;
   if (opts.itemId && opts.itemId !== root.id) {
     const [inner] = await db.select().from(driveItems).where(and(eq(driveItems.id, opts.itemId), eq(driveItems.orgId, root.orgId)));

@@ -98,6 +98,8 @@ export interface Draft {
   cc: string[]
   subject: string
   text: string
+  /** The rich body (Plate document, components/mailbox/mail-editor.tsx); `text` is its plain version. */
+  doc?: Record<string, unknown>[]
   /** The message a reply answers or a forward carries. */
   messageId?: string
   /** Sent without the mailbox's signature (the composer's "Signature" box unticked). */

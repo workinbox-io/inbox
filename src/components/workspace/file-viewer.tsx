@@ -61,10 +61,10 @@ const FAMILY: Record<FileFamily, { icon: typeof File; tone: string }> = {
 const iconFor = (file: Pick<ViewerFile, "mediaType" | "name">) => FAMILY[fileFamily(file)].icon
 
 /** The coloured file-type tile for attachment cards (mail, chat). */
-export function FileBadge({ file, className }: { file: Pick<ViewerFile, "mediaType" | "name">; className?: string }) {
+export function FileBadge({ file, className, style }: { file: Pick<ViewerFile, "mediaType" | "name">; className?: string; style?: React.CSSProperties }) {
   const { icon: Icon, tone } = FAMILY[fileFamily(file)]
   return (
-    <span className={cn("grid size-10 shrink-0 place-items-center rounded-md", tone, className)}>
+    <span style={style} className={cn("grid size-10 shrink-0 place-items-center rounded-md", tone, className)}>
       <Icon className="size-[18px]" />
     </span>
   )

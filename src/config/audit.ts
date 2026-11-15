@@ -74,6 +74,9 @@ export const AUDIT_ACTIONS = {
   "event.create": "Created event",
   "event.update": "Changed event",
   "event.delete": "Deleted event",
+  "mention.grant": "Gave access to a mentioned item",
+  "mention.live": "Made a live link for a mention",
+  "mention.snapshot": "Made a snapshot link for a mention",
 } as const;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

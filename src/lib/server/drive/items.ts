@@ -3,7 +3,7 @@
  * sharing and deleting for good. Files arrive through ./uploads; their bytes live in R2 under `r2Key`.
  */
 import { env } from "cloudflare:workers";
-import { and, db, desc, driveAccess, driveItems, driveStars, eq, inArray, isNotNull, isNull, lt, member, or, sql, user } from "@/db";
+import { and, db, desc, driveAccess, driveItems, driveLinks, driveStars, eq, inArray, isNotNull, isNull, lt, member, or, sql, user } from "@/db";
 import { cleanName, MAX_DEPTH, uniqueName, type DriveRole } from "@/lib/drive/access";
 import { HttpError } from "@/lib/server/api";
 import { enqueue } from "@/lib/server/queue";
@@ -323,7 +323,8 @@ export async function purgeSubtree(orgId: string, path: string) {
       .where(and(eq(driveItems.orgId, orgId), sql`instr(${driveItems.path}, ${path}) = 1`))
       .limit(PURGE_BATCH);
     if (!rows.length) return;
-    const keys = rows.map((r) => r.r2Key).filter((k): k is string => !!k);
+    const snapshots = await db.select({ key: driveLinks.snapshotKey }).from(driveLinks).where(inArray(driveLinks.itemId, rows.map((r) => r.id)));
+    const keys = [...rows.map((r) => r.r2Key), ...snapshots.map((s) => s.key)].filter((k): k is string => !!k);
     if (keys.length) await env.FILES.delete(keys);
     await db.delete(driveItems).where(inArray(driveItems.id, rows.map((r) => r.id)));
     if (rows.length < PURGE_BATCH) return;

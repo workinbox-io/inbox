@@ -4,7 +4,7 @@
  */
 import { env } from "cloudflare:workers";
 import { planById } from "@/config/plans";
-import { db, driveItems, driveUploads, eq, sql } from "@/db";
+import { db, driveItems, driveLinks, driveUploads, eq, sql } from "@/db";
 import { driveQuota } from "@/lib/drive/access";
 import { HttpError } from "@/lib/server/api";
 import { subscriptionUsable } from "@/lib/server/billing";
@@ -12,11 +12,12 @@ import { getSubscription } from "@/lib/server/org";
 import { peopleCount } from "@/lib/server/seats";
 
 export async function driveUsage(orgId: string) {
-  const [[files], [uploads]] = await Promise.all([
+  const [[files], [uploads], [snapshots]] = await Promise.all([
     db.select({ n: sql<number>`coalesce(sum(${driveItems.size}), 0)` }).from(driveItems).where(eq(driveItems.orgId, orgId)),
     db.select({ n: sql<number>`coalesce(sum(${driveUploads.size}), 0)` }).from(driveUploads).where(eq(driveUploads.orgId, orgId)),
+    db.select({ n: sql<number>`coalesce(sum(${driveLinks.snapshotSize}), 0)` }).from(driveLinks).where(eq(driveLinks.orgId, orgId)),
   ]);
-  const used = Number(files?.n ?? 0) + Number(uploads?.n ?? 0);
+  const used = Number(files?.n ?? 0) + Number(uploads?.n ?? 0) + Number(snapshots?.n ?? 0);
   if (env.DEPLOY_MODE === "self") return { used, quota: null };
   const sub = await getSubscription(orgId);
   // Without a usable plan the org keeps the cheapest plan's storage (the free tier).

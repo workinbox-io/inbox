@@ -33,6 +33,8 @@ import { canManage } from "@/lib/server/roles";
 import { pushToUser } from "@/lib/server/mail/push";
 import { isOrgAttachmentUrl } from "@/lib/uploads";
 import { mentionedIds, plainChat } from "@/lib/chat/format";
+import { sanitizeRefs } from "@/lib/mentions";
+import { env } from "cloudflare:workers";
 import type { ChatHit, ChatMessage, ChatView, Reaction } from "@/lib/chat/types";
 import { audience, requireChannel, visibleChannelIds, type Channel, type ChatViewer } from "./access";
 import { publish } from "./sync";
@@ -175,7 +177,7 @@ function cleanFiles(v: ChatViewer, files: ChatFile[] | undefined) {
 export async function sendMessage(v: ChatViewer, input: { channelId: string; parentId?: string | null; text: string; files?: ChatFile[] }) {
   const { channel, membership } = await requireChannel(v, input.channelId);
   if (channel.archivedAt) throw new HttpError(422, "This channel is archived");
-  const text = input.text.trim().slice(0, MAX_TEXT);
+  const text = sanitizeRefs(input.text.trim().slice(0, MAX_TEXT), env.PUBLIC_APP_URL);
   const files = cleanFiles(v, input.files);
   if (!text && !files.length) throw new HttpError(422, "Write something first");
   let root: Row | null = null;
@@ -251,7 +253,7 @@ async function broadcastUpdate(v: ChatViewer, channel: Channel, id: string) {
 export async function editMessage(v: ChatViewer, id: string, text: string) {
   const { row, channel } = await requireMessage(v, id);
   if (row.authorId !== v.userId || row.deletedAt) throw new HttpError(403, "You can only edit your own messages");
-  const clean = text.trim().slice(0, MAX_TEXT);
+  const clean = sanitizeRefs(text.trim().slice(0, MAX_TEXT), env.PUBLIC_APP_URL);
   if (!clean && !row.files?.length) throw new HttpError(422, "Write something first");
   const mentioned = (await mentionable(channel, mentionedIds(clean))).filter((u) => u !== v.userId);
   await db.batch([

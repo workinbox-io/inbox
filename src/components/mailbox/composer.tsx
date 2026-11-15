@@ -17,6 +17,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AttachmentDropZone, uploadWithProgress, useAttachments, type Attachments, type UploadFn } from "@/components/uploads/attachments"
 import { AddressInput, ComposeBody, ComposeFrame, EMAIL, FieldRow, type AddressSuggestion } from "@/components/mail/compose"
+import { useMentionAccess } from "@/components/workspace/mentions"
+import { docRefs, docToText, withRefUrls } from "@/lib/mail/doc-render"
+import type { Value } from "platejs"
+import { MailEditor, type MailEditorHandle } from "./mail-editor"
 import { MailAttachmentMenu } from "@/components/drive/attach-from-drive"
 import { NEW_DRAFT, readDraft, writeDraft, flushDraft, useRemoteDraft, resolveDraftConflict } from "./drafts"
 import { useTemplates, type MailTemplate } from "./mail-replies"
@@ -102,6 +106,23 @@ export function useUndoSend(onSent: (threadId: string) => void) {
   }, [])
 }
 
+/**
+ * Recipients who can't open a mentioned file, note or event: the sender picks access or a link first
+ * (components/workspace/mentions.tsx). The draft with the links on its mentions, or null when cancelled.
+ */
+async function checkMentions(check: ReturnType<typeof useMentionAccess>["check"], d: Draft): Promise<Draft | null> {
+  if (!d.doc) return d
+  try {
+    const linked = await check(docRefs(d.doc), { emails: [...d.to, ...d.cc] })
+    if (!linked) return null
+    const doc = withRefUrls(d.doc, linked)
+    return { ...d, doc, text: docToText(doc, location.origin) }
+  } catch (e) {
+    toast.error((e as Error).message)
+    return null
+  }
+}
+
 const invalid = (d: Draft) => [...d.to, ...d.cc].filter((a) => !EMAIL.test(a))
 
 /** The request that sends a draft: a reply in its thread, a forward, or a new e-mail. */
@@ -113,7 +134,7 @@ async function sendRequest(d: Draft, files: { url: string; mediaType: string; fi
     const digest = [...new Uint8Array(bytes)].map(byte => byte.toString(16).padStart(2, "0")).join("")
     const requestKey = `${d.idempotencyKey ?? crypto.randomUUID()}:${digest}`
     const expectedUpdatedAt = await flushDraft(key, d)
-    const base = { draftKey: key, expectedUpdatedAt, sendAt: d.sendAt, idempotencyKey: requestKey, to: d.to[0], cc: [...d.to.slice(1), ...d.cc], text: d.text.trim(), signature: !d.noSignature, files }
+    const base = { draftKey: key, expectedUpdatedAt, sendAt: d.sendAt, idempotencyKey: requestKey, to: d.to[0], cc: [...d.to.slice(1), ...d.cc], text: d.text.trim(), doc: d.doc, signature: !d.noSignature, files }
     const result = await ((d.mode === "reply" || d.mode === "replyAll") && threadId
       ? api<QueuedSend>("POST", `/api/app/mail/threads/${threadId}/reply`, base)
       : api<QueuedSend>("POST", "/api/app/mail/threads", d.mode === "forward"
@@ -164,17 +185,16 @@ function MailForm({
   onDiscard: () => void
 }) {
   const [showCc, setShowCc] = React.useState(draft.cc.length > 0)
-  const body = React.useRef<HTMLTextAreaElement>(null)
+  const body = React.useRef<MailEditorHandle>(null)
   const disabled = !draft.to.length || attachments.uploading || (!draft.text.trim() && draft.mode !== "forward")
   // Start in the body when the form opens, and again whenever the shortcut asks (r / a / f with the reply open). Not
   // when a recipient is added: that flips autoFocusTo and would pull a Tab from the To field into the body.
   const focusTo = React.useRef(autoFocusTo)
   focusTo.current = autoFocusTo
   React.useEffect(() => {
-    if (focusTo.current || !body.current) return
-    body.current.focus()
-    body.current.setSelectionRange(0, 0)
-    body.current.scrollTop = 0
+    if (focusTo.current) return
+    // The editor mounts after hydration: focus on the next frame.
+    requestAnimationFrame(() => body.current?.focus())
   }, [focusSignal])
   const ccToggle = showCc ? null : (
     // Out of the Tab order, like Gmail: Tab goes from To straight to Subject.
@@ -237,9 +257,9 @@ function MailForm({
         {draft.sendAt ? <span className="text-muted-foreground text-xs">Your local time</span> : null}
       </FieldRow>
       <ComposeBody
-        bodyRef={body}
         value={draft.text}
         onChange={(text) => set({ text })}
+        editor={<MailEditor ref={body} initial={draft.doc as Value | undefined} initialText={draft.text} onChange={(doc, text) => set({ doc, text })} onSubmit={() => !disabled && onSend()} placeholder="Write your e-mail… (@ to mention people, files, notes, events)" className={bodyClassName} />}
         bodyClassName={bodyClassName}
         note={note}
         footer={signatureHtml ? <SignaturePreview html={signatureHtml} on={!draft.noSignature} onChange={(on) => set({ noSignature: !on })} /> : null}
@@ -249,11 +269,8 @@ function MailForm({
             <TemplatesMenu
               mailbox={draft.from}
               onPick={(tpl) => {
-                const el = body.current
-                const at = el && document.activeElement === el ? el.selectionStart : draft.text.trim() ? draft.text.length : 0
-                const text = draft.text.trim() ? draft.text.slice(0, at) + tpl.text + draft.text.slice(at) : tpl.text
-                set({ text, ...(showSubject && !draft.subject.trim() && tpl.subject ? { subject: tpl.subject } : {}) })
-                requestAnimationFrame(() => body.current?.focus())
+                body.current?.insertText(tpl.text)
+                if (showSubject && !draft.subject.trim() && tpl.subject) set({ subject: tpl.subject })
               }}
             />
           </>
@@ -357,6 +374,7 @@ export function InlineComposer({
   onClose: () => void
 }) {
   const attachments = useAttachments(upload)
+  const mentionAccess = useMentionAccess()
   const [draft, setDraft] = React.useState(initial)
   const [pending, setPending] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
@@ -387,7 +405,7 @@ export function InlineComposer({
   const switchMode = (mode: ReplyMode) => {
     const next = replyDraft(mode, thread, source, mailboxes)
     // Keep what was written; only the recipients and subject change.
-    setDraft((d) => ({ ...next, text: d.text, files: d.files }))
+    setDraft((d) => ({ ...next, text: d.text, doc: d.doc, files: d.files }))
   }
   function discard() {
     closed.current = true
@@ -395,12 +413,14 @@ export function InlineComposer({
     attachments.clear()
     onClose()
   }
-  function send() {
+  async function send() {
     const bad = invalid(draft)
     if (bad.length) return void toast.error(`Check ${bad.join(", ")}`)
     if (draft.mode === "forward" && !draft.messageId) return
+    const linked = await checkMentions(mentionAccess.check, draft)
+    if (!linked) return
     const files = attachments.ready
-    const sending = { ...draft, files, idempotencyKey: draft.idempotencyKey ?? crypto.randomUUID() }
+    const sending = { ...linked, files, idempotencyKey: draft.idempotencyKey ?? crypto.randomUUID() }
     setDraft(sending)
     setPending(true)
     schedule({
@@ -441,6 +461,7 @@ export function InlineComposer({
         </span>
       </div>
       {conflict && <DraftConflict draftKey={thread.id} />}
+      {mentionAccess.dialog}
       <MailForm
         draft={draft}
         set={set}
@@ -453,7 +474,7 @@ export function InlineComposer({
         bodyClassName="max-h-[45vh]"
         focusSignal={focusSignal}
         signatureHtml={signatureHtml}
-        onSend={send}
+        onSend={() => void send()}
         onDiscard={discard}
       />
     </div>
@@ -490,6 +511,7 @@ export function ComposeWindow({
   onClose: () => void
 }) {
   const attachments = useAttachments(upload)
+  const mentionAccess = useMentionAccess()
   const fresh = React.useCallback(
     (from: string, to: string[] = []): Draft => ({ mode: "new", from, to, cc: [], subject: "", text: "" }),
     [],
@@ -541,12 +563,14 @@ export function ComposeWindow({
     setDraft(fresh(mailbox))
     onClose()
   }
-  function send() {
+  async function send() {
     const bad = invalid(draft)
     if (bad.length) return void toast.error(`Check ${bad.join(", ")}`)
     if (!draft.subject.trim()) return void toast.error("Add a subject")
+    const linked = await checkMentions(mentionAccess.check, draft)
+    if (!linked) return
     const files = attachments.ready
-    const sending = { ...draft, files, idempotencyKey: draft.idempotencyKey ?? crypto.randomUUID() }
+    const sending = { ...linked, files, idempotencyKey: draft.idempotencyKey ?? crypto.randomUUID() }
     setDraft(sending)
     setPending(true)
     schedule({
@@ -568,6 +592,7 @@ export function ComposeWindow({
   const form = (
     <>
       {conflict && <DraftConflict draftKey={draftKey} />}
+      {mentionAccess.dialog}
       <MailForm
         key={focusKey}
         draft={draft}
@@ -580,7 +605,7 @@ export function ComposeWindow({
         showSubject
         autoFocusTo={!draft.to.length}
         signatureHtml={signaturePreview(signatures[draft.from], signatureBrand, draft.from)}
-        onSend={send}
+        onSend={() => void send()}
         onDiscard={discard}
       />
     </>

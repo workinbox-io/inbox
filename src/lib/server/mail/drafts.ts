@@ -64,7 +64,8 @@ export async function getDraft({ orgId, userId, boxes }: DraftOwner, key: string
 /** Patch a saved draft only if nobody changed it since the caller read it. Never recreate a deleted draft. */
 export async function updateDraft(owner: DraftOwner, key: string, patch: Partial<Pick<MailDraftPayload, "from" | "to" | "cc" | "subject" | "text" | "files">>, expectedUpdatedAt: number) {
   const current = await requireDraftVersion(owner, key, expectedUpdatedAt);
-  const payload = { ...current.draft, ...patch };
+  // New text (MCP, API) replaces the rich body too, or the stale document would be what gets sent.
+  const payload = { ...current.draft, ...patch, ...(patch.text !== undefined ? { doc: undefined } : {}) };
   if (payload.files?.length) payload.files = await checkDraftFiles(owner, payload.files);
   const mailbox = owner.boxes.find((b) => b.address === payload.from);
   if (!mailbox) throw new HttpError(422, "Pick a mailbox");

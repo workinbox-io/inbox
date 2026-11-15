@@ -3,7 +3,7 @@
  * may open or edit). The live document is a Yjs doc in the note's Durable Object (src/notes/room.ts);
  * `content` and `text` are its last saved snapshot, used for lists, search, the API and to seed a new room.
  */
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createdAt, id, organization, time, updatedAt, user } from "./core";
 
 /** A Plate (Slate) document: a list of block elements. */
@@ -65,4 +65,26 @@ export const noteAccess = sqliteTable(
     role: text("role", { enum: ["view", "edit"] }).notNull().default("edit"),
   },
   (t) => [primaryKey({ columns: [t.noteId, t.userId] }), index("note_access_user_idx").on(t.userId)],
+);
+
+/** Public read-only links (/n/<token>): "live" shows the note as it is now, "snapshot" the content kept when made. */
+export const noteLinks = sqliteTable(
+  "note_links",
+  {
+    id: id(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    noteId: text("note_id")
+      .notNull()
+      .references(() => notes.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    mode: text("mode", { enum: ["live", "snapshot"] }).notNull().default("live"),
+    snapshotTitle: text("snapshot_title"),
+    snapshotContent: text("snapshot_content", { mode: "json" }).$type<NoteContent>(),
+    expiresAt: time("expires_at"),
+    createdBy: text("created_by"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("note_links_token_idx").on(t.token), index("note_links_note_idx").on(t.noteId)],
 );

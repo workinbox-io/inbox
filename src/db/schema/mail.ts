@@ -253,6 +253,8 @@ export interface MailDraftPayload {
   cc: string[];
   subject: string;
   text: string;
+  /** The rich body (Plate document); `text` is its plain version. */
+  doc?: Record<string, unknown>[];
   messageId?: string;
   files?: import("@/lib/uploads").AttachmentInput[]
   noSignature?: boolean;

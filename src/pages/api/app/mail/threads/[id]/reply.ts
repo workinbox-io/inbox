@@ -17,6 +17,6 @@ export const POST = handler(async (ctx) => {
     await requireDraftVersion(owner, body.draftKey, body.expectedUpdatedAt);
   }
   const files = await checkDraftFiles(owner, body.files);
-  const job = await sendMail({ threadId: ctx.params.id!, to: body.to, cc: body.cc, text: body.text, signature: body.signature, files, sendAt: body.sendAt }, boxes, ctx.locals.user!.name, { actorUserId: ctx.locals.user!.id, idempotencyKey: ctx.request.headers.get("Idempotency-Key") ?? body.idempotencyKey });
+  const job = await sendMail({ threadId: ctx.params.id!, to: body.to, cc: body.cc, text: body.text, doc: body.doc, signature: body.signature, files, sendAt: body.sendAt }, boxes, ctx.locals.user!.name, { actorUserId: ctx.locals.user!.id, idempotencyKey: ctx.request.headers.get("Idempotency-Key") ?? body.idempotencyKey });
   return json(job, 202);
 });

@@ -218,6 +218,13 @@
       "when": 1794571058685,
       "tag": "0030_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1794774257901,
+      "tag": "0031_mention_links",
+      "breakpoints": true
     }
   ]
 }

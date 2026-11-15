@@ -88,6 +88,12 @@ export const driveLinks = sqliteTable(
     token: text("token").notNull(),
     passwordHash: text("password_hash"),
     expiresAt: time("expires_at"),
+    /** "snapshot": a frozen copy of the file at `snapshot_key` (R2), served instead of the live one. */
+    mode: text("mode", { enum: ["live", "snapshot"] }).notNull().default("live"),
+    snapshotKey: text("snapshot_key"),
+    snapshotName: text("snapshot_name"),
+    snapshotType: text("snapshot_type"),
+    snapshotSize: integer("snapshot_size"),
     createdBy: text("created_by"),
     createdAt: createdAt(),
   },

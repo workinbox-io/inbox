@@ -172,6 +172,7 @@ export function AddressInput({
 export function ComposeBody({
   value,
   onChange,
+  editor,
   bodyRef,
   placeholder = "Write your e-mail…",
   bodyClassName,
@@ -186,6 +187,8 @@ export function ComposeBody({
 }: {
   value: string
   onChange: (text: string) => void
+  /** A rich editor in place of the plain text box (org mail: components/mailbox/mail-editor.tsx). */
+  editor?: React.ReactNode
   bodyRef?: React.Ref<HTMLTextAreaElement>
   placeholder?: string
   bodyClassName?: string
@@ -204,7 +207,7 @@ export function ComposeBody({
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <Textarea
+        {editor ?? <Textarea
           ref={bodyRef}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -216,7 +219,7 @@ export function ComposeBody({
             e.preventDefault()
             if (!disabled) onSend()
           }}
-        />
+        />}
         {footer}
         {note ? <p className="text-muted-foreground px-4 pb-2 text-xs">{note}</p> : null}
         <AttachmentStrip attachments={attachments} removeLabel="Remove" className="px-4" />

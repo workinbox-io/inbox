@@ -5,6 +5,7 @@
  */
 import { env } from "cloudflare:workers";
 import { renderSignature } from "@/lib/mail/signature";
+import { docToHtml, docToText } from "@/lib/mail/doc-render";
 import { sameSubmission } from "@/lib/mail/submission";
 import PostalMime, { type Address, type Attachment } from "postal-mime";
 import {
@@ -579,10 +580,13 @@ async function mailboxSignature(mailbox: Mailbox) {
   return renderSignature(card, await getSignatureBrand(mailbox.orgId), env.PUBLIC_APP_URL);
 }
 
-function renderMail(rawText: string, extra: { quote?: MailMessageRow; forward?: MailMessageRow; signature?: { text: string; html: string } | null }) {
+function renderMail(plain: string, extra: { quote?: MailMessageRow; forward?: MailMessageRow; signature?: { text: string; html: string } | null; doc?: unknown[] }) {
   const sig = extra.signature;
+  // The composer's rich body when there is one (mentions become links); API, MCP and auto-replies send text.
+  const rawText = extra.doc ? docToText(extra.doc, env.PUBLIC_APP_URL) || plain : plain;
   const text = sig ? `${rawText}\n\n-- \n${sig.text}`.trim() : rawText;
-  const body = `<div style="${FONT};white-space:pre-wrap">${escapeHtml(rawText)}</div>${sig?.html ?? ""}`;
+  const main = extra.doc ? `<div style="${FONT}">${docToHtml(extra.doc, env.PUBLIC_APP_URL)}</div>` : `<div style="${FONT};white-space:pre-wrap">${escapeHtml(rawText)}</div>`;
+  const body = `${main}${sig?.html ?? ""}`;
   if (extra.forward) {
     const f = extra.forward;
     const head = forwardHeaders(f, formatDate);
@@ -609,6 +613,8 @@ export interface SendInput {
   cc?: string[];
   subject?: string;
   text: string;
+  /** The composer's rich body (lib/mail/doc-render.ts); `text` stays the fallback. */
+  doc?: unknown[];
   /** Append the mailbox's signature (default); never on automated forwards. */
   signature?: boolean;
   files?: AttachmentInput[];
@@ -642,7 +648,7 @@ export async function prepareMailSend(input: SendInput, boxes: Mailbox[], sender
   if (input.automatedForward) headers["X-WorkInbox-Forwarded"] = "1";
   if (input.autoReply) headers["Auto-Submitted"] = "auto-replied";
   const signature = input.signature === false || input.automatedForward ? null : await mailboxSignature(mailbox);
-  const { text, html } = renderMail(input.text, { quote: forward || input.autoReply ? undefined : lastIn, forward, signature });
+  const { text, html } = renderMail(input.text, { quote: forward || input.autoReply ? undefined : lastIn, forward, signature, doc: input.doc });
   const files = [...(forward?.files ?? []).map((f) => ({ url: f.url, mediaType: f.mediaType, filename: f.filename })), ...(input.files ?? [])];
   const fromName = mailbox.displayName || senderFallbackName;
 

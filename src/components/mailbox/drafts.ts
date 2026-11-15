@@ -45,7 +45,7 @@ export function readDraft(key: string): Draft | null {
   const draft = readStored(key)
   return draft?.deleted ? null : draft
 }
-const payload = (d: Draft) => ({ mode: d.mode, from: d.from, to: d.to, cc: d.cc, subject: d.subject, text: d.text, messageId: d.messageId, noSignature: d.noSignature, files: d.files ?? [] })
+const payload = (d: Draft) => ({ mode: d.mode, from: d.from, to: d.to, cc: d.cc, subject: d.subject, text: d.text, doc: d.doc, messageId: d.messageId, noSignature: d.noSignature, files: d.files ?? [] })
 const timers = new Map<string, ReturnType<typeof setTimeout>>()
 const writes = new Map<string, Promise<void>>()
 function pushLater(key: string) {

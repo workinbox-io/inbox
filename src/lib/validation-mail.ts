@@ -15,6 +15,13 @@ export const draftFileSchema = z.object({
 export const draftListSchema = z.object({ q: z.string().trim().max(2000).optional(), limit: z.coerce.number().int().min(1).max(200).default(50), cursor: z.string().max(1000).optional() });
 
 /** A reply in a thread, a forward (`forwardOf`), or a new e-mail with `mailbox` and `subject`. */
+/** The composer's Plate document (lib/mail/doc-render.ts renders it; unknown nodes are dropped there). */
+export const mailDocSchema = z
+  .array(z.record(z.string(), z.unknown()))
+  .max(2000)
+  .refine((d) => JSON.stringify(d).length <= 300_000, { message: "This e-mail is too long" })
+  .optional();
+
 export const mailSendSchema = z
   .object({
     draftKey: z.string().max(80).optional(),
@@ -27,6 +34,7 @@ export const mailSendSchema = z
     cc: z.array(mailAddress).max(20).default([]),
     subject: z.string().trim().max(300).optional(),
     text: z.string().trim().max(50_000).default(""),
+    doc: mailDocSchema,
     /** Append the sender's signature (lib/mail/signature.ts). */
     signature: z.boolean().default(true),
     files: z.array(draftFileSchema).max(5).default([]),
@@ -101,6 +109,7 @@ export const mailDraftSchema = z.object({
   cc: z.array(z.string().trim().max(254)).max(50).default([]),
   subject: z.string().max(300).default(""),
   text: z.string().max(50_000).default(""),
+  doc: mailDocSchema,
   files: z.array(draftFileSchema).max(5).optional(),
   messageId: z.string().uuid().optional(),
   noSignature: z.boolean().optional(),

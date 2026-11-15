@@ -1,0 +1,41 @@
+---
+/**
+ * A public note link (lib/server/notes/links.ts): the note read-only, live or as the snapshot kept when the link was
+ * made. Rendered by lib/mail/doc-render.ts (escaped, known nodes only). No sign-in, never indexed.
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import { docToHtml } from "@/lib/mail/doc-render";
+import { openNoteLink } from "@/lib/server/notes/links";
+import { env } from "cloudflare:workers";
+
+const open = await openNoteLink(Astro.params.token!);
+if (!open) Astro.response.status = 404;
+Astro.response.headers.set("Referrer-Policy", "no-referrer");
+const html = open ? docToHtml(open.content, env.PUBLIC_APP_URL) : "";
+const when = open?.at.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+---
+
+<BaseLayout title={open?.title ?? "Link not found"} noindex>
+  <div class="mx-auto flex min-h-svh max-w-3xl flex-col gap-6 px-4 py-6">
+    <header class="flex items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-2 text-sm font-medium tracking-tight">
+        <img src="/logo.svg" alt="" class="size-6" />{siteConfig.name}
+      </a>
+      {open && <span class="text-muted-foreground text-xs">{open.snapshot ? `Snapshot from ${when}` : `Updated ${when}`}</span>}
+    </header>
+    {open ? (
+      <main class="grid gap-4">
+        <h1 class="text-2xl font-semibold break-words">{open.title}</h1>
+        <article class="text-[15px] leading-6 break-words" set:html={html} />
+      </main>
+    ) : (
+      <div class="grid flex-1 place-items-center text-center">
+        <div class="grid gap-2">
+          <h1 class="text-xl font-semibold">This link doesn't work</h1>
+          <p class="text-muted-foreground text-sm">It may have expired or been removed. Ask the person who sent it for a new one.</p>
+        </div>
+      </div>
+    )}
+  </div>
+</BaseLayout>
