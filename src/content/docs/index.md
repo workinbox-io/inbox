@@ -25,8 +25,8 @@ self-hosted on your own Cloudflare account.
 - **AI apps and API**: read and answer mail and notes from Claude or ChatGPT ([AI apps](/docs/mcp)), or over the
   [REST API](/docs/api).
 
-There is no IMAP access yet: mail is read and sent in the web app, which you can
-install on a phone or a computer.
+Mail also works in Apple Mail, Outlook, Thunderbird and phone mail apps over IMAP and SMTP
+([Mail clients](/docs/mail-clients)); the web app installs on phones and computers too.
 
 ## Where to start
 

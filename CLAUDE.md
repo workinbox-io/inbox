@@ -8,7 +8,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 
 - Tables: `src/db/schema/mail.ts` (re-exported from `app.ts`): `mail_domains`, `mailboxes` (personal per member or
   shared), `mailbox_access`, `mail_aliases`, `mail_threads`, `mail_messages`, `mail_sender_rules`. Mailboxes hand out
-  IMAP-style UIDs (`uid_next`, `uid_validity`) and bump `modseq` on every change, for a future IMAP gateway / sync API.
+  IMAP-style UIDs (`uid_next`, `uid_validity`) and bump `modseq` on every change, used by the IMAP gateway (mail bridge, `services/mail-bridge`).
 - Incoming: `email()` in `src/worker.ts` calls `handleOrgMail` (hooked in `src/app-worker.ts`) (`lib/server/mail/store.ts`) first: address → mailbox,
   alias or the domain's catch-all (plus addressing stripped), spam score and sender rules (`lib/mail/rules.ts`), raw .eml
   in R2 under `mail-raw/<org>/<mailbox>/`, files under the org's `attachments/`. Unknown addresses fall through to the
@@ -261,7 +261,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   before editing, keep "pick them if" and our gaps honest). `/llms.txt` is generated from `config/plans.ts` and
   `compare.ts` (`lib/llms.ts`): update it with every shipped feature, like Luxivo's feature rollout (landing, `/vs` row,
   `llms.txt`, docs, footer).
-- Claim only what ships: no IMAP, no CalDAV or booking pages. Import is .mbox/.eml upload only (no IMAP import).
+- Claim only what ships: IMAP and SMTP for mail apps ship (mail bridge + Stalwart, `infra/mail`, `mail.workinbox.io`,
+  docs `mail-clients.md`); no CalDAV/CardDAV, booking pages or native mobile apps. Import is .mbox/.eml upload only.
 - Billing (workinbox.io runs `DEPLOY_MODE=cloud`, PADDLE_ENV production; self-hosters set `self`): per person = personal
   mailboxes (`lib/server/seats.ts`). Checkout sells that quantity; adding/removing/converting a personal mailbox calls
   `seatsChanged` → job `billing.seats` → PATCH the Paddle subscription (prorated next period); a daily task reconciles.

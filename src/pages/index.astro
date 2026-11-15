@@ -3,7 +3,7 @@
  * The home page, laid out after boat.dev in our ink: an ink hero with a pixel harbour, six feature cards, the setup
  * in three steps, what a team pays next to the big suites, a pricing calculator, open source and what's next, FAQ and
  * a closing band. Pixel scenes are ours (components/site/pixel); the tour shows real screens of the app.
- * Only claim what ships; IMAP stays under "Coming next".
+ * Only claim what ships; what's next stays under "soon".
  */
 import { APPS } from "@/config/apps";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
@@ -110,10 +110,11 @@ const shipped = [
   { icon: ICONS.contacts, label: "Contacts" },
   { icon: ICONS.drive, label: "Drive" },
   { icon: ICONS.calendar, label: "Calendar" },
+  { icon: ICONS.imap, label: "IMAP and SMTP" },
   { icon: ICONS.ai, label: "Claude, ChatGPT" },
 ];
 const next = [
-  { icon: ICONS.imap, label: "IMAP apps" },
+  { icon: ICONS.calendar, label: "CalDAV" },
 ];
 
 const steps = [
@@ -145,7 +146,7 @@ const faq = [
   },
   {
     question: "Can I use Outlook, Apple Mail or my phone's mail app?",
-    answer: "Not yet. Work Inbox has no IMAP access today: you read and send mail in the web app, which you can install on a phone or a computer. An IMAP gateway is on the roadmap.",
+    answer: "Yes. Every mailbox works over IMAP and SMTP: create a password for the device in Settings → Mail clients and add the account in Apple Mail, Outlook, Thunderbird or your phone's mail app. The web app installs on phones and computers too.",
   },
   {
     question: "Do I have to move my domain to Cloudflare?",
@@ -401,7 +402,7 @@ const jsonLd = [
         </ul>
         <h3 class="mt-10 text-xl">Not yet</h3>
         <ul class="mk-sqlist mt-4 text-lg">
-          <li>IMAP for Apple Mail, Outlook or phone apps: the web app installs on phones.</li>
+          <li>Native mobile apps: use your phone's mail app over IMAP, or install the web app.</li>
           <li>CalDAV sync and booking pages for the calendar.</li>
         </ul>
         <p class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-lg">

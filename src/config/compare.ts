@@ -1,7 +1,7 @@
 /**
  * Comparison pages (/vs and /vs/<slug>), modelled on Luxivo's config/compare.ts: Work Inbox next to one competitor.
  * Competitor facts come from their own pricing and help pages on `checked` (links in `sources`); re-check them before
- * changing a page. Keep "pick them if" honest, and keep our gaps (no IMAP, no CalDAV) in the table: a comparison
+ * changing a page. Keep "pick them if" honest, and keep our gaps (no CalDAV, no native mobile apps) in the table: a comparison
  * that hides the other side's strengths, or ours' weaknesses, doesn't convert and doesn't get cited.
  */
 import { FREE_PEOPLE, MIN_SEATS, PLAN_LIST, PLANS, amount } from "./plans";
@@ -44,7 +44,7 @@ export const OURS: Record<RowKey, Cell> = {
   aliases: yes("Unlimited aliases, catch-all per domain, plus addressing"),
   notes: yes("Shared notes with live editing, checklists, tables, @mentions"),
   selfHost: yes("Open source; runs on your own Cloudflare account"),
-  imap: no("Not yet: web app only (installable). IMAP gateway planned"),
+  imap: yes("IMAP and SMTP for Apple Mail, Outlook, Thunderbird and phone mail apps, a password per device; no native mobile apps"),
   ai: yes("MCP server: search and read mail, notes, contacts and drive files on every plan; replies and changes on Pro and Business"),
   suite: partial("Calendar, contacts (a team address book) and a shared drive; no office documents or video calls"),
 };
@@ -105,7 +105,7 @@ export const COMPETITORS: Competitor[] = [
     ],
     pickThemIf: [
       "Your team lives in Docs, Sheets and Meet.",
-      "You need Gmail on phones, Outlook or another IMAP app today.",
+      "You want native phone apps from the same vendor (Gmail, Calendar, Drive).",
       "You need Gemini across mail, documents and meetings.",
     ],
     faq: [
@@ -195,7 +195,7 @@ export const COMPETITORS: Competitor[] = [
     ],
     pickThemIf: [
       "You want a whole suite (drive, chat, meetings) from one vendor today.",
-      "You need IMAP or mobile apps now (on Zoho's paid plans).",
+      "You want native mobile apps from the same vendor (on Zoho's paid plans).",
       "You pay yearly anyway and only need mail: Mail Lite at $1 a person is cheaper for big teams.",
     ],
     faq: [
@@ -254,7 +254,7 @@ export const COMPETITORS: Competitor[] = [
     logo: "/logos/fastmail.png",
     tagline: "A Fastmail alternative with shared mailboxes and notes",
     intro:
-      "Fastmail is fast, standards-based mail with excellent IMAP, CalDAV and JMAP support. Work Inbox trades that client support (no IMAP yet) for shared mailboxes, live notes and the option to self-host on Cloudflare.",
+      "Fastmail is fast, standards-based mail with excellent IMAP, CalDAV and JMAP support. Work Inbox has IMAP and SMTP too, but no CalDAV, CardDAV or JMAP; it adds shared mailboxes, live notes and the option to self-host on Cloudflare.",
     checked: CHECKED,
     theirPricing: [
       "Basic, Standard and Professional: 6 GB, 60 GB and 150 GB a person (prices shown in the visitor's currency)",
@@ -273,7 +273,7 @@ export const COMPETITORS: Competitor[] = [
     },
     whyUs: ["Shared mailboxes a whole team answers.", "Live shared notes next to the mail.", "Open source and self-hostable."],
     pickThemIf: [
-      "You want to keep your IMAP and CalDAV apps on every device.",
+      "You want CalDAV and CardDAV in every app on every device.",
       "Mail alone is what you need, from an independent vendor.",
       "You need CalDAV calendars in your phone's calendar app.",
     ],
