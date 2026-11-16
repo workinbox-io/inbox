@@ -14,9 +14,9 @@ import BrowserFrame from "@/components/site/BrowserFrame.astro";
 import Shot from "@/components/site/Shot.astro";
 import Faq from "@/components/site/Faq.astro";
 import PixelScene from "@/components/site/pixel/PixelScene.astro";
+import { APP_ROWS } from "@/components/site/pixel/scenes";
 import PixelIcon from "@/components/site/pixel/PixelIcon.astro";
 import PersonReferences from "@/components/site/PersonReferences.astro";
-import CommandBox from "@/components/site/CommandBox.astro";
 import ClosingBand from "@/components/site/ClosingBand.astro";
 import { COMPETITORS } from "@/config/compare";
 import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, PLANS, TRIAL_DAYS, hasFeature, priceYearly, seatsFor } from "@/config/plans";
@@ -25,6 +25,15 @@ import { organizationJsonLd, siteConfig } from "@/config/site";
 export const prerender = true;
 
 const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly)) / 100;
+
+/** GitHub stars at build time (deploys rebuild the page); nothing shown while the repo is private or the API fails. */
+let stars: number | null = null;
+try {
+  const res = await fetch(`https://api.github.com/repos/${siteConfig.repoUrl.replace("https://github.com/", "")}`, { headers: { accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(3000) });
+  if (res.ok) stars = ((await res.json()) as { stargazers_count?: number }).stargazers_count ?? null;
+} catch {
+  stars = null;
+}
 
 const tabs = APPS.map((a) => ({ id: a.slug, label: a.label, url: `workinbox.io/app/${a.shot === "mail-thread" ? "mail" : a.shot}`, name: a.shot, alt: `Work Inbox ${a.label}: ${a.description}`, href: `/${a.slug}` }));
 
@@ -209,39 +218,54 @@ const jsonLd = [
 ---
 
 <MarketingLayout title="The open-source workspace for your team" description={siteConfig.description} jsonLd={jsonLd} ink>
-  <!-- Hero: ink band under the see-through header, the packing room with its conveyor belt (pixel scene "belt") as a full-width strip. -->
+  <!-- Hero: ink band under the see-through header; the packing room (pixel scene "belt") under the text, its wall rising
+       beside the text on large screens. -->
   <section class="mk-band mk-under-header relative isolate overflow-hidden">
-    <div class="mk-wrap pt-8 sm:pt-12">
-      <h1 class="mk-h1 max-w-4xl">Your team's workspace,<br /> open source</h1>
+    <div class="mk-wrap relative z-10 pt-8 sm:pt-12">
+      <h1 class="mk-h1 max-w-4xl">Everything your team works on,<br /> in one box</h1>
       <p class="mk-lead mt-6 max-w-2xl lg:max-w-xl">
-        Everything your team works on, in one box: email on your own domain, chat, notes, calendars, a shared drive and
-        contacts. Free for up to {FREE_PEOPLE} people, then from
-        €{lowest} per person a month, or free on your own Cloudflare account.
+        The open-source workspace: email on your own domain, chat, notes, calendars, a shared drive and contacts.
       </p>
-      <div class="mt-9 flex flex-wrap items-center gap-3">
+      <ul class="mt-6 flex max-w-xl flex-wrap gap-2">
+        {
+          APPS.map((a, i) => (
+            <li>
+              <a href={`/${a.slug}`} data-app={i} class="hero-app">
+                <PixelIcon rows={APP_ROWS[i]!.map((r) => r.replaceAll("w", "5"))} class="h-3.5 w-auto" />
+                {a.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="mt-8 flex flex-wrap items-center gap-3">
         <a href="/signup" class="mk-btn">Start free <span aria-hidden="true">→</span></a>
         <a href="/docs/self-host" class="mk-btn mk-btn-ghost">Self-host for free</a>
       </div>
-      <CommandBox hint class="mt-6" />
-      <p class="mk-cap mt-6">Open source · AGPL-3.0 · runs on Cloudflare</p>
+      <p class="mk-cap mt-5">Free for up to {FREE_PEOPLE} people · then €{lowest} per person a month · free on your own Cloudflare account</p>
+      <p class="mk-cap mt-2">
+        Open source · AGPL-3.0 · <a href={siteConfig.repoUrl} class="mk-link">{stars !== null ? `★ ${stars} on GitHub` : "on GitHub"}</a>
+      </p>
     </div>
-    <!-- The packing room as a full-width strip under the text: boxes on a conveyor belt catching mail, messages, notes,
-         events, files and contacts. Each chute links to its app (hover lights it up). Phones show the middle (the
-         chutes), twice as large. -->
-    <div class="relative mt-8 sm:mt-10 max-md:-ml-[50%] max-md:w-[200%]" data-belt>
-      <PixelScene scene="belt" />
-      {
-        APPS.map((a, i) => (
-          <a
-            href={`/${a.slug}`}
-            data-chute={i}
-            aria-label={a.label}
-            title={a.label}
-            class="absolute top-[12%] h-[16%] w-[4%] -translate-x-1/2"
-            style={`left: ${((140 + i * 36) / 480) * 100}%`}
-          />
-        ))
-      }
+    <!-- The packing room: boxes on a conveyor belt catching mail, messages, notes, events, files and contacts. The
+         scene is 480×180: below xl only its room (the bottom 100) shows; from xl its wall rises beside the text. Each
+         chute links to its app and lights up with the matching link above. Phones show the middle, twice as large. -->
+    <div class="relative mt-8 aspect-[480/100] overflow-hidden sm:mt-10 max-md:-ml-[50%] max-md:w-[200%] xl:-mt-[12.5%] xl:aspect-[480/180]" data-belt>
+      <PixelScene scene="belt" class="absolute inset-x-0 bottom-0" />
+      <div class="absolute inset-x-0 bottom-0 aspect-[480/180]">
+        {
+          APPS.map((a, i) => (
+            <a
+              href={`/${a.slug}`}
+              data-chute={i}
+              aria-label={a.label}
+              title={a.label}
+              class="absolute top-[52.8%] h-[5%] w-[3.5%] -translate-x-1/2"
+              style={`left: ${((140 + i * 36) / 480) * 100}%`}
+            />
+          ))
+        }
+      </div>
     </div>
   </section>
 
@@ -504,6 +528,23 @@ const jsonLd = [
 </MarketingLayout>
 
 <style>
+  .hero-app {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    font-size: 0.875rem;
+    color: rgb(255 255 255 / 0.85);
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+  .hero-app:hover,
+  .hero-app:focus-visible,
+  .hero-app.is-lit {
+    background: rgb(255 255 255 / 0.1);
+    border-color: rgb(255 255 255 / 0.6);
+    color: #fff;
+  }
   .setup-caret {
     display: inline-block;
     width: 0.6em;
@@ -568,17 +609,21 @@ const jsonLd = [
 </style>
 
 <script>
-  // The hero's belt: a chute under the pointer lights up its app.
+  // The hero's belt: a chute or an app link under the pointer (or focused) lights both up.
   const belt = document.querySelector<HTMLElement>("[data-belt]");
   const beltScene = belt?.querySelector<HTMLCanvasElement>("canvas");
   if (belt && beltScene) {
-    for (const chute of belt.querySelectorAll<HTMLElement>("[data-chute]")) {
-      const on = () => (beltScene.dataset.state = chute.dataset.chute);
-      const off = () => (beltScene.dataset.state = "");
-      chute.addEventListener("pointerenter", on);
-      chute.addEventListener("focus", on);
-      chute.addEventListener("pointerleave", off);
-      chute.addEventListener("blur", off);
+    const links = [...document.querySelectorAll<HTMLElement>("[data-app]")];
+    const light = (i: string) => {
+      beltScene.dataset.state = i;
+      for (const l of links) l.classList.toggle("is-lit", l.dataset.app === i);
+    };
+    for (const el of [...belt.querySelectorAll<HTMLElement>("[data-chute]"), ...links]) {
+      const i = el.dataset.chute ?? el.dataset.app ?? "";
+      el.addEventListener("pointerenter", () => light(i));
+      el.addEventListener("focus", () => light(i));
+      el.addEventListener("pointerleave", () => light(""));
+      el.addEventListener("blur", () => light(""));
     }
   }
 
