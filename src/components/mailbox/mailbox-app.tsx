@@ -90,12 +90,14 @@ export function MailboxApp(props: MailboxAppProps) {
     api<{ jobs: OutboxRow[] }>("GET", "/api/app/mail/outbox").then((r) => setOutboxJobs(r.jobs)).catch(() => {})
   }, [])
   React.useEffect(refreshOutbox, [refreshOutbox])
+  const outboxCount = scheduledCount(outboxJobs)
+  const queued = outboxCount > 0
   React.useEffect(() => {
-    if (folder !== "outbox") return
+    // Also while a send is queued, wherever the person is, so the rail's count drops once it goes out.
+    if (folder !== "outbox" && !queued) return
     const timer = setInterval(refreshOutbox, 10_000)
     return () => clearInterval(timer)
-  }, [folder, refreshOutbox])
-  const outboxCount = scheduledCount(outboxJobs)
+  }, [folder, queued, refreshOutbox])
   const draftCount = useDraftCount(props.mailboxes)
   React.useEffect(() => {
     const url = new URL(location.href)
