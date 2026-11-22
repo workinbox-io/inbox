@@ -6,7 +6,8 @@
 import { env } from "cloudflare:workers";
 import { and, collectionRecordLinks, db, eq, gt, inArray, or, sql } from "@/db";
 
-export type GithubState = { state: "open" | "draft" | "merged" | "closed"; checkedAt: number };
+/** `mergedAt` lets a deploy find the PRs it shipped (lib/server/collection-git.ts). */
+export type GithubState = { state: "open" | "draft" | "merged" | "closed"; checkedAt: number; mergedAt?: number };
 
 export async function githubState(url: string): Promise<GithubState | null> {
   const m = /^https:\/\/github\.com\/([\w.-]+)\/([\w.-]+)\/(pull|issues)\/(\d+)/.exec(url);
@@ -20,7 +21,7 @@ export async function githubState(url: string): Promise<GithubState | null> {
     if (!res.ok) return null;
     const j = (await res.json()) as { state?: string; merged_at?: string | null; draft?: boolean };
     const state = j.merged_at ? "merged" : j.state === "closed" ? "closed" : j.draft ? "draft" : "open";
-    return { state, checkedAt: Date.now() };
+    return { state, checkedAt: Date.now(), ...(j.merged_at ? { mergedAt: Date.parse(j.merged_at) } : {}) };
   } catch {
     return null;
   }

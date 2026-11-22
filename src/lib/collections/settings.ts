@@ -5,6 +5,7 @@
  */
 import { z } from "zod";
 import type { RecordValues } from "./fields";
+import { gitMapSchema, type GitMap } from "./git";
 
 export const REPEAT_UNITS = ["day", "week", "month"] as const;
 export type RepeatUnit = (typeof REPEAT_UNITS)[number];
@@ -18,6 +19,8 @@ export type CollectionSettings = {
   triage?: boolean;
   sla?: Sla | null;
   templates?: RecordTemplate[];
+  /** Statuses that git activity moves records to (lib/collections/git.ts). */
+  git?: GitMap | null;
 };
 
 export const MAX_TEMPLATES = 20;
@@ -37,6 +40,7 @@ export const settingsSchema = z.object({
   triage: z.boolean().optional(),
   sla: z.object({ field: z.string().min(1).max(32), hours: z.record(z.string().max(60), z.number().positive().max(24 * 365)) }).nullable().optional(),
   templates: z.array(templateSchema).max(MAX_TEMPLATES).optional(),
+  git: gitMapSchema.nullable().optional(),
 });
 export type SettingsInput = z.infer<typeof settingsSchema>;
 

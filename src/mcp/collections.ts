@@ -5,7 +5,7 @@
  */
 import { z } from "zod";
 import { COLLECTION_TEMPLATES, fieldsInputSchema, TEMPLATE_IDS } from "@/lib/collections/fields";
-import { batchRecords, createRecord, deleteRecord, findCollection, findRecord, listCollections, listLinks, listRecords, updateCollection, updateRecord, createCollection, type CollectionRecord } from "@/lib/server/collections";
+import { addLink, batchRecords, createRecord, deleteRecord, findCollection, findRecord, listCollections, listLinks, listRecords, updateCollection, updateRecord, createCollection, type CollectionRecord } from "@/lib/server/collections";
 import { addRelation, relatedOf } from "@/lib/server/collection-relations";
 import type { Value } from "platejs";
 import { formatId } from "@/lib/collections/ids";
@@ -171,6 +171,20 @@ export const collectionsTools: Tools = {
       if (!res.records.length) throw new HttpError(404, "No such record in the trash");
       ctx.audit("collection_record.restore", { target: res.records[0]!.title, details: { collection: c.name } });
       return { restored: true, record: forModel(c, res.records[0]!) };
+    },
+  }),
+
+  collection_record_link: defineTool({
+    title: "Link to record",
+    description: "Adds a link to a record: a GitHub pull request, issue or commit, a Figma file, a Linear issue or any web page (the kind and title are read from the URL; the same URL is kept once). Use it to attach the pull request or commit you made for a task.",
+    input: z.object({ collection, id: recordId, url: z.string().trim().url().max(2000).describe("https://… address") }),
+    scope: "write",
+    async run({ collection: ref, id, url }, ctx) {
+      const c = await findCollection(viewer(ctx), ref, "edit");
+      const record = await findRecord(ctx.orgId, c, id);
+      const { kind, title, state } = await addLink(ctx.orgId, c, record.id, url, ctx.userId);
+      ctx.audit("collection_record.update", { target: record.title, details: { collection: c.name, link: title } });
+      return { key: formatId(c.prefix, record.number), link: { url, kind, title, state } };
     },
   }),
 

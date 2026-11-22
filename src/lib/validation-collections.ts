@@ -3,6 +3,7 @@ import { z } from "zod";
 import { IMPORT_CHUNK } from "@/lib/collections/csv";
 import { fieldsInputSchema, TEMPLATE_IDS } from "@/lib/collections/fields";
 import { REPEAT_UNITS, settingsSchema } from "@/lib/collections/settings";
+import { gitEventSchema } from "@/lib/collections/git";
 import { COLLECTION_ICONS, HEX_COLOR } from "@/lib/collections/appearance";
 
 const name = z.string().trim().min(1, "Enter a name").max(80);
@@ -44,6 +45,7 @@ export const recordUpdateSchema = z.object({
   triage: z.literal(false).optional().describe("false accepts a record waiting in triage"),
 });
 export const linkSchema = z.object({ url: z.string().trim().min(1).max(2000) });
+export const gitEventsSchema = z.object({ events: z.array(gitEventSchema).min(1).max(50) });
 
 /** Several records at once (the selection): the same values for all, positions per id, a cycle, or trash/restore/purge/accept. */
 export const recordBatchSchema = z.object({

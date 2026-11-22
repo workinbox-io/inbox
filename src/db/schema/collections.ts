@@ -211,6 +211,28 @@ export const collectionRecordLinks = sqliteTable(
   (t) => [index("collection_record_links_record_idx").on(t.recordId, t.createdAt)],
 );
 
+/**
+ * A collection's GitHub webhook (api/hooks/github/[id].ts): the id is the URL, the secret signs GitHub's deliveries.
+ * Kept out of `collections.settings`, which every viewer gets.
+ */
+export const collectionGitHooks = sqliteTable(
+  "collection_git_hooks",
+  {
+    id: id(),
+    orgId: text("org_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    collectionId: text("collection_id")
+      .notNull()
+      .references(() => collections.id, { onDelete: "cascade" }),
+    secret: text("secret").notNull(),
+    createdBy: text("created_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    lastEventAt: integer("last_event_at", { mode: "timestamp_ms" }),
+  },
+  (t) => [uniqueIndex("collection_git_hooks_collection_idx").on(t.collectionId)],
+);
+
 /** Emoji reactions on comments, one per person and emoji. */
 export const collectionCommentReactions = sqliteTable(
   "collection_comment_reactions",

@@ -361,6 +361,11 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   (`parent_id`, one level) and reactions; following (`collection_subscriptions`, bell in the panel). GitHub PR/issue
   state on links (`lib/server/github-links.ts`, optional `GITHUB_TOKEN`). UI: ⌘K (`useAppCommands`), Space = Peek,
   ⌘Z undo stack, ⌘. / ⌘⇧. copy ID / branch, P priority, rail items Triage / cycles / Trash (`?scope=`).
+- Git activity (`docs/git-integration.md`): per-collection GitHub webhook `/api/hooks/github/<hookId>` (HMAC with
+  `collection_git_hooks.secret`, outside the session middleware, `apiAccess` plan on cloud) and `POST …/[id]/git-events`
+  (+ `/api/v1`) → job `collections.git` (`lib/server/collection-git.ts`, rules `lib/collections/git.ts`): IDs in branch,
+  PR, commit texts link the URL and move the status by `settings.git` (started/review/merged/deployed, forward only);
+  deploys move records whose PR merged earlier (`mergedAt` in link state). MCP `collection_record_link`.
 - API `/api/app/collections[/id[/records[/recordId[/activity|links|comments|related|follow]]]]`, `…/records/batch`,
   `…/views`, `…/recurrences`, `/lookup`, `/api/v1/collections` re-exports. MCP `src/mcp/collections.ts` (`collections_list`,
   `collection_create/update`, `collection_records_search`, `collection_record_get/create/update/delete/restore/relate`;

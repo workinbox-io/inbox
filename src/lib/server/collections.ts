@@ -35,6 +35,7 @@ import {
 import { CREATED, diffRecord } from "@/lib/collections/activity";
 import { NONE } from "@/lib/collections/board";
 import { settingsSchema, type CollectionSettings, type SettingsInput } from "@/lib/collections/settings";
+import { GIT_STEPS } from "@/lib/collections/git";
 import { normalizeView, type FilterRule } from "@/lib/collections/view-config";
 import { isOrgAttachmentUrl } from "@/lib/uploads";
 import { parseId, PREFIX, prefixFrom } from "@/lib/collections/ids";
@@ -266,6 +267,12 @@ async function cleanSettings(orgId: string, fields: CollectionField[], current: 
     const field = p.sla ? fields.find((f) => f.id === p.sla!.field && f.type === "select") : undefined;
     if (p.sla && !field) throw new HttpError(422, "The SLA follows a choice field");
     next.sla = p.sla && field ? { field: field.id, hours: Object.fromEntries(Object.entries(p.sla.hours).filter(([o]) => field.options?.includes(o))) } : null;
+  }
+  if (p.git !== undefined) {
+    // Only choices of the status field, so a renamed or removed status stops moving records instead of failing.
+    const options = statusFieldOf(fields)?.options ?? [];
+    const steps = p.git ? GIT_STEPS.filter((k) => p.git![k] && options.includes(p.git![k]!)).map((k) => [k, p.git![k]!]) : [];
+    next.git = p.git ? { ...Object.fromEntries(steps), ...(p.git.environment ? { environment: p.git.environment } : {}) } : null;
   }
   if (p.templates !== undefined) {
     next.templates = [];

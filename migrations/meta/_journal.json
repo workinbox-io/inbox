@@ -337,6 +337,13 @@
       "when": 1795162171054,
       "tag": "0047_wakeful_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1795378635527,
+      "tag": "0048_loose_infant_terrible",
+      "breakpoints": true
     }
   ]
 }

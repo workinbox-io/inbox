@@ -1,21 +1,26 @@
 /**
  * The planning part of the collection dialog (lib/collections/settings.ts): cycles (length and the first one's start),
  * triage for requests, an SLA per priority (hours), record templates and repeating records. Settings are saved with
- * the dialog; a repeating record stops at once (its own API).
+ * the dialog; a repeating record stops at once (its own API). The GitHub part maps git steps to statuses
+ * (lib/collections/git.ts) and shows the collection's webhook (its own API, made when first asked for).
  */
 import * as React from "react"
-import { Repeat, X } from "lucide-react"
+import { GitPullRequest, Repeat, X } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
+import { CopyField } from "@/components/app/copy-field"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { api } from "@/lib/api-client"
-import { priorityFieldOf, type CollectionField } from "@/lib/collections/fields"
+import { priorityFieldOf, statusFieldOf, type CollectionField } from "@/lib/collections/fields"
+import { GIT_STEPS, type GitMap } from "@/lib/collections/git"
 import type { CollectionSettings } from "@/lib/collections/settings"
 import { today } from "@/lib/collections/settings"
-import { t, tp } from "@/lib/i18n/panel"
+import { appLocale, msg, t, tp } from "@/lib/i18n/panel"
 import type { Recurrence } from "@/lib/server/collection-planning"
+import type { GitHookInfo } from "@/lib/server/collection-git"
 
 function Toggle({ id, label, hint, checked, onChange }: { id: string; label: string; hint: string; checked: boolean; onChange: (on: boolean) => void }) {
   return (
@@ -40,6 +45,7 @@ export function CollectionSettingsSection({ collectionId, fields, value, onChang
   const unit = (r: Recurrence) => (r.unit === "day" ? tp(r.every, { one: "every day", other: "every {n} days" }) : r.unit === "week" ? tp(r.every, { one: "every week", other: "every {n} weeks" }) : tp(r.every, { one: "every month", other: "every {n} months" }))
 
   return (
+    <>
     <fieldset className="grid gap-4 border-t pt-4">
       <legend className="mb-2 text-sm font-medium">{t("Planning")}</legend>
       <Toggle id="set-cycles" label={t("Cycles")} hint={t("Plan work in sprints. Records not done when a cycle ends move to the next one.")} checked={!!value.cycles}
@@ -124,6 +130,67 @@ export function CollectionSettingsSection({ collectionId, fields, value, onChang
           </ul>
         </div>
       ) : null}
+    </fieldset>
+    <GitSection collectionId={collectionId} fields={fields} value={value.git ?? null} onChange={(git) => set({ git })} />
+    </>
+  )
+}
+
+const STEP_LABEL: Record<(typeof GIT_STEPS)[number], string> = {
+  started: msg("Branch or pull request opened"),
+  review: msg("Ready for review"),
+  merged: msg("Pull request merged"),
+  deployed: msg("Deployed"),
+}
+const NONE = "__none"
+
+function GitSection({ collectionId, fields, value, onChange }: { collectionId: string; fields: CollectionField[]; value: GitMap | null; onChange: (next: GitMap | null) => void }) {
+  const status = statusFieldOf(fields)
+  const [hook, setHook] = React.useState<GitHookInfo | null>(null)
+  const load = (rotate = false) =>
+    api<GitHookInfo>(rotate ? "POST" : "GET", `/api/app/collections/${collectionId}/git`, rotate ? { action: "rotate" } : undefined).then(setHook, (e: Error) => void toast.error(e.message))
+  const map = value ?? {}
+  const setStep = (k: keyof GitMap, v: string | undefined) => onChange({ ...map, [k]: v || undefined })
+
+  return (
+    <fieldset className="grid gap-4 border-t pt-4">
+      <legend className="mb-2 flex items-center gap-1.5 text-sm font-medium"><GitPullRequest className="size-4" /> {t("GitHub")}</legend>
+      <p className="text-muted-foreground text-xs">{t("Branches, commits and pull requests that mention a record's ID (like {id}) get linked on it and move it along.", { id: "TAS-12" })}</p>
+      {status ? (
+        <div className="grid gap-2">
+          {GIT_STEPS.map((k) => (
+            <div key={k} className="flex items-center gap-2 text-sm">
+              <span className="min-w-0 flex-1 truncate">{t(STEP_LABEL[k])}</span>
+              <Select value={map[k] ?? NONE} onValueChange={(v) => setStep(k, v === NONE ? undefined : v)}>
+                <SelectTrigger size="sm" className="w-40" aria-label={t(STEP_LABEL[k])}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NONE}>{t("Don't move")}</SelectItem>
+                  {(status.options ?? []).map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 text-sm">
+            <Label htmlFor="set-git-env" className="min-w-0 flex-1 font-normal">{t("Deploys to environment")}</Label>
+            <Input id="set-git-env" className="h-8 w-40" placeholder="production" value={map.environment ?? ""} onChange={(e) => setStep("environment", e.target.value)} />
+          </div>
+        </div>
+      ) : (
+        <p className="text-muted-foreground text-xs">{t("Add a Status field to move records automatically; links work without one.")}</p>
+      )}
+      {hook ? (
+        <div className="grid gap-2 rounded-md border p-3">
+          <CopyField label={t("Payload URL")} value={hook.url} />
+          <CopyField label={t("Secret")} value={hook.secret} secret />
+          <p className="text-muted-foreground text-xs">{t("In the repository: Settings → Webhooks → Add webhook. Content type application/json; events: Pull requests, Pushes, Deployment statuses.")}</p>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground text-xs">{hook.lastEventAt ? t("Last delivery {date}", { date: new Date(hook.lastEventAt).toLocaleString(appLocale()) }) : t("No deliveries yet")}</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => load(true)}>{t("New secret")}</Button>
+          </div>
+        </div>
+      ) : (
+        <Button type="button" variant="outline" size="sm" className="justify-self-start" onClick={() => load()}>{t("Set up webhook")}</Button>
+      )}
     </fieldset>
   )
 }

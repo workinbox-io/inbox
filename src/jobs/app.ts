@@ -10,6 +10,8 @@ import { syncSeats } from "@/lib/server/seats";
 import { recheckDomain } from "@/lib/server/mail/admin";
 import { purgeSubtree } from "@/lib/server/drive/items";
 import { runAutomation } from "@/lib/server/collection-automations";
+import { applyGitEvents } from "@/lib/server/collection-git";
+import type { GitEvent } from "@/lib/collections/git";
 import { memberLeft } from "@/lib/server/member-left";
 
 export interface AppJobs {
@@ -25,6 +27,8 @@ export interface AppJobs {
   "drive.purge": { orgId: string; path: string };
   /** One collection automation for one record write (lib/server/collection-automations.ts). */
   "collections.automation": { orgId: string; automationId: string; recordId: string };
+  /** Branches, commits, PRs and deploys from a collection's GitHub webhook or the API (lib/server/collection-git.ts). */
+  "collections.git": { orgId: string; collectionId: string; events: GitEvent[] };
   /** Someone left or was removed from an org (lib/server/member-left.ts). */
   "org.memberLeft": { orgId: string; userId: string };
 }
@@ -37,5 +41,6 @@ export const appJobs: JobHandlers<AppJobs> = {
   "mail.domainCheck": (job) => recheckDomain(job),
   "drive.purge": ({ orgId, path }) => purgeSubtree(orgId, path),
   "collections.automation": (job) => runAutomation(job),
+  "collections.git": (job) => applyGitEvents(job),
   "org.memberLeft": ({ orgId, userId }) => memberLeft(orgId, userId),
 };
