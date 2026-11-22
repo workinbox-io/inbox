@@ -1,0 +1,25 @@
+---
+/** A caption pill. A newline in the text starts a new line. */
+interface Props {
+  id: string
+  x: number
+  y: number
+  w: number
+  h: number
+  text: string
+}
+const { id, x, y, w, h, text } = Astro.props
+const lines = text.split("\n")
+const size = lines.length > 1 ? 16 : 17
+---
+
+<g class="sb-note" data-node={id}>
+  <rect class="soft" x={x} y={y} width={w} height={h} rx="20"></rect>
+  {
+    lines.map((l, i) => (
+      <text class="cap" x={x + w / 2} y={y + h / 2 + (i - (lines.length - 1) / 2) * 22} text-anchor="middle" dominant-baseline="central" style={`font-size:${size}px`}>
+        {l}
+      </text>
+    ))
+  }
+</g>

@@ -1,0 +1,73 @@
+/* WorkInbox look: black and white. Ink buttons on white, white buttons on near-black, a gray frame,
+   hairline borders and no brand colour at all; colour belongs to the data only (mailboxes, charts).
+   Product file: overrides the template's tokens in global.css (loaded right after it by BaseLayout),
+   so template updates to global.css merge cleanly. Keep siteConfig.accent and emails/colors.ts in step. */
+
+:root {
+  --radius: 0.5rem;
+  --ink: #1a1a1a;
+  --background: #ffffff;
+  --card: #ffffff;
+  --popover: #ffffff;
+  --primary: #1a1a1a;
+  --primary-foreground: #ffffff;
+  --secondary: #efefef;
+  --muted: color-mix(in srgb, var(--ink) 4%, transparent);
+  --muted-foreground: #707070;
+  --accent: color-mix(in srgb, var(--ink) 5%, transparent);
+  --border: color-mix(in srgb, var(--ink) 9%, transparent);
+  --input: color-mix(in srgb, var(--ink) 13%, transparent);
+  --ring: color-mix(in srgb, var(--ink) 35%, transparent);
+  --surface: #f7f7f7;
+  --sidebar: var(--surface);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in srgb, var(--ink) 6%, transparent);
+  --sidebar-border: color-mix(in srgb, var(--ink) 8%, transparent);
+  --sidebar-ring: var(--ring);
+  --code-number: var(--muted-foreground);
+  --selection: color-mix(in srgb, var(--ink) 14%, transparent);
+  /* Charts keep colour, since ink would read as "no data". */
+  --chart-1: #1a1a1a;
+  --chart-2: #2bb3a3;
+  --chart-3: #8b7cf6;
+  --chart-4: #e6a23c;
+  --chart-5: #e66aa8;
+  --chart-upload: #1a1a1a;
+  --chart-download: #2bb3a3;
+}
+
+.dark {
+  --ink: #ececec;
+  /* Near-black page, a step lighter frame, raised layers lighter again; borders do the work, not shadows. */
+  --background: #141414;
+  --card: #1b1b1b;
+  --popover: #1f1f1f;
+  --primary: #ececec;
+  --primary-foreground: #141414;
+  --secondary: #262626;
+  --muted: color-mix(in srgb, var(--ink) 4%, transparent);
+  --muted-foreground: #8c8c8c;
+  --accent: color-mix(in srgb, var(--ink) 6%, transparent);
+  --border: color-mix(in srgb, var(--ink) 10%, transparent);
+  --input: color-mix(in srgb, var(--ink) 14%, transparent);
+  --ring: color-mix(in srgb, var(--ink) 40%, transparent);
+  --surface: #1a1a1a;
+  --sidebar: var(--surface);
+  --sidebar-foreground: color-mix(in srgb, var(--ink) 62%, var(--sidebar));
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: #141414;
+  --sidebar-accent: color-mix(in srgb, var(--ink) 6%, transparent);
+  --sidebar-border: color-mix(in srgb, var(--ink) 8%, transparent);
+  --sidebar-ring: var(--ring);
+  --code: #1a1a1a;
+  --code-number: #8c8c8c;
+  --selection: color-mix(in srgb, var(--ink) 22%, transparent);
+  --chart-1: #ececec;
+  --chart-2: #34c2b1;
+  --chart-3: #9d90f8;
+  --chart-4: #ecb04f;
+  --chart-5: #ec7cb5;
+  --chart-upload: #ececec;
+  --chart-download: #34c2b1;
+}

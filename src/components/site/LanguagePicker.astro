@@ -1,0 +1,103 @@
+---
+/**
+ * The website's language picker for the header: a flag + code button and a list of the languages this page exists in
+ * (config/languages.ts TRANSLATED_PAGES). Hidden when the page has one language. Picking one also sets the language
+ * cookie, so sign-up, sign-in and the dashboard follow it until the user picks a language in their account. From `sm` up:
+ * a phone header has no room for it, so link the languages from the footer or the mobile menu there.
+ */
+import { LOCALE_COOKIE, localeFlag, localeName, localizedPath, pageLocales, stripLocale } from "@/lib/i18n/locales";
+
+interface Props {
+  /** Accessible name of the button, in the page's language. */
+  label?: string;
+}
+const { label = "Language" } = Astro.props;
+// Prerendered pages may see "/pricing.html" or "/index.html"; the served path has neither.
+const served = Astro.url.pathname.replace(/(^|\/)index\.html$/, "$1").replace(/\.html$/, "").replace(/(.)\/$/, "$1") || "/";
+const { locale, path } = stripLocale(served);
+const versions = pageLocales(path);
+---
+
+{
+  versions.length > 1 && (
+    <div class="relative hidden sm:block" data-language-picker data-cookie={LOCALE_COOKIE}>
+      <button
+        type="button"
+        aria-expanded="false"
+        aria-haspopup="true"
+        aria-label={`${label}: ${localeName(locale)}`}
+        class="text-muted-foreground hover:text-foreground hover:bg-accent aria-expanded:text-foreground inline-flex h-8 items-center gap-1 rounded-full px-2 text-xs font-medium tracking-wide uppercase transition-colors"
+      >
+        <span class="text-base leading-none" aria-hidden="true">{localeFlag(locale)}</span>
+        <span>{locale}</span>
+        <svg class="size-3.5 transition-transform in-aria-expanded:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      <ul
+        data-panel
+        inert
+        class="bg-popover text-popover-foreground invisible absolute top-full right-0 z-50 mt-2 w-44 translate-y-1 rounded-2xl border p-1.5 opacity-0 shadow-lg transition-[opacity,transform,visibility] duration-200 ease-out data-[open=true]:visible data-[open=true]:translate-y-0 data-[open=true]:opacity-100"
+      >
+        {versions.map((l) => (
+          <li>
+            <a
+              href={localizedPath(l, path)}
+              hreflang={l}
+              lang={l}
+              data-locale={l}
+              aria-current={l === locale ? "true" : undefined}
+              class="hover:bg-accent focus-visible:bg-accent aria-[current]:bg-accent flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium outline-none transition-colors"
+            >
+              <span class="text-base leading-none" aria-hidden="true">{localeFlag(l)}</span>
+              <span class="flex-1">{localeName(l)}</span>
+              {l === locale && (
+                <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+              )}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+<script>
+  for (const picker of document.querySelectorAll<HTMLElement>("[data-language-picker]")) {
+    const button = picker.querySelector("button")!;
+    const panel = picker.querySelector<HTMLElement>("[data-panel]")!;
+    const links = [...panel.querySelectorAll<HTMLAnchorElement>("a")];
+    const setOpen = (open: boolean) => {
+      button.setAttribute("aria-expanded", String(open));
+      panel.dataset.open = String(open);
+      panel.inert = !open;
+    };
+    button.addEventListener("click", () => setOpen(button.getAttribute("aria-expanded") !== "true"));
+    button.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowDown") return;
+      e.preventDefault();
+      setOpen(true);
+      (links.find((a) => a.getAttribute("aria-current")) ?? links[0])?.focus();
+    });
+    panel.addEventListener("keydown", (e) => {
+      const i = links.indexOf(document.activeElement as HTMLAnchorElement);
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        links[(i + (e.key === "ArrowDown" ? 1 : links.length - 1)) % links.length]?.focus();
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && button.getAttribute("aria-expanded") === "true") {
+        setOpen(false);
+        button.focus();
+      }
+    });
+    document.addEventListener("click", (e) => {
+      if (!picker.contains(e.target as Node)) setOpen(false);
+    });
+    // Remember the pick for the pages that don't live under a language prefix (sign-in, the dashboard).
+    for (const a of links) {
+      a.addEventListener("click", () => {
+        document.cookie = `${picker.dataset.cookie}=${a.dataset.locale}; path=/; max-age=31536000; samesite=lax`;
+      });
+    }
+  }
+</script>

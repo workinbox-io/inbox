@@ -1,0 +1,26 @@
+# Isolated pilot on the existing CloudFile VPS. Mount state on its bounded filesystem first.
+services:
+  bridge:
+    restart: "no"
+    mem_limit: 384m
+    volumes:
+      - /opt/workinbox-mail/state/bridge:/data
+    networks:
+      default: {}
+      cloudfile:
+        aliases: [workinbox-mail-bridge]
+  stalwart:
+    restart: "no"
+    mem_limit: 512m
+    cpus: 0.5
+    volumes:
+      - /opt/workinbox-mail/state/engine:/var/lib/stalwart
+      - /opt/workinbox-mail/state/config:/etc/stalwart
+    networks:
+      default:
+        aliases: [nbg1.cloudfile.dev]
+
+networks:
+  cloudfile:
+    external: true
+    name: sftpcloud_default

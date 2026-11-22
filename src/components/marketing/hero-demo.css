@@ -1,0 +1,405 @@
+/* The homepage hero demo. Wide hero: a 1040px browser inset one gutter from the top and sides of a
+   transparent stage (the page is the ground), running 44px past the bottom. */
+.hd {
+  & .ss-stage {
+    --gutter: 32px;
+    --bleed: 44px;
+    overflow: hidden;
+  }
+
+  .hd-window {
+    position: absolute;
+    top: var(--gutter);
+    left: var(--gutter);
+    width: calc(100% - 2 * var(--gutter));
+    height: calc(100% - var(--gutter) + var(--bleed));
+    box-shadow: var(--ss-shadow-hero);
+  }
+
+  .hd-body {
+    background: var(--surface);
+  }
+
+  .hd-app {
+    position: relative;
+    display: flex;
+    height: 100%;
+    padding: 8px 8px 0 0;
+  }
+
+  /* ---- Sidebar: transparent on the gray frame, as components/ui/sidebar's inset variant ---- */
+
+  .hd-side {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: 2px;
+    width: 200px;
+    padding: 6px 12px 0;
+  }
+
+  .hd-org {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 4px 6px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ss-text-strong);
+  }
+
+  .hd-org img {
+    display: block;
+    border-radius: 7px;
+  }
+
+  .hd-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    margin-bottom: 10px;
+    padding: 0 8px 0 10px;
+    border: 1px solid var(--ss-line);
+    border-radius: 999px;
+    background: var(--background);
+    color: var(--ss-text-faint);
+    font-size: 13px;
+  }
+
+  .hd-search kbd {
+    margin-left: auto;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--muted);
+    font-family: inherit;
+    font-size: 10px;
+  }
+
+  .hd-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    color: var(--ss-text);
+    font-size: 13.5px;
+  }
+
+  .hd-nav[data-active] {
+    background: var(--sidebar-accent);
+    color: var(--ss-text-strong);
+    font-weight: 500;
+  }
+
+  .hd-side__foot {
+    display: grid;
+    gap: 8px;
+    margin-top: auto;
+    padding-bottom: calc(var(--bleed) + 14px);
+  }
+
+  .hd-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 6px;
+    color: var(--ss-icon-faint);
+  }
+
+  .hd-user__avatar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .hd-user__name {
+    flex: 1;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--ss-text-strong);
+  }
+
+  /* ---- The inset panel ---- */
+
+  .hd-panel {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    border-radius: 12px 12px 0 0;
+    background: var(--background);
+    box-shadow: 0 0 0 1px var(--ss-line-faint);
+    overflow: hidden;
+  }
+
+  .hd-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 18px;
+    color: var(--ss-text-strong);
+    font-size: 13px;
+  }
+
+  .hd-bar svg {
+    color: var(--ss-icon-faint);
+  }
+
+  .hd-bar__rule {
+    width: 1px;
+    height: 14px;
+    background: var(--ss-line);
+  }
+
+  .hd-page {
+    position: relative;
+    padding: 18px 28px 0;
+  }
+
+  .hd-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .hd-title {
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--ss-text-strong);
+  }
+
+  .hd-desc {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--ss-text-faint);
+  }
+
+  /* ---- Buttons, after components/ui/button: pills ---- */
+
+  .hd-btn {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 13px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, transform 0.12s ease, filter 0.15s ease;
+  }
+
+  .hd-btn--primary {
+    height: 34px;
+    padding: 0 15px 0 13px;
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  /* Even widths, so the 14px glyph sits on whole pixels */
+  .hd-new {
+    width: 128px;
+  }
+
+  .hd-btn--primary[data-hover],
+  .hd-btn--primary[data-open] {
+    filter: brightness(0.92);
+  }
+
+  .hd-btn--primary[data-pressed] {
+    transform: scale(0.97);
+  }
+
+  .hd-btn--outline {
+    border: 1px solid var(--ss-line);
+    background: var(--background);
+    color: var(--ss-text-strong);
+  }
+
+  .hd-btn--danger {
+    padding: 0 8px;
+    color: var(--destructive);
+  }
+
+  /* ---- The list ---- */
+
+  .hd-list {
+    border-radius: 16px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .hd-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--ss-line-faint);
+  }
+
+  .hd-row__text {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .hd-row__name {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--ss-text-strong);
+  }
+
+  .hd-row__sub {
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.3;
+    color: var(--ss-text-faint);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .hd-row__actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .hd-rest {
+    position: absolute;
+    top: 20px;
+    right: 260px;
+    width: 1px;
+    height: 1px;
+  }
+
+  /* ---- The toast, after components/ui/toaster (Ding pill): bottom right, above the crop ---- */
+
+  .hd-toast {
+    position: absolute;
+    right: 20px;
+    bottom: calc(var(--bleed) + 24px);
+    gap: 10px;
+    height: 44px;
+    padding: 0 18px 0 12px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--popover);
+    color: var(--ss-text-strong);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow:
+      0 0 0 1px var(--ss-line),
+      0 4px 12px -4px rgb(0 0 0 / 0.14);
+  }
+
+  .hd-toast .ss-toast__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ss-success);
+  }
+
+  /* ---- The dialog, after components/ui/dialog ---- */
+
+  .hd-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 0.18);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+
+  .hd-scrim[data-show] {
+    opacity: 1;
+  }
+
+  .hd-dialog {
+    position: absolute;
+    top: 118px;
+    left: 452px;
+    width: 400px;
+    padding: 22px;
+    border-radius: 18px;
+    --ss-popover-bg: var(--popover);
+  }
+
+  .hd-dialog__title {
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--ss-text-strong);
+  }
+
+  .hd-dialog__desc {
+    margin: 5px 0 18px;
+    font-size: 13px;
+    line-height: 1.35;
+    color: var(--ss-text-faint);
+  }
+
+  .hd-field {
+    --ss-control: 36px;
+  }
+
+  .hd-dialog__label {
+    margin: 14px 0 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ss-text-strong);
+  }
+
+  .hd-textarea {
+    height: 64px;
+    border: 1px solid var(--input);
+    border-radius: var(--ss-radius-md);
+  }
+
+  .hd-dialog__foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  /* ---- Compact: the panel alone, a narrower window, the same gesture ---- */
+
+  & .ss-stage[data-layout="compact"] {
+    --gutter: 16px;
+    --bleed: 40px;
+  }
+  & .ss-stage[data-layout="compact"] .hd-app { padding-left: 8px; }
+  & .ss-stage[data-layout="compact"] .hd-bar { padding: 0 14px; }
+  & .ss-stage[data-layout="compact"] .hd-page { padding: 10px 14px 0; }
+  & .ss-stage[data-layout="compact"] .hd-head { align-items: center; margin-bottom: 14px; }
+  & .ss-stage[data-layout="compact"] .hd-title { font-size: 24px; }
+  & .ss-stage[data-layout="compact"] .hd-row { padding: 12px 14px; }
+  & .ss-stage[data-layout="compact"] .hd-new { width: 72px; }
+  & .ss-stage[data-layout="compact"] .hd-rest { top: 72px; right: 120px; }
+  & .ss-stage[data-layout="compact"] .hd-toast { right: 14px; left: 14px; bottom: calc(var(--bleed) + 16px); }
+  & .ss-stage[data-layout="compact"] :is(.hd-dialog__label, .hd-textarea) { display: none; }
+  & .ss-stage[data-layout="compact"] .hd-dialog { top: 66px; left: 28px; width: 302px; padding: 18px; }
+}

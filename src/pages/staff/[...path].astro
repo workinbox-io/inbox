@@ -1,0 +1,8 @@
+---
+import PanelPage from "@/components/app/PanelPage.astro";
+import { panelDocument } from "@/lib/server/app-page";
+
+const doc = await panelDocument(Astro);
+if ("redirect" in doc) return Astro.redirect(doc.redirect);
+---
+<PanelPage initial={doc.initial} />

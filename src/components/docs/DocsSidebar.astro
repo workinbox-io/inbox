@@ -1,0 +1,39 @@
+---
+import { SECTIONS, docHref, type DocEntry } from "@/lib/docs";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+
+interface Props {
+  docs: DocEntry[];
+  current: string;
+}
+const { docs, current } = Astro.props;
+const t = tFor(siteLocale(Astro.url));
+---
+
+<nav
+  aria-label={t("Docs")}
+  class="sticky top-[calc(var(--header-height)+0.6rem)] hidden h-[calc(100svh-10rem)] w-56 shrink-0 overflow-y-auto pt-12 pr-4 pl-2.5 lg:block"
+>
+  {
+    SECTIONS.map((section) => (
+      <div class="mb-6">
+        <p class="text-muted-foreground mb-1.5 px-2 text-xs font-medium">{t(section)}</p>
+        <ul class="flex flex-col gap-0.5">
+          {docs
+            .filter((d) => d.data.section === section)
+            .map((d) => (
+              <li>
+                <a
+                  href={docHref(d)}
+                  data-active={d.id === current}
+                  class="text-foreground/80 hover:bg-accent data-[active=true]:border-accent data-[active=true]:bg-accent data-[active=true]:text-foreground inline-flex h-[30px] items-center gap-2 rounded-md border border-transparent px-2 text-[0.8rem] font-medium transition-colors"
+                >
+                  {d.data.title}
+                </a>
+              </li>
+            ))}
+        </ul>
+      </div>
+    ))
+  }
+</nav>

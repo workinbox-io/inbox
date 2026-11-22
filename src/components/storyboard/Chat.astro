@@ -1,0 +1,75 @@
+---
+/**
+ * A chat window that is always on screen: channel header, older messages in muted type and, when the
+ * `chatMessage` step runs, the new message with the bold app name, text and an optional file attachment.
+ * The markup is the final state (older message above, new message below it) and the runtime animates to it.
+ */
+import type { ChatMessage } from "./steps"
+import { siteConfig } from "@/config/site"
+
+interface Props {
+  id: string
+  x: number
+  y: number
+  w: number
+  clipId: string
+  channel?: string
+  history?: { text: string; time: string }[]
+  msg?: ChatMessage
+}
+const { id, x, y, w, clipId, channel = "# general", history = [], msg } = Astro.props
+const h = 240
+const s1 = y + 44 // first message slot
+const ny = y + 100 // slot of the new message
+const [old1, old2] = history.length > 1 ? [history[0], history[1]] : [undefined, history[0]]
+const from = msg?.from ?? siteConfig.name
+---
+
+<g class="sb-tile sb-chat" data-node={id}>
+  <rect class="card" x={x} y={y} width={w} height={h} rx="16"></rect>
+  <rect class="ring" x={x} y={y} width={w} height={h} rx="16"></rect>
+  <text class="m" x={x + 16} y={y + 24}>{channel}</text>
+  <text class="m" x={x + w - 16} y={y + 24} text-anchor="end">Today</text>
+  <path class="line" d={`M${x} ${y + 36}H${x + w}`}></path>
+  <clipPath id={clipId}><rect x={x} y={y + 37} width={w} height={h - 38}></rect></clipPath>
+
+  <g clip-path={`url(#${clipId})`}>
+    {
+      [old1, old2].map(
+        (m, i) =>
+          m && (
+            <g class={i === 0 ? "sb-old1" : "sb-old2"} style={i === 0 ? "opacity:0" : undefined}>
+              <rect class="ptile" x={x + 16} y={s1 + 4} width="28" height="28" rx="7" style="opacity:0.55" />
+              <image href="/logo.svg" x={x + 21} y={s1 + 9} width="18" height="18" style="opacity:0.55" />
+              <text x={x + 52} y={s1 + 16} style="font-size:13px;font-weight:600;fill:var(--muted-foreground)">{from}</text>
+              <text class="m" x={x + w - 16} y={s1 + 16} text-anchor="end">{m.time}</text>
+              <text class="body" x={x + 52} y={s1 + 36} style="font-size:13px;fill:var(--muted-foreground)">{m.text}</text>
+            </g>
+          ),
+      )
+    }
+
+    {
+      msg && (
+        <g class="sb-new">
+          <rect class="ptile" x={x + 16} y={ny + 4} width="36" height="36" rx="9" />
+          <image href="/logo.svg" x={x + 22} y={ny + 10} width="24" height="24" />
+          <text x={x + 62} y={ny + 18} style="font-size:15px;font-weight:700">{from}</text>
+          <rect class="soft" x={x + 62 + from.length * 8.3 + 6} y={ny + 5} width="40" height="18" rx="5" />
+          <text class="m-p" x={x + 62 + from.length * 8.3 + 26} y={ny + 14.5} text-anchor="middle" dominant-baseline="central" style="font-size:12px">APP</text>
+          <text class="m" x={x + w - 16} y={ny + 18} text-anchor="end">{msg.time}</text>
+          <text class="body sb-bl" x={x + 62} y={ny + 42}>{msg.text}</text>
+          {msg.file && (
+            <g class="sb-attach">
+              <rect x={x + 62} y={ny + 54} width="3" height="72" rx="1.5" fill="var(--primary)" />
+              <text x={x + 76} y={ny + 72} class="cap" style="font-size:14px;font-weight:600">{msg.file.name}</text>
+              <text class="m" x={x + 76} y={ny + 92}>{msg.file.meta}</text>
+              <rect class="pill" x={x + 76} y={ny + 100} width="92" height="24" rx="7" />
+              <text x={x + 122} y={ny + 112.5} text-anchor="middle" dominant-baseline="central" style="font-size:13px;font-weight:500">{msg.file.action ?? "Download"}</text>
+            </g>
+          )}
+        </g>
+      )
+    }
+  </g>
+</g>

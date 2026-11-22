@@ -1,0 +1,9 @@
+# gitleaks: the default rules, minus known non-secrets.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Throwaway test fixtures and the public analytics site key"
+paths = ['''^test/sns\.test\.ts$''', '''^test/mail-native-drafts\.test\.ts$''']
+# workinbox.io's Tapll site key: public by design (it ships in every page), hosted builds only.
+regexes = ['''av_cbdcef797dab98b5e655e9ed8498d056ed0e91896d891325''']

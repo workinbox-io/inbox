@@ -1,0 +1,98 @@
+---
+/** Work Inbox vs one competitor, from config/compare.ts. */
+import { ArrowRight, Check } from "lucide-react";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import PageHero from "@/components/site/PageHero.astro";
+import ClosingBand from "@/components/site/ClosingBand.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import Faq from "@/components/site/Faq.astro";
+import { COMPETITORS, type Competitor } from "@/config/compare";
+import { TRIAL_DAYS } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+import { siteLocale, tFor, lp } from "@/lib/i18n/site";
+import { localizedPath } from "@/lib/i18n/locales";
+
+export const prerender = true;
+export function getStaticPaths() {
+  return COMPETITORS.map((c) => ({ params: { slug: c.slug }, props: { c } }));
+}
+
+const { c } = Astro.props as { c: Competitor };
+const others = COMPETITORS.filter((o) => o.slug !== c.slug);
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const checked = new Date(c.checked).toLocaleDateString(locale === "en" ? "en-GB" : locale, { day: "numeric", month: "long", year: "numeric" });
+const url = (path: string) => (Astro.site ? new URL(localizedPath(locale, path), Astro.site).href : path);
+const faq = c.faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: t("Compare"), item: url("/vs") },
+      { "@type": "ListItem", position: 2, name: `${siteConfig.name} ${t("vs")} ${c.name}`, item: url(`/vs/${c.slug}`) },
+    ],
+  },
+  ...(faq.length
+    ? [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) }]
+    : []),
+];
+---
+
+<MarketingLayout title={`${siteConfig.name} ${t("vs")} ${c.name}`} description={`${t(c.intro).split(". ")[0]}. ${t("Prices, shared mailboxes, self-hosting and what each does better, checked {date}.", { date: checked })}`} jsonLd={jsonLd} ink>
+  <PageHero>
+    <nav class="mk-cap flex items-center gap-2"><a href={lp(locale, "/vs")} class="hover:text-(--foreground)">{t("Compare")}</a> / <img src={c.logo} alt="" width="16" height="16" class="size-4 bg-white object-contain" /> {c.name}</nav>
+    <h1 class="mk-h1 mt-6 max-w-4xl">{t(c.tagline)}</h1>
+    <p class="mk-lead mt-6 max-w-2xl">{t(c.intro)}</p>
+    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+      <a href="/signup" class="mk-btn">{t("Start free")} <ArrowRight className="size-5" /></a>
+      <span class="mk-cap">{t("{days} days, no card. Or self-host for free.", { days: TRIAL_DAYS })}</span>
+    </div>
+  </PageHero>
+  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
+
+    <section class="pt-16">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Side by side")}</h2>
+      <p class="mt-2 text-sm text-foreground/60">{t("{name}'s facts from its own pages, checked {date}. Prices as {name} shows them, before tax.", { name: c.name, date: checked })}</p>
+      <div class="mt-6"><ComparisonTable competitors={[c]} /></div>
+    </section>
+
+    <section class="pt-16">
+      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("{name}'s plans", { name: c.name })}</h2>
+      <ul class="mt-5 space-y-2 text-foreground/75">{c.theirPricing.map((p) => <li class="flex gap-2.5"><span class="mt-2.5 size-1.5 shrink-0 rounded-full bg-foreground/40" />{t(p)}</li>)}</ul>
+    </section>
+
+    <section class="grid gap-10 pt-16 md:grid-cols-2">
+      <div>
+        <h2 class="text-[clamp(1.6rem,2.6vw,2.1rem)]">{t("Why teams pick {name}", { name: siteConfig.name })}</h2>
+        <ul class="mt-5 space-y-3">{c.whyUs.map((p) => <li class="flex gap-2.5"><Check className="mt-1 size-4 shrink-0" />{t(p)}</li>)}</ul>
+      </div>
+      <div>
+        <h2 class="text-[clamp(1.6rem,2.6vw,2.1rem)]">{t("Pick {name} if", { name: c.name })}</h2>
+        <ul class="mt-5 space-y-3">{c.pickThemIf.map((p) => <li class="flex gap-2.5"><Check className="mt-1 size-4 shrink-0 text-foreground/50" />{t(p)}</li>)}</ul>
+      </div>
+    </section>
+
+    {
+      faq.length ? (
+        <section class="pt-16">
+          <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Questions")}</h2>
+          <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
+        </section>
+      ) : null
+    }
+
+    <section class="pt-16">
+      <h2 class="text-xl">{t("Sources")}</h2>
+      <ul class="mt-3 space-y-1 text-sm break-all text-foreground/60">{c.sources.map((s) => <li><a href={s} rel="nofollow noopener" target="_blank" class="underline underline-offset-4 hover:text-foreground">{s}</a></li>)}</ul>
+    </section>
+
+    <section class="pt-16">
+      <h2 class="text-xl">{t("Other comparisons")}</h2>
+      <div class="mt-4 flex flex-wrap gap-2">
+        {others.map((o) => <a href={lp(locale, `/vs/${o.slug}`)} class="inline-flex items-center gap-2 border border-(--border) py-1.5 pr-4 pl-2 text-sm hover:bg-(--accent)"><img src={o.logo} alt="" width="20" height="20" loading="lazy" class="size-5 bg-white object-contain p-0.5" />{t("vs")} {o.name}</a>)}
+      </div>
+    </section>
+  </div>
+  <ClosingBand />
+</MarketingLayout>

@@ -1,0 +1,15 @@
+---
+/** Section title in the boat.dev manner: left aligned, the `muted` half in a lighter ink. `left` is kept for old callers. */
+interface Props {
+  muted?: string;
+  class?: string;
+  left?: boolean;
+}
+import { siteLocale, tFor } from "@/lib/i18n/site";
+const t = tFor(siteLocale(Astro.url));
+const { muted, class: className } = Astro.props;
+---
+
+<h2 class:list={["mk-h2 max-w-5xl", className]}>
+  <slot />{muted ? <> <span class="text-(--mk-soft-ink)">{t(muted)}</span></> : null}
+</h2>

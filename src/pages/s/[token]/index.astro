@@ -1,0 +1,134 @@
+---
+/**
+ * A public drive link (lib/server/drive/links.ts): the password form when it has one, then the file's preview or the
+ * folder's contents with downloads. No sign-in, never indexed, no referrer sent onwards.
+ */
+import { t } from "@/lib/i18n/panel";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { siteConfig } from "@/config/site";
+import { and, db, driveItems, eq, inArray } from "@/db";
+import { ancestorIds, previewKind } from "@/lib/drive/access";
+import { clientIp } from "@/lib/server/api";
+import { checkLinkPassword, LINK_UNLOCK_MS, openLink, publicChildren, unlockCookieName, unlockValue } from "@/lib/server/drive/links";
+import { env } from "cloudflare:workers";
+
+const token = Astro.params.token!;
+const itemId = Astro.url.searchParams.get("item");
+let wrong = false;
+let limited = false;
+
+if (Astro.request.method === "POST") {
+  // Per IP and per link: many IPs can't share one link's attempts.
+  const [byIp, byLink] = await Promise.all([
+    env.AUTH_RATE_LIMIT.limit({ key: `drive-link:${clientIp(Astro.request) || "unknown"}` }),
+    env.AUTH_RATE_LIMIT.limit({ key: `drive-link-token:${token}` }),
+  ]);
+  const success = byIp.success && byLink.success;
+  const form = await Astro.request.formData();
+  if (!success) limited = true;
+  else if (await checkLinkPassword(token, String(form.get("password") ?? ""))) {
+    Astro.cookies.set(unlockCookieName(token), await unlockValue(token), { path: `/s/${token}`, httpOnly: true, secure: Astro.url.protocol === "https:", sameSite: "lax", maxAge: LINK_UNLOCK_MS / 1000 });
+    return Astro.redirect(Astro.url.pathname + Astro.url.search, 303);
+  } else wrong = true;
+}
+
+const open = await openLink(token, { itemId, cookie: Astro.cookies.get(unlockCookieName(token))?.value });
+if (open.state === "missing") Astro.response.status = 404;
+
+const item = open.state === "open" ? open.item : null;
+const children = item?.kind === "folder" ? await publicChildren(item) : [];
+// The way from the shared folder down to the open item.
+let crumbs: { id: string; name: string }[] = [];
+if (open.state === "open" && item && item.id !== open.root.id) {
+  const ids = ancestorIds(item.path);
+  const inside = ids.slice(ids.indexOf(open.root.id) + 1);
+  const rows = inside.length ? await db.select({ id: driveItems.id, name: driveItems.name }).from(driveItems).where(and(eq(driveItems.orgId, open.root.orgId), inArray(driveItems.id, inside))) : [];
+  crumbs = [{ id: open.root.id, name: open.root.name }, ...inside.map((id) => rows.find((r) => r.id === id)!).filter(Boolean)];
+}
+const kind = item?.kind === "file" ? previewKind(item.mediaType) : null;
+const fileUrl = (id: string, download = false) => `/s/${token}/file?item=${id}${download ? "&download=1" : ""}`;
+const pageUrl = (id: string) => (open.state === "open" && id === open.root.id ? `/s/${token}` : `/s/${token}?item=${id}`);
+let text = "";
+if (kind === "text" && item?.r2Key) {
+  const obj = await env.FILES.get(item.r2Key, { range: { offset: 0, length: 256 * 1024 } });
+  text = obj ? await obj.text() : "";
+}
+const size = (n: number) => (n < 1024 ? `${n} B` : n < 1024 ** 2 ? `${(n / 1024).toFixed(0)} KB` : n < 1024 ** 3 ? `${(n / 1024 ** 2).toFixed(1)} MB` : `${(n / 1024 ** 3).toFixed(2)} GB`);
+const title = open.state === "open" ? item!.name : open.state === "locked" ? open.name : t("Link not found");
+---
+
+<BaseLayout title={title} noindex lang={Astro.locals.locale} words={false}>
+  <div class="mx-auto flex min-h-svh max-w-4xl flex-col gap-6 px-4 py-6">
+    <header class="flex items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-2 text-sm font-medium tracking-tight">
+        <img src="/logo.svg" alt="" class="size-6" />{siteConfig.name}
+      </a>
+      {item?.kind === "file" && <a href={fileUrl(item.id, true)} class="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm font-medium">{t("Download")}</a>}
+      {item?.kind === "folder" && children.length > 0 && <a href={`/s/${token}/zip${item.id === open.root.id ? "" : `?item=${item.id}`}`} class="bg-primary text-primary-foreground rounded-md px-3 py-1.5 text-sm font-medium">{t("Download all")}</a>}
+    </header>
+
+    {open.state === "missing" && (
+      <div class="grid flex-1 place-items-center text-center">
+        <div class="grid gap-2">
+          <h1 class="text-xl font-semibold">{t("This link doesn't work")}</h1>
+          <p class="text-muted-foreground text-sm">{t("It may have expired or been removed. Ask the person who sent it for a new one.")}</p>
+        </div>
+      </div>
+    )}
+
+    {open.state === "locked" && (
+      <form method="post" class="mx-auto grid w-full max-w-sm gap-3 rounded-lg border p-6">
+        <h1 class="text-lg font-semibold">{open.name}</h1>
+        <p class="text-muted-foreground text-sm">{t("This link is protected. Enter the password you were given.")}</p>
+        <input type="password" name="password" required autofocus autocomplete="off" aria-label={t("Password")} class="h-9 rounded-md border bg-transparent px-3 text-sm" />
+        {wrong && <p class="text-destructive text-sm">{t("That password isn't right.")}</p>}
+        {limited && <p class="text-destructive text-sm">{t("Too many attempts. Wait a minute and try again.")}</p>}
+        <button class="bg-primary text-primary-foreground h-9 rounded-md text-sm font-medium">{t("Open")}</button>
+      </form>
+    )}
+
+    {item && (
+      <main class="grid gap-4">
+        {crumbs.length > 0 && (
+          <nav aria-label={t("Folders")} class="text-muted-foreground flex flex-wrap items-center gap-1 text-sm">
+            {crumbs.map((c) => (
+              <>
+                <a href={pageUrl(c.id)} class="hover:text-foreground hover:underline">{c.name}</a>
+                <span aria-hidden="true">/</span>
+              </>
+            ))}
+            <span class="text-foreground">{item.name}</span>
+          </nav>
+        )}
+        <h1 class="text-xl font-semibold break-words">{item.name}</h1>
+
+        {item.kind === "folder" && (
+          children.length ? (
+            <ul class="divide-y rounded-lg border">
+              {children.map((c) => (
+                <li class="flex items-center gap-3 px-4 py-2.5 text-sm">
+                  <span aria-hidden="true">{c.kind === "folder" ? "📁" : "📄"}</span>
+                  <a href={pageUrl(c.id)} class="min-w-0 flex-1 truncate hover:underline">{c.name}</a>
+                  {c.kind === "file" && <span class="text-muted-foreground tabular-nums">{size(c.size)}</span>}
+                  {c.kind === "file" && <a href={fileUrl(c.id, true)} class="text-primary text-sm">{t("Download")}</a>}
+                </li>
+              ))}
+            </ul>
+          ) : <p class="text-muted-foreground text-sm">{t("This folder is empty.")}</p>
+        )}
+
+        {item.kind === "file" && (
+          <div class="grid gap-3">
+            <p class="text-muted-foreground text-sm">{size(item.size)}</p>
+            {kind === "image" && <img src={fileUrl(item.id)} alt={item.name} class="max-h-[75vh] w-auto rounded-md border object-contain" />}
+            {kind === "video" && <video src={fileUrl(item.id)} controls class="max-h-[75vh] w-full rounded-md border" />}
+            {kind === "audio" && <audio src={fileUrl(item.id)} controls class="w-full" />}
+            {kind === "pdf" && <iframe src={fileUrl(item.id)} title={item.name} class="h-[75vh] w-full rounded-md border" />}
+            {kind === "text" && <pre class="bg-muted max-h-[75vh] overflow-auto rounded-md p-4 text-xs whitespace-pre-wrap">{text}</pre>}
+            {!kind && <p class="text-sm">{t("No preview for this kind of file. Download it to open it.")}</p>}
+          </div>
+        )}
+      </main>
+    )}
+  </div>
+</BaseLayout>

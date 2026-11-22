@@ -1,0 +1,789 @@
+---
+/**
+ * The home page, laid out after boat.dev in our ink: an ink hero, the six apps, the real screens, who it's for,
+ * switching in an afternoon, AI apps across the workspace, Google and Microsoft side by side, the pricing calculator,
+ * what you own, FAQ and a closing band. Sections picked after Zoho, Proton, Nextcloud and Twake's homepages. Pixel scenes are ours (components/site/pixel); the tour shows real screens of the app.
+ * Only claim what ships; no testimonials or numbers we can't show.
+ */
+import { APPS } from "@/config/apps";
+import FeatureLedger from "@/components/site/craft/FeatureLedger.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import { CalendarDays, Code, Contact, Download, FileSearch, FolderUp, KeyRound, ListChecks, MonitorSmartphone, NotebookPen, ScrollText, Send, Server } from "lucide-react";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import BrowserFrame from "@/components/site/BrowserFrame.astro";
+import Shot from "@/components/site/Shot.astro";
+import Faq from "@/components/site/Faq.astro";
+import PixelScene from "@/components/site/pixel/PixelScene.astro";
+import { APP_ROWS } from "@/components/site/pixel/scenes";
+import PixelIcon from "@/components/site/pixel/PixelIcon.astro";
+import PersonReferences from "@/components/site/PersonReferences.astro";
+import ClosingBand from "@/components/site/ClosingBand.astro";
+import { COMPETITORS } from "@/config/compare";
+import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, PLANS, TRIAL_DAYS, hasFeature, priceYearly, seatsFor } from "@/config/plans";
+import { organizationJsonLd, siteConfig } from "@/config/site";
+import { lp, pluralForms, siteLocale, tFor } from "@/lib/i18n/site";
+import { formatMoney } from "@/lib/i18n/format";
+import { localizedPath } from "@/lib/i18n/locales";
+
+export const prerender = true;
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly)) / 100;
+
+/** GitHub stars at build time (deploys rebuild the page); nothing shown while the repo is private or the API fails. */
+let stars: number | null = null;
+try {
+  const res = await fetch(`https://api.github.com/repos/${siteConfig.repoUrl.replace("https://github.com/", "")}`, { headers: { accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(3000) });
+  if (res.ok) stars = ((await res.json()) as { stargazers_count?: number }).stargazers_count ?? null;
+} catch {
+  stars = null;
+}
+
+/** The hero's belt has a chute and a pixel icon for each of the first six apps (APP_ROWS); Collections joins the tour. */
+const BELT = APPS.slice(0, APP_ROWS.length);
+const tabs = APPS.map((a) => ({ id: a.slug, label: t(a.label), url: `workinbox.io/app/${a.shot === "mail-thread" ? "mail" : a.shot}`, name: a.shot, alt: t("Work Inbox {app}: {description}", { app: t(a.label), description: t(a.description) }), href: lp(locale, `/${a.slug}`) }));
+
+/** Who it's for: three teams, each pointed at the apps it would open first. */
+const audiences = [
+  { icon: "contacts", title: "Agencies and studios", text: "hello@ answered by the whole team, clients in contact groups, files sent with a public link, meeting notes made from the calendar.", links: [["Mail", "/custom-domain-email"], ["Contacts", "/shared-contacts"], ["Drive", "/shared-drive"]] },
+  { icon: "shared", title: "Support teams", text: "support@ as a shared mailbox everyone opens with their own login, reply templates and out of office, a chat thread to ask a colleague.", links: [["Shared mailboxes", "/shared-mailbox"], ["Chat", "/team-chat"]] },
+  { icon: "mail", title: "Small companies leaving Google", text: "The same apps for a fraction of the price, your old mail, contacts and calendars brought along, and phones that keep using their mail app.", links: [["Google Workspace alternative", "/google-workspace-alternative"], ["Calendar", "/team-calendar"]] },
+] as const;
+
+/** Switching: what comes along, beside the setup steps. */
+const imports = [
+  { icon: Contact, title: "Contacts", text: "Google or Outlook CSV and vCard files; addresses already in the book merge instead of doubling." },
+  { icon: CalendarDays, title: "Calendars", text: "Sync a Google Calendar in while you move, and import .ics files." },
+  { icon: FolderUp, title: "Files", text: "Drop whole folders from your computer into the shared drive." },
+  { icon: MonitorSmartphone, title: "Mail apps", text: "Apple Mail, Outlook and phones keep working over IMAP and SMTP.", href: "/docs/mail-clients" },
+];
+
+/** What AI apps can do through the MCP server (src/mcp). */
+const aiCan = [
+  { icon: FileSearch, title: "Find and read", text: "Search mail, chat, notes, contacts and drive files, and read whole threads." },
+  { icon: CalendarDays, title: "ai|Plan", text: "List the week's events and find free time in your calendar." },
+  { icon: NotebookPen, title: "Write", text: "Create and update notes and contacts, post to a chat channel (Pro and Business)." },
+  { icon: Send, title: "Draft, never send", text: "Replies come back as drafts with a Send button: mail leaves only when you press it." },
+];
+
+/** What a team owns, in the ink band. */
+const own = [
+  { icon: Code, title: "The code", text: "AGPL-3.0, public on GitHub: the hosted service runs the same code.", href: siteConfig.repoUrl },
+  { icon: Server, title: "Where it runs", text: "Hosted by us, or on your own Cloudflare account with every feature and no fee.", href: "/docs/self-host" },
+  { icon: Download, title: "Your data, out", text: "Mail over IMAP and the original .eml of every message, contacts as vCard or CSV, calendars as .ics, files as ZIP." },
+  { icon: KeyRound, title: "Everyone signs in as themselves", text: "No shared passwords, two-factor sign-in, a password per mail app.", href: "/security" },
+  { icon: ScrollText, title: "An audit log", text: "Who changed what, on Pro and Business." },
+  { icon: ListChecks, title: "Every app on every plan", text: "One price per person; shared mailboxes, aliases and AI reading are free on every plan." },
+];
+
+const cards = [
+  {
+    scene: "mailboxes" as const,
+    caption: "mail · acme.com",
+    command: "anna@ ben@ support@ → 3 inboxes",
+    title: "Email on your domain",
+    text: "A mailbox for each person, shared ones like support@ answered by the team, aliases and a catch-all.",
+    href: "/custom-domain-email",
+  },
+  {
+    scene: "chat" as const,
+    caption: "chat · #spring-campaign",
+    command: "diana is typing…",
+    title: "Team chat",
+    text: "Channels, direct messages and threads, with mentions, reactions and files. Live, with notifications.",
+    href: "/team-chat",
+  },
+  {
+    scene: "notes" as const,
+    caption: "notes · launch plan",
+    command: "anna and ben are editing",
+    title: "Notes written together",
+    text: "Meeting notes, checklists and how-tos the team edits at once, with named cursors and live selections.",
+    href: "/shared-notes",
+  },
+  {
+    scene: "calendar" as const,
+    caption: "calendar · this week",
+    command: "kickoff wed 11:00 → 3 people",
+    title: "Shared calendars",
+    text: "A calendar per person and shared ones, colleagues side by side, invitations that work with Gmail and Outlook.",
+    href: "/team-calendar",
+  },
+  {
+    scene: "drive" as const,
+    caption: "drive · brightloop",
+    command: "contract.pdf → shared with the team",
+    title: "A drive you share",
+    text: "Folders for people or the whole team, previews, and public links with a password. Attach files straight to mail.",
+    href: "/shared-drive",
+  },
+  {
+    scene: "board" as const,
+    caption: "collections · tasks",
+    command: "TAS-12 → done",
+    title: "Your own trackers",
+    text: "Tasks, deals, equipment: your own fields as a list, board or timeline, with cycles, sub-tasks and automations. Starts from a spreadsheet.",
+    href: "/custom-apps",
+  },
+];
+
+/** Pixel icons (PixelIcon: 5 is ink, 3 lighter). */
+const ICONS = {
+  mail: ["555555555555", "55........55", "5.5......5.5", "5..5....5..5", "5...5..5...5", "5....55....5", "5..........5", "555555555555"],
+  shared: ["..55555555..", ".5555555555.", "555555555555", "553333333355", "555555555555", "555555555555", "555555555555", ".....55.....", ".....55.....", "...555555..."],
+  notes: ["5555555...", "5.....55..", "5.333.5.5.", "5.....5555", "5.333333.5", "5........5", "5.33333..5", "5........5", "5.3333...5", "5555555555"],
+  ai: ["55555555555", "5.........5", "5.5..5..5.5", "5.........5", "55555555555", "..55.......", "..5........"],
+  calendar: [".5....5...", "5555555555", "5555555555", "5........5", "5.55.55..5", "5........5", "5.55.55..5", "5555555555"],
+  contacts: ["...5555...", "..555555..", "..555555..", "...5555...", "..........", ".55555555.", "5555555555", "5555555555"],
+  chat: ["55555555..", "5......5..", "5.3333.555", "5......5.5", "55555555.5", "55..5....5", "5...555555", "........55"],
+  drive: ["55555.....", "5...55555.", "5555555555", "5........5", "5........5", "5........5", "5555555555"],
+  imap: ["5555555", "5.....5", "5.....5", "5.....5", "5.....5", "5555555", "5..5..5", "5555555"],
+};
+
+/** Switching without moving first: connect the mailbox you have (External accounts), bring the team, move the domain last. */
+const steps = [
+  { when: "today", command: "connect anna@acme.com", status: "anna@acme.com connected · MX unchanged", text: "Connect the mailbox you already have over IMAP and SMTP. Mail keeps arriving where it does today and syncs in; you read and reply from Work Inbox. Nothing changes for anyone writing to you." },
+  { when: "same afternoon", command: "add people ben chris", status: "3 people · free up to 5", text: "Everyone gets the whole workspace next to their mail: chat, notes, calendars, drive and contacts." },
+  { when: "when you're ready", command: "move acme.com", status: "acme.com: MX, DKIM and DMARC check out", text: "Copy each mailbox from the old server (the original stays as it was, duplicates are skipped) or upload a Takeout .mbox, then switch MX: Connect Cloudflare adds the records for you. No domain? Start on yourname.workinbox.io." },
+];
+
+const money = (amount: number, currency: string) => formatMoney(locale, Math.round(amount * 100), currency);
+
+/** What a team of ten pays a month on each entry plan: ours from config/plans.ts, theirs from config/compare.ts. */
+const TEAM = 10;
+const race = [
+  { name: siteConfig.name, plan: PLANS.starter.name, amount: (seatsFor(TEAM) * PLANS.starter.priceMonthly) / 100, currency: CURRENCY, ours: true, href: "/pricing" },
+  ...COMPETITORS.flatMap((c) => (c.entry ? [{ name: c.name, plan: c.entry.plan, amount: Math.round(TEAM * c.entry.usd * 100) / 100, currency: "USD", ours: false, href: `/vs/${c.slug}` }] : [])),
+].sort((a, b) => a.amount - b.amount);
+const bigSuites = COMPETITORS.filter((c) => c.slug === "google-workspace" || c.slug === "microsoft-365");
+const raceMax = Math.max(...race.map((r) => r.amount));
+const checked = COMPETITORS.find((c) => c.entry)?.checked;
+
+const plans = PLAN_LIST.map((p) => ({ id: p.id, name: p.name, monthly: p.priceMonthly / 100, yearly: priceYearly(p) / 100 }));
+
+const faq = [
+  {
+    question: "Is Work Inbox really open source?",
+    answer: `Yes. The code is public at ${siteConfig.repoUrl}, and you can run it on your own Cloudflare account with every feature and no fee to us. The hosted version is the same app, run by us.`,
+  },
+  {
+    question: "Can I use Outlook, Apple Mail or my phone's mail app?",
+    answer: "Yes. Every mailbox works over IMAP and SMTP: create a password for the device in Settings → Mail clients and add the account in Apple Mail, Outlook, Thunderbird or your phone's mail app. The web app installs on phones and computers too.",
+  },
+  {
+    question: "Do I have to move my domain to Cloudflare?",
+    answer: "No. If your domain is on Cloudflare, Connect Cloudflare adds the records for you with an API token. Anywhere else, add the MX, DKIM and DMARC records the setup shows and click Check DNS.",
+  },
+  {
+    question: "Do we have to move our mailboxes first?",
+    answer: "No. Each person can connect the mailbox they already have (Settings → Mail clients → External accounts, over IMAP and SMTP) and read and send from Work Inbox while mail keeps arriving where it does today. When you're ready, copy the old mailbox in from its server or upload an .mbox, then point the domain's MX here.",
+  },
+  {
+    question: "Do I need my own domain?",
+    answer: "No. Claim a free address like yourname.workinbox.io in Settings → Mail and start right away; it's set up for you in a few minutes. Add your own domain whenever you're ready.",
+  },
+  {
+    question: "What does a shared mailbox cost?",
+    answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}, and the first ${FREE_PEOPLE} people are free. Shared mailboxes, aliases and the catch-all are free on every plan.`,
+  },
+  {
+    question: "Where is my mail stored?",
+    answer: "On Cloudflare: messages in D1 and each original message (.eml) and its attachments in R2. Self-hosted, all of it lives on your own Cloudflare account.",
+  },
+  {
+    question: "Can it replace Slack and Notion too?",
+    answer: "For everyday team chat and shared notes, yes: channels, DMs, threads, mentions and files; notes with live editing, checklists, tables and mentions. For Notion-style databases there are Collections: lists with your own fields, table and board views. There are no voice or video calls.",
+  },
+  {
+    question: "Is there a free trial?",
+    answer: `Yes. Every hosted account starts with a ${TRIAL_DAYS}-day trial, no card needed, and up to ${FREE_PEOPLE} people stay free after it. Self-hosting is free for good.`,
+  },
+];
+
+const ledger = <T extends { title: string; text: string; href?: string }>(items: T[]) => items.map((i) => ({ ...i, title: t(i.title), text: t(i.text), href: i.href && lp(locale, i.href) }));
+const importItems = ledger(imports);
+const aiItems = ledger(aiCan);
+const ownItems = ledger(own);
+const audienceItems = audiences.map((a) => ({ ...a, title: t(a.title), text: t(a.text), links: a.links.map(([label, href]) => [t(label), lp(locale, href)] as const) }));
+const cardItems = cards.map((c) => ({ ...c, caption: t(c.caption), command: t(c.command), title: t(c.title), text: t(c.text), href: lp(locale, c.href) }));
+const stepItems = steps.map((x) => ({ when: t(x.when), command: t(x.command), status: t(x.status), text: t(x.text) }));
+const questions = faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+// What the page's scripts say (setup widget, price calculator): English text is the key, like everything else.
+const calcWords = {
+  lang: locale,
+  month: t("/ month"),
+  year: t("/ year"),
+  free: pluralForms(locale, "{people} person, free for good · paid features need a plan", "{people} people, free for good · paid features need a plan"),
+  atLeast: t("{people} people: at least {min} billed × {each} = {total}"),
+  formula: t("({people} − {free} free) × {each} = {total}"),
+};
+
+const url = (path: string) => (Astro.site ? new URL(localizedPath(locale, path), Astro.site).href : path);
+const prices = PLAN_LIST.map((p) => p.priceMonthly / 100);
+const jsonLd = [
+  organizationJsonLd(url),
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: siteConfig.name,
+    description: t(siteConfig.description),
+    applicationCategory: "BusinessApplication",
+    applicationSubCategory: "Productivity suite",
+    operatingSystem: "Web",
+    url: url("/"),
+    offers: { "@type": "AggregateOffer", lowPrice: Math.min(...prices), highPrice: Math.max(...prices), priceCurrency: CURRENCY, offerCount: prices.length },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: questions.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })),
+  },
+];
+---
+
+<MarketingLayout title={t("The open-source workspace for your team")} description={t(siteConfig.description)} jsonLd={jsonLd} ink>
+  <!-- Hero: ink band under the see-through header; the packing room (pixel scene "belt") under the text, its wall rising
+       beside the text on large screens. -->
+  <section class="mk-band mk-under-header relative isolate overflow-hidden">
+    <div class="mk-wrap relative z-10 pt-8 sm:pt-12">
+      <h1 class="mk-h1 max-w-4xl">{t("Everything your team works on,")}<br /> {t("in one box")}</h1>
+      <p class="mk-lead mt-6 max-w-2xl lg:max-w-xl">
+        {t("The open-source workspace: email on your own domain, chat, notes, calendars, a shared drive, contacts and lists you design yourself.")}
+      </p>
+      <ul class="mt-6 flex max-w-xl flex-wrap gap-2">
+        {
+          BELT.map((a, i) => (
+            <li>
+              <a href={lp(locale, `/${a.slug}`)} data-app={i} class="hero-app">
+                <PixelIcon rows={APP_ROWS[i]!.map((r) => r.replaceAll("w", "5"))} class="h-3.5 w-auto" />
+                {t(a.label)}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a href="/signup" class="mk-btn">{t("Start free")} <span aria-hidden="true">→</span></a>
+        <form method="post" action={`/demo?lang=${locale}`} data-demo-steps={JSON.stringify([t("Setting up your workspace…"), t("Filling the inbox…"), t("Adding chat and notes…"), t("Planning the calendar…"), t("Putting files in Drive…"), t("Almost ready…")])}><button type="submit" class="mk-btn mk-btn-ghost" aria-live="polite">{t("Try the demo")}</button></form>
+        <a href="/docs/self-host" class="mk-btn mk-btn-ghost">{t("Self-host for free")}</a>
+      </div>
+      <p class="mk-cap mt-5">{t("Free for up to {n} people · then {price} per person a month · free on your own Cloudflare account", { n: FREE_PEOPLE, price: money(lowest, CURRENCY) })}</p>
+      <p class="mk-cap mt-2">
+        {t("Open source")} · AGPL-3.0 · <a href={siteConfig.repoUrl} class="mk-link">{stars !== null ? t("★ {stars} on GitHub", { stars }) : t("on GitHub")}</a>
+      </p>
+    </div>
+    <!-- The packing room: boxes on a conveyor belt catching mail, messages, notes, events, files and contacts. The
+         scene is 480×180: below xl only its room (the bottom 100) shows; from xl its wall rises beside the text. Each
+         chute links to its app and lights up with the matching link above. Phones show the middle, twice as large. -->
+    <div class="relative mt-8 aspect-[480/100] overflow-hidden sm:mt-10 max-md:-ml-[50%] max-md:w-[200%] xl:-mt-[12.5%] xl:aspect-[480/180]" data-belt>
+      <PixelScene scene="belt" class="absolute inset-x-0 bottom-0" />
+      <div class="absolute inset-x-0 bottom-0 aspect-[480/180]">
+        {
+          BELT.map((a, i) => (
+            <a
+              href={lp(locale, `/${a.slug}`)}
+              data-chute={i}
+              aria-label={t(a.label)}
+              title={t(a.label)}
+              class="absolute top-[52.8%] h-[5%] w-[3.5%] -translate-x-1/2"
+              style={`left: ${((140 + i * 36) / 480) * 100}%`}
+            />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Six cards, each a small scene in a frame. -->
+  <section id="features" class="mk-wrap mk-section scroll-mt-20">
+    <div class="grid gap-12 md:grid-cols-3 md:gap-x-8 md:gap-y-16 lg:gap-x-10">
+      {
+        cardItems.map((c) => (
+          <div data-reveal>
+            <p class="mk-cap">{c.caption}</p>
+            <div class="mk-frame mt-2"><PixelScene scene={c.scene} /></div>
+            <p class="mk-cap mt-2">$ <PersonReferences text={c.command} /></p>
+            <h2 class="mk-h3 mt-6">{c.title}</h2>
+            <p class="mt-3 text-lg leading-7 text-(--muted-foreground)">
+              {c.text} {c.href && <a href={c.href} class="mk-link text-(--foreground)">{t("More")}</a>}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- The real app: screens behind mono tabs. -->
+  <section id="tour" class="mk-wrap scroll-mt-20 pb-20 sm:pb-28" data-tabs>
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h2 class="mk-h2">{t("The real app")}</h2>
+        <p class="mk-lead mt-3">{t("Screens of Work Inbox as it runs today.")}</p>
+      </div>
+      <div role="tablist" aria-label={t("Work Inbox screens")} class="mk-seg">
+        {
+          tabs.map((tab, i) => (
+            <button type="button" role="tab" id={`tab-${tab.id}`} aria-controls={`panel-${tab.id}`} aria-selected={i === 0 ? "true" : "false"} data-tab={tab.id}>
+              {tab.label}
+            </button>
+          ))
+        }
+      </div>
+    </div>
+    <div class="mt-8">
+      <BrowserFrame url={tabs[0]!.url}>
+        {
+          tabs.map((tab, i) => (
+            <div role="tabpanel" id={`panel-${tab.id}`} aria-labelledby={`tab-${tab.id}`} data-panel={tab.id} data-url-value={tab.url} hidden={i !== 0} class="h-full">
+              <Shot name={tab.name} alt={tab.alt} class="h-full w-full object-cover object-top-left" />
+            </div>
+          ))
+        }
+      </BrowserFrame>
+    </div>
+  </section>
+
+  <!-- Who it's for: three teams, the apps each opens first. -->
+  <section id="who" class="mk-wrap scroll-mt-20 pb-20 sm:pb-28">
+    <h2 class="mk-h2">{t("Made for small teams")}</h2>
+    <p class="mk-lead mt-3 max-w-3xl">{t("From two people to a few dozen, on one domain or several.")}</p>
+    <div class="mt-10 grid gap-10 md:grid-cols-3 md:gap-8">
+      {
+        audienceItems.map((a) => (
+          <div data-reveal class="mk-frame flex flex-col p-6">
+            <PixelIcon rows={ICONS[a.icon]} class="h-10 w-auto self-start" />
+            <h3 class="mk-h3 mt-6">{a.title}</h3>
+            <p class="mt-3 text-lg leading-7 text-(--muted-foreground)">{a.text}</p>
+            <p class="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-6">
+              {a.links.map(([label, href]) => <a href={href} class="mk-link">{label}</a>)}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Switching without moving first: three steps, all visible; the one pointed at (or scrolled to on phones) fills the scene. -->
+  <section id="setup" class="mk-wrap scroll-mt-20 pb-16 sm:pb-24">
+    <h2 class="mk-h2">{t("Switch in an afternoon")}</h2>
+    <p class="mk-lead mt-3 max-w-3xl">{t("No need to move your mailboxes first. Connect the ones you have, bring the team in, and point the domain when you're ready. Free for up to {n} people, no card.", { n: FREE_PEOPLE })}</p>
+    <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12" data-setup={JSON.stringify(stepItems.map((s) => s.status))}>
+      <ol class="grid gap-1">
+        {
+          stepItems.map((step, i) => (
+            <li>
+              <button type="button" class="setup-step block w-full p-5 text-left sm:p-6" aria-pressed="false" data-setup-step={i}>
+                <span class="mk-cap">{String(i + 1).padStart(2, "0")} · {step.when}</span>
+                <span class="mt-2 block font-[family-name:var(--mk-font-mono)] text-lg sm:text-xl"><span class="opacity-50">$</span> <PersonReferences text={step.command} /></span>
+                <span class="mt-2 block text-(--muted-foreground)">{step.text}</span>
+              </button>
+            </li>
+          ))
+        }
+      </ol>
+      <div class="lg:sticky lg:top-24 lg:self-start">
+        <p class="mk-cap">{t("your organization")}</p>
+        <div class="mk-frame mt-2">
+          <PixelScene scene="setup" state="0" />
+          <p class="flex items-center gap-3 bg-(--mk-band) px-4 py-3 font-[family-name:var(--mk-font-mono)] text-sm text-white" aria-live="polite">
+            <span class="size-2.5 shrink-0 rounded-full bg-white/50" data-setup-dot></span>
+            <span data-setup-status>{t("Nothing moved yet: your mail works as before")}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <h3 class="mt-16 text-xl">{t("What comes along")}</h3>
+    <FeatureLedger items={importItems} cols={4} class="mt-6" />
+    <p class="mt-6"><a href="/docs/quickstart" class="mk-link">{t("The quickstart, step by step")}</a></p>
+  </section>
+
+  <!-- AI apps: what Claude and ChatGPT can do across the workspace. -->
+  <section id="ai" class="mk-wrap scroll-mt-20 pb-20 sm:pb-28">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16">
+      <div>
+        <h2 class="mk-h2">{t("Your AI, across the workspace")}</h2>
+        <p class="mk-lead mt-3">
+          {t("Connect Claude, ChatGPT, Claude Code or Cursor once. They work with your mail, chat, notes, calendar, contacts and files, with your access and nothing more.")}
+        </p>
+        <p class="mt-6"><a href="/docs/mcp" class="mk-link">{t("Connect an AI app")}</a></p>
+      </div>
+      <div>
+        <p class="mk-cap">claude · chatgpt</p>
+        <div class="mk-frame mt-2"><PixelScene scene="ai" /></div>
+      </div>
+    </div>
+    <FeatureLedger items={aiItems} cols={4} class="mt-12" />
+  </section>
+
+  <!-- Grey band: Google and Microsoft side by side, a race of envelopes for the price, then the facts. -->
+  <section id="compare" class="mk-band-grey scroll-mt-16">
+    <div class="mk-wrap mk-section grid gap-12 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-16" data-race>
+      <div>
+        <h2 class="mk-h2">{t("What a team of {n} pays", { n: TEAM })}</h2>
+        <p class="mk-lead mt-4">
+          {t("A month on each entry plan with your own domain, billed yearly where that is the only option. Ours covers every app: mail, chat, notes, calendars, drive and contacts, and the first {n} people are free. Prices as each vendor lists them on {date}, € and $ not converted.", { n: FREE_PEOPLE, date: checked ?? "" })}
+        </p>
+        <button type="button" class="mk-btn mk-btn-ghost mt-8" data-race-replay>▶ {t("Replay")}</button>
+        <p class="mt-5"><a href="/vs" class="mk-link">{t("Full comparisons, with sources")}</a></p>
+      </div>
+      <ol class="grid gap-1 font-[family-name:var(--mk-font-mono)] text-sm">
+        {
+          race.map((r, i) => (
+            <li>
+              <a href={lp(locale, r.href)} class:list={["race-row", r.ours && "font-medium"]} style={`--x: ${(r.amount / raceMax) * 100}%; --i: ${i}`}>
+                <span class="truncate">{r.name}</span>
+                <span class="race-track mk-dots">
+                  <span class="race-marker"><PixelIcon rows={ICONS.mail} class="h-4 w-6" /></span>
+                </span>
+                <span class="text-right tabular-nums">{money(r.amount, r.currency)}</span>
+                <span class="col-start-1 -mt-1 truncate text-xs text-(--muted-foreground)">{r.plan}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+    <div class="mk-wrap pb-20 sm:pb-28">
+      <h3 class="text-xl">{t("Next to Google Workspace and Microsoft 365")}</h3>
+      <div class="mt-6"><ComparisonTable competitors={bigSuites} rows={["selfHost", "shared", "imap", "ai", "suite"]} /></div>
+    </div>
+  </section>
+
+  <!-- Pricing: toggles and the price they make. -->
+  <section id="pricing" class="mk-wrap mk-section scroll-mt-16">
+    <h2 class="mk-h2">{t("The whole workspace, per person")}</h2>
+    <p class="mk-lead mt-3">
+      {t("One price covers the whole workspace: mail, chat, notes, calendars, drive and contacts. The first {n} people, shared mailboxes and aliases cost nothing; after that, from {price} a person a month.", { n: FREE_PEOPLE, price: money(lowest, CURRENCY) })}
+    </p>
+    <div class="mt-12 grid gap-12 lg:grid-cols-2 lg:gap-16" data-calc data-free={FREE_PEOPLE} data-min={MIN_SEATS} data-plans={JSON.stringify(plans)} data-words={JSON.stringify(calcWords)}>
+      <div>
+        <div class="flex items-baseline justify-between text-sm">
+          <label for="calc-people">{t("People in your workspace")}</label>
+          <output for="calc-people" class="font-[family-name:var(--mk-font-mono)] text-base tabular-nums" data-calc-people>10</output>
+        </div>
+        <input id="calc-people" type="range" min="1" max="100" value="10" class="calc-range mt-3 w-full" data-calc-people-input />
+        <div class="mk-cap mt-1 flex justify-between"><span>1</span><span>100</span></div>
+
+        <p class="mt-8 text-sm" id="calc-plan-label">{t("Plan")}</p>
+        <div class="mt-3 grid grid-cols-3 gap-2" role="group" aria-labelledby="calc-plan-label" data-calc-key="plan">
+          {
+            PLAN_LIST.map((p) => (
+              <button type="button" class="calc-plan mk-frame p-3 text-left sm:p-4" aria-pressed={String(p.id === "starter")} data-value={p.id}>
+                <span class="block text-sm font-medium">{p.name}</span>
+                <span class="mt-1 block font-[family-name:var(--mk-font-display)] text-2xl tabular-nums sm:text-3xl">{money(p.priceMonthly / 100, CURRENCY)}</span>
+                <span class="calc-plan-cap mt-2 block font-[family-name:var(--mk-font-mono)] text-xs">
+                  {t("{gb} GB drive", { gb: p.driveGbPerPerson })}
+                  <br />
+                  {hasFeature(p, "mcpAccess") ? t("+ API, AI apps, audit") : t("whole workspace")}
+                </span>
+              </button>
+            ))
+          }
+        </div>
+        <p class="mk-cap mt-2">{t("per person a month")}</p>
+
+        <div class="mk-seg mt-8" data-calc-key="billing">
+          <button type="button" aria-pressed="true" data-value="month">{t("monthly")}</button>
+          <button type="button" aria-pressed="false" data-value="year">{t("yearly · 2 months free")}</button>
+        </div>
+
+        <p class="mt-10 flex items-baseline gap-2" aria-live="polite">
+          <span class="font-[family-name:var(--mk-font-display)] text-6xl font-medium tracking-tight tabular-nums sm:text-7xl" data-calc-total>{money(5, CURRENCY)}</span>
+          <span class="text-lg" data-calc-unit>{calcWords.month}</span>
+        </p>
+        <p class="mk-cap mt-2" data-calc-formula>{t("({people} − {free} free) × {each} = {total}", { people: 10, free: FREE_PEOPLE, each: money(1, CURRENCY), total: money(5, CURRENCY) })}</p>
+        <p class="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+          <a href="/signup" class="mk-btn">{t("Start free")}</a>
+          <span class="mk-cap">{t("{days}-day trial, no card · prices exclude VAT", { days: TRIAL_DAYS })}</span>
+        </p>
+      </div>
+      <div>
+        <h3 class="text-xl">{t("Every plan includes")}</h3>
+        <ul class="mk-sqlist mt-4 text-lg">
+          <li>{t("Unlimited shared mailboxes, aliases and a catch-all per domain.")}</li>
+          <li>{t("The whole workspace: team chat, live shared notes, a team address book, a shared drive and calendars.")}</li>
+          <li>{t("Drafts on every device, signatures in your company's style.")}</li>
+          <li>{t("Spam filter, sender rules and search across every mailbox.")}</li>
+          <li>{t("Up to {n} people free, for good.", { n: FREE_PEOPLE })}</li>
+        </ul>
+        <h3 class="mt-10 text-xl">{t("Not yet")}</h3>
+        <ul class="mk-sqlist mt-4 text-lg">
+          <li>{t("Native mobile apps: use your phone's mail app over IMAP, or install the web app.")}</li>
+          <li>{t("CalDAV sync and booking pages for the calendar.")}</li>
+        </ul>
+        <p class="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-lg">
+          <a href={lp(locale, "/pricing")} class="mk-link">{t("Pricing details")}</a>
+          <a href="/docs/self-host" class="mk-link">{t("Self-host for free")}</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ink band: what the team owns. -->
+  <section id="own" class="mk-band scroll-mt-16">
+    <div class="mk-wrap mk-section">
+      <p class="max-w-4xl font-[family-name:var(--mk-font-display)] text-[clamp(1.75rem,2.6vw,2.4rem)] leading-tight font-medium tracking-tight text-balance">
+        {t("Yours to own. Every line that touches your mail, chats and files is public. Run it on your own Cloudflare account, or let us run the same code.")}
+      </p>
+      <ul class="mt-12 grid gap-px bg-white/15 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          ownItems.map((o) => (
+            <li class="bg-(--mk-band) p-6">
+              <o.icon className="size-5 opacity-70" />
+              <p class="mt-4 font-medium">{o.href ? <a href={o.href} class="mk-link">{o.title}</a> : o.title}</p>
+              <p class="mt-2 text-white/65">{o.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ. -->
+  <section id="faq" class="mk-wrap mk-section scroll-mt-16">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-16">
+      <div>
+        <h2 class="mk-h2">{t("Questions")}</h2>
+        <p class="mk-lead mt-4">{t("Something else? Write to")} <a href={`mailto:${siteConfig.supportEmail}`} class="mk-link text-(--foreground)">{siteConfig.supportEmail}</a>.</p>
+      </div>
+      <Faq items={questions} />
+    </div>
+  </section>
+
+  <ClosingBand />
+</MarketingLayout>
+
+<style>
+  .hero-app {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.2);
+    font-size: 0.875rem;
+    color: rgb(255 255 255 / 0.85);
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+  .hero-app:hover,
+  .hero-app:focus-visible,
+  .hero-app.is-lit {
+    background: rgb(255 255 255 / 0.1);
+    border-color: rgb(255 255 255 / 0.6);
+    color: #fff;
+  }
+  .setup-step {
+    border-left: 2px solid transparent;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+  .setup-step:hover,
+  .setup-step[aria-pressed="true"] {
+    background: var(--mk-grey);
+  }
+  .setup-step[aria-pressed="true"] {
+    border-color: var(--mk-accent);
+  }
+  .setup-step:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .race-row {
+    display: grid;
+    grid-template-columns: minmax(6rem, 10rem) minmax(0, 1fr) 5rem;
+    align-items: center;
+    gap: 0 1rem;
+    padding: 0.5rem 0;
+  }
+  .race-row:hover .race-track {
+    opacity: 0.8;
+  }
+  .race-track {
+    position: relative;
+    height: 1.5rem;
+  }
+  .race-marker {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--x) - 1.5rem * var(--x) / 100%);
+    translate: 0 -50%;
+    padding-inline: 2px;
+    background: var(--mk-grey);
+    color: var(--mk-accent);
+    transition: left 1.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: calc(var(--i) * 120ms);
+  }
+  .race-row.font-medium .race-marker {
+    color: var(--mk-accent);
+  }
+  .race-row:not(.font-medium) .race-marker {
+    color: color-mix(in srgb, var(--mk-accent) 50%, transparent);
+  }
+  [data-race]:not([data-race-on]) .race-marker {
+    left: 0;
+    transition: none;
+  }
+  .calc-range {
+    accent-color: var(--mk-accent);
+  }
+  .calc-plan {
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .calc-plan:hover {
+    background: var(--mk-grey);
+  }
+  .calc-plan[aria-pressed="true"] {
+    color: var(--mk-on-accent);
+    background: var(--mk-accent);
+    border-color: var(--mk-accent);
+  }
+  .calc-plan:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  .calc-plan-cap {
+    opacity: 0.7;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .race-marker {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import "@/scripts/demo-progress";
+  // The hero's belt: a chute or an app link under the pointer (or focused) lights both up.
+  const belt = document.querySelector<HTMLElement>("[data-belt]");
+  const beltScene = belt?.querySelector<HTMLCanvasElement>("canvas");
+  if (belt && beltScene) {
+    const links = [...document.querySelectorAll<HTMLElement>("[data-app]")];
+    const light = (i: string) => {
+      beltScene.dataset.state = i;
+      for (const l of links) l.classList.toggle("is-lit", l.dataset.app === i);
+    };
+    for (const el of [...belt.querySelectorAll<HTMLElement>("[data-chute]"), ...links]) {
+      const i = el.dataset.chute ?? el.dataset.app ?? "";
+      el.addEventListener("pointerenter", () => light(i));
+      el.addEventListener("focus", () => light(i));
+      el.addEventListener("pointerleave", () => light(""));
+      el.addEventListener("blur", () => light(""));
+    }
+  }
+
+  // Setup steps: the step pointed at, focused or clicked (on phones: scrolled to the middle) fills the scene up to it.
+  const setup = document.querySelector<HTMLElement>("[data-setup]");
+  if (setup) {
+    const statuses: string[] = JSON.parse(setup.dataset.setup!);
+    const scene = setup.querySelector<HTMLCanvasElement>("canvas")!;
+    const buttons = [...setup.querySelectorAll<HTMLButtonElement>("[data-setup-step]")];
+    const pick = (i: number) => {
+      buttons.forEach((b, n) => b.setAttribute("aria-pressed", String(n === i)));
+      scene.dataset.state = String(i + 1);
+      setup.querySelector("[data-setup-status]")!.textContent = statuses[i]!;
+      setup.querySelector("[data-setup-dot]")!.classList.replace("bg-white/50", "bg-white");
+    };
+    buttons.forEach((b, i) => {
+      for (const type of ["pointerenter", "focus", "click"]) b.addEventListener(type, () => pick(i));
+    });
+    const middle = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) pick(buttons.indexOf(e.target as HTMLButtonElement));
+    }, { rootMargin: "-45% 0px -45% 0px" });
+    for (const b of buttons) middle.observe(b);
+  }
+
+  // The race: markers slide in when the chart comes into view; Replay runs it again.
+  const race = document.querySelector<HTMLElement>("[data-race]");
+  if (race) {
+    const run = () => {
+      race.removeAttribute("data-race-on");
+      void race.offsetWidth;
+      race.setAttribute("data-race-on", "");
+    };
+    new IntersectionObserver(([e], o) => {
+      if (e?.isIntersecting) {
+        run();
+        o.disconnect();
+      }
+    }, { threshold: 0.3 }).observe(race);
+    race.querySelector("[data-race-replay]")!.addEventListener("click", run);
+  }
+
+  // Pricing calculator: people × plan × billing, FREE_PEOPLE free, at least MIN_SEATS billed (seatsFor).
+  const calc = document.querySelector<HTMLElement>("[data-calc]");
+  if (calc) {
+    const plans: { id: string; name: string; monthly: number; yearly: number }[] = JSON.parse(calc.dataset.plans!);
+    const free = Number(calc.dataset.free);
+    const min = Number(calc.dataset.min);
+    const words: { lang: string; month: string; year: string; free: Record<string, string>; atLeast: string; formula: string } = JSON.parse(calc.dataset.words!);
+    const fill = (text: string, vars: Record<string, string | number>) => text.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+    const eur = (n: number) => new Intl.NumberFormat(words.lang, { style: "currency", currency: "EUR", maximumFractionDigits: Number.isInteger(n) ? 0 : 2 }).format(n);
+    const peopleInput = calc.querySelector<HTMLInputElement>("[data-calc-people-input]")!;
+    peopleInput.addEventListener("input", () => render());
+    const value = (key: string) => calc.querySelector<HTMLElement>(`[data-calc-key="${key}"] [aria-pressed="true"]`)!.dataset.value!;
+    const render = () => {
+      const people = Number(peopleInput.value);
+      calc.querySelector("[data-calc-people]")!.textContent = String(people);
+      const plan = plans.find((p) => p.id === value("plan"))!;
+      const yearly = value("billing") === "year";
+      const each = yearly ? plan.yearly : plan.monthly;
+      const paid = people <= free ? 0 : Math.max(min, people - free);
+      const total = paid * each;
+      calc.querySelector("[data-calc-total]")!.textContent = eur(total);
+      calc.querySelector("[data-calc-unit]")!.textContent = yearly ? words.year : words.month;
+      const vars = { people, free, min, each: eur(each), total: eur(total) };
+      calc.querySelector("[data-calc-formula]")!.textContent =
+        paid === 0
+          ? fill(words.free[new Intl.PluralRules(words.lang).select(people)] ?? words.free.other!, vars)
+          : people - free < min
+            ? fill(words.atLeast, vars)
+            : fill(words.formula, vars);
+    };
+    for (const group of calc.querySelectorAll<HTMLElement>("[data-calc-key]")) {
+      group.addEventListener("click", (e) => {
+        const button = (e.target as Element).closest<HTMLButtonElement>("button");
+        if (!button) return;
+        for (const b of group.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b === button));
+        render();
+      });
+    }
+    render();
+  }
+
+  // Tour tabs: arrow keys move between them, the address bar follows.
+  const tour = document.querySelector<HTMLElement>("[data-tabs]");
+  if (tour) {
+    const buttons = [...tour.querySelectorAll<HTMLButtonElement>("[data-tab]")];
+    const url = tour.querySelector<HTMLElement>("[data-url]")!;
+    const select = (btn: HTMLButtonElement) => {
+      for (const b of buttons) {
+        const on = b === btn;
+        b.setAttribute("aria-selected", String(on));
+        b.tabIndex = on ? 0 : -1;
+        const panel = tour.querySelector<HTMLElement>(`[data-panel="${b.dataset.tab}"]`)!;
+        panel.hidden = !on;
+        if (on) url.textContent = panel.dataset.urlValue ?? "";
+      }
+    };
+    buttons.forEach((b, n) => {
+      b.tabIndex = n === 0 ? 0 : -1;
+      b.addEventListener("click", () => select(b));
+      b.addEventListener("keydown", (e) => {
+        const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        const next = buttons[(n + d + buttons.length) % buttons.length]!;
+        select(next);
+        next.focus();
+      });
+    });
+    // /#tour-notes, /#tour-drive…: the header's Product menu opens the tour on that screen.
+    const fromHash = () => {
+      const btn = buttons.find((b) => location.hash === `#tour-${b.dataset.tab}`);
+      if (!btn) return;
+      select(btn);
+      tour.scrollIntoView();
+    };
+    fromHash();
+    addEventListener("hashchange", fromHash);
+  }
+</script>

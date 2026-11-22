@@ -1,0 +1,36 @@
+---
+import { t } from "@/lib/i18n/panel";
+// OAuth step after sign-in for users in several organizations (postLogin in lib/server/oauth.ts).
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { OAuthOrganizationPicker } from "@/components/auth/oauth-screens";
+import { OAuthExpired } from "@/components/auth/oauth-expired";
+import { getAuth } from "@/lib/server/auth";
+import { getOAuthClientName, oauthOrgFor } from "@/lib/server/oauth";
+import { verifyOAuthQueryParams } from "@better-auth/oauth-provider";
+import { createPersonalOrg, loadMemberships } from "@/lib/server/org";
+
+const auth = getAuth();
+const query = Astro.url.searchParams;
+const valid = await verifyOAuthQueryParams(query.toString(), (await auth.$context).secret);
+const session = valid ? await auth.api.getSession({ headers: Astro.request.headers }) : null;
+if (valid && !session) return Astro.redirect(`/login?${query}`);
+
+let orgs = session ? await loadMemberships(session.user.id) : [];
+// Invited users who never accepted have no organization yet; same fallback as the dashboard.
+if (session && !orgs.length) {
+  await createPersonalOrg(session.user.id, session.user.name);
+  orgs = await loadMemberships(session.user.id);
+}
+const initial = session ? (await oauthOrgFor(session.user.id, session.session.activeOrganizationId)).orgId : null;
+const appName = await getOAuthClientName(query.get("client_id") ?? "");
+---
+
+<AuthLayout title={t("Choose an organization")}>
+  {
+    session ? (
+      <OAuthOrganizationPicker client:load appName={appName} orgs={orgs.map(({ orgId, orgName, role }) => ({ orgId, orgName, role }))} initial={initial} />
+    ) : (
+      <OAuthExpired />
+    )
+  }
+</AuthLayout>

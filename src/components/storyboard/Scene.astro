@@ -1,0 +1,60 @@
+---
+/**
+ * An animated SVG storyboard drawn straight on the page, from a scene made with `defineScene`.
+ * A wide layout and a phone layout are both rendered, the runtime island animates the visible one.
+ * Numbered captions only show for people who prefer reduced motion, because the animation is then
+ * replaced by its final frame.
+ */
+import "./storyboard.css"
+import Canvas from "./Canvas.astro"
+import { StoryboardMotion } from "./runtime"
+import type { Scene } from "./scene"
+
+interface Props {
+  scene: Scene
+  class?: string
+}
+const { scene, class: className } = Astro.props
+
+const captions = scene.steps.filter((s) => s.caption).map((s) => s.caption!)
+// Only what the browser needs: rectangles of nodes and the columns for moveNode.
+const slim = (l: "wide" | "phone") => {
+  const g = scene.geo[l]
+  return {
+    w: g.w,
+    h: g.h,
+    cols: g.cols,
+    nodes: Object.fromEntries(Object.values(g.nodes).map((n) => [n.id, { ...n.rect, col: n.place.at?.[0] }])),
+  }
+}
+const motion = {
+  steps: scene.steps,
+  intro: scene.intro,
+  loop: scene.loop,
+  geo: { wide: slim("wide"), phone: slim("phone") },
+}
+---
+
+<figure class:list={["sb relative isolate", className]} role="group" aria-label={scene.label} data-pending>
+  <div
+    aria-hidden="true"
+    class="sb-dots pointer-events-none absolute -inset-x-6 -inset-y-4 -z-10"
+  >
+  </div>
+  <noscript><style>.sb[data-pending] svg{visibility:visible!important}</style></noscript>
+  <StoryboardMotion client:visible {...motion} />
+  <div class="hidden sm:block"><Canvas scene={scene} layout="wide" /></div>
+  <div class="mx-auto sm:hidden" style={`max-width:${scene.geo.phone.w}px`}><Canvas scene={scene} layout="phone" /></div>
+  {
+    captions.length > 0 && (
+      <ol class="text-muted-foreground mt-4 hidden gap-1.5 text-sm motion-reduce:grid">
+        {captions.map((s, i) => (
+          <li class="flex gap-2.5">
+            <span class="bg-primary flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white">{i + 1}</span>
+            <span>{s}</span>
+          </li>
+        ))}
+      </ol>
+    )
+  }
+</figure>

@@ -1,0 +1,14 @@
+---
+/** The panel router's document, for every area (/app, /admin, /staff); the pages load `initial` with panelDocument(). */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import PanelRouter from "@/components/app/panel-router";
+import { AppLoading } from "@/components/app/app-loading";
+import type { AppPage } from "@/lib/server/app-page";
+
+const { initial } = Astro.props as { initial: AppPage };
+---
+<BaseLayout title={initial.title} lang={Astro.locals.locale} noindex>
+  <PanelRouter client:only="react" initial={initial}>
+    <div slot="fallback"><AppLoading className="min-h-svh" /></div>
+  </PanelRouter>
+</BaseLayout>

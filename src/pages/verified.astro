@@ -1,0 +1,30 @@
+---
+import { t } from "@/lib/i18n/panel";
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { TRIAL_DAYS } from "@/config/plans";
+
+// Better Auth redirects here after the confirmation link (with ?error=… if it failed).
+const failed = Boolean(Astro.url.searchParams.get("error"));
+---
+
+<AuthLayout title={failed ? t("Link expired") : t("Email confirmed")}>
+  <Card className="w-full max-w-sm">
+    <CardHeader>
+      <CardTitle className="text-xl">{failed ? t("This link has expired") : t("Email confirmed")}</CardTitle>
+      <CardDescription>
+        {
+          failed
+            ? t("Confirmation links work for 24 hours. Sign in and we'll send you a new one.")
+            : t("Your account is ready and your {n}-day trial has started.", { n: TRIAL_DAYS })
+        }
+      </CardDescription>
+    </CardHeader>
+    <CardFooter>
+      <Button asChild className="w-full">
+        <a href={failed ? "/login" : "/app"}>{failed ? t("Sign in") : t("Open dashboard")}</a>
+      </Button>
+    </CardFooter>
+  </Card>
+</AuthLayout>

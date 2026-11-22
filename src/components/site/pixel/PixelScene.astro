@@ -1,0 +1,43 @@
+---
+/**
+ * A pixel scene (pixel/scenes.ts) on a canvas sized by its aspect ratio, so nothing shifts while it starts.
+ * `cover` fills a box of a given height instead (the full-bleed bands), cropping the sides on narrow screens.
+ */
+import { SCENES } from "./scenes";
+
+interface Props {
+  scene: keyof typeof SCENES;
+  class?: string;
+  /** Initial data-state (the setup scene's step). */
+  state?: string;
+  cover?: boolean;
+}
+const { scene, class: className, state, cover = false } = Astro.props;
+const s = SCENES[scene]!;
+---
+
+<canvas
+  data-scene={scene}
+  data-state={state}
+  width={s.w}
+  height={s.h}
+  aria-hidden="true"
+  class:list={["pixel-scene", cover && "pixel-cover", className]}
+  style={cover ? undefined : `aspect-ratio: ${s.w} / ${s.h}`}></canvas>
+
+<script>
+  import { mountScenes } from "./mount";
+  mountScenes();
+</script>
+
+<style>
+  .pixel-scene {
+    display: block;
+    width: 100%;
+    image-rendering: pixelated;
+  }
+  .pixel-cover {
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
