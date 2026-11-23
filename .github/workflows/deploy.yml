@@ -32,6 +32,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: echo "BETTER_AUTH_SECRET=ci-dummy-secret" > .dev.vars
       - run: pnpm typecheck
+      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test
       # The dummy .dev.vars only exists for types and the build; production secrets live in the Worker.
       - run: pnpm build
