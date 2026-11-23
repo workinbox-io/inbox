@@ -27,10 +27,11 @@ import { Badge } from "@/components/ui/badge"
 import { confirmSettingsLeave, SettingsDraftContext } from "@/components/settings/settings-draft"
 import { appLocale, t, tp } from "@/lib/i18n/panel"
 
-type Role = "admin" | "member"
+export type Role = "admin" | "member"
 
 export interface TeamMember {
   id: string
+  userId: string
   name: string
   email: string
   role: string
@@ -50,7 +51,7 @@ export interface OrgChoice {
   active: boolean
 }
 
-interface TeamPanelProps {
+export interface TeamPanelProps {
   members: TeamMember[]
   invitations: PendingInvitation[]
   /** Owners and admins manage the team; Better Auth enforces the same rule server-side. */
@@ -63,7 +64,7 @@ interface TeamPanelProps {
 }
 
 /** Better Auth client calls return `{ error }` instead of throwing; `after` updates the view. */
-async function run(call: Promise<{ error: { message?: string } | null }>, success: string, after: () => Promise<void>) {
+export async function run(call: Promise<{ error: { message?: string } | null }>, success: string, after: () => Promise<void>) {
   const { error } = await call
   if (error) {
     toast.error(error.message ?? t("Something went wrong"))
@@ -74,9 +75,9 @@ async function run(call: Promise<{ error: { message?: string } | null }>, succes
   return true
 }
 
-const roleHint = (r: Role) => (r === "admin" ? t("Manages the team, billing and API keys.") : t("Uses mail, notes and contacts."))
-const roleName = (r: string) => (r === "admin" ? t("Admin") : r === "member" ? t("Member") : r === "owner" ? t("Owner") : r)
-const ROLES: Role[] = ["admin", "member"]
+export const roleHint = (r: Role) => (r === "admin" ? t("Manages the team, billing and API keys.") : t("Uses mail, notes and contacts."))
+export const roleName = (r: string) => (r === "admin" ? t("Admin") : r === "member" ? t("Member") : r === "owner" ? t("Owner") : r)
+export const ROLES: Role[] = ["admin", "member"]
 
 export function TeamPanel(props: TeamPanelProps) {
   const [{ members, invitations, canManage, canChangeRoles, seats }, refresh] = useLiveData("/api/app/team", props)
@@ -139,7 +140,7 @@ export function TeamPanel(props: TeamPanelProps) {
                 {canManage && !m.isMe && m.role !== "owner" ? (
                   <ConfirmButton
                     title={t("Remove {name}?", { name: m.name })}
-                    description={t("They lose access right away. Their personal mailbox becomes shared and keeps its mail and aliases. To hand it to someone else, change its owner in Mail settings first.")}
+                    description={t("They lose access right away. Their personal mailbox becomes shared and keeps its mail and aliases.")}
                     confirmLabel={t("Remove")}
                     onConfirm={async () => {
                       await run(authClient.organization.removeMember({ memberIdOrEmail: m.id }), t("{name} removed", { name: m.name }), refresh)
@@ -199,7 +200,7 @@ export function TeamPanel(props: TeamPanelProps) {
   )
 }
 
-function InviteDialog({ onClose, onInvited }: { onClose: () => void; onInvited: () => Promise<void> }) {
+export function InviteDialog({ onClose, onInvited }: { onClose: () => void; onInvited: () => Promise<void> }) {
   const [email, setEmail] = React.useState("")
   const [role, setRole] = React.useState<Role>("member")
   const [domains, setDomains] = React.useState<{ id: string; domain: string }[]>([])

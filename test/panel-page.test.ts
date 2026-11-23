@@ -73,16 +73,16 @@ describe("shared panel page loader", () => {
     expect(await appPage(ctx, ctx.url)).toMatchObject({ screen: "staff", context: { isAdmin: true, area: "staff" } });
   });
   it("opens the admin console to owners and admins only", async () => {
-    for (const path of ["/admin", "/admin/team", "/admin/billing"]) {
+    for (const path of ["/admin", "/admin/people", "/admin/billing"]) {
       const ctx = context(path); expect(await appPage(ctx, ctx.url)).toEqual({ redirect: "/app/mail" });
     }
     for (const role of ["admin", "owner"]) {
       state.role = role;
-      const ctx = context("/admin/team");
-      expect(await appPage(ctx, ctx.url)).toMatchObject({ screen: "admin-settings", props: { page: "team" }, context: { area: "admin", canManage: true } });
+      const ctx = context("/admin/people");
+      expect(await appPage(ctx, ctx.url)).toMatchObject({ screen: "admin-settings", props: { page: "people" }, context: { area: "admin", canManage: true } });
       for (const [from, to] of [
         ["/app", "/admin"], ["/app/billing?checkout=success", "/admin/billing?checkout=success"], ["/app/view?to=admin&next=/app/notes", "/admin"],
-        ["/app/view?to=user&next=/app/notes", "/app/notes"], ["/app/settings/organization#team", "/admin/organization#team"], ["/app/settings/mail", "/admin/mail"],
+        ["/app/view?to=user&next=/app/notes", "/app/notes"], ["/app/settings/organization#team", "/admin/organization#team"], ["/app/settings/mail", "/admin/mail"], ["/admin/team", "/admin/people"], ["/app/settings/team", "/admin/people"],
         ["/app/contacts?settings=team#invite", "/app/settings/team#invite"],
       ]) {
         const c = context(from); expect(await appPage(c, c.url)).toEqual({ redirect: to });

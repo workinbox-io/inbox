@@ -18,7 +18,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { ConfirmButton } from "@/components/app/confirm-button"
@@ -58,7 +57,7 @@ const NONE = "__none__"
 /** How often a domain still waiting for DNS is checked while the page is open. */
 const AUTO_CHECK_MS = 60_000
 
-async function run(body: Record<string, unknown>, ok?: string) {
+export async function run(body: Record<string, unknown>, ok?: string) {
   const checking = body.action === "domain.check"
   if (checking) tapllEvent("domain_check_started")
   try {
@@ -76,7 +75,7 @@ async function run(body: Record<string, unknown>, ok?: string) {
   }
 }
 
-/** Admin → Domains and mailboxes: mailboxes first (each one's settings in a side sheet), then domains, import and org-wide sending. */
+/** Admin → Mail: domains, import and org-wide sending. People and shared mailboxes live in Admin → People (people-panel.tsx). */
 export function MailSettings(props: { initial: MailSetup }) {
   const [setup, refresh] = useLiveData<MailSetup>("/api/app/mail/settings", props.initial)
   const act: Act = async (body, ok) => {
@@ -86,10 +85,9 @@ export function MailSettings(props: { initial: MailSetup }) {
   return (
     <SettingsTabs
       label={t("Mail administration")}
-      // Older links: per-mailbox limits now live in each mailbox's sheet, the signature next to org-wide sending.
-      aliases={{ limits: "mailboxes", branding: "organization" }}
+      // Older links: mailboxes and their limits moved to Admin → People, the signature sits next to org-wide sending.
+      aliases={{ limits: "domains", mailboxes: "domains", branding: "organization" }}
       tabs={[
-        { id: "mailboxes", label: t("Mailboxes"), content: <MailboxesSection setup={setup} act={act} refresh={refresh} /> },
         { id: "domains", label: t("Domains"), content: <DomainsSection setup={setup} act={act} refresh={refresh} /> },
         { id: "import", label: t("Import"), content: <MailImport mailboxes={setup.mailboxes} /> },
         {
@@ -107,11 +105,12 @@ export function MailSettings(props: { initial: MailSetup }) {
   )
 }
 
-type Act = (body: Record<string, unknown>, ok?: string) => Promise<void>
+export type Act = (body: Record<string, unknown>, ok?: string) => Promise<void>
 
 /* ───────────────────────────── Mailboxes ───────────────────────────── */
 
-function MailboxesSection({ setup, act, refresh }: { setup: MailSetup; act: Act; refresh: () => Promise<unknown> }) {
+/** Admin → People → Shared mailboxes: support@ and the like, plus personal ones whose owner left. */
+export function SharedMailboxes({ setup, act }: { setup: MailSetup; act: Act }) {
   const [creating, setCreating] = React.useState(false)
   const [credentials, setCredentials] = React.useState<Credentials | null>(null)
   const [openId, setOpenId] = React.useState<string | null>(null)
@@ -123,13 +122,14 @@ function MailboxesSection({ setup, act, refresh }: { setup: MailSetup; act: Act;
       onDeleted: () => setOpenId(null),
     })
   const opened = setup.mailboxes.find((m) => m.id === openId) ?? null
+  const boxes = setup.mailboxes.filter((m) => m.kind === "shared" || !setup.members.some((p) => p.userId === m.userId))
   const newButton = (
     <Button onClick={() => setCreating(true)}>
-      <Plus /> {t("New mailbox")}
+      <Plus /> {t("New shared mailbox")}
     </Button>
   )
   return (
-    <SettingsSection title={t("Mailboxes")} description={t("A personal mailbox for each member, and shared ones like support@ that several people answer. Click a mailbox for its settings.")}>
+    <SettingsSection title={t("Shared mailboxes")} description={t("Addresses like support@ that several people answer. Click one to pick who reads it.")}>
       {!setup.domains.length ? (
         <EmptyState
           variant="plain"
@@ -139,16 +139,16 @@ function MailboxesSection({ setup, act, refresh }: { setup: MailSetup; act: Act;
           description={t("Every address lives on a domain. Add yours, or start on a free one.")}
           action={
             <Button asChild>
-              <a href="#domains">{t("Go to Domains")}</a>
+              <a href="/admin/mail#domains">{t("Go to Domains")}</a>
             </Button>
           }
         />
-      ) : !setup.mailboxes.length ? (
-        <EmptyState variant="plain" density="compact" icon={<Inbox />} title={t("No mailboxes yet")} description={t("Create one for each person, and shared ones like support@.")} action={newButton} />
+      ) : !boxes.length ? (
+        <EmptyState variant="plain" density="compact" icon={<Users />} title={t("No shared mailboxes yet")} description={t("Make one for support@, sales@ or anything a few people answer together.")} action={newButton} />
       ) : (
         <div className="grid gap-3">
           <ul className="bg-surface divide-border/60 divide-y overflow-hidden rounded-2xl">
-            {setup.mailboxes.map((m) => {
+            {boxes.map((m) => {
               const aliases = setup.aliases.filter((a) => a.mailboxId === m.id).length
               const catchAll = setup.domains.some((d) => d.catchAllMailboxId === m.id)
               return (
@@ -191,24 +191,14 @@ function MailboxesSection({ setup, act, refresh }: { setup: MailSetup; act: Act;
           <div>{newButton}</div>
         </div>
       )}
-      <NewMailboxDialog
-        open={creating}
-        onOpenChange={setCreating}
-        setup={setup}
-        act={act}
-        onAdded={async (c) => {
-          setCreating(false)
-          setCredentials(c)
-          await refresh()
-        }}
-      />
+      <NewMailboxDialog who={creating ? "shared" : null} onClose={() => setCreating(false)} setup={setup} act={act} onAdded={setCredentials} />
       <CredentialsDialog credentials={credentials} onClose={() => setCredentials(null)} />
       <MailboxSheet mailbox={opened} setup={setup} act={act} ops={opened ? ops(opened) : []} onClose={() => setOpenId(null)} />
     </SettingsSection>
   )
 }
 
-interface MailboxOp {
+export interface MailboxOp {
   label: string
   icon: typeof Trash2
   destructive?: boolean
@@ -217,7 +207,7 @@ interface MailboxOp {
 }
 
 /** The actions on one mailbox, shared by its row's "…" menu and its sheet. */
-function mailboxOps(m: Mailbox, act: Act, on: { onShared: () => void; onReset: (c: Credentials) => void; onDeleted: () => void }): MailboxOp[] {
+export function mailboxOps(m: Mailbox, act: Act, on: { onShared: () => void; onReset: (c: Credentials) => void; onDeleted: () => void }): MailboxOp[] {
   const ops: MailboxOp[] = []
   if (m.mailOnly)
     ops.push({
@@ -253,7 +243,7 @@ function mailboxOps(m: Mailbox, act: Act, on: { onShared: () => void; onReset: (
   return ops
 }
 
-/** Everything about one mailbox in one place: who opens it, its aliases, its limits, and the risky actions. */
+/** One mailbox in a side sheet. */
 function MailboxSheet({ mailbox, setup, act, ops, onClose }: { mailbox: Mailbox | null; setup: MailSetup; act: Act; ops: MailboxOp[]; onClose: () => void }) {
   const owner = setup.members.find((m) => m.userId === mailbox?.userId)?.name ?? t("Former member")
   return (
@@ -269,24 +259,7 @@ function MailboxSheet({ mailbox, setup, act, ops, onClose }: { mailbox: Mailbox 
               <SheetDescription>{mailbox.kind === "shared" ? t("Shared mailbox") : t("Personal mailbox of {name}", { name: owner })}</SheetDescription>
             </SheetHeader>
             <div className="grid gap-8 p-4">
-              <AccessEditor key={`${mailbox.id}:${mailbox.kind}`} mailbox={mailbox} members={setup.members} act={act} />
-              <MailboxAliases key={mailbox.id} mailbox={mailbox} setup={setup} act={act} />
-              <div className="grid gap-4">
-                <SendingLimits mailboxes={[mailbox]} organization={false} />
-                <StorageSettings mailboxes={[mailbox]} />
-              </div>
-              <section className="grid gap-3">
-                <SheetSectionTitle title={t("Manage")} />
-                <div className="flex flex-wrap gap-2">
-                  {ops.map((op) => (
-                    <ConfirmButton key={op.label} title={op.confirm.title} description={op.confirm.description} confirmLabel={op.confirm.confirmLabel} onConfirm={op.run}>
-                      <Button variant="outline" size="sm" className={cn(op.destructive && "text-destructive")}>
-                        <op.icon /> {op.label}
-                      </Button>
-                    </ConfirmButton>
-                  ))}
-                </div>
-              </section>
+              <MailboxDetails mailbox={mailbox} setup={setup} act={act} ops={ops} />
             </div>
           </>
         ) : null}
@@ -295,7 +268,33 @@ function MailboxSheet({ mailbox, setup, act, ops, onClose }: { mailbox: Mailbox 
   )
 }
 
-function SheetSectionTitle({ title, description }: { title: string; description?: string }) {
+/** Everything about one mailbox: who opens it, its aliases, its limits, and the risky actions (also in a person's sheet). */
+export function MailboxDetails({ mailbox, setup, act, ops }: { mailbox: Mailbox; setup: MailSetup; act: Act; ops: MailboxOp[] }) {
+  return (
+    <>
+      <AccessEditor key={`${mailbox.id}:${mailbox.kind}`} mailbox={mailbox} members={setup.members} act={act} />
+      <MailboxAliases key={mailbox.id} mailbox={mailbox} setup={setup} act={act} />
+      <div className="grid gap-4">
+        <SendingLimits mailboxes={[mailbox]} organization={false} />
+        <StorageSettings mailboxes={[mailbox]} />
+      </div>
+      <section className="grid gap-3">
+        <SheetSectionTitle title={t("Manage mailbox")} />
+        <div className="flex flex-wrap gap-2">
+          {ops.map((op) => (
+            <ConfirmButton key={op.label} title={op.confirm.title} description={op.confirm.description} confirmLabel={op.confirm.confirmLabel} onConfirm={op.run}>
+              <Button variant="outline" size="sm" className={cn(op.destructive && "text-destructive")}>
+                <op.icon /> {op.label}
+              </Button>
+            </ConfirmButton>
+          ))}
+        </div>
+      </section>
+    </>
+  )
+}
+
+export function SheetSectionTitle({ title, description }: { title: string; description?: string }) {
   return (
     <div className="grid gap-1">
       <h3 className="text-sm font-medium">{title}</h3>
@@ -429,11 +428,14 @@ function DomainPicker({ domains, value, onChange }: { domains: Domain[]; value: 
   )
 }
 
-type Who = "person" | "member" | "shared"
+export type Who = "person" | "member" | "shared"
 
-/** One way to make any mailbox: for someone new (mail-only sign-in), for a team member, or shared. */
-function NewMailboxDialog({ open, onOpenChange, setup, act, onAdded }: { open: boolean; onOpenChange: (o: boolean) => void; setup: MailSetup; act: Act; onAdded: (c: Credentials) => void }) {
-  const withoutBox = setup.members.filter((m) => !setup.mailboxes.some((b) => b.kind === "personal" && b.userId === m.userId))
+/**
+ * Makes a mailbox: for someone new (an account on the domain with a temporary password), for a member without one
+ * (`userId`), or shared. `who` null = closed.
+ */
+export function NewMailboxDialog({ who: asked, userId: forUser, onClose, setup, act, onAdded }: { who: Who | null; userId?: string; onClose: () => void; setup: MailSetup; act: Act; onAdded: (c: Credentials) => void }) {
+  const open = !!asked
   const shared = setup.mailboxes.filter((m) => m.kind === "shared")
   const [who, setWho] = React.useState<Who>("person")
   const [name, setName] = React.useState("")
@@ -453,34 +455,29 @@ function NewMailboxDialog({ open, onOpenChange, setup, act, onAdded }: { open: b
     setWho(next)
     setTouched(false)
     setPicked(new Set())
-    if (next === "member") pickMember(withoutBox[0]?.userId ?? "")
+    if (next === "member") pickMember(forUser ?? "")
     else {
       setName("")
       setLocal("")
     }
   }
   React.useEffect(() => {
-    if (!open) return
-    choose("person")
+    if (!asked) return
+    choose(asked)
     setDomainId(setup.domains.find((d) => d.status === "active")?.id ?? setup.domains[0]?.id ?? "")
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
-  const options = [
-    { value: "person" as const, label: t("New person") },
-    ...(withoutBox.length ? [{ value: "member" as const, label: t("Team member") }] : []),
-    { value: "shared" as const, label: t("Shared") },
-  ]
   const ready = !!local && !!domainId && (who === "person" ? !!name.trim() : who === "member" ? !!userId : true)
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{t("New mailbox")}</DialogTitle>
+          <DialogTitle>{who === "person" ? t("Create an account on your domain") : who === "member" ? t("Give {name} a mailbox", { name: setup.members.find((m) => m.userId === userId)?.name ?? "" }) : t("New shared mailbox")}</DialogTitle>
           <DialogDescription>
             {who === "person"
               ? t("For someone not in Work Inbox yet. They get an address on your domain and see only their mail. You'll get a temporary password to hand over.")
               : who === "member"
-                ? t("For someone already in your team. They open it with their own sign-in.")
+                ? t("They open it with their own sign-in.")
                 : t("An address like support@ that several people answer. Pick who in its settings afterwards.")}
           </DialogDescription>
         </DialogHeader>
@@ -492,15 +489,17 @@ function NewMailboxDialog({ open, onOpenChange, setup, act, onAdded }: { open: b
             if (who === "person") {
               const res = (await run({ action: "person.add", name, domainId, local, sharedMailboxIds: [...picked] }).catch(() => null)) as Credentials | null
               setPending(false)
-              if (res) onAdded(res)
+              if (res) {
+                onClose()
+                onAdded(res)
+              }
               return
             }
             await act({ action: "mailbox.create", kind: who === "member" ? "personal" : "shared", userId: who === "member" ? userId : undefined, local, domainId, displayName: name }, t("Mailbox created"))
             setPending(false)
-            onOpenChange(false)
+            onClose()
           }}
         >
-          <SegmentedControl aria-label={t("Who it's for")} options={options} value={who} onValueChange={choose} fullWidth />
           {who === "person" ? (
             <div className="grid gap-1.5">
               <Label htmlFor="person-name">{t("person|Name")}</Label>
@@ -515,22 +514,6 @@ function NewMailboxDialog({ open, onOpenChange, setup, act, onAdded }: { open: b
                 }}
                 placeholder="Diana Nowak"
               />
-            </div>
-          ) : who === "member" ? (
-            <div className="grid gap-1.5">
-              <Label>{t("Member")}</Label>
-              <Select value={userId} onValueChange={pickMember}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {withoutBox.map((m) => (
-                    <SelectItem key={m.userId} value={m.userId}>
-                      {m.name} · {m.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           ) : null}
           <div className="grid gap-1.5">
@@ -905,14 +888,14 @@ function suggest(name: string) {
   )
 }
 
-interface Credentials {
+export interface Credentials {
   address: string
   password: string
   reset?: boolean
 }
 
 /** Shown once: the sign-in details to hand over. The password is never shown again. */
-function CredentialsDialog({ credentials, onClose }: { credentials: Credentials | null; onClose: () => void }) {
+export function CredentialsDialog({ credentials, onClose }: { credentials: Credentials | null; onClose: () => void }) {
   const url = typeof location === "undefined" ? "" : `${location.origin}/login`
   const text = credentials ? t("Sign in at {url}\nE-mail: {address}\nTemporary password: {password}\nChange the password after you sign in.", { url, address: credentials.address, password: credentials.password }) : ""
   return (

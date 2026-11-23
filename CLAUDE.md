@@ -45,9 +45,11 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   owners/admins. Every mail query is scoped to that list. `followed` (own, granted, shared) decides "All mailboxes",
   the bell and push, so admins aren't flooded by others' personal mail they can merely open.
 - UI: `/app/mail` (`components/mailbox/*`, a copy of `components/admin-mail` adapted: starred and spam folders, search
-  operators `from: to: subject: has:attachment is:unread is:starred`). Admin console → Domains and mailboxes
-  (`/admin/mail`, settings section `mail-admin`, `components/mailbox/mail-settings.tsx`) manages domains (DNS records + DoH check), mailboxes, aliases, catch-all.
-- People on the org's domain (Admin console → Domains and mailboxes → Add person, `lib/server/mail/people.ts`): user + credential account +
+  operators `from: to: subject: has:attachment is:unread is:starred`). Admin console → People
+  (`/admin/people`, section `people`, `components/app/people-panel.tsx`) lists everyone with their personal mailbox (a sheet per
+  person: role, mailbox, aliases, access, removal) and the shared mailboxes; Admin console → Mail (`/admin/mail`, section
+  `mail-admin`, `components/mailbox/mail-settings.tsx`) holds domains (DNS records + DoH check, catch-all), import and signature/sending.
+- People on the org's domain (Admin console → People → Add person → Create an account on your domain, `lib/server/mail/people.ts`): user + credential account +
   member + personal mailbox + shared access in one `db.batch`, written directly (no verification mail, no personal
   org from the sign-up hook); the admin gets a temporary password once and can reset it (`mailOnly` mailboxes).
 - API: `/api/app/mail/threads` (list/send/patch/delete), `/threads/[id]`, `/threads/[id]/reply`,
@@ -71,7 +73,7 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   documents `pages/{app,admin,staff}/[...path].astro` via `panelDocument`): **`/app/*`** the apps for everyone (app rail
   `AppRail`, `AppSearch`, account menu at the bottom of each app's rail; apps always get `account` and never know about
   other frames); **`/admin/*`** the admin console for owners/admins (`AppShell` sidebar from `ADMIN_NAV`: overview,
-  team, domains and mailboxes, apps, billing, API keys, audit log, organization; settings pages render the dialog's
+  people, mail, apps, billing, API keys, audit log, organization; settings pages render the dialog's
   sections through `SettingsPage`, map `ADMIN_SETTINGS`); **`/staff/*`** the platform operator's tools for
   `ADMIN_EMAILS` (analytics, staff mailboxes; 404 for everyone else). `context.area` picks the frame; members asking for
   `/admin` land on `/app/mail`. Entry: account menu "Admin console", ⌘K, "Go to apps" in the sidebar and overview. Old addresses

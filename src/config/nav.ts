@@ -16,8 +16,8 @@ export const WORKSPACE_NAV = [
 /** The admin console (/admin), owners and admins. */
 export const ADMIN_NAV = [
   { href: "/admin", label: msg("Overview"), icon: LayoutDashboard },
-  { href: "/admin/team", label: msg("Team"), icon: Users },
-  { href: "/admin/mail", label: msg("Domains and mailboxes"), icon: Mail },
+  { href: "/admin/people", label: msg("People"), icon: Users },
+  { href: "/admin/mail", label: msg("Mail"), icon: Mail },
   { href: "/admin/apps", label: msg("Apps"), icon: LayoutGrid },
   { href: "/admin/billing", label: msg("Billing"), icon: CreditCard },
   { href: "/admin/api-keys", label: msg("API keys"), icon: KeyRound },

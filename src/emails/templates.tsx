@@ -105,7 +105,7 @@ export function welcome({ name, trialDays }: { name: string; trialDays: number }
       <DetailRows
         items={[
           { label: t("1. Add your domain"), value: t("Settings → Mail") },
-          { label: t("2. Add your team"), value: t("Admin → Domains and mailboxes → New mailbox") },
+          { label: t("2. Add your team"), value: t("Admin → People → Add person") },
           { label: t("3. Open your inbox"), value: t("Mail") },
         ]}
       />

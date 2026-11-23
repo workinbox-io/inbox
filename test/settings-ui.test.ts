@@ -103,7 +103,7 @@ it("shows every settings section on one page, follows the scroll, protects draft
     await page.evaluate(() => (window as any).hideSettings());
     await nav.waitFor({ state: "detached" });
     // The admin console's pages render the same sections.
-    for (const [key, label] of [["team", "Team"], ["mail", "Domains and mailboxes"], ["api-keys", "API keys"], ["audit", "Audit log"], ["organization", "Organization"]]) {
+    for (const [key, label] of [["people", "People"], ["mail", "Mail"], ["api-keys", "API keys"], ["audit", "Audit log"], ["organization", "Organization"]]) {
       await page.evaluate((key) => (window as any).showAdmin(key), key);
       await page.getByRole("heading", { level: 1, name: label, exact: true }).waitFor();
       await expect.poll(() => page.getByText("Loading…", { exact: true }).count()).toBe(0);

@@ -20,6 +20,7 @@ export type SettingsSection =
   | "ai-apps"
   | "organization"
   | "team"
+  | "people"
   | "api-keys"
   | "audit"
   | "mail-admin"

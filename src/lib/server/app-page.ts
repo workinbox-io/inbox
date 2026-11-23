@@ -60,6 +60,7 @@ function legacyRedirect(ctx: APIContext, url: URL, path: string) {
   const manager = canManage(ctx.locals.role);
   const search = url.search;
   if (path === "/app") return manager ? "/admin" : "/app/mail";
+  if (path === "/admin/team") return `/admin/people${search}`;
   if (path === "/app/billing") return `/admin/billing${search}`;
   if (path === "/app/admin") return `/staff${search}`;
   if (path === "/app/admin-mail") return `/staff/mail${search}`;
@@ -75,7 +76,7 @@ function legacyRedirect(ctx: APIContext, url: URL, path: string) {
   if (asked !== null && path.startsWith("/app")) return `/app/settings${asked ? `/${asked}` : ""}${url.hash}`;
   const settings = /^\/app\/settings(?:\/([^/]+))?$/.exec(path);
   if (settings) {
-    const section = settings[1] === "mail" ? "mail-admin" : settings[1];
+    const section = settings[1] === "mail" ? "mail-admin" : settings[1] === "team" && manager ? "people" : settings[1];
     const page = manager ? adminPageOf(section) : null;
     if (page) return `/admin/${page}${url.hash}`;
     if (section !== settings[1]) return `/app/settings/${section}${search}${url.hash}`;
@@ -206,7 +207,7 @@ export async function appPage(ctx: APIContext, url: URL) {
   }
 }
 
-const ADMIN_TITLES = { team: msg("Team"), mail: msg("Domains and mailboxes"), apps: msg("Apps"), "api-keys": msg("API keys"), audit: msg("Audit log"), organization: msg("Organization") };
+const ADMIN_TITLES = { people: msg("People"), mail: msg("Mail"), apps: msg("Apps"), "api-keys": msg("API keys"), audit: msg("Audit log"), organization: msg("Organization") };
 
 export type AppContext = Awaited<ReturnType<typeof appContext>>;
 export async function appNotFound(ctx: APIContext, url = ctx.url) {

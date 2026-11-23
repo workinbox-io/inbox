@@ -964,4 +964,12 @@ export default {
   "{n} aliases|few": "{n} aliasy",
   "{n} aliases|many": "{n} aliasów",
   "{n} aliases|other": "{n} aliasu",
+  "Your admin can add the company, website, logo and colour in Admin console \u2192 Mail \u2192 Signature and sending.": "Administrator może dodać firmę, stronę, logo i kolor w Konsola administratora → Poczta → Podpis i wysyłka.",
+  "New shared mailbox": "Nowa skrzynka wspólna",
+  "Addresses like support@ that several people answer. Click one to pick who reads it.": "Adresy takie jak support@, na które odpowiada kilka osób. Kliknij jedną, aby wybrać, kto ją czyta.",
+  "No shared mailboxes yet": "Nie ma jeszcze skrzynek wspólnych",
+  "Make one for support@, sales@ or anything a few people answer together.": "Utwórz ją dla support@, sales@ albo czegokolwiek, na co odpowiada kilka osób.",
+  "Manage mailbox": "Zarządzaj skrzynką",
+  "Give {name} a mailbox": "Daj skrzynkę: {name}",
+  "They open it with their own sign-in.": "Otwierają ją swoim własnym logowaniem.",
 } satisfies Record<string, string>;

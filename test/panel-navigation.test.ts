@@ -10,14 +10,14 @@ import { contacts, panelFixture, prefs, usage } from "./helpers/panel-fixtures";
 describe("panel routes", () => {
   it("recognizes screens without treating endpoints or malformed paths as screens", () => {
     expect(appRoute("/admin")).toEqual({ screen: "overview", id: null });
-    expect(appRoute("/admin/team")).toEqual({ screen: "admin-settings", id: "team" });
+    expect(appRoute("/admin/people")).toEqual({ screen: "admin-settings", id: "people" });
     expect(appRoute("/staff/mail")).toEqual({ screen: "staff-mail", id: null });
     expect(appRoute("/app/mail/external/account-1")).toEqual({ screen: "external-mail", id: "account-1" });
     // Old addresses (/app, /app/billing, /app/admin…) are redirects in appPage, not screens.
-    for (const path of ["/app", "/app/view", "/app/billing", "/app/admin", "/app/admin-mail", "/application", "/administrator", "/admin/nope", "/admin/team/x", "/staff/other", "/app/contacts/not-an-id", "/app/mail/other"]) expect(appRoute(path)).toBeNull();
-    expect(panelArea("/admin/team")).toBe("admin");
+    for (const path of ["/app", "/app/view", "/app/billing", "/app/admin", "/app/admin-mail", "/application", "/administrator", "/admin/nope", "/admin/team", "/admin/people/x", "/staff/other", "/app/contacts/not-an-id", "/app/mail/other"]) expect(appRoute(path)).toBeNull();
+    expect(panelArea("/admin/people")).toBe("admin");
     expect(panelArea("/administrator")).toBeNull();
-    expect(appScreenKey("/admin/team")).not.toBe(appScreenKey("/admin/audit"));
+    expect(appScreenKey("/admin/people")).not.toBe(appScreenKey("/admin/audit"));
     expect(appScreenKey("/app/notes/00000000-0000-0000-0000-000000000001")).toBe(appScreenKey("/app/notes"));
     expect(appScreenKey("/app/mail/external/one")).not.toBe(appScreenKey("/app/mail/external/two"));
     expect(appScreenKey("/app/collections/00000000-0000-0000-0000-000000000001")).not.toBe(appScreenKey("/app/collections/00000000-0000-0000-0000-000000000002"));
@@ -222,7 +222,7 @@ it("keeps the real shell and icons mounted across apps, history, errors, and pen
     await page.getByRole("button", { name: "Toggle sidebar", exact: true }).click();
     await page.waitForSelector('[data-slot="sidebar"][data-state="collapsed"]');
     await page.evaluate(() => { const w = window as any; w.sidebar = document.querySelector('[data-slot="sidebar"]'); w.backIcon = w.sidebar.querySelector('a[href="/app/mail"] svg'); });
-    for (const path of ["/admin/billing", "/admin/team", "/admin/audit", "/staff", "/staff/mail", "/admin"]) {
+    for (const path of ["/admin/billing", "/admin/people", "/admin/audit", "/staff", "/staff/mail", "/admin"]) {
       await page.evaluate((path) => (window as any).goPanel(path), path);
       await page.waitForURL(origin + path);
       await page.waitForFunction(() => !document.querySelector('main[aria-busy="true"]'));
@@ -239,8 +239,8 @@ it("keeps the real shell and icons mounted across apps, history, errors, and pen
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(origin + "/admin");
     await page.getByRole("button", { name: "Toggle sidebar", exact: true }).click();
-    await page.getByRole("dialog").getByRole("link", { name: "Team", exact: true }).click();
-    await page.waitForURL("**/admin/team");
+    await page.getByRole("dialog").getByRole("link", { name: "People", exact: true }).click();
+    await page.waitForURL("**/admin/people");
     await page.getByRole("dialog").waitFor({ state: "hidden" });
     expect(documents).toHaveLength(3);
     expect(errors).toEqual([]);

@@ -9,7 +9,7 @@ export type PanelArea = (typeof PANEL_AREAS)[number]
 
 /** Console pages that show a settings section; the value is its section in the settings dialog. */
 export const ADMIN_SETTINGS = {
-  team: "team",
+  people: "people",
   mail: "mail-admin",
   apps: "modules",
   "api-keys": "api-keys",

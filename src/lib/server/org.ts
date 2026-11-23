@@ -218,7 +218,7 @@ export async function loadTeam(orgId: string, userId: string) {
   const plan = planById(sub?.plan);
   const myRole = members.find((m) => m.userId === userId)?.role ?? "member";
   return {
-    members: members.map((m) => ({ id: m.id, name: m.name, email: m.email, role: m.role, isMe: m.userId === userId })),
+    members: members.map((m) => ({ id: m.id, userId: m.userId, name: m.name, email: m.email, role: m.role, isMe: m.userId === userId })),
     invitations: invitations.map((i) => ({ id: i.id, email: i.email, role: i.role ?? "member", expiresAt: i.expiresAt.toISOString() })),
     canManage: myRole === "owner" || myRole === "admin",
     /** Only an owner changes roles; ownership itself moves through Transfer, never a role pick. */

@@ -82,7 +82,7 @@ Cloudflare dashboard.
 
 For each mail domain, turn on **Email Routing** and add a **catch-all rule** with the action **Send to a Worker**,
 pointing at your Work Inbox Worker. Then sign up in your Work Inbox: the first account becomes the admin, and after it sign-up is closed. Add your
-team in **Admin console → Domains and mailboxes → Add person**, or invite people to the organization. Add the domain in **Admin console → Domains and mailboxes** and click
+team in **Admin console → People → Add person**, or invite people to the organization. Add the domain in **Admin console → Mail** and click
 **Check DNS**. The [Quickstart](/docs/quickstart) covers the rest.
 
 ## Updating

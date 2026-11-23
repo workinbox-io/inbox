@@ -36,7 +36,7 @@ The username is the mailbox address, for both.
 - **One password per device and mailbox.** Revoke it under the mailbox's **Devices** and that device stops syncing;
   your sign-in password is never used by mail apps.
 - **Finding the servers on its own** works on your organization's own domain once its optional `autoconfig` CNAME and
-  `_autodiscover._tcp` SRV records are in (Admin console → Domains and mailboxes lists them; "Connect Cloudflare" adds them).
+  `_autodiscover._tcp` SRV records are in (Admin console → Mail lists them; "Connect Cloudflare" adds them).
 - **The same mail as the web app.** Read, star and move in the app and Work Inbox follows. Manage folders and labels in
   Work Inbox. Drafts are shared too: one started in Work Inbox shows up in the Drafts folder within half a minute and
   the reverse, sending or discarding it on either side removes it on the other, and when both sides change the same

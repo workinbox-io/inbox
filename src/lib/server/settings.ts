@@ -16,11 +16,11 @@ import { getBillingDetails, getOrg, getSubscription, loadTeam } from "@/lib/serv
 import { canManage, type OrgRole } from "@/lib/server/roles";
 import { listModules } from "@/lib/server/modules";
 
-export const SETTINGS_DATA = ["mailbox", "calendar", "account", "organization", "team", "api-keys", "audit", "mail-admin", "mail-clients", "ai-apps", "modules"] as const;
+export const SETTINGS_DATA = ["mailbox", "calendar", "account", "organization", "team", "people", "api-keys", "audit", "mail-admin", "mail-clients", "ai-apps", "modules"] as const;
 export type SettingsData = (typeof SETTINGS_DATA)[number];
 
 /** Owners and admins only, like the pages they replace. */
-const MANAGERS: SettingsData[] = ["api-keys", "audit", "mail-admin", "modules"];
+const MANAGERS: SettingsData[] = ["api-keys", "audit", "mail-admin", "people", "modules"];
 
 export interface SettingsViewer {
   orgId: string
@@ -56,6 +56,10 @@ export async function settingsData(key: SettingsData, v: SettingsViewer) {
     }
     case "team":
       return loadTeam(v.orgId, v.userId);
+    case "people": {
+      const [team, setup] = await Promise.all([loadTeam(v.orgId, v.userId), listMailSetup(v.orgId)]);
+      return { team, setup };
+    }
     case "api-keys":
       return { keys: await listApiKeys(v.orgId) };
     case "audit":

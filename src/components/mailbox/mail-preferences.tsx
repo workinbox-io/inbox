@@ -151,7 +151,7 @@ export function SignatureSection({ mailbox, signatures, brand, onSaved }: { mail
         <FieldLabel htmlFor="sig-note">{t("More lines")}</FieldLabel>
         <Textarea id="sig-note" className="min-h-20" value={form.note} maxLength={2000} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder={t("Office hours: Mon–Fri, 9–17")} />
         <FieldDescription>
-          {brand.company || brand.logoUrl ? t("Company, website, logo and colour come from your organization's template.") : t("Your admin can add the company, website, logo and colour in Domains and mailboxes → Signature.")}
+          {brand.company || brand.logoUrl ? t("Company, website, logo and colour come from your organization's template.") : t("Your admin can add the company, website, logo and colour in Admin console → Mail → Signature and sending.")}
         </FieldDescription>
       </Field>
       <div className="grid gap-1.5">

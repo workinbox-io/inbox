@@ -3,7 +3,7 @@
  * (a select on phones); /app/settings/<section> scrolls to it. Mail, calendar, this device, the account and, for members, their
  * organization. Apps go here with `openSettings(section)` (open-settings.ts); `?settings=<section>` on any app address
  * redirects here (legacyRedirect). Owners and admins manage the organization in the admin console: its pages
- * (/admin/team…) render the same sections with `SettingsPage`, and asking for one of them here goes there.
+ * (/admin/people…) render the same sections with `SettingsPage`, and asking for one of them here goes there.
  * Each section loads what it shows from /api/app/settings/<data>.
  */
 import * as React from "react"
@@ -37,6 +37,7 @@ import { AuditLogPanel } from "@/components/app/audit-log-panel"
 import { ModulesPanel } from "@/components/app/modules-panel"
 import { CompanyDetailsSection, OrgDangerZone, OrgProfileSection } from "@/components/app/organization-settings"
 import { OrganizationSwitcher, TeamPanel } from "@/components/app/team-panel"
+import { PeoplePanel } from "@/components/app/people-panel"
 import { CalendarFeedSettings, CalendarSettingsForm } from "@/components/calendar/calendar-rail"
 import { browserZone, type Prefs } from "@/components/calendar/shared"
 import { NativeAccounts } from "@/components/mailbox/native-accounts"
@@ -62,7 +63,7 @@ import { confirmSettingsLeave, SettingsDraftContext } from "./settings-draft"
 import { SettingsTabs } from "./settings-tabs"
 
 /** What a section loads (lib/server/settings.ts). */
-type DataKey = "mailbox" | "calendar" | "account" | "organization" | "team" | "api-keys" | "audit" | "mail-admin" | "mail-clients" | "ai-apps" | "modules"
+type DataKey = "mailbox" | "calendar" | "account" | "organization" | "team" | "people" | "api-keys" | "audit" | "mail-admin" | "mail-clients" | "ai-apps" | "modules"
 
 interface SectionDef {
   id: SettingsSection
@@ -84,7 +85,8 @@ function orgSections(): SectionDef[] {
     { id: "organization", label: t("Organization"), icon: Building2, data: "organization", description: t("Your organization's name and company details.") },
     { id: "team", label: t("Team"), icon: Users, data: "team", description: t("Who's in your organization, their roles and invitations.") },
     { id: "modules", label: t("Apps"), icon: LayoutGrid, data: "modules", manage: true, description: t("Turn apps on or off for everyone in the organization. Turning one off keeps its data.") },
-    { id: "mail-admin", label: t("Domains and mailboxes"), icon: Mail, data: "mail-admin", manage: true, description: t("Your domains, mailboxes and aliases.") },
+    { id: "people", label: t("People"), icon: Users, data: "people", manage: true, description: t("Everyone in the organization with their mailbox, and the shared mailboxes.") },
+    { id: "mail-admin", label: t("Mail"), icon: Mail, data: "mail-admin", manage: true, description: t("Your domains, importing mail, and the signature and sending rules for everyone.") },
     { id: "api-keys", label: t("API keys"), icon: KeyRound, data: "api-keys", manage: true, description: t("Keys for the public API and MCP.") },
     { id: "audit", label: t("Audit log"), icon: ScrollText, data: "audit", manage: true, description: t("Who changed what, newest first.") },
   ]
@@ -282,7 +284,7 @@ export function SettingsScreen({ canManage }: { canManage: boolean }) {
   )
 }
 
-/** An admin console page (/admin/team…): one organization section as a page, with the dialog's leave guard. */
+/** An admin console page (/admin/people…): one organization section as a page, with the dialog's leave guard. */
 export function SettingsPage({ page }: { page: AdminSettingsPage }) {
   const def = orgSections().find((s) => s.id === ADMIN_SETTINGS[page])!
   const { data, error, retry } = useSectionData<Record<string, unknown>>(def.data)
@@ -457,6 +459,8 @@ function Body({ def, data }: { def: SectionDef; data: Record<string, any> }) {
       ]} />
     case "team":
       return <TeamPanel {...(data as any)} />
+    case "people":
+      return <PeoplePanel {...(data as any)} />
     case "mail-admin":
       return (
         <>

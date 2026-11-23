@@ -9,6 +9,7 @@ export const fixtures: Record<string, unknown> = {
   "/api/app/settings/account": { user: { name: "Test", email: boxes[0].address, twoFactorEnabled: false }, hasPassword: true, googleEnabled: false, googleAccountId: null, sessions: [], deletionBlockers: [] },
   "/api/app/settings/organization": { orgId: "org", name: "Example", role: "owner", canManage: true, billingDetails: { legalName: "", vatId: "", addressLine1: "", addressLine2: "", postalCode: "", city: "", region: "", country: "" }, others: [], orgs: [{ id: "org", name: "Example", active: true }, { id: "other", name: "Other organization", active: false }] },
   "/api/app/settings/team": { members: [], invitations: [], canManage: true, canChangeRoles: true, seats: { limit: 5, plan: "free" }, orgs: [] },
+  "/api/app/settings/people": { team: { members: [], invitations: [], canManage: true, canChangeRoles: true, seats: { limit: 5, plan: "free" } }, setup: { domains: [], mailboxes: [], aliases: [], members: [], signatureBrand: brand, subdomainBase: null } },
   "/api/app/settings/mail-admin": { setup: { domains: [], mailboxes: [], aliases: [], members: [], signatureBrand: brand, subdomainBase: null } },
   "/api/app/settings/mail-clients": { configured: true },
   "/api/app/settings/ai-apps": { apps: [], mcpUrl: "https://example.test/mcp", upsell: null },

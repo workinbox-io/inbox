@@ -1,6 +1,6 @@
 /**
  * Who may create an account. Hosted (cloud) sign-up is open; a self-hosted instance takes its first user (the admin)
- * and after that only people invited to an org. Admins add the rest in Admin → Domains and mailboxes → New mailbox.
+ * and after that only people invited to an org. Admins add the rest in Admin → People → Add person.
  */
 export function signUpAllowed(mode: string | undefined, hasUsers: boolean, invited: boolean) {
   return mode !== "self" || !hasUsers || invited;

@@ -12,10 +12,10 @@ updated: 2026-11-10
 
 ## 2. Add your domain
 
-No domain yet? In **Admin console → Domains and mailboxes**, claim a free address like `yourname.workinbox.io`: Work Inbox sets up its
+No domain yet? In **Admin console → Mail**, claim a free address like `yourname.workinbox.io`: Work Inbox sets up its
 records for you, you get a mailbox on it, and mail works within a few minutes. You can add your own domain later.
 
-Open **Admin console → Domains and mailboxes** and add your domain, for example `yourcompany.com`. Work Inbox lists the DNS records it needs:
+Open **Admin console → Mail** and add your domain, for example `yourcompany.com`. Work Inbox lists the DNS records it needs:
 
 - an **MX** record, so mail for the domain comes to Work Inbox,
 - three **DKIM** records (CNAME) and two records on `bounce.yourcompany.com`, so mail you send is signed and delivered,
@@ -31,7 +31,7 @@ Under **Mail to unknown addresses**, choose whether mail to an address nobody ha
 
 ## 3. Add your people
 
-In **Admin console → Domains and mailboxes → Add person**, enter a name and an address on the domain. The person gets a mailbox and a
+In **Admin console → People → Add person**, enter a name and an address on the domain. The person gets a mailbox and a
 temporary password, shown to you once; they sign in and change it. You can reset it later.
 
 ## 4. Share a mailbox
@@ -47,12 +47,12 @@ the domain now arrives in the right mailbox.
 ## 6. Bring your old mail
 
 Export it from the old provider: Google Takeout (choose Mail) gives an `.mbox` file; Outlook, Zoho and most others
-export messages as `.eml` files. In **Admin console → Domains and mailboxes → Import mail**, pick the mailbox and the file (or all the
+export messages as `.eml` files. In **Admin console → Mail → Import**, pick the mailbox and the file (or all the
 `.eml` files at once). The upload runs in the browser, the import in the background: messages arrive read, with their
 original dates and threads, your sent mail as sent. From Gmail, what was in the inbox stays in the inbox, the rest is
 archived, spam and trash are left out. Importing the same file again adds nothing twice.
 
-No export at hand? In **Admin console → Domains and mailboxes → Import mail** you can also give the old server's IMAP address and an app
+No export at hand? In **Admin console → Mail → Import** you can also give the old server's IMAP address and an app
 password: the mail is copied in the background, the old mailbox stays untouched and duplicates are skipped.
 
 Not ready to move at all? Each person can connect the mailbox they already have in **Settings → Mail clients →

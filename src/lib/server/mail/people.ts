@@ -1,5 +1,5 @@
 /**
- * People who only use mail (Admin → Domains and mailboxes → New mailbox): an account on the org's own domain, created by an
+ * People who only use mail (Admin → People → Add person): an account on the org's own domain, created by an
  * owner/admin together with its personal mailbox and access to shared ones. The new address can't receive an
  * invitation before it exists, so the admin gets a temporary password to hand over, like a Workspace admin.
  */
