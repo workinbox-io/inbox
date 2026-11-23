@@ -1,13 +1,27 @@
 name: Deploy
 
-# Manual by default. Switch to `push: branches: [main]` once you trust CI.
+# Every push to main: check, apply remote D1 migrations, then deploy the Worker.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, and never cancel one that's halfway through a migration.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -16,15 +30,14 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: echo "BETTER_AUTH_SECRET=ci-dummy-secret" > .dev.vars
+      - run: pnpm typecheck
+      - run: pnpm test
+      # The dummy .dev.vars only exists for types and the build; production secrets live in the Worker.
       - run: pnpm build
+      - run: rm .dev.vars
       # Migrations first: they must be backwards compatible with the code that's still running.
       - run: pnpm wrangler d1 migrations apply DB --remote
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - run: pnpm wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       # Pings IndexNow (Bing, ChatGPT search, Copilot) with the sitemap URLs; only warns on failure.
       - run: pnpm indexnow
