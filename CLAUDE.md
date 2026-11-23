@@ -365,7 +365,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   `collection_git_hooks.secret`, outside the session middleware, `apiAccess` plan on cloud) and `POST …/[id]/git-events`
   (+ `/api/v1`) → job `collections.git` (`lib/server/collection-git.ts`, rules `lib/collections/git.ts`): IDs in branch,
   PR, commit texts link the URL and move the status by `settings.git` (started/review/merged/deployed, forward only);
-  deploys move records whose PR merged earlier (`mergedAt` in link state). MCP `collection_record_link`.
+  deploys move records whose PR merged earlier (`mergedAt` in link state). `settings.git.create`: a PR naming no record
+  makes one (Triage) or finds the one linked to its URL; a PR body fills an empty description. MCP `collection_record_link`.
 - API `/api/app/collections[/id[/records[/recordId[/activity|links|comments|related|follow]]]]`, `…/records/batch`,
   `…/views`, `…/recurrences`, `/lookup`, `/api/v1/collections` re-exports. MCP `src/mcp/collections.ts` (`collections_list`,
   `collection_create/update`, `collection_records_search`, `collection_record_get/create/update/delete/restore/relate`;

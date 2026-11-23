@@ -17,6 +17,11 @@ Collection → Edit → **GitHub**: pick a status for each step (empty = don't m
 
 Statuses only move forward along the field's choices. A cancelled record is never moved.
 
+**Create records from pull requests** (same section): a PR that names no record adds one (title and description from
+the PR, into Triage when the collection has it on) and later updates of that PR keep moving it. On every record, a PR's
+description fills the record's description while it's empty; what people wrote there is never overwritten. This works
+for whoever opens the PR: a person, any coding agent, any tool, since it only needs GitHub.
+
 ## GitHub webhook
 
 1. Collection → Edit → GitHub → **Set up webhook**. Copy the payload URL and secret.
@@ -40,7 +45,7 @@ curl -X POST https://workinbox.io/api/v1/collections/$COLLECTION/git-events \
 ```
 
 An event: `kind` (`branch` | `commit` | `pr` | `deploy`), `repo`, optional `url` (becomes the link), `texts` (where
-IDs are read from), `state` for PRs (`open` | `draft` | `review` | `merged` | `closed`), `environment` for deploys,
+IDs are read from), `body` for PRs (Markdown, fills an empty description), `state` for PRs (`open` | `draft` | `review` | `merged` | `closed`), `environment` for deploys,
 `at` (ms). With this API, deploys move only records whose PR links point to GitHub; for other forges send the shipped
 IDs as `commit` events instead, with no state.
 

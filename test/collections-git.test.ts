@@ -25,6 +25,7 @@ describe("parseGithub", () => {
     const [ev] = parseGithub("pull_request", pr({}), 1000);
     expect(ev).toMatchObject({ kind: "pr", repo: "acme/app", state: "open", at: 1000 });
     expect(ev!.texts).toContain("tas-12-login");
+    expect(ev!.body).toBe("Closes TAS-13");
     expect(parseGithub("pull_request", pr({ draft: true }))[0]!.state).toBe("draft");
     expect(parseGithub("pull_request", pr({}, "ready_for_review"))[0]!.state).toBe("review");
     const merged = parseGithub("pull_request", pr({ state: "closed", merged_at: "2026-11-20T10:00:00Z" }, "closed"))[0]!;

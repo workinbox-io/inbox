@@ -178,6 +178,8 @@ function GitSection({ collectionId, fields, value, onChange }: { collectionId: s
       ) : (
         <p className="text-muted-foreground text-xs">{t("Add a Status field to move records automatically; links work without one.")}</p>
       )}
+      <Toggle id="set-git-create" label={t("Create records from pull requests")} hint={t("A pull request that names no record adds one (to Triage when it's on). Its description fills an empty record description.")}
+        checked={!!map.create} onChange={(on) => onChange({ ...map, create: on || undefined })} />
       {hook ? (
         <div className="grid gap-2 rounded-md border p-3">
           <CopyField label={t("Payload URL")} value={hook.url} />

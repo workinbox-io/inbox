@@ -7,7 +7,8 @@
 import { z } from "zod";
 import { statusKind, type CollectionField } from "./fields";
 
-export type GitMap = { started?: string; review?: string; merged?: string; deployed?: string; environment?: string };
+/** `create`: a pull request naming no record makes one (in Triage when the collection has it on). */
+export type GitMap = { started?: string; review?: string; merged?: string; deployed?: string; environment?: string; create?: boolean };
 export const GIT_STEPS = ["started", "review", "merged", "deployed"] as const;
 
 export const gitMapSchema = z.object({
@@ -16,6 +17,7 @@ export const gitMapSchema = z.object({
   merged: z.string().max(60).optional(),
   deployed: z.string().max(60).optional(),
   environment: z.string().trim().max(60).optional(),
+  create: z.boolean().optional(),
 });
 
 export const gitEventSchema = z.object({
@@ -23,6 +25,7 @@ export const gitEventSchema = z.object({
   repo: z.string().trim().min(1).max(200).describe("owner/name"),
   url: z.string().url().max(2000).optional().describe("The branch, commit or pull request page; becomes a link on the record"),
   title: z.string().max(300).optional(),
+  body: z.string().max(20_000).optional().describe("A pull request's description (Markdown); fills an empty record description"),
   texts: z.array(z.string().max(10_000)).max(50).default([]).describe("Branch names, titles, commit messages: record IDs are read from them"),
   state: z.enum(["open", "draft", "review", "merged", "closed"]).optional().describe("A pull request's state"),
   mergedAt: z.number().int().optional(),
@@ -53,7 +56,7 @@ export function parseGithub(event: string, p: Gh, now = Date.now()): GitEvent[] 
     if (!pr || !["opened", "reopened", "ready_for_review", "converted_to_draft", "closed", "edited", "synchronize"].includes(p.action)) return [];
     const mergedAt = ms(pr.merged_at);
     const state = mergedAt ? "merged" : pr.state === "closed" ? "closed" : pr.draft ? "draft" : p.action === "ready_for_review" ? "review" : "open";
-    return [{ kind: "pr", repo, url: pr.html_url, title: pr.title, texts: [pr.head?.ref ?? "", pr.title ?? "", pr.body ?? ""], state, mergedAt, at: mergedAt ?? now }];
+    return [{ kind: "pr", repo, url: pr.html_url, title: pr.title, body: pr.body ? String(pr.body).slice(0, 20_000) : undefined, texts: [pr.head?.ref ?? "", pr.title ?? "", pr.body ?? ""], state, mergedAt, at: mergedAt ?? now }];
   }
   if (event === "push") {
     const ref: string = p.ref ?? "";

@@ -272,7 +272,7 @@ async function cleanSettings(orgId: string, fields: CollectionField[], current: 
     // Only choices of the status field, so a renamed or removed status stops moving records instead of failing.
     const options = statusFieldOf(fields)?.options ?? [];
     const steps = p.git ? GIT_STEPS.filter((k) => p.git![k] && options.includes(p.git![k]!)).map((k) => [k, p.git![k]!]) : [];
-    next.git = p.git ? { ...Object.fromEntries(steps), ...(p.git.environment ? { environment: p.git.environment } : {}) } : null;
+    next.git = p.git ? { ...Object.fromEntries(steps), ...(p.git.environment ? { environment: p.git.environment } : {}), ...(p.git.create ? { create: true } : {}) } : null;
   }
   if (p.templates !== undefined) {
     next.templates = [];

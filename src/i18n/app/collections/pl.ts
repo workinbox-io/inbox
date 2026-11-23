@@ -491,4 +491,6 @@ export default {
   "No deliveries yet": "Jeszcze nic nie przyszło",
   "New secret": "Nowy sekret",
   "Set up webhook": "Skonfiguruj webhook",
+  "Create records from pull requests": "Twórz rekordy z pull requestów",
+  "A pull request that names no record adds one (to Triage when it's on). Its description fills an empty record description.": "Pull request bez ID rekordu dodaje nowy rekord (do Triage, gdy jest włączone). Jego opis wypełnia pusty opis rekordu.",
 } satisfies Record<string, string>;
