@@ -169,6 +169,7 @@ export function TeamPanel(props: TeamPanelProps) {
                     </span>
                     <Badge variant="secondary">{roleName(i.role)}</Badge>
                     {canManage && <ActionMenuButton label={t("Manage invitation for {email}", { email: i.email })} size="icon-sm" actions={[
+                      { label: t("Copy invitation link"), onSelect: async () => { await navigator.clipboard.writeText(new URL(`/invite/${i.id}`, location.origin).href).then(() => toast.success(t("Invitation link copied")), (e) => toast.error((e as Error).message)) } },
                       { label: t("Resend invitation"), onSelect: async () => { await run(authClient.organization.inviteMember({ email: i.email, role: i.role as Role, resend: true }), t("Invitation sent again to {email}", { email: i.email }), refresh) } },
                       { label: t("Revoke invitation"), destructive: true, confirm: { title: t("Revoke the invitation for {email}?", { email: i.email }), description: t("The link in their email stops working."), confirmLabel: t("Revoke") }, onSelect: async () => { await run(authClient.organization.cancelInvitation({ invitationId: i.id }), t("Invitation revoked"), refresh) } },
                     ]} />}

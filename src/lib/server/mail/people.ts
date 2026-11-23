@@ -34,7 +34,12 @@ export async function addPerson(orgId: string, input: NewPerson) {
   if (left !== null && left < 1) throw new HttpError(403, seatUpsell(plan));
   const { address, domain } = await freeAddress(orgId, input.domainId, input.local);
   const [taken] = await db.select({ id: user.id }).from(user).where(eq(user.email, address));
-  if (taken) throw new HttpError(409, "An account with this address already exists");
+  if (taken) {
+    const [membership] = await db.select({ id: member.id }).from(member).where(and(eq(member.organizationId, orgId), eq(member.userId, taken.id)));
+    throw new HttpError(409, membership
+      ? "This address belongs to a team member. Choose Team member to create their mailbox."
+      : "This address already has a Work Inbox login. Invite it from Team and select the mailbox address there. Copy the invitation link if the mailbox cannot receive email.");
+  }
   const shared = input.sharedMailboxIds.length
     ? await db
         .select({ id: mailboxes.id })

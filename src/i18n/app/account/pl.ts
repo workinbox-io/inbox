@@ -318,6 +318,8 @@ export default {
   "Expires {date}": "Wygasa {date}",
   "Manage invitation for {email}": "Zarządzaj zaproszeniem dla {email}",
   "Resend invitation": "Wyślij zaproszenie ponownie",
+  "Copy invitation link": "Kopiuj link zaproszenia",
+  "Invitation link copied": "Skopiowano link zaproszenia",
   "Invitation sent again to {email}": "Ponownie wysłano zaproszenie na {email}",
   "Revoke invitation": "Unieważnij zaproszenie",
   "Revoke the invitation for {email}?": "Unieważnić zaproszenie dla {email}?",
