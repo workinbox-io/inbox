@@ -28,6 +28,19 @@ for whoever opens the PR: a person, any coding agent, any tool, since it only ne
 2. Repo → Settings → Webhooks → Add webhook: paste both, content type `application/json`, events **Pull requests**,
    **Pushes**, **Deployment statuses**.
 
+Or with the `gh` CLI, for one repo (`repos/OWNER/REPO/hooks`) or every repo of a GitHub organization, including
+future ones (`orgs/OWNER/hooks`, needs `gh auth refresh -s admin:org_hook`):
+
+```sh
+gh api orgs/OWNER/hooks -f name=web -F active=true \
+  -f 'events[]=pull_request' -f 'events[]=push' -f 'events[]=deployment_status' \
+  -f "config[url]=$URL" -f "config[secret]=$SECRET" -f 'config[content_type]=json'
+```
+
+Don't add both an organization and a repo hook for the same collection, or every event arrives twice. One repo can
+feed several collections (one hook each; each reads only its own prefix), but turn on "Create records from pull
+requests" in only one of them.
+
 Jobs with `environment:` in GitHub Actions create deployments on their own, so a deploy workflow needs no changes.
 The hosted service needs a plan with API access. "New secret" rotates it; paste the new one into GitHub.
 
