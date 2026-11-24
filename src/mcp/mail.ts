@@ -4,10 +4,11 @@ import { z } from "zod";
 import { HttpError } from "@/lib/server/api";
 import { defineTool, type McpContext, type McpModule } from "./define";
 import { viewerMailboxes } from "@/lib/server/mail/access";
+import { updateOwnMailbox } from "@/lib/server/mail/admin";
 import { listThreads, getThread } from "@/lib/server/mail/store";
 import { cancelOutboxJob, queueMailSend } from "@/lib/server/mail/outbox";
 import { deleteDraft, getDraft, listDrafts, saveDraft, updateDraft, requireDraftVersion } from "@/lib/server/mail/drafts";
-import { draftFileSourceSchema, draftListSchema, mailDraftKey, mailSendSchema } from "@/lib/validation-mail";
+import { draftFileSourceSchema, draftListSchema, mailDraftKey, mailSendSchema, ownMailboxSchema } from "@/lib/validation-mail";
 import { attachSource, checkDraftFiles } from "@/lib/server/mail/draft-files";
 import { USER_MAIL_FOLDERS } from "@/lib/mail/rules";
 import { stripQuotedReply } from "@/lib/mail/quotes";
@@ -42,6 +43,25 @@ export const mailModule: McpModule = {
     "mail-compose": { title: "New message", html: composeWidget },
   },
   tools: {
+    mail_set_signature: defineTool({
+      title: "Set mailbox signature",
+      description: "Updates the signature for an accessible mailbox as a signed-in person. Supply signature to replace the free-text note (empty clears it) or signatureCard to replace the entire contact card (empty object clears it). An omitted section is kept. Use only when the user asks to change mailbox settings.",
+      scope: "write",
+      destructive: true,
+      input: ownMailboxSchema.pick({ signature: true, signatureCard: true }).extend({
+        mailbox: z.string().trim().toLowerCase().email(),
+      }),
+      async run({ mailbox, signature, signatureCard }, ctx) {
+        if (!ctx.userId || ctx.apiKeyId) throw new HttpError(403, "Signature settings require a signed-in person");
+        if (signature === undefined && signatureCard === undefined) throw new HttpError(422, "Provide a signature or contact card");
+        const accessible = await boxes(ctx);
+        const target = accessible.find((box) => box.address === mailbox);
+        if (!target) throw new HttpError(404, "Not found");
+        const saved = await updateOwnMailbox(accessible.map((box) => box.id), target.id, { signature, signatureCard });
+        ctx.audit("mail_signature.update", { target: mailbox });
+        return { mailbox, signature: saved.signature, signatureCard: saved.signatureCard };
+      },
+    }),
     mail_search: defineTool({
       title: "Search mail",
       description: "Search accessible mailboxes. With q, searches all non-deleted threads unless folder is explicit; without q defaults to Inbox. mailbox restricts the sender mailbox. `q` supports from:, to:, subject:, has:attachment, is:unread and is:starred. Returns threads newest first; pass `before` (a thread's lastMessageAt) for the next page.",

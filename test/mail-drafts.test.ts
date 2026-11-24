@@ -5,6 +5,7 @@ const state = vi.hoisted(() => ({ sqlite: undefined as DatabaseSync | undefined 
 vi.mock("cloudflare:workers", () => ({ env: { PUBLIC_APP_URL: "https://workinbox.test" } }));
 vi.mock("@/lib/server/api", () => ({ HttpError: class extends Error { constructor(public status: number, message: string) { super(message); } } }));
 vi.mock("@/lib/server/mail/access", () => ({ viewerMailboxes: vi.fn() }));
+vi.mock("@/lib/server/mail/admin", () => ({ updateOwnMailbox: vi.fn() }));
 vi.mock("@/lib/server/mail/store", () => ({ listThreads: vi.fn(), getThread: vi.fn() }));
 vi.mock("@/lib/server/mail/outbox", () => ({ cancelOutboxJob: vi.fn(), queueMailSend: vi.fn() }));
 vi.mock("@/lib/server/uploads", () => ({ checkAttachments: vi.fn() }));
@@ -34,6 +35,7 @@ vi.mock("@/db", async () => {
 
 import { deleteDraft, getDraft, listDrafts, saveDraft, updateDraft, type DraftOwner } from "@/lib/server/mail/drafts";
 import { viewerMailboxes } from "@/lib/server/mail/access";
+import { updateOwnMailbox } from "@/lib/server/mail/admin";
 import { mailModule } from "@/mcp/mail";
 import { canUseTool, needsPlan, type McpContext } from "@/mcp/define";
 
@@ -49,6 +51,22 @@ beforeEach(async () => {
   vi.clearAllMocks();
   vi.mocked(viewerMailboxes).mockResolvedValue(owner.boxes);
   await saveDraft(owner, key, payload, { source: "ai", via: "Codex" });
+});
+
+it("updates signatures through the mailbox access list and audits successful writes", async () => {
+  const tool = tools.mail_set_signature!;
+  expect(canUseTool(tool, new Set(["read"]), "member")).toBe(false);
+  await expect(call("mail_set_signature", { mailbox: "other@example.com", signature: "" })).rejects.toMatchObject({ status: 404 });
+  await expect(call("mail_set_signature", { mailbox: "anna@example.com" })).rejects.toMatchObject({ status: 422 });
+  await expect(call("mail_set_signature", { mailbox: "anna@example.com", signature: "" }, { ...ctx, userId: null, apiKeyId: "key" })).rejects.toMatchObject({ status: 403 });
+  expect(updateOwnMailbox).not.toHaveBeenCalled();
+  const saved = { ...owner.boxes[0]!, signature: "", signatureCard: { name: "Anna", role: "", phone: "" } };
+  vi.mocked(updateOwnMailbox).mockResolvedValueOnce(saved);
+  await expect(call("mail_set_signature", { mailbox: " ANNA@example.com ", signature: "" })).resolves.toEqual({
+    mailbox: "anna@example.com", signature: "", signatureCard: saved.signatureCard,
+  });
+  expect(updateOwnMailbox).toHaveBeenCalledWith(["own"], "own", { signature: "", signatureCard: undefined });
+  expect(ctx.audit).toHaveBeenCalledWith("mail_signature.update", { target: "anna@example.com" });
 });
 
 describe("saved draft access and changes against SQLite", () => {

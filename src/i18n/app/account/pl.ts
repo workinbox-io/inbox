@@ -578,6 +578,7 @@ export default {
   "Added DNS records through Cloudflare": "Dodano rekordy DNS przez Cloudflare",
   "Started a mail import": "Rozpoczęto import poczty",
   "Changed the signature template": "Zmieniono szablon podpisu",
+  "Changed the mailbox signature": "Zmieniono podpis skrzynki",
   "Changed catch-all mailbox": "Zmieniono skrzynkę catch-all",
   "Added a person with a mailbox": "Dodano osobę ze skrzynką",
   "Reset a mail password": "Zresetowano hasło do poczty",

@@ -50,6 +50,7 @@ export const AUDIT_ACTIONS = {
   "mail_domain.connect_cloudflare": msg("Added DNS records through Cloudflare"),
   "mail_import.start": msg("Started a mail import"),
   "mail_signature.brand": msg("Changed the signature template"),
+  "mail_signature.update": msg("Changed the mailbox signature"),
   "mail_domain.catch_all": msg("Changed catch-all mailbox"),
   "mail_person.add": msg("Added a person with a mailbox"),
   "mail_person.reset_password": msg("Reset a mail password"),
