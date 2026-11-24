@@ -34,6 +34,12 @@ describe("signature", () => {
     expect(sig.html).not.toContain("<img");
 
   });
+  it("uses the default footer style without a brand rule", () => {
+    const sig = renderSignature(card, { ...EMPTY_BRAND, footer: "Acme" }, "")!;
+    expect(sig.html).toContain("font-size:13px;line-height:1.5;color:#595959;text-align:left");
+    expect(sig.html).toContain('<td style="padding-top:8px">Acme</td>');
+    expect(sig.html).not.toContain("border-top");
+  });
   it("drops invalid brand values and renders nothing when empty", () => {
     expect(cleanBrand({ color: "red", website: "javascript:alert(1)", logoUrl: "https://evil.example/x.png" })).toEqual({ company: "", website: "", logoUrl: "", color: "", footer: "" });
     expect(websiteUrl("http://acme.com/team")).toBe("http://acme.com/team");

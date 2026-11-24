@@ -31,7 +31,7 @@ export interface SignatureBrand {
 
 export const EMPTY_CARD: SignatureCard = { name: "", role: "", phone: "", note: "" };
 export const EMPTY_BRAND: SignatureBrand = { company: "", website: "", logoUrl: "", color: "", footer: "" };
-export const DEFAULT_COLOR = "#1a1a1a";
+export const DEFAULT_COLOR = "#595959";
 
 /** `#rrggbb`, or "" for anything else. */
 export const brandColor = (c: string) => (/^#[0-9a-f]{6}$/i.test(c.trim()) ? c.trim().toLowerCase() : "");
@@ -77,13 +77,13 @@ export function cleanCard(c: Partial<SignatureCard>): SignatureCard {
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const lines = (s: string) => esc(s).replace(/\r?\n/g, "<br>");
-const GREY = "#767676";
+const GREY = DEFAULT_COLOR;
 const FONT = "font-family:Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
 /**
  * The signature as text and HTML, or null when there's nothing to show. `appUrl` makes the logo URL absolute (sent
  * mail; previews pass ""). The HTML is minimal and built from tables with inline styles so Gmail and Outlook keep it.
- * A short rule in the brand colour separates the signature from the message.
+ * An explicitly configured brand colour adds a short rule above the signature.
  */
 export function renderSignature(card: SignatureCard, brand: SignatureBrand, appUrl: string) {
   const c = cleanCard(card);
@@ -108,22 +108,22 @@ export function renderSignature(card: SignatureCard, brand: SignatureBrand, appU
     ? `<td valign="middle" style="padding-right:12px"><img src="${esc(appUrl ? new URL(picture, appUrl).href : picture)}" alt="${esc(c.photoUrl ? c.name : b.company)}" ${size}></td>`
     : "";
   const head = [
-    c.name && `<div style="font-size:14px;font-weight:600">${esc(c.name)}</div>`,
-    roleLine && `<div style="font-size:13px;color:${GREY}">${esc(roleLine)}</div>`,
+    c.name && `<div style="font-weight:600">${esc(c.name)}</div>`,
+    roleLine && `<div>${esc(roleLine)}</div>`,
   ].filter(Boolean);
   const dot = `<span style="color:${GREY}">&nbsp;·&nbsp;</span>`;
   const contacts = [
-    c.phone && `<a href="tel:${esc(c.phone.replace(/[^\d+]/g, ""))}" style="color:${GREY};text-decoration:none">${esc(c.phone)}</a>`,
-    c.email && `<a href="mailto:${esc(c.email)}" style="color:${GREY};text-decoration:none">${esc(c.email)}</a>`,
+    c.phone && `<a href="tel:${esc(c.phone.replace(/[^\d+]/g, ""))}" style="color:${GREY};text-decoration:underline">${esc(c.phone)}</a>`,
+    c.email && `<a href="mailto:${esc(c.email)}" style="color:${GREY};text-decoration:underline">${esc(c.email)}</a>`,
     site && `<a href="${esc(site)}" style="color:${GREY};text-decoration:underline">${esc(siteLabel)}</a>`,
   ].filter(Boolean);
   const rows = [
     head.length || logo ? `<tr><td><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>${logo}<td valign="middle">${head.join("")}</td></tr></table></td></tr>` : "",
-    contacts.length ? `<tr><td style="font-size:12.5px">${contacts.join(dot)}</td></tr>` : "",
-    c.note ? `<tr><td style="font-size:12.5px;color:${GREY}">${lines(c.note)}</td></tr>` : "",
-    b.footer ? `<tr><td style="font-size:11px;color:${GREY}">${lines(b.footer)}</td></tr>` : "",
+    contacts.length ? `<tr><td>${contacts.join(dot)}</td></tr>` : "",
+    c.note ? `<tr><td>${lines(c.note)}</td></tr>` : "",
+    b.footer ? `<tr><td style="padding-top:${person ? "8px" : "0"}">${lines(b.footer)}</td></tr>` : "",
   ].filter(Boolean);
-  const html = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;max-width:540px;${FONT};line-height:1.5;overflow-wrap:anywhere"><tr><td><div style="width:32px;border-top:1px solid ${b.color || "#b0b0b0"}"></div></td></tr>${rows.join("")}</table>`;
+  const html = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;max-width:540px;${FONT};font-size:13px;line-height:1.5;color:${GREY};text-align:left;overflow-wrap:anywhere">${b.color ? `<tr><td><div style="width:32px;border-top:1px solid ${b.color}"></div></td></tr>` : ""}${rows.join("")}</table>`;
   return { text, html };
 }
 
