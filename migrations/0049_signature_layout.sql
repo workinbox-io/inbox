@@ -1,0 +1,1 @@
+ALTER TABLE `mail_signature_brands` ADD `layout` text DEFAULT 'left' NOT NULL;

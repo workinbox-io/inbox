@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EMPTY_BRAND, EMPTY_CARD, cleanBrand, renderSignature, websiteUrl } from "../src/lib/mail/signature";
 
 const card = { name: "Anna Kowalska", role: "Head of Support", phone: "+48 600 100 200", note: "", email: "anna@acme.com" };
-const brand = { company: "Acme", website: "acme.com", logoUrl: "/api/files/attachments/org1/abcdefghijklmnop/logo.png", color: "#E5484D", footer: "Acme sp. z o.o., KRS 0000123456" };
+const brand = { company: "Acme", website: "acme.com", logoUrl: "/api/files/attachments/org1/abcdefghijklmnop/logo.png", color: "#E5484D", layout: "left" as const, footer: "Acme sp. z o.o., KRS 0000123456" };
 
 describe("signature", () => {
   it("renders text and HTML with the brand", () => {
@@ -26,9 +26,15 @@ describe("signature", () => {
     expect(sig.html).toContain("border-radius:20px");
     expect(renderSignature({ ...card, photoUrl: "https://evil.example/me.jpg" }, brand, "https://workinbox.io")!.html).toContain("logo.png");
     const square = renderSignature({ ...card, photoUrl: photo, photoRound: false }, brand, "https://workinbox.io")!.html;
-    expect(square).toContain('width="100"');
+    expect(square).toContain('width="64"');
     expect(square).not.toContain("background:");
     expect(square).not.toContain(`width="40"`);
+  });
+  it("puts the logo to the left by default and above when configured", () => {
+    const left = renderSignature(card, brand, "")!.html;
+    const above = renderSignature(card, { ...brand, layout: "above" }, "")!.html;
+    expect(left).toMatch(/<img[^>]+><\/td><td valign="top"><table/);
+    expect(above).toMatch(/<img[^>]+><\/td><\/tr><tr><td style="font-weight:600">Anna/);
   });
   it("escapes values and keeps note lines", () => {
     const sig = renderSignature({ ...EMPTY_CARD, name: '<b>"x"</b>', note: "line 1\nline 2" }, EMPTY_BRAND, "https://a.b")!;
@@ -44,7 +50,7 @@ describe("signature", () => {
     expect(sig.html).not.toContain("border-top");
   });
   it("drops invalid brand values and renders nothing when empty", () => {
-    expect(cleanBrand({ color: "red", website: "javascript:alert(1)", logoUrl: "https://evil.example/x.png" })).toEqual({ company: "", website: "", logoUrl: "", color: "", footer: "" });
+    expect(cleanBrand({ color: "red", website: "javascript:alert(1)", logoUrl: "https://evil.example/x.png" })).toEqual({ company: "", website: "", logoUrl: "", color: "", layout: "left", footer: "" });
     expect(websiteUrl("http://acme.com/team")).toBe("http://acme.com/team");
     expect(websiteUrl("localhost")).toBe("");
     expect(renderSignature(EMPTY_CARD, { ...EMPTY_BRAND, color: "#000000" }, "https://a.b")).toBeNull();

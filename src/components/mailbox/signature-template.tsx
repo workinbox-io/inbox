@@ -98,6 +98,17 @@ export function SignatureTemplate({ initial, onSaved }: { initial: SignatureBran
             </div>
           </div>
         </div>
+        <fieldset className="grid gap-2">
+          <legend className="mb-2 text-sm font-medium">{t("Logo position")}</legend>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="radio" name="signature-layout" checked={brand.layout !== "above"} onChange={() => set({ layout: "left" })} />
+            {t("Left of the details")}
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="radio" name="signature-layout" checked={brand.layout === "above"} onChange={() => set({ layout: "above" })} />
+            {t("Above the details")}
+          </label>
+        </fieldset>
         <div className="grid gap-1.5">
           <Label htmlFor="brand-footer">{t("Footer")}</Label>
           <Textarea

@@ -25,12 +25,13 @@ export interface SignatureBrand {
   /** An uploaded image (/api/files/attachments/…). */
   logoUrl: string;
   color: string;
+  layout: "left" | "above";
   /** Small print under every signature: company details, a confidentiality notice. */
   footer: string;
 }
 
 export const EMPTY_CARD: SignatureCard = { name: "", role: "", phone: "", note: "" };
-export const EMPTY_BRAND: SignatureBrand = { company: "", website: "", logoUrl: "", color: "", footer: "" };
+export const EMPTY_BRAND: SignatureBrand = { company: "", website: "", logoUrl: "", color: "", layout: "left", footer: "" };
 export const DEFAULT_COLOR = "#595959";
 
 /** `#rrggbb`, or "" for anything else. */
@@ -59,6 +60,7 @@ export function cleanBrand(b: Partial<SignatureBrand>): SignatureBrand {
     website: websiteUrl(b.website ?? "") ? (b.website ?? "").trim().slice(0, 200) : "",
     logoUrl: logoPath(b.logoUrl ?? ""),
     color: brandColor(b.color ?? ""),
+    layout: b.layout === "above" ? "above" : "left",
     footer: (b.footer ?? "").trim().slice(0, 1000),
   };
 }
@@ -100,9 +102,9 @@ export function renderSignature(card: SignatureCard, brand: SignatureBrand, appU
   const round = !!c.photoUrl && c.photoRound;
   const size = round
     ? `width="40" height="40" style="display:block;width:40px;height:40px;border-radius:20px;object-fit:cover;border:0"`
-    : `width="100" style="display:block;width:100px;max-width:100%;height:auto;border:0"`;
+    : `width="64" style="display:block;width:64px;max-width:100%;height:auto;border:0"`;
   const logo = picture
-    ? `<tr><td style="padding-bottom:16px"><img src="${esc(appUrl ? new URL(picture, appUrl).href : picture)}" alt="${esc(c.photoUrl ? c.name : b.company)}" ${size}></td></tr>`
+    ? `<img src="${esc(appUrl ? new URL(picture, appUrl).href : picture)}" alt="${esc(c.photoUrl ? c.name : b.company)}" ${size}>`
     : "";
   const contacts = [
     c.phone && `<a href="tel:${esc(c.phone.replace(/[^\d+]/g, ""))}" style="color:${GREY};text-decoration:underline">${esc(c.phone)}</a>`,
@@ -110,14 +112,18 @@ export function renderSignature(card: SignatureCard, brand: SignatureBrand, appU
     site && `<a href="${esc(site)}" style="color:${GREY};text-decoration:underline">${esc(siteLabel)}</a>`,
   ].filter(Boolean);
   const rows = [
-    logo,
     c.name ? `<tr><td style="font-weight:600">${esc(c.name)}</td></tr>` : "",
     roleLine ? `<tr><td>${esc(roleLine)}</td></tr>` : "",
     ...contacts.map((contact) => `<tr><td>${contact}</td></tr>`),
     c.note ? `<tr><td>${lines(c.note)}</td></tr>` : "",
     b.footer ? `<tr><td style="padding-top:${person ? "8px" : "0"}">${lines(b.footer)}</td></tr>` : "",
   ].filter(Boolean);
-  const html = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;max-width:540px;${FONT};font-size:13px;line-height:1.5;color:${GREY};text-align:left;letter-spacing:-0.01em;overflow-wrap:anywhere">${b.color ? `<tr><td><div style="width:32px;border-top:1px solid ${b.color}"></div></td></tr>` : ""}${rows.join("")}</table>`;
+  const logoOnLeft = logo && b.layout === "left";
+  const table = 'role="presentation" cellpadding="0" cellspacing="0" border="0"';
+  const content = logoOnLeft
+    ? `<tr><td valign="top" style="padding-right:12px">${logo}</td><td valign="top"><table ${table}>${rows.join("")}</table></td></tr>`
+    : `${logo ? `<tr><td style="padding-bottom:16px">${logo}</td></tr>` : ""}${rows.join("")}`;
+  const html = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;max-width:540px;${FONT};font-size:13px;line-height:1.5;color:${GREY};text-align:left;letter-spacing:-0.01em;overflow-wrap:anywhere">${b.color ? `<tr><td><div style="width:32px;border-top:1px solid ${b.color}"></div></td></tr>` : ""}${content}</table>`;
   return { text, html };
 }
 

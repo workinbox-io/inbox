@@ -14,7 +14,7 @@ vi.mock("@/db", async () => {
  sql.exec(`
  PRAGMA foreign_keys=ON;
  CREATE TABLE api_keys(id TEXT PRIMARY KEY, org_id TEXT);
- CREATE TABLE mail_signature_brands(org_id TEXT PRIMARY KEY, company TEXT DEFAULT '', website TEXT DEFAULT '', logo_url TEXT DEFAULT '', color TEXT DEFAULT '', footer TEXT DEFAULT '', updated_at INTEGER);
+ CREATE TABLE mail_signature_brands(org_id TEXT PRIMARY KEY, company TEXT DEFAULT '', website TEXT DEFAULT '', logo_url TEXT DEFAULT '', color TEXT DEFAULT '', layout TEXT DEFAULT 'left', footer TEXT DEFAULT '', updated_at INTEGER);
  CREATE TABLE mailboxes(id TEXT PRIMARY KEY, org_id TEXT, domain_id TEXT, address TEXT, kind TEXT, user_id TEXT, display_name TEXT DEFAULT '', signature TEXT DEFAULT '', signature_card TEXT, uid_validity INTEGER DEFAULT 1, uid_next INTEGER DEFAULT 1, modseq INTEGER DEFAULT 1, created_at INTEGER DEFAULT 1, updated_at INTEGER DEFAULT 1, quota_bytes INTEGER, used_bytes INTEGER DEFAULT 0);
  CREATE TABLE mailbox_access(mailbox_id TEXT,user_id TEXT);
  CREATE TABLE mail_api_access(api_key_id TEXT REFERENCES api_keys(id) ON DELETE CASCADE, mailbox_id TEXT REFERENCES mailboxes(id) ON DELETE CASCADE, PRIMARY KEY(api_key_id,mailbox_id));
