@@ -56,6 +56,8 @@ export default {
   "A mail identity is required": "Wymagana jest tożsamość pocztowa",
   "Saved drafts require a signed-in person; API keys have no personal drafts": "Zapisane wersje robocze wymagają zalogowanej osoby; klucze API nie mają osobistych wersji roboczych",
   "You have no mailbox yet": "Nie masz jeszcze skrzynki",
+  "Signature settings require a signed-in person": "Aby zmienić podpis, zaloguj się jako użytkownik",
+  "Provide a signature or contact card": "Podaj treść podpisu lub dane wizytówki",
   "Provide at least one draft field to change": "Podaj co najmniej jedno pole wersji roboczej do zmiany",
   "Attachment not found": "Nie znaleziono załącznika",
   "AI apps can't send mail on their own. Call mail_draft: the person checks the message and clicks Send in the card.": "Aplikacje AI nie wysyłają poczty same. Wywołaj mail_draft: osoba sprawdza wiadomość i klika Wyślij na karcie.",
