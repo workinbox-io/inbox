@@ -15,6 +15,8 @@ describe("signature", () => {
     expect(sig.html).toContain('href="tel:+48600100200"');
     expect(sig.html).toContain("width:32px;border-top:1px solid #e5484d");
     expect(sig.html).not.toContain('bgcolor=');
+    expect(sig.html.indexOf("<img")).toBeLessThan(sig.html.indexOf("Anna Kowalska"));
+    expect(sig.html).toMatch(/<\/a><\/td><\/tr><tr><td><a href="mailto:/);
   });
   it("shows the person's photo instead of the org's logo", () => {
     const photo = "/api/files/attachments/org1/qrstuvwxyzabcdefgh/me.jpg";
@@ -24,7 +26,8 @@ describe("signature", () => {
     expect(sig.html).toContain("border-radius:20px");
     expect(renderSignature({ ...card, photoUrl: "https://evil.example/me.jpg" }, brand, "https://workinbox.io")!.html).toContain("logo.png");
     const square = renderSignature({ ...card, photoUrl: photo, photoRound: false }, brand, "https://workinbox.io")!.html;
-    expect(square).toContain("max-height:40px;max-width:180px;padding:4px;background:#ffffff");
+    expect(square).toContain('width="100"');
+    expect(square).not.toContain("background:");
     expect(square).not.toContain(`width="40"`);
   });
   it("escapes values and keeps note lines", () => {

@@ -98,32 +98,26 @@ export function renderSignature(card: SignatureCard, brand: SignatureBrand, appU
   // The person's own picture wins over the org's logo. A round photo is cropped to a circle; a logo keeps its shape.
   const picture = c.photoUrl || b.logoUrl;
   const round = !!c.photoUrl && c.photoRound;
-  // A logo keeps its aspect ratio (a wide wordmark grows sideways): CSS caps it at 40px high / 180px wide, Outlook
-  // (no max-*) takes height="40" and scales the width. A white tile behind it keeps a dark logo readable in dark mode,
-  // where clients darken the mail but never the image (Outlook for Windows drops the padding and shows the bare logo).
   const size = round
     ? `width="40" height="40" style="display:block;width:40px;height:40px;border-radius:20px;object-fit:cover;border:0"`
-    : `height="40" style="display:block;width:auto;height:auto;max-height:40px;max-width:180px;padding:4px;background:#ffffff;border-radius:6px;border:0"`;
+    : `width="100" style="display:block;width:100px;max-width:100%;height:auto;border:0"`;
   const logo = picture
-    ? `<td valign="middle" style="padding-right:12px"><img src="${esc(appUrl ? new URL(picture, appUrl).href : picture)}" alt="${esc(c.photoUrl ? c.name : b.company)}" ${size}></td>`
+    ? `<tr><td style="padding-bottom:16px"><img src="${esc(appUrl ? new URL(picture, appUrl).href : picture)}" alt="${esc(c.photoUrl ? c.name : b.company)}" ${size}></td></tr>`
     : "";
-  const head = [
-    c.name && `<div style="font-weight:600">${esc(c.name)}</div>`,
-    roleLine && `<div>${esc(roleLine)}</div>`,
-  ].filter(Boolean);
-  const dot = `<span style="color:${GREY}">&nbsp;·&nbsp;</span>`;
   const contacts = [
     c.phone && `<a href="tel:${esc(c.phone.replace(/[^\d+]/g, ""))}" style="color:${GREY};text-decoration:underline">${esc(c.phone)}</a>`,
     c.email && `<a href="mailto:${esc(c.email)}" style="color:${GREY};text-decoration:underline">${esc(c.email)}</a>`,
     site && `<a href="${esc(site)}" style="color:${GREY};text-decoration:underline">${esc(siteLabel)}</a>`,
   ].filter(Boolean);
   const rows = [
-    head.length || logo ? `<tr><td><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>${logo}<td valign="middle">${head.join("")}</td></tr></table></td></tr>` : "",
-    contacts.length ? `<tr><td>${contacts.join(dot)}</td></tr>` : "",
+    logo,
+    c.name ? `<tr><td style="font-weight:600">${esc(c.name)}</td></tr>` : "",
+    roleLine ? `<tr><td>${esc(roleLine)}</td></tr>` : "",
+    ...contacts.map((contact) => `<tr><td>${contact}</td></tr>`),
     c.note ? `<tr><td>${lines(c.note)}</td></tr>` : "",
     b.footer ? `<tr><td style="padding-top:${person ? "8px" : "0"}">${lines(b.footer)}</td></tr>` : "",
   ].filter(Boolean);
-  const html = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;max-width:540px;${FONT};font-size:13px;line-height:1.5;color:${GREY};text-align:left;overflow-wrap:anywhere">${b.color ? `<tr><td><div style="width:32px;border-top:1px solid ${b.color}"></div></td></tr>` : ""}${rows.join("")}</table>`;
+  const html = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;max-width:540px;${FONT};font-size:13px;line-height:1.5;color:${GREY};text-align:left;letter-spacing:-0.01em;overflow-wrap:anywhere">${b.color ? `<tr><td><div style="width:32px;border-top:1px solid ${b.color}"></div></td></tr>` : ""}${rows.join("")}</table>`;
   return { text, html };
 }
 
