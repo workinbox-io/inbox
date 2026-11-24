@@ -44,6 +44,7 @@ export const emailStyles = {
   heading: { color: light.foreground, fontSize: "26px", fontWeight: 500, letterSpacing: "-0.025em", lineHeight: "1.15", margin: "0 0 24px" },
   text: { color: light.foreground, fontSize: "15px", lineHeight: "1.6", margin: 0 },
   muted: { color: light.mutedForeground, fontSize: "14px", lineHeight: "1.6", margin: 0 },
+  footer: { color: "#595959", fontSize: "13px", lineHeight: "1.5", margin: 0 },
   link: { color: light.accent, textDecoration: "underline" },
 } as const satisfies Record<string, CSSProperties>;
 
@@ -82,14 +83,14 @@ export function EmailLayout({ preview, children, footer }: { preview: string; ch
             {children}
           </Section>
 
-          <Section style={{ padding: "24px 4px 0" }}>
+          <Section style={{ padding: "24px 4px 0", textAlign: "left" }}>
             {footer ? (
-              <Text className="email-footer" style={{ color: light.mutedForeground, fontSize: "12.5px", lineHeight: "1.6", margin: "0 0 4px" }}>
+              <Text className="email-footer" style={{ ...emailStyles.footer, margin: "0 0 8px" }}>
                 {footer}
               </Text>
             ) : null}
-            <Text className="email-footer" style={{ color: light.mutedForeground, fontSize: "12.5px", lineHeight: "1.6", margin: 0 }}>
-              {`${siteConfig.name} · ${siteConfig.supportEmail}`}
+            <Text className="email-footer" style={emailStyles.footer}>
+              {siteConfig.name} · <a href={`mailto:${siteConfig.supportEmail}`} style={{ color: emailStyles.footer.color, textDecoration: "underline" }}>{siteConfig.supportEmail}</a>
             </Text>
           </Section>
         </Container>
