@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, FilePen, Inbox, Loader2, Mail, MailOpen, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, Settings2, ShieldAlert, Star, Trash2, X, type LucideIcon } from "lucide-react"
+import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, FilePen, Inbox, Loader2, Mail, MailOpen, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, Settings2, ShieldAlert, ShieldCheck, Star, StarOff, Trash2, X, type LucideIcon } from "lucide-react"
 
 import type { MailView as MailFolder } from "./types"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
@@ -128,6 +128,7 @@ export function ThreadList({
     onSelection(next)
   }
   const allChecked = threads.length > 0 && threads.every((th) => selection.has(th.id))
+  const allStarred = threads.some((th) => selection.has(th.id)) && threads.every((th) => !selection.has(th.id) || th.starred)
   // The inbox's "Unread" filter: a bare switch in the header row, so the search keeps the full width.
   const unreadSwitch =
     onUnreadOnly && folder === "inbox" && !query ? (
@@ -256,6 +257,18 @@ export function ThreadList({
                 </Button>
                 <Button variant="ghost" size="icon-sm" onClick={() => onBulk({ unread: true })} aria-label={t("Mark unread")} title={t("Mark unread")}>
                   <Mail />
+                </Button>
+                {allStarred ? (
+                  <Button variant="ghost" size="icon-sm" onClick={() => onBulk({ starred: false })} aria-label={t("Remove star")} title={t("Remove star")}>
+                    <StarOff />
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="icon-sm" onClick={() => onBulk({ starred: true })} aria-label={t("Star")} title={t("Star")}>
+                    <Star />
+                  </Button>
+                )}
+                <Button variant="ghost" size="icon-sm" onClick={() => onBulk({ spam: folder !== "spam" })} aria-label={folder === "spam" ? t("Not spam") : t("Report spam")} title={folder === "spam" ? t("Not spam") : t("Report spam")}>
+                  {folder === "spam" ? <ShieldCheck /> : <ShieldAlert />}
                 </Button>
                 <Button variant="ghost" size="icon-sm" onClick={() => onBulk({ trashed: true })} aria-label={t("Move to trash")} title={t("Move to trash")}>
                   <Trash2 />

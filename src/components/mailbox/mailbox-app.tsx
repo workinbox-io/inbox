@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { ConfirmButton } from "@/components/app/confirm-button"
 import { EmptyState } from "@/components/app/empty-state"
-import { ComposeWindow, useUndoSend } from "./composer"
+import { ComposeWindow, sendSavedDraft, useUndoSend } from "./composer"
 import { NEW_DRAFT, syncDrafts, syncTeamDrafts, useDraftKeys, useTeamDrafts, writeDraft } from "./drafts"
 import { draftRows, isTeamRow, TeamDraftDetail, teamRowId, useDraftCount } from "./drafts-panel"
 import { SenderPanel } from "./sender-panel"
@@ -29,7 +29,7 @@ import { SidePanel } from "@/components/workspace/split-view"
 import { foldAway, shortcutsPaused, useAppLayout } from "@/components/workspace/ui"
 import { cleanActions, type MenuAction } from "@/components/workspace/action-menu"
 import { FOLDER_KEYS, Kbd, assignMailboxColors } from "./mail-ui"
-import { FilePen, MessagesSquare, X as XIcon } from "lucide-react"
+import { FilePen, MessagesSquare, Send, X as XIcon } from "lucide-react"
 import { SnoozeDialog, ThreadView, snoozeActions, type ThreadViewHandle } from "./thread-view"
 import { isVirtualFolder, type MailThread, type ReplyMode, type ThreadDetail, type ThreadPatch } from "./types"
 import { onRefreshCounts, publishUnread, refreshBell } from "@/lib/mail/unread-badge"
@@ -45,6 +45,7 @@ const shortcuts = (): [string, string][] => [
   ["e", t("Archive")],
   ["#", t("Move to trash")],
   ["u", t("Mark unread")],
+  ["⇧ I", t("Mark read")],
   ["s", t("Star / unstar")],
   ["!", t("Report spam")],
   ["x", t("Select the thread")],
@@ -373,6 +374,26 @@ export function MailboxApp(props: MailboxAppProps) {
     setSelection(new Set())
     if (item && keys.includes(item)) closeItem()
   }
+  /** Queues each selected draft (one at a time); the rest stay in Drafts with the reason. */
+  async function sendDrafts(all: string[]) {
+    const keys = all.filter((key) => !isTeamRow(key))
+    if (!keys.length) return
+    const id = toast.loading(t("Sending {n} drafts…", { n: keys.length }))
+    const failed: string[] = []
+    const left = new Set<string>()
+    for (const key of keys) {
+      try { await sendSavedDraft(key) } catch (e) {
+        left.add(key)
+        failed.push(`${rows.find((r) => r.id === key)?.subject || t("(no subject)")}: ${(e as Error).message}`)
+      }
+    }
+    const sent = keys.length - failed.length
+    if (failed.length) toast.error(sent ? t("{n} sent to the outbox, {m} left in Drafts", { n: sent, m: failed.length }) : t("Nothing sent"), { id, description: failed.join("\n"), duration: 0 })
+    else toast.success(t("Queued for sending: {n}", { n: sent }), { id })
+    setSelection(new Set())
+    if (item && keys.includes(item) && !left.has(item)) closeItem()
+    refreshOutbox()
+  }
   /** Row menu in Drafts and Outbox, acting on the selection when the row is in it. */
   const itemActions = (row: MailThread): MenuAction[] => {
     const ids = selection.size > 1 && selection.has(row.id) ? [...selection] : [row.id]
@@ -380,6 +401,12 @@ export function MailboxApp(props: MailboxAppProps) {
     if (folder === "drafts")
       return cleanActions([
         { label: t("Open"), icon: FilePen, onSelect: () => openDraft(row.id) },
+        {
+          label: ids.length > 1 ? t("Send {n} drafts", { n: ids.length }) : t("Send"),
+          icon: Send,
+          confirm: { title: ids.length > 1 ? t("Send {n} drafts?", { n: ids.length }) : t("Send this draft?"), description: t("Each one goes to the Outbox, where it can still be cancelled for a moment."), confirmLabel: t("Send") },
+          onSelect: () => void sendDrafts(ids),
+        },
         { separator: true },
         {
           label: ids.length > 1 ? t("Discard {n} drafts", { n: ids.length }) : t("Discard draft"),
@@ -543,7 +570,7 @@ export function MailboxApp(props: MailboxAppProps) {
         },
         e: () => {
           const ids = selection.size ? [...selection] : selectedId ? [selectedId] : []
-          if (ids.length) patch(ids, folder === "archived" ? { archived: false } : { archived: true })
+          if (ids.length && folder !== "trash") patch(ids, folder === "archived" ? { archived: false } : { archived: true })
         },
         "#": () => {
           const ids = selection.size ? [...selection] : selectedId ? [selectedId] : []
@@ -561,6 +588,10 @@ export function MailboxApp(props: MailboxAppProps) {
         u: () => {
           const ids = selection.size ? [...selection] : selectedId ? [selectedId] : []
           if (ids.length) patch(ids, { unread: true })
+        },
+        I: () => {
+          const ids = selection.size ? [...selection] : selectedId ? [selectedId] : []
+          if (ids.length) patch(ids, { unread: false })
         },
         r: () => threadRef.current?.reply("reply"),
         a: () => threadRef.current?.reply("replyAll"),
@@ -653,11 +684,18 @@ export function MailboxApp(props: MailboxAppProps) {
       counts={{ drafts: draftCount, outbox: outboxCount }}
       bulkActions={
         folder === "drafts" ? (
+          <>
+          <ConfirmButton title={t("Send {n} drafts?", { n: selection.size })} description={t("Each one goes to the Outbox, where it can still be cancelled for a moment.")} confirmLabel={t("Send")} onConfirm={() => sendDrafts([...selection])}>
+            <Button variant="ghost" size="sm">
+              <Send /> {t("Send")}
+            </Button>
+          </ConfirmButton>
           <ConfirmButton title={t("Discard {n} drafts?", { n: selection.size })} description={t("The selected drafts are removed on every device. This can't be undone.")} confirmLabel={t("Discard")} onConfirm={() => discardDrafts([...selection])}>
             <Button variant="ghost" size="icon-sm" className="text-destructive" aria-label={t("Discard drafts")} title={t("Discard drafts")}>
               <Trash2 />
             </Button>
           </ConfirmButton>
+          </>
         ) : folder === "outbox" ? (
           <ConfirmButton title={t("Cancel selected sends?")} description={t("The selected queued e-mails are discarded and won't be sent. Messages that have already started sending cannot be cancelled.")} confirmLabel={t("Cancel sends")} onConfirm={() => cancelSends([...selection].filter((id) => outboxJobs.find((x) => x.id === id)?.status === "pending"))}>
             <Button variant="ghost" size="sm">

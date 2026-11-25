@@ -148,6 +148,27 @@ async function sendRequest(d: Draft, files: { url: string; mediaType: string; fi
   }
 }
 
+/**
+ * Sends a saved draft without opening it (Drafts → select → Send). Throws why it was left as a draft. Drafts with
+ * @mentions need the access check's dialog, so they are left to be sent from the composer.
+ */
+export async function sendSavedDraft(key: string) {
+  const d = readDraft(key)
+  if (!d) throw new Error(t("Draft not found"))
+  if (!d.to.length) throw new Error(t("Add a recipient"))
+  const bad = invalid(d)
+  if (bad.length) throw new Error(t("Check {list}", { list: bad.join(", ") }))
+  if (d.mode === "new" && !d.subject.trim()) throw new Error(t("Add a subject"))
+  if (d.mode === "forward" && !d.messageId) throw new Error(t("Draft not found"))
+  if (d.doc && docRefs(d.doc).length) throw new Error(t("Has mentions: open it to send"))
+  const sending = { ...d, idempotencyKey: d.idempotencyKey ?? crypto.randomUUID() }
+  writeDraft(key, sending)
+  // A reply draft's key is its thread id.
+  const result = await sendRequest(sending, d.files ?? [], key, key)
+  writeDraft(key, null)
+  return result
+}
+
 /** Header fields, body, files and the send row, shared by the inline reply and the new e-mail window. */
 function MailForm({
   draft,
