@@ -5,6 +5,14 @@ Template releases. Note anything a product has to do by hand after `pnpm templat
 
 ## Unreleased
 
+## v1.20.0 (2026-11-25)
+
+- Sign-up asks for email and password only; the account name defaults to the part of the address before `@`
+  (rename it in Settings).
+- "Check your inbox" moves on by itself once the address is confirmed in another tab, and links to sign-in with the
+  address filled in for people who confirmed on their phone.
+- `/signup?next=…` survives email confirmation: the link goes through `/verified?next=…`, whose button opens that page
+  instead of `/app`.
 - `pnpm template:update` for products with a squashed history: write the template commit the product contains into
   `.template-ref`, and updates come as a three-way patch since that commit instead of a merge (TEMPLATE.md, "Squashed
   products"). Products cloned from the template merge as before.

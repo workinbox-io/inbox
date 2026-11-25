@@ -416,6 +416,7 @@ export default {
   "Resend the email": "Wyślij wiadomość ponownie",
   "We sent a confirmation link to {email}. Click it to open your dashboard. The link works for 24 hours.": "Wysłaliśmy link potwierdzający na adres {email}. Kliknij go, aby otworzyć panel. Link działa przez 24 godziny.",
   "Nothing after a few minutes? Check your spam folder.": "Nic po kilku minutach? Sprawdź folder ze spamem.",
+  "Confirmed on another device? Sign in here": "Potwierdzono na innym urządzeniu? Zaloguj się tutaj",
   "Could not connect. Check your connection and try again.": "Nie udało się połączyć. Sprawdź połączenie i spróbuj ponownie.",
   "Enter one of the backup codes you saved when you turned on 2FA. Each code works once.": "Wpisz jeden z kodów zapasowych zapisanych przy włączaniu 2FA. Każdy kod działa jednorazowo.",
   "Enter the 6-digit code from your authenticator app.": "Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej.",

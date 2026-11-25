@@ -16,6 +16,8 @@ concurrency:
 
 jobs:
   deploy:
+    # The template repo has no Cloudflare secrets; apps copied from it deploy.
+    if: github.repository != 'jakub-kalamarz/saas-template'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production

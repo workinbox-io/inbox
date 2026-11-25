@@ -20,7 +20,8 @@ interface AuthFormProps {
 }
 
 /** Invitation links must survive e-mail verification, so they become the verification callback. */
-const callbackFor = (next: string) => (next.startsWith("/invite/") ? next : "/verified")
+const callbackFor = (next: string) =>
+  next.startsWith("/invite/") ? next : next === "/app" ? "/verified" : `/verified?next=${encodeURIComponent(next)}`
 
 /** Resend button with a short cooldown, used after sign-up and for unverified logins. */
 export function ResendVerification({ email, callbackURL = "/verified" }: { email: string; callbackURL?: string }) {
@@ -38,7 +39,16 @@ export function ResendVerification({ email, callbackURL = "/verified" }: { email
   )
 }
 
-export function CheckInbox({ email, callbackURL }: { email: string; callbackURL?: string }) {
+export function CheckInbox({ email, callbackURL, next = "/app" }: { email: string; callbackURL?: string; next?: string }) {
+  // Confirmed in another tab of this browser: the session cookie appears, so move on by ourselves.
+  React.useEffect(() => {
+    const id = setInterval(async () => {
+      if (document.hidden) return
+      const { data } = await authClient.getSession()
+      if (data?.session) window.location.assign(next)
+    }, 4000)
+    return () => clearInterval(id)
+  }, [next])
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
@@ -50,6 +60,13 @@ export function CheckInbox({ email, callbackURL }: { email: string; callbackURL?
       <CardFooter className="flex-col gap-3">
         <ResendVerification email={email} callbackURL={callbackURL} />
         <p className="text-muted-foreground text-center text-xs">{t("Nothing after a few minutes? Check your spam folder.")}</p>
+        {/* Confirmed on a phone signs in the phone only; this tab still needs a sign-in. */}
+        <a
+          className="text-muted-foreground hover:text-foreground text-center text-sm underline underline-offset-4"
+          href={`/login?email=${encodeURIComponent(email)}&next=${encodeURIComponent(next)}`}
+        >
+          {t("Confirmed on another device? Sign in here")}
+        </a>
       </CardFooter>
     </Card>
   )
@@ -160,7 +177,7 @@ export function AuthForm({ mode, next = "/app", email: prefill }: AuthFormProps)
     let result
     try {
       result = signup
-        ? await authClient.signUp.email({ email, password, name: String(form.get("name")), callbackURL })
+        ? await authClient.signUp.email({ email, password, name: email.split("@")[0], callbackURL })
         : await authClient.signIn.email({ email, password, callbackURL })
     } catch {
       setPending(false)
@@ -181,7 +198,7 @@ export function AuthForm({ mode, next = "/app", email: prefill }: AuthFormProps)
     window.location.assign(oauthRedirect(data) ?? next)
   }
 
-  if (signedUp) return <CheckInbox email={signedUp} callbackURL={callbackURL} />
+  if (signedUp) return <CheckInbox email={signedUp} callbackURL={callbackURL} next={next} />
   if (twoFactor) return <TwoFactorChallenge next={next} />
 
   return (
@@ -200,12 +217,6 @@ export function AuthForm({ mode, next = "/app", email: prefill }: AuthFormProps)
       </CardHeader>
       <form method="post" onSubmit={onSubmit}>
         <CardContent className="grid gap-4">
-          {signup ? (
-            <div className="grid gap-2">
-              <Label htmlFor="name">{t("person|Name")}</Label>
-              <Input id="name" name="name" autoComplete="name" required />
-            </div>
-          ) : null}
           <div className="grid gap-2">
             <Label htmlFor="email">{t("Email")}</Label>
             <Input id="email" name="email" type="email" autoComplete="email" defaultValue={prefill} required />
