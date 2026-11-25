@@ -729,6 +729,7 @@ export default {
   "{n} unread": "Nieprzeczytane: {n}",
   "New e-mail (c)": "Nowa wiadomość (c)",
   "Search mail": "Szukaj w poczcie",
+  "Search in {folder}": "Szukaj w: {folder}",
   "{n} selected": "Zaznaczono: {n}",
   "Searching…": "Wyszukiwanie…",
   "Has attachments": "Ma załączniki",

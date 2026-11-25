@@ -87,10 +87,10 @@ it("keeps the real shell and icons mounted across apps, history, errors, and pen
     await page.keyboard.press("Escape");
     await page.setViewportSize({ width: 390, height: 844 });
     const header = page.locator('[data-slot="sidebar-inset"] > header');
-    await header.getByRole("button", { name: "Search pages", exact: true }).waitFor();
+    await header.getByRole("button", { name: "Apps", exact: true }).waitFor();
     expect(await page.getByRole("button", { name: /^Notifications/ }).count()).toBe(1);
     expect(await rail.getByRole("button", { name: "Search pages", exact: true }).count()).toBe(0);
-    await header.getByRole("button", { name: "Search pages", exact: true }).click();
+    await header.getByRole("button", { name: "Apps", exact: true }).click();
     await page.getByRole("dialog").waitFor();
     await page.keyboard.press("Escape");
     await header.getByRole("button", { name: /^Notifications/ }).click();

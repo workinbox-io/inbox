@@ -135,6 +135,8 @@ export function MailboxApp(props: MailboxAppProps) {
   const [signatures, setSignatures] = React.useState(props.signatures)
   const [compose, setCompose] = React.useState<{ open: boolean; prefill: { to?: string; nonce: number } | null; draftKey?: string }>({ open: false, prefill: null })
   const [infoOpen, setInfoOpen] = React.useState(false)
+  // Phones: the folder rail as a side menu.
+  const [menuOpen, setMenuOpen] = React.useState(false)
   const [helpOpen, setHelpOpen] = React.useState(false)
   // The settings dialog opens at the mailbox in view; a signature saved there shows in the composer at once.
   // Plain "Settings" starts at the signature on desktop; phones get the list of sections first.
@@ -656,13 +658,8 @@ export function MailboxApp(props: MailboxAppProps) {
     <ThreadList
       mailboxes={props.mailboxes}
       mailbox={mailbox}
-      onMailbox={(m) => {
-        setMailbox(m)
-        closeItem()
-      }}
       unread={unread}
       folder={folder}
-      onFolder={goFolder}
       query={query}
       onQuery={setQuery}
       unreadOnly={unreadOnly}
@@ -680,7 +677,6 @@ export function MailboxApp(props: MailboxAppProps) {
       onBulkDelete={() => remove([...selection])}
       drafts={drafts}
       onCompose={() => openCompose()}
-      onSettings={() => openSettings()}
       counts={{ drafts: draftCount, outbox: outboxCount }}
       bulkActions={
         folder === "drafts" ? (
@@ -706,9 +702,32 @@ export function MailboxApp(props: MailboxAppProps) {
       }
       rail={desktop}
       actionsFor={virtual ? itemActions : threadActions}
+      onMenu={() => setMenuOpen(true)}
       account={!desktop ? <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} compact /> : null}
     />
     </div></div>
+  )
+
+  const folderRail = (close?: () => void) => (
+    <FolderRail
+      canManage={props.canManage}
+      mailboxes={props.mailboxes}
+      mailbox={mailbox}
+      folder={folder}
+      onOpen={(m, f) => {
+        openFolder(m, f)
+        close?.()
+      }}
+      unread={unread}
+      onCompose={() => {
+        close?.()
+        openCompose()
+      }}
+      onSettings={(m) => (m ? openSettingsDialog("signature", { mailbox: m }) : openSettings())}
+      outboxJobs={outboxJobs}
+      compact={!!close}
+      footer={close ? undefined : <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} />}
+    />
   )
 
   const sender = detail ? <SenderPanel detail={detail} multipleMailboxes={multiple} onOpen={setSelectedId} onCompose={openCompose} /> : null
@@ -778,20 +797,7 @@ export function MailboxApp(props: MailboxAppProps) {
   return (
     <TooltipProvider delayDuration={400}>
       <AppFrame ref={frameRef}>
-        {desktop ? (
-          <FolderRail
-            canManage={props.canManage}
-            mailboxes={props.mailboxes}
-            mailbox={mailbox}
-            folder={folder}
-            onOpen={openFolder}
-            unread={unread}
-            onCompose={() => openCompose()}
-            onSettings={(m) => (m ? openSettingsDialog("signature", { mailbox: m }) : openSettings())}
-            outboxJobs={outboxJobs}
-            footer={<AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} />}
-          />
-        ) : null}
+        {desktop ? folderRail() : null}
         <div className="flex min-w-0 flex-1">
         <div className="min-w-0 flex-1">
         {desktop ? (
@@ -819,6 +825,13 @@ export function MailboxApp(props: MailboxAppProps) {
         </div>
       </AppFrame>
       <SnoozeDialog open={!!snoozeIds} onOpenChange={(o) => !o && setSnoozeIds(null)} onSnooze={(at) => snoozeIds && patch(snoozeIds, { snoozedUntil: at })} />
+      <Sheet open={menuOpen && !desktop} onOpenChange={setMenuOpen}>
+        {/* !w-full beats the rail's own width (an inline CSS variable). */}
+        <SheetContent side="left" showCloseButton={false} className="w-[85vw] max-w-xs gap-0 p-0 pt-[env(safe-area-inset-top)] [&>div]:!w-full [&>div]:border-r-0">
+          <SheetTitle className="sr-only">{t("Folders")}</SheetTitle>
+          {folderRail(() => setMenuOpen(false))}
+        </SheetContent>
+      </Sheet>
       <Sheet open={infoOpen && !wide} onOpenChange={setInfoOpen}>
         <SheetContent className="w-[22rem] max-w-full overflow-y-auto">
           <SheetHeader>

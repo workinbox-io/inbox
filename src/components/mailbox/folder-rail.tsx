@@ -29,6 +29,7 @@ export function FolderRail({
   outboxJobs,
   footer,
   canManage = false,
+  compact = false,
 }: {
   mailboxes: string[]
   /** A mailbox address or ALL_MAILBOXES. */
@@ -44,6 +45,8 @@ export function FolderRail({
   /** The mail-only view's account menu; the dashboard has its own in the sidebar. */
   footer?: React.ReactNode
   canManage?: boolean
+  /** Phones (the ☰ menu): only the open scope's folders, then one row per mailbox, like Apple Mail and Gmail. */
+  compact?: boolean
 }) {
   const multiple = mailboxes.length > 1
   const domains = new Map<string, { address: string; index: number }[]>()
@@ -124,6 +127,46 @@ export function FolderRail({
         <MailboxImportProgress jobs={imports.filter(job => job.mailbox === m)} />
         {open ? <div className="pl-4">{folders(m, [m])}</div> : null}
       </div>
+    )
+  }
+
+  if (compact) {
+    const all = mailbox === ALL_MAILBOXES
+    const label = "text-muted-foreground truncate px-2 text-xs font-medium"
+    return (
+      // Touch-sized rows (40px) instead of the desktop's 28px.
+      <RailNav label={t("Mail")} className="gap-5 pt-4 [&_li>button]:h-10 [&_li>button]:text-[15px]">
+        <div className="grid gap-1">
+          <p className={label}>{all ? t("All mailboxes") : mailbox}</p>
+          {folders(mailbox, all ? mailboxes : [mailbox])}
+        </div>
+        {multiple ? (
+          <div className="grid gap-1">
+            <p className={label}>{t("Mailboxes")}</p>
+            <ul className="grid gap-px">
+              {[ALL_MAILBOXES, ...mailboxes].map((m) => {
+                const count = m === ALL_MAILBOXES ? mailboxes.reduce((a, x) => a + (unread[x] ?? 0), 0) : (unread[m] ?? 0)
+                return (
+                  <li key={m}>
+                    <button
+                      type="button"
+                      onClick={() => onOpen(m, "inbox")}
+                      aria-current={mailbox === m ? "true" : undefined}
+                      className={cn("flex w-full items-center gap-2.5 rounded-md px-2 outline-none", mailbox === m ? "bg-foreground/[0.06] font-medium" : "text-foreground/80")}
+                    >
+                      <span className="grid size-4 shrink-0 place-items-center">
+                        <span className="size-2.5 rounded-full" style={{ background: m === ALL_MAILBOXES ? "var(--foreground)" : mailboxColor(m) }} />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-left">{m === ALL_MAILBOXES ? t("All mailboxes") : m}</span>
+                      {count ? <span className="text-foreground/60 text-xs font-medium tabular-nums">{count}</span> : null}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ) : null}
+      </RailNav>
     )
   }
 

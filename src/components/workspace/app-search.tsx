@@ -1,6 +1,6 @@
 import { navigatePanel, PANEL_NAVIGATION } from "@/lib/panel-history"
 import * as React from "react"
-import { Search } from "lucide-react"
+import { LayoutGrid, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CommandPalette, openAppSearch, useCommandPaletteShortcut, type CommandPaletteGroup } from "@/components/ui/command-palette"
 import { ADMIN_NAV, APP_ACTIONS, APP_HELP, WORKSPACE_NAV } from "@/config/nav"
@@ -48,21 +48,15 @@ export function AppSearch({ compact = false, disabled = [], admin = false }: { c
   const palette = usePaletteGroups(shared, open)
   return (
     <>
+      {/* Phones (not compact) get a grid like Google's app launcher: it's how they switch apps, and apps like Mail have their own search field. */}
       <Button
-        variant={compact ? "ghost" : "outline"}
-        size={compact ? "icon" : "sm"}
-        className={compact ? undefined : "text-muted-foreground w-9 justify-start gap-2 px-0 max-sm:justify-center sm:w-64 sm:px-3"}
-        aria-label={t("Search pages")}
-        title={compact ? `${t("Search…")} (⌘K)` : undefined}
+        variant="ghost"
+        size="icon"
+        aria-label={compact ? t("Search pages") : t("Apps")}
+        title={compact ? `${t("Search…")} (⌘K)` : t("Apps")}
         onClick={() => openAppSearch(() => setOpen(true))}
       >
-        <Search />
-        {!compact && (
-          <>
-            <span className="max-sm:sr-only">{t("Search…")}</span>
-            <kbd className="bg-muted ml-auto rounded px-1.5 font-mono text-[10px] max-sm:hidden">⌘K</kbd>
-          </>
-        )}
+        {compact ? <Search /> : <LayoutGrid />}
       </Button>
       <CommandPalette groups={palette.groups} loading={palette.loading} onQueryChange={palette.onQueryChange} onSelect={() => setOpen(false)} open={open} onOpenChange={setOpen} size="wide" placeholder={palette.placeholder ?? t("Search everything…")} />
     </>

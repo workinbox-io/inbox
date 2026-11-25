@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, FilePen, Inbox, Loader2, Mail, MailOpen, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, Settings2, ShieldAlert, ShieldCheck, Star, StarOff, Trash2, X, type LucideIcon } from "lucide-react"
+import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, FilePen, Inbox, Loader2, Mail, Menu, MailOpen, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, ShieldAlert, ShieldCheck, Star, StarOff, Trash2, X, type LucideIcon } from "lucide-react"
 
 import type { MailView as MailFolder } from "./types"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
@@ -11,8 +11,6 @@ import { UserAvatar } from "@/components/app/user-avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Switch } from "@/components/ui/switch"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
-import { SegmentedControl } from "@/components/ui/segmented-control"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ConfirmButton } from "@/components/app/confirm-button"
 import { shortDate } from "./message-view"
 import { SnoozeMenu } from "./thread-view"
@@ -48,10 +46,8 @@ const EMPTY: Record<MailFolder, { icon: LucideIcon; text: string }> = {
 export function ThreadList({
   mailboxes,
   mailbox,
-  onMailbox,
   unread,
   folder,
-  onFolder,
   query,
   onQuery,
   unreadOnly = false,
@@ -69,19 +65,17 @@ export function ThreadList({
   onBulkDelete,
   drafts,
   onCompose,
-  onSettings,
   counts = {},
   bulkActions,
   rail = false,
   account,
+  onMenu,
   actionsFor,
 }: {
   mailboxes: string[]
   mailbox: string
-  onMailbox: (m: string) => void
   unread: Record<string, number>
   folder: MailFolder
-  onFolder: (f: MailFolder) => void
   query: string
   onQuery: (q: string) => void
   /** The inbox's "Unread" filter. */
@@ -100,7 +94,6 @@ export function ThreadList({
   onBulkDelete: () => void
   drafts: Set<string>
   onCompose: () => void
-  onSettings: () => void
   /** Counts next to folders other than the inbox (drafts, scheduled sends). */
   counts?: Partial<Record<MailFolder, number>>
   /** Replaces the thread actions of a selection (Drafts: discard; Outbox: cancel). */
@@ -109,6 +102,8 @@ export function ThreadList({
   rail?: boolean
   /** The account menu (mail-only view on a phone), next to Compose. */
   account?: React.ReactNode
+  /** Phones: opens the folders menu. */
+  onMenu?: () => void
   /** A thread's right-click menu and "…" (mailbox-app.tsx `threadActions`). */
   actionsFor?: (thread: MailThread) => MenuAction[]
 }) {
@@ -118,6 +113,7 @@ export function ThreadList({
     () => true,
     () => false,
   )
+  const folderLabel = FOLDERS.find((f) => f.id === folder)?.label ?? ""
   const all = mailbox === ALL_MAILBOXES
   const totalUnread = all ? Object.values(unread).reduce((a, b) => a + b, 0) : (unread[mailbox] ?? 0)
   const selecting = selection.size > 0
@@ -138,84 +134,67 @@ export function ThreadList({
       </label>
     ) : null
 
+  const searchField = (
+    <InputGroup className={cn("h-8 bg-foreground/[0.04] border-transparent shadow-none dark:bg-foreground/[0.06]", !rail && "h-9 min-w-0 flex-1 rounded-full")}>
+      <InputGroupAddon>
+        <Search />
+      </InputGroupAddon>
+      <InputGroupInput
+        ref={searchRef}
+        type="search"
+        value={query}
+        onChange={(e) => onQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.stopPropagation()
+            if (query) onQuery("")
+            else e.currentTarget.blur()
+          }
+        }}
+        placeholder={rail ? t("Search mail") : t("Search in {folder}", { folder: folderLabel })}
+        aria-label={t("Search mail")}
+        // 16px on phones, or iOS Safari zooms the page in on focus.
+        className="text-base md:text-sm [&::-webkit-search-cancel-button]:hidden"
+      />
+      {query ? (
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton size="icon-xs" onClick={() => onQuery("")} aria-label={t("Clear search")}>
+            <X />
+          </InputGroupButton>
+        </InputGroupAddon>
+      ) : rail ? (
+        <InputGroupAddon align="inline-end">
+          <Kbd>/</Kbd>
+        </InputGroupAddon>
+      ) : null}
+    </InputGroup>
+  )
+
   return (
-    <aside className="@container flex h-full min-h-0 flex-col">
+    <aside className="@container relative flex h-full min-h-0 flex-col">
       <div className={cn("grid grid-cols-[minmax(0,1fr)] gap-2.5 p-3", !rail && "border-b")}>
-        {rail ? (
-          <div className="flex h-8 items-baseline gap-2 px-1">
-            <h2 className="text-lg font-semibold tracking-tight">{query ? t("Search") : FOLDERS.find((f) => f.id === folder)?.label}</h2>
-            <span className="text-muted-foreground truncate text-[13px]">
-              {folder === "inbox" && !query && totalUnread ? t("{n} unread", { n: totalUnread }) + " · " : ""}
-              {all ? t("All mailboxes") : mailbox}
-            </span>
-            <span className="ml-auto flex items-center gap-2 self-center">
-              {loading ? <Loader2 className="text-muted-foreground size-3.5 animate-spin" /> : null}
-              {unreadSwitch}
-            </span>
+        {rail ? null : (
+          // Phones: folders and mailboxes live in the menu (FolderRail in a sheet), like Gmail's app.
+          <div className="flex items-center gap-1.5">
+            <Button variant="ghost" size="icon" className="-ml-1.5 shrink-0" onClick={onMenu} aria-label={t("Folders")} title={t("Folders")}>
+              <Menu />
+            </Button>
+            {searchField}
+            {account}
           </div>
-        ) : null}
-        <div className={cn("flex items-center gap-2", rail && "hidden")}>
-          {mailboxes.length > 1 ? (
-            <Select value={mailbox} onValueChange={onMailbox}>
-              <SelectTrigger size="sm" className="min-w-0 flex-1 font-medium" aria-label={t("Mailbox")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_MAILBOXES}>{t("All mailboxes")}</SelectItem>
-                {mailboxes.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    <span className="flex w-full items-center justify-between gap-3">
-                      {m}
-                      {unread[m] ? <span className="text-muted-foreground text-xs">{unread[m]}</span> : null}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <span className="min-w-0 flex-1 truncate text-sm font-medium">{mailboxes[0]}</span>
-          )}
-          {unreadSwitch}
-          <Button variant="ghost" size="icon-sm" onClick={onSettings} aria-label={t("Settings")} title={t("Settings")}>
-            <Settings2 />
-          </Button>
-          <Button size="sm" className="rounded-full" onClick={onCompose} title={t("New e-mail (c)")}>
-            <PenSquare /> {t("Compose")}
-          </Button>
-          {account}
+        )}
+        <div className="flex h-8 items-baseline gap-2 px-1">
+          <h2 className="text-lg font-semibold tracking-tight">{query ? t("Search") : folderLabel}</h2>
+          <span className="text-muted-foreground min-w-0 truncate text-[13px]">
+            {folder === "inbox" && !query && totalUnread ? t("{n} unread", { n: totalUnread }) + " · " : ""}
+            {all ? t("All mailboxes") : mailbox}
+          </span>
+          <span className="ml-auto flex items-center gap-2 self-center">
+            {loading ? <Loader2 className="text-muted-foreground size-3.5 animate-spin" /> : null}
+            {unreadSwitch}
+          </span>
         </div>
-        <InputGroup className={cn("h-8", rail && "bg-foreground/[0.04] border-transparent shadow-none dark:bg-foreground/[0.06]")}>
-          <InputGroupAddon>
-            <Search />
-          </InputGroupAddon>
-          <InputGroupInput
-            ref={searchRef}
-            type="search"
-            value={query}
-            onChange={(e) => onQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.stopPropagation()
-                if (query) onQuery("")
-                else e.currentTarget.blur()
-              }
-            }}
-            placeholder={t("Search mail")}
-            aria-label={t("Search mail")}
-            className="text-sm [&::-webkit-search-cancel-button]:hidden"
-          />
-          {query ? (
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton size="icon-xs" onClick={() => onQuery("")} aria-label={t("Clear search")}>
-                <X />
-              </InputGroupButton>
-            </InputGroupAddon>
-          ) : (
-            <InputGroupAddon align="inline-end">
-              <Kbd>/</Kbd>
-            </InputGroupAddon>
-          )}
-        </InputGroup>
+        {rail ? searchField : null}
         {selecting ? (
           <div className="@container flex h-8 items-center gap-1">
             <Checkbox checked={allChecked ? true : "indeterminate"} onCheckedChange={() => onSelection(allChecked ? new Set() : new Set(threads.map((th) => th.id)))} aria-label={t("Select all")} className="mx-1" />
@@ -284,27 +263,9 @@ export function ThreadList({
             {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Search className="size-3.5" />}
             {loading ? t("Searching…") : folder === "drafts" || folder === "outbox" ? tp(threads.length, { one: "{n}{plus} result", other: "{n}{plus} results" }, { plus: hasMore ? "+" : "" }) : tp(threads.length, { one: "{n}{plus} result in every folder but the trash", other: "{n}{plus} results in every folder but the trash" }, { plus: hasMore ? "+" : "" })}
           </p>
-        ) : rail ? null : (
-          <SegmentedControl
-            fullWidth
-            aria-label={t("Folders")}
-            value={folder}
-            onValueChange={onFolder}
-            options={FOLDERS.map((f) => ({
-              value: f.id,
-              // A narrow list shows the other folders as icons; the open one has its name from 420px.
-              label: (
-                <span className="flex items-center gap-1.5" title={f.label}>
-                  <f.icon className="size-3.5 shrink-0" />
-                  <span className={cn(folder !== f.id ? "sr-only @min-[680px]:not-sr-only" : "sr-only @min-[420px]:not-sr-only")}>{f.label}</span>
-                </span>
-              ),
-              count: f.id === "inbox" ? totalUnread : counts[f.id] || undefined,
-            }))}
-          />
-        )}
+        ) : null}
       </div>
-      <ul className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto py-1">
+      <ul className={cn("min-h-0 flex-1 overflow-x-hidden overflow-y-auto py-1", !rail && "pb-24")}>
         {threads.map((th) => {
           const checked = selection.has(th.id)
           const draft = drafts.has(th.id)
@@ -376,6 +337,11 @@ export function ThreadList({
           </li>
         ) : null}
       </ul>
+      {rail ? null : (
+        <Button size="icon" className="absolute right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] size-14 rounded-2xl shadow-lg" onClick={onCompose} aria-label={t("Compose")} title={t("New e-mail (c)")}>
+          <PenSquare className="size-5" />
+        </Button>
+      )}
     </aside>
   )
 }
