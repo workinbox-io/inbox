@@ -99,7 +99,8 @@ export function ListRow({
   meta?: React.ReactNode
   time?: React.ReactNode
   snippet?: React.ReactNode
-  onClick: () => void
+  /** Gets the click, so lists with multi-select can read ⌘/Ctrl/Shift. */
+  onClick: (e: React.MouseEvent) => void
   /** Right-click menu and the "…" shown on hover instead of the time. */
   actions?: MenuAction[] | (() => MenuAction[])
   menuLabel?: string

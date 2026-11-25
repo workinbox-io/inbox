@@ -22,6 +22,7 @@ import {
   Upload,
   UserPlus,
   Users,
+  X,
 } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { EmptyState } from "@/components/app/empty-state"
@@ -43,9 +44,10 @@ import { DetailHeader, IconAction } from "@/components/workspace/detail-header"
 import { ListBody, ListEmpty, ListHeader, ListPane, ListRow, ListSearch } from "@/components/workspace/list-pane"
 import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
 import { SplitView } from "@/components/workspace/split-view"
-import { foldAway, Kbd, shortcutsPaused, tint, useAppLayout, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
+import { foldAway, isTyping, Kbd, shortcutsPaused, tint, useAppLayout, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
-import { IMPORT_MAX_BYTES, parseContactsFile } from "@/lib/contacts/import"
+import { IMPORT_MAX_BYTES, parseContactsFile, toCsv, toVcards } from "@/lib/contacts/import"
+import { clickSelect, type Selection } from "@/lib/drive/explorer"
 import { appLocale, msg, t, tp } from "@/lib/i18n/panel"
 import { navigatePanel, PANEL_NAVIGATION, pushUrl } from "@/lib/panel-history"
 import type { Contact, DirectoryEntry } from "@/lib/server/contacts"
@@ -92,6 +94,10 @@ export function ContactsApp(props: ContactsAppProps) {
   const [selectedId, setSelectedId] = React.useState<string | null>(props.selectedId)
   const [loading, setLoading] = React.useState(false)
   const [groupDialog, setGroupDialog] = React.useState<boolean | ContactGroup>(false)
+  const [sel, setSel] = React.useState<Selection>({ ids: new Set(), anchor: null })
+  // Only contacts in the list now count, so a new view or search drops the rest.
+  const picked = contacts.filter((c) => sel.ids.has(c.id))
+  const clearSel = () => setSel({ ids: new Set(), anchor: null })
   const searchRef = React.useRef<HTMLInputElement>(null)
   const fileRef = React.useRef<HTMLInputElement>(null)
   const mounted = useMounted()
@@ -158,8 +164,14 @@ export function ContactsApp(props: ContactsAppProps) {
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "a" && !e.altKey && !isTyping(e.target) && !document.querySelector("[role=dialog][data-state=open], [role=alertdialog], [role=menu]")) {
+        e.preventDefault()
+        return setSel({ ids: new Set(contacts.map((c) => c.id)), anchor: null })
+      }
       if (shortcutsPaused(e)) return
-      if (e.key === "c") {
+      if (e.key === "x" && selectedId && contacts.some((c) => c.id === selectedId)) setSel((s) => clickSelect(s, [], selectedId, { meta: true }))
+      else if (e.key === "Escape" && sel.ids.size) clearSel()
+      else if (e.key === "c") {
         e.preventDefault()
         open("new")
       } else if (e.key === "/") {
@@ -169,7 +181,7 @@ export function ContactsApp(props: ContactsAppProps) {
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [open, selectedId])
+  }, [open, selectedId, contacts, sel])
 
   function pickView(v: View) {
     setView(v)
@@ -275,6 +287,73 @@ export function ContactsApp(props: ContactsAppProps) {
         onSelect: () => remove(c),
       },
     ])
+
+  /** One request per contact under one toast; `done` gets the ones that worked. */
+  // shortcut: one request per contact, add a batch route if people select hundreds
+  async function eachContact(list: Contact[], run: (c: Contact) => Promise<unknown>, done: (ok: Contact[]) => void) {
+    const id = toast.loading(t("Updating {n} contacts…", { n: list.length }))
+    const ok: Contact[] = []
+    for (const c of list) {
+      try {
+        await run(c)
+        ok.push(c)
+      } catch {}
+    }
+    done(ok)
+    void refreshGroups()
+    if (ok.length < list.length) toast.error(t("{n} of {total} could not be changed", { n: list.length - ok.length, total: list.length }), { id })
+    else toast.success(t("Contacts updated: {n}", { n: ok.length }), { id })
+  }
+  const setGroup = (list: Contact[], g: ContactGroup, on: boolean) =>
+    eachContact(
+      list.filter((c) => c.groupIds.includes(g.id) !== on),
+      async (c) => {
+        const saved = await api<Contact>("PATCH", `/api/app/contacts/${c.id}`, { groupIds: on ? [...c.groupIds, g.id] : c.groupIds.filter((x) => x !== g.id) })
+        setContacts((all) => all.map((x) => (x.id === saved.id ? saved : x)))
+      },
+      () => {},
+    )
+  const removeAll = (list: Contact[]) =>
+    eachContact(list, (c) => api("DELETE", `/api/app/contacts/${c.id}`), (ok) => {
+      const gone = ok.map((c) => c.id)
+      foldAway(gone, () => setContacts((all) => all.filter((x) => !gone.includes(x.id))))
+      if (selectedId && gone.includes(selectedId)) open(null)
+      clearSel()
+    })
+  function exportFile(list: Contact[], csv: boolean) {
+    const names = new Map(groups.map((g) => [g.id, g.name]))
+    const rows = list.map((c) => ({ name: c.name, company: c.company, title: c.title, note: c.note, emails: c.emails, phones: c.phones, groups: c.groupIds.map((id) => names.get(id) ?? "") }))
+    const a = document.createElement("a")
+    a.href = URL.createObjectURL(new Blob([csv ? toCsv(rows) : toVcards(rows)], { type: csv ? "text/csv" : "text/vcard" }))
+    a.download = `contacts.${csv ? "csv" : "vcf"}`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
+  /** The selection's menu: the bar's "…" and a selected row's right-click. */
+  const bulkActions = (list: Contact[]): MenuAction[] => {
+    const to = list.flatMap((c) => c.emails.slice(0, 1).map((e) => e.value))
+    return cleanActions([
+      to.length > 0 && { label: t("Write e-mail"), icon: Mail, onSelect: () => void navigatePanel(compose(to.join(","))) },
+      groups.length > 0 && {
+        label: t("Groups"),
+        icon: Tag,
+        items: groups.map((g) => {
+          const all = list.every((c) => c.groupIds.includes(g.id))
+          return { label: all ? `✓ ${g.name}` : g.name, onSelect: () => void setGroup(list, g, !all) }
+        }),
+      },
+      { label: t("Export as vCard"), icon: Download, onSelect: () => exportFile(list, false) },
+      { label: t("Export as CSV"), icon: Download, onSelect: () => exportFile(list, true) },
+      { separator: true },
+      {
+        label: t("Delete {n} contacts", { n: list.length }),
+        icon: Trash2,
+        destructive: true,
+        confirm: { title: t("Delete {n} contacts?", { n: list.length }), description: t("They're removed from the address book for everyone in the organization."), confirmLabel: t("Delete") },
+        onSelect: () => void removeAll(list),
+      },
+    ])
+  }
 
   const groupActions = (g: ContactGroup): MenuAction[] => [
     { label: t("Open"), icon: Users, onSelect: () => (setGroupId(g.id), setView("all")) },
@@ -386,6 +465,22 @@ export function ContactsApp(props: ContactsAppProps) {
         }
       >
         <ListSearch ref={searchRef} value={query} onChange={setQuery} placeholder={t("Search contacts")} />
+        {picked.length ? (
+          <div className="flex h-8 items-center gap-1">
+            <span className="mr-auto pl-1 text-sm font-medium tabular-nums">{t("{n} selected", { n: picked.length })}</span>
+            {picked.some((c) => c.emails.length) ? (
+              <Button variant="ghost" size="icon-sm" asChild>
+                <a href={compose(picked.flatMap((c) => c.emails.slice(0, 1).map((e) => e.value)).join(","))} aria-label={t("Write e-mail")} title={t("Write e-mail")}>
+                  <Mail />
+                </a>
+              </Button>
+            ) : null}
+            <ActionMenuButton actions={() => bulkActions(picked)} label={t("Contact actions")} />
+            <Button variant="ghost" size="icon-sm" onClick={clearSel} aria-label={t("Clear selection")} title={t("Clear selection")}>
+              <X />
+            </Button>
+          </div>
+        ) : null}
       </ListHeader>
       <ListBody dimmed={loading}>
         {group && contacts.some((c) => c.emails.length) ? (
@@ -407,7 +502,7 @@ export function ContactsApp(props: ContactsAppProps) {
           <ListRow
             rowId={c.id}
             color={color(c)}
-            selected={selectedId === c.id}
+            selected={selectedId === c.id || sel.ids.has(c.id)}
             title={
               <span className="flex items-center gap-2">
                 <UserAvatar seed={c.emails[0]?.value ?? c.id} size={18} />
@@ -416,8 +511,17 @@ export function ContactsApp(props: ContactsAppProps) {
             }
             time={c.company || (view === "recent" && mounted && c.lastContactedAt ? shortDate(c.lastContactedAt) : undefined)}
             snippet={c.emails[0]?.value ?? c.phones[0]?.value ?? ""}
-            onClick={() => open(c.id)}
-            actions={() => contactActions(c, "list")}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey) {
+                e.preventDefault()
+                // The open contact counts as picked, so ⌘-click adds to it and Shift-click ranges from it.
+                const base = sel.ids.size ? sel : selectedId && contacts.some((x) => x.id === selectedId) ? { ids: new Set([selectedId]), anchor: selectedId } : sel
+                return setSel(clickSelect(base, contacts.map((x) => x.id), c.id, { shift: e.shiftKey, meta: e.metaKey || e.ctrlKey }))
+              }
+              clearSel()
+              open(c.id)
+            }}
+            actions={() => (picked.length > 1 && sel.ids.has(c.id) ? bulkActions(picked) : contactActions(c, "list"))}
             menuLabel={t("Contact actions")}
           />
           </React.Fragment>
@@ -437,10 +541,19 @@ export function ContactsApp(props: ContactsAppProps) {
             time={d.kind === "shared" ? t("Shared mailbox") : undefined}
             snippet={d.email}
             onClick={() => open(`dir:${d.id}`)}
-            actions={[
+            actions={cleanActions([
               { label: t("Write e-mail"), icon: Mail, onSelect: () => void (navigatePanel(compose(d.email))) },
               { label: t("Copy e-mail"), icon: Copy, onSelect: () => copy(d.email) },
-            ]}
+              // Only the loaded page is checked; the server refuses an address another contact already has.
+              !contacts.some((c) => c.emails.some((x) => x.value.toLowerCase() === d.email.toLowerCase())) && {
+                label: t("Save contact"),
+                icon: UserPlus,
+                onSelect: () =>
+                  void api<Contact>("POST", "/api/app/contacts", { name: d.name || d.email.split("@")[0], emails: [{ value: d.email }] })
+                    .then((c) => (onSaved(c, true), toast.success(t("Contact added"))))
+                    .catch((e: Error) => toast.error(e.message)),
+              },
+            ])}
           />
         ))}
         {contacts.length === 0 && directory.length === 0 && !loading ? (

@@ -369,6 +369,7 @@ export function CollectionsApp(props: CollectionsAppProps) {
       toast.error((e as Error).message)
     }
   }
+  const [purgeAsk, setPurgeAsk] = React.useState<CollectionRecord[] | null>(null)
   async function accept(targets: CollectionRecord[]) {
     try {
       const res = await api<{ records: CollectionRecord[] }>("POST", `${path}/batch`, { ids: targets.map((r) => r.id), accept: true })
@@ -606,7 +607,7 @@ export function CollectionsApp(props: CollectionsAppProps) {
       if (field) return void (e.preventDefault(), openPicker(field, shortcutTargets()))
       if (e.key === "Backspace" || e.key === "Delete") {
         const targets = shortcutTargets()
-        if (targets.length && scope !== "trash") (e.preventDefault(), void trash(targets))
+        if (targets.length) (e.preventDefault(), scope === "trash" ? setPurgeAsk(targets) : void trash(targets))
       }
     }
     window.addEventListener("keydown", onKey)
@@ -941,6 +942,7 @@ export function CollectionsApp(props: CollectionsAppProps) {
     />
   ) : null
 
+  const selected = shown.filter((r) => selection.has(r.id))
   return (
     <CollectionsMeta.Provider value={meta}>
     <AppFrame ref={frameRef}>
@@ -950,15 +952,26 @@ export function CollectionsApp(props: CollectionsAppProps) {
         <div className="relative flex min-h-0 flex-1 flex-col overflow-auto">
           {body}
           <AnimatePresence>
-            {selection.size && scope !== "trash" ? (
+            {selected.length ? (
               <SelectionBar
                 count={selection.size}
-                fields={[...groupable, ...(current?.fields.filter((f) => f.type === "multiselect") ?? [])]}
+                fields={scope === "trash" ? [] : [...groupable, ...(current?.fields.filter((f) => f.type === "multiselect") ?? [])]}
                 canEdit={canEdit}
-                onField={(f, anchor) => openPicker(f, shown.filter((r) => selection.has(r.id)), anchor)}
-                onDelete={() => void trash(shown.filter((r) => selection.has(r.id)))}
+                onField={(f, anchor) => openPicker(f, selected, anchor)}
+                onDelete={scope === "trash" ? undefined : () => void trash(selected)}
                 onClear={() => setSelection(new Set())}
-              />
+              >
+                {scope === "trash" && canEdit ? (
+                  <>
+                    <Button variant="ghost" size="sm" className="h-7 shrink-0" onClick={() => void restoreRecords(selected).then(() => setSelection(new Set()), (e: Error) => toast.error(e.message))}><Upload />{t("Restore")}</Button>
+                    <Button variant="ghost" size="sm" className="text-destructive h-7 shrink-0" onClick={() => setPurgeAsk(selected)}><Trash2 />{t("Delete for good")}</Button>
+                  </>
+                ) : scope === "triage" && canEdit ? (
+                  <Button variant="ghost" size="sm" className="h-7 shrink-0" onClick={() => void accept(selected).then(() => setSelection(new Set()))}><Inbox />{t("Accept")}</Button>
+                ) : null}
+                {/* The row menu on the selection: cycle, copy links and the rest. */}
+                {scope !== "trash" ? <ActionMenuButton actions={() => actionsFor(selected[0]!)} size="icon-sm" align="start" /> : null}
+              </SelectionBar>
             ) : null}
           </AnimatePresence>
         </div>
@@ -966,6 +979,14 @@ export function CollectionsApp(props: CollectionsAppProps) {
         {desktop && full && panel ? <div className="bg-background absolute inset-0 z-30">{panel}</div> : null}
       </div>
       {desktop ? <SidePanel open={!!panel && !full} width={440}>{full ? null : panel}</SidePanel> : panel ? <div className="bg-background fixed inset-0 z-40">{panel}</div> : null}
+      <ConfirmDialog
+        open={!!purgeAsk}
+        onOpenChange={(o) => !o && setPurgeAsk(null)}
+        title={t("Delete for good?")}
+        description={t("Its comments, links and history go with it. This can't be undone.")}
+        confirmLabel={t("Delete")}
+        onConfirm={() => { if (purgeAsk) void purge(purgeAsk).then(() => (setPurgeAsk(null), setSelection(new Set()))) }}
+      />
       <FieldPicker request={picker} people={people} onClose={() => setPicker(null)} />
       {current && peek ? <Peek collection={current} record={peek} people={people} idOf={idOf} onClose={() => setPeek(null)} onOpen={(r) => (setPeek(null), setOpen(r))} /> : null}
       {current && parentFor ? (

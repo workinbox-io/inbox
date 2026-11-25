@@ -195,4 +195,9 @@ export default {
   "You can't change this item": "Nie możesz zmienić tego elementu",
   "Your access: {role}": "Twój dostęp: {role}",
   "ZIP downloads can be up to 4 GB; pick fewer files": "Pobrany ZIP może mieć do 4 GB; wybierz mniej plików",
+  "Copying {count} items…": "Kopiowanie elementów: {count}…",
+  "{ok} of {count} items copied": "Skopiowano {ok} z {count} elementów",
+  "Copied {count} items": "Skopiowano elementy: {count}",
+  "Links copied: {count}": "Skopiowano linki: {count}",
+  "Make {count} copies": "Utwórz kopie: {count}",
 } satisfies Record<string, string>;

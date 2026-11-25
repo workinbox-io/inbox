@@ -2,6 +2,12 @@
 export default {
   "No name": "Bez nazwy",
   "Contact deleted": "Usunięto kontakt",
+  "Updating {n} contacts…": "Aktualizowanie kontaktów: {n}…",
+  "{n} of {total} could not be changed": "Nie udało się zmienić {n} z {total}",
+  "Contacts updated: {n}": "Zaktualizowano kontakty: {n}",
+  "Delete {n} contacts": "Usuń kontakty: {n}",
+  "Delete {n} contacts?": "Usunąć kontakty: {n}?",
+  "They're removed from the address book for everyone in the organization.": "Znikną z książki adresowej dla wszystkich w organizacji.",
   "Copied": "Skopiowano",
   "The file is too big (2 MB at most).": "Plik jest za duży (maksymalnie 2 MB).",
   "No contacts found in that file. Use a CSV or vCard (.vcf) export.": "Nie znaleziono kontaktów w tym pliku. Użyj eksportu CSV lub vCard (.vcf).",

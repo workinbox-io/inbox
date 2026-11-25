@@ -3,7 +3,7 @@
  * With a selection it turns into the bulk bar, as in Mail: what applies to every selected item.
  */
 import * as React from "react"
-import { ArrowDownUp, ArchiveRestore, ChevronRight, Copy, Download, FolderInput, LayoutGrid, List, PanelRight, Share2, Star, StarOff, Trash2, X } from "lucide-react"
+import { ArrowDownUp, ArchiveRestore, ChevronRight, Copy, Download, FolderInput, LayoutGrid, Link2, List, PanelRight, Share2, Star, StarOff, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfirmButton } from "@/components/app/confirm-button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -81,6 +81,7 @@ export function Toolbar({
     download: () => void
     move: () => void
     copy: () => void
+    links: () => void
     star: (on: boolean) => void
     share: () => void
     trash: () => void
@@ -129,11 +130,12 @@ export function Toolbar({
                 <Button variant="ghost" size="icon-sm" onClick={() => bulk.star(!allStarred)} aria-label={allStarred ? t("Remove star") : t("Star")} title={allStarred ? t("Remove star") : t("Star")}>
                   {allStarred ? <StarOff /> : <Star />}
                 </Button>
-                {selected.length === 1 ? (
-                  <Button variant="ghost" size="icon-sm" onClick={bulk.copy} aria-label={t("Make a copy")} title={t("Make a copy")}>
-                    <Copy />
-                  </Button>
-                ) : null}
+                <Button variant="ghost" size="icon-sm" onClick={bulk.links} aria-label={t("Copy links")} title={t("Copy links")}>
+                  <Link2 />
+                </Button>
+                <Button variant="ghost" size="icon-sm" onClick={bulk.copy} aria-label={t("Make a copy")} title={t("Make a copy")}>
+                  <Copy />
+                </Button>
                 {manageAll ? (
                   <Button variant="ghost" size="icon-sm" onClick={bulk.move} aria-label={t("Move to…")} title={t("Move to…")}>
                     <FolderInput />

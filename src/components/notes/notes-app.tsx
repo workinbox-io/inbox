@@ -28,6 +28,7 @@ import {
   Trash2,
   User,
   Users,
+  X,
 } from "lucide-react"
 import { toast } from "@yusufceng1z/ding-react"
 import { ActionMenuButton, cleanActions, type MenuAction } from "@/components/workspace/action-menu"
@@ -43,8 +44,9 @@ import { DetailHeader, IconAction } from "@/components/workspace/detail-header"
 import { ListBody, ListEmpty, ListHeader, ListPane, ListRow, ListSearch } from "@/components/workspace/list-pane"
 import { Rail, RailAction, RailItem, RailList, RailSection, RailSectionButton } from "@/components/workspace/rail"
 import { SplitView } from "@/components/workspace/split-view"
-import { foldAway, Kbd, shortcutsPaused, useAppLayout, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
+import { foldAway, isTyping, Kbd, shortcutsPaused, useAppLayout, useMounted, WORKSPACE_COLORS } from "@/components/workspace/ui"
 import { api } from "@/lib/api-client"
+import { clickSelect, type Selection } from "@/lib/drive/explorer"
 import { msg, t } from "@/lib/i18n/panel"
 import { PANEL_NAVIGATION, pushUrl, replaceUrl } from "@/lib/panel-history"
 import type { Presence } from "./editor/note-editor"
@@ -89,6 +91,7 @@ export function NotesApp(props: NotesAppProps) {
   const [folderId, setFolderId] = React.useState<string | null>(null)
   const [query, setQuery] = React.useState("")
   const [selectedId, setSelectedId] = React.useState(props.selectedId)
+  const [sel, setSel] = React.useState<Selection>({ ids: new Set(), anchor: null })
   const [loading, setLoading] = React.useState(false)
   /** Open for a new folder (true) or to rename one. */
   const [folderDialog, setFolderDialog] = React.useState<boolean | NoteFolder>(false)
@@ -193,11 +196,24 @@ export function NotesApp(props: NotesAppProps) {
     return () => window.removeEventListener(PANEL_NAVIGATION, read)
   }, [])
 
-  // Shortcuts, as in Mail: c new note, / search, Esc closes the note.
+  // The selection only keeps notes still in the list (view, folder or search changed).
+  const picked = notes.filter((n) => sel.ids.has(n.id))
+  const clearSel = React.useCallback(() => setSel({ ids: new Set(), anchor: null }), [])
+
+  // Shortcuts, as in Mail: c new note, / search, x select, ⌘A select all, Esc clears the selection, then closes the note.
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // ⌘A selects the list unless the editor, a field or a dialog has the keys.
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "a" && !e.defaultPrevented && !isTyping(e.target) && !document.querySelector("[role=dialog][data-state=open], [role=alertdialog], [role=menu]")) {
+        e.preventDefault()
+        setSel({ ids: new Set(notes.map((n) => n.id)), anchor: notes[0]?.id ?? null })
+        return
+      }
       if (shortcutsPaused(e)) return
-      if (e.key === "c") {
+      if (e.key === "x" && selectedId) {
+        setSel((cur) => clickSelect(cur, notes.map((n) => n.id), selectedId, { meta: true }))
+      } else if (e.key === "Escape" && picked.length) clearSel()
+      else if (e.key === "c") {
         e.preventDefault()
         void createNote()
       } else if (e.key === "/") {
@@ -207,7 +223,7 @@ export function NotesApp(props: NotesAppProps) {
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [createNote, open, selectedId])
+  }, [createNote, open, selectedId, notes, picked.length, clearSel])
 
   function pickView(v: NoteView) {
     setView(v)
@@ -283,11 +299,68 @@ export function NotesApp(props: NotesAppProps) {
     }
   }
 
+  // shortcut: one request per note, add a batch route if people select hundreds
+  async function bulk(list: NoteSummary[], run: (n: NoteSummary) => Promise<void>, done: string) {
+    const id = toast.loading(t("Updating {n} notes…", { n: list.length }))
+    const failed: string[] = []
+    for (const n of list) {
+      try { await run(n) } catch (e) { failed.push(`${n.title || t("Untitled")}: ${(e as Error).message}`) }
+    }
+    setDetailVersion((v) => v + 1)
+    if (failed.length) toast.error(t("{n} of {m} notes not changed", { n: failed.length, m: list.length }), { id, description: failed.join("\n"), duration: 0 })
+    else toast.success(done, { id })
+    clearSel()
+  }
+  const patchMany = (list: NoteSummary[], body: Record<string, unknown>, done: string) =>
+    bulk(list, async (n) => onChanged(await api<NoteDetail>("PATCH", `/api/app/notes/${n.id}`, body), n.id), done)
+  const deleteMany = (list: NoteSummary[]) =>
+    bulk(list, async (n) => {
+      await api("DELETE", `/api/app/notes/${n.id}`)
+      onChanged(null, n.id)
+      if (selectedId === n.id) open(null)
+    }, t("Notes deleted: {n}", { n: list.length }))
+
+  const canEdit = (n: NoteSummary) => n.role !== "view" && !n.archived
+  // Owners of the note, and owners/admins for team notes (the server checks again).
+  const canManage = (n: NoteSummary) => n.role === "owner" || (n.sharing === "team" && props.canManage)
+
+  /** Actions on several notes: offered only when the viewer may do them on every one. */
+  const bulkActions = (list: NoteSummary[]): MenuAction[] => {
+    const n = list.length
+    const editable = list.every(canEdit)
+    const manage = list.every(canManage)
+    const archived = list.every((x) => x.archived)
+    const active = list.every((x) => !x.archived)
+    const pinned = list.every((x) => x.pinned)
+    return cleanActions([
+      editable && { label: pinned ? t("Unpin {n} notes", { n }) : t("Pin {n} notes", { n }), icon: pinned ? PinOff : Pin, onSelect: () => patchMany(list, { pinned: !pinned }, pinned ? t("Unpinned: {n}", { n }) : t("Pinned: {n}", { n })) },
+      editable && {
+        label: t("Move to folder"),
+        icon: Folder,
+        items: [
+          { label: t("No folder"), onSelect: () => patchMany(list, { folderId: null }, t("Moved: {n}", { n })) },
+          ...folders.map((f) => ({ label: f.name, icon: Folder, onSelect: () => patchMany(list, { folderId: f.id }, t("Moved: {n}", { n })) })),
+        ],
+      },
+      { separator: true },
+      manage && active && { label: t("Archive {n} notes", { n }), icon: Archive, onSelect: () => patchMany(list, { archived: true }, t("Notes archived: {n}", { n })) },
+      manage && archived && { label: t("Restore {n} notes", { n }), icon: ArchiveRestore, onSelect: () => patchMany(list, { archived: false }, t("Notes restored: {n}", { n })) },
+      manage &&
+        archived && {
+          label: t("Delete {n} notes for good", { n }),
+          icon: Trash2,
+          destructive: true,
+          confirm: { title: t("Delete {n} notes for good?", { n }), description: t("They can't be restored afterwards."), confirmLabel: t("Delete") },
+          onSelect: () => deleteMany(list),
+        },
+    ])
+  }
+
   /** A note's actions: the row's right-click menu and "…", and the "…" in the open note's header. */
   const noteActions = (n: NoteSummary, where: "list" | "detail"): MenuAction[] => {
-    const editable = n.role !== "view" && !n.archived
-    // Owners of the note, and owners/admins for team notes (the server checks again).
-    const manage = n.role === "owner" || (n.sharing === "team" && props.canManage)
+    if (where === "list" && picked.length > 1 && sel.ids.has(n.id)) return bulkActions(picked)
+    const editable = canEdit(n)
+    const manage = canManage(n)
     return cleanActions([
       where === "list" && { label: t("Open"), icon: FileText, onSelect: () => open(n.id) },
       { label: t("Open in new tab"), icon: ExternalLink, onSelect: () => void window.open(`/app/notes/${n.id}`, "_blank") },
@@ -440,7 +513,17 @@ export function NotesApp(props: NotesAppProps) {
           )
         }
       >
-        <ListSearch ref={searchRef} value={query} onChange={setQuery} placeholder={t("Search notes")} />
+        {picked.length ? (
+          <div className="flex h-8 items-center gap-1 px-1">
+            <span className="mr-auto min-w-0 truncate text-sm font-medium tabular-nums">{t("{n} selected", { n: picked.length })}</span>
+            <ActionMenuButton actions={() => bulkActions(picked)} label={t("Note actions")} size="icon-sm" />
+            <Button variant="ghost" size="icon-sm" onClick={clearSel} aria-label={t("Clear selection")} title={t("Clear selection")}>
+              <X />
+            </Button>
+          </div>
+        ) : (
+          <ListSearch ref={searchRef} value={query} onChange={setQuery} placeholder={t("Search notes")} />
+        )}
       </ListHeader>
       <ListBody dimmed={loading}>
         {notes.map((n) => {
@@ -450,7 +533,7 @@ export function NotesApp(props: NotesAppProps) {
               key={n.id}
               rowId={n.id}
               color={share.color}
-              selected={selectedId === n.id}
+              selected={picked.length ? sel.ids.has(n.id) : selectedId === n.id}
               title={n.title || t("Untitled")}
               meta={
                 <>
@@ -460,7 +543,16 @@ export function NotesApp(props: NotesAppProps) {
               }
               time={mounted ? shortDate(n.updatedAt) : null}
               snippet={previewWithoutTitle(n) || t("Empty note")}
-              onClick={() => open(n.id)}
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey) {
+                  // The open note joins the selection, as in Finder and Drive.
+                  const base = !sel.ids.size && selectedId ? { ids: new Set([selectedId]), anchor: selectedId } : sel
+                  setSel(clickSelect(base, notes.map((x) => x.id), n.id, { shift: e.shiftKey, meta: e.metaKey || e.ctrlKey }))
+                } else {
+                  setSel({ ids: new Set(), anchor: n.id })
+                  open(n.id)
+                }
+              }}
               actions={() => noteActions(n, "list")}
               menuLabel={t("Note actions")}
             />

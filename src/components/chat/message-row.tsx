@@ -5,6 +5,7 @@
  */
 import * as React from "react"
 import { Bookmark, Copy, MessageSquareText, Pencil, Pin, PinOff, SmilePlus, Trash2 } from "lucide-react"
+import { toast } from "@yusufceng1z/ding-react"
 import { UserAvatar } from "@/components/app/user-avatar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
@@ -183,7 +184,9 @@ export function MessageRow({
   const actions = (): MenuAction[] =>
     cleanActions([
       { label: m.pinned ? t("Unpin from channel") : t("Pin to channel"), icon: m.pinned ? PinOff : Pin, onSelect: () => handlers.onPin(m) },
+      { label: m.saved ? t("Remove from saved") : t("Save for later"), icon: Bookmark, onSelect: () => handlers.onSave(m) },
       { label: t("Copy link"), icon: Copy, onSelect: () => handlers.onCopyLink(m) },
+      { label: t("Copy text"), icon: Copy, onSelect: () => void navigator.clipboard.writeText(editText).then(() => toast.success(t("Text copied"))) },
       mine && { separator: true },
       mine && { label: t("Edit message"), icon: Pencil, onSelect: () => setEditing(true) },
       (mine || canModerate) && {

@@ -5,6 +5,8 @@ export default {
   "Removed from saved": "Usunięto z zapisanych",
   "Saved for later": "Zapisano na później",
   "Link copied": "Skopiowano link",
+  "Copy text": "Kopiuj tekst",
+  "Text copied": "Skopiowano tekst",
   "Mark as read": "Oznacz jako przeczytane",
   "Unmute": "Włącz powiadomienia",
   "Mute": "Wycisz",

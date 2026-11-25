@@ -87,6 +87,7 @@ export function DriveApp(props: DriveAppProps) {
   /** New folder (true) or the item being renamed. */
   const [naming, setNaming] = React.useState<boolean | DriveSummary>(false)
   const [moving, setMoving] = React.useState<string[] | null>(null)
+  const [purging, setPurging] = React.useState<string[] | null>(null)
   const [sharing, setSharing] = React.useState<DriveDetail | null>(null)
   const [quickLook, setQuickLook] = React.useState<string | null>(null)
   const [sheet, setSheet] = React.useState(false)
@@ -295,6 +296,21 @@ export function DriveApp(props: DriveAppProps) {
     refreshUsage()
   }
 
+  /** Copies one at a time (the server copies folders synchronously) under one toast; failures are listed, the rest go on. */
+  async function copyAll(list: DriveSummary[]) {
+    if (list.length === 1) return copyOf(list[0]!)
+    const job = task(t("Copying {count} items…", { count: list.length }), { progress: true })
+    const errors: string[] = []
+    for (const [n, item] of list.entries()) {
+      try { await api<DriveDetail>("POST", `/api/app/drive/items/${item.id}/copy`, {}) } catch (e) { errors.push(`${item.name}: ${(e as Error).message}`) }
+      job.progress((n + 1) / list.length)
+    }
+    if (errors.length) job.fail(t("{ok} of {count} items copied", { ok: list.length - errors.length, count: list.length }), errors.slice(0, 3).join(" · "))
+    else job.done(t("Copied {count} items", { count: list.length }))
+    changed(list.some((i) => i.kind === "folder"))
+    refreshUsage()
+  }
+
   async function saveName(name: string) {
     try {
       if (typeof naming === "object") {
@@ -350,10 +366,11 @@ export function DriveApp(props: DriveAppProps) {
     else setQuickLook(item.id)
   }
 
-  const copyLink = (i: DriveSummary) =>
+  /** One link per line, as Collections copies several records. */
+  const copyLinks = (list: DriveSummary[]) =>
     navigator.clipboard
-      .writeText(`${location.origin}${i.kind === "folder" ? `/app/drive/${i.id}` : `/app/drive${i.parentId ? `/${i.parentId}` : ""}?file=${i.id}`}`)
-      .then(() => toast.success(t("Link copied")), (e) => toast.error((e as Error).message))
+      .writeText(list.map((i) => `${location.origin}${i.kind === "folder" ? `/app/drive/${i.id}` : `/app/drive${i.parentId ? `/${i.parentId}` : ""}?file=${i.id}`}`).join("\n"))
+      .then(() => toast.success(list.length === 1 ? t("Link copied") : t("Links copied: {count}", { count: list.length })), (e) => toast.error((e as Error).message))
 
   const showDetails = (item: DriveSummary) => {
     setSel({ ids: new Set([item.id]), anchor: item.id })
@@ -387,6 +404,8 @@ export function DriveApp(props: DriveAppProps) {
       return cleanActions([
         { label: t("Download as ZIP"), icon: Download, onSelect: () => downloadItems(list) },
         { label: starred ? t("Remove star") : t("Star"), icon: starred ? StarOff : Star, onSelect: () => batch(ids, starred ? "unstar" : "star") },
+        { label: t("Copy links"), icon: Link2, onSelect: () => copyLinks(list) },
+        { label: t("Make {count} copies", { count: list.length }), icon: Copy, onSelect: () => copyAll(list) },
         { separator: true },
         manage && { label: t("Move to…"), icon: FolderInput, onSelect: () => setMoving(ids) },
         manage && { label: t("Move to trash"), icon: Trash2, destructive: true, onSelect: () => batch(ids, "trash") },
@@ -398,7 +417,7 @@ export function DriveApp(props: DriveAppProps) {
       { separator: true },
       { label: item.kind === "folder" ? t("Download as ZIP") : t("Download"), icon: Download, onSelect: () => downloadItems([item]) },
       item.manage && { label: t("Share…"), icon: Share2, onSelect: () => openShare(item.id) },
-      { label: t("Copy link"), icon: Link2, onSelect: () => copyLink(item) },
+      { label: t("Copy link"), icon: Link2, onSelect: () => copyLinks([item]) },
       { separator: true },
       item.role !== "view" && { label: t("Rename…"), icon: Pencil, onSelect: () => setNaming(item) },
       item.manage && { label: t("Move to…"), icon: FolderInput, onSelect: () => setMoving([item.id]) },
@@ -471,7 +490,8 @@ export function DriveApp(props: DriveAppProps) {
         go(up ? { folder: up.id } : { view: folder.root })
       } else if ((e.key === "Delete" || e.key === "#" || (e.key === "Backspace" && meta)) && selected.length && selected.every((i) => i.manage)) {
         e.preventDefault()
-        void batch(selected.map((i) => i.id), trashView ? "restore" : "trash")
+        if (trashView) setPurging(selected.map((i) => i.id))
+        else void batch(selected.map((i) => i.id), "trash")
       } else if (e.key === "F2" && selected.length === 1 && selected[0]!.role !== "view") {
         e.preventDefault()
         setNaming(selected[0]!)
@@ -563,6 +583,17 @@ export function DriveApp(props: DriveAppProps) {
   return (
     <AppFrame ref={frameRef}>
       <ConfirmDialog
+        open={!!purging}
+        onOpenChange={(o) => !o && setPurging(null)}
+        title={t("Delete {count} items for good?", { count: purging?.length ?? 0 })}
+        description={t("Everything in the selected folders goes too. It can't be restored.")}
+        confirmLabel={t("Delete")}
+        onConfirm={async () => {
+          if (purging) await batch(purging, "delete")
+          setPurging(null)
+        }}
+      />
+      <ConfirmDialog
         open={emptyTrashOpen}
         onOpenChange={setEmptyTrashOpen}
         title={t("Empty trash?")}
@@ -604,7 +635,8 @@ export function DriveApp(props: DriveAppProps) {
           bulk={{
             download: () => downloadItems(selected),
             move: () => setMoving(selected.map((i) => i.id)),
-            copy: () => void (selected[0] && copyOf(selected[0])),
+            copy: () => void copyAll(selected),
+            links: () => void copyLinks(selected),
             star: (on) => void batch(selected.map((i) => i.id), on ? "star" : "unstar"),
             share: () => void (selected[0] && openShare(selected[0].id)),
             trash: () => void batch(selected.map((i) => i.id), "trash"),
