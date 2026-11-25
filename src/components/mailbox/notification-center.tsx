@@ -201,16 +201,18 @@ export function NotificationCenter({ side = "bottom" }: { side?: "bottom" | "rig
   }, [refresh])
   // The server's ping (reads, DMs, mentions, other apps) recounts the bell and the sidebar / rail badges; any other
   // message only refreshes the bell, as each tab gets it on its own socket.
-  useChatSocket((e) => (e.type === "notification" ? refreshCountsHere() : e.type === "message" ? soon() : undefined), refreshCountsHere, live)
+  const connected = useChatSocket((e) => (e.type === "notification" ? refreshCountsHere() : e.type === "message" ? soon() : undefined), refreshCountsHere, live)
   React.useEffect(() => onRefreshCounts(soon), [soon])
   React.useEffect(() => onRefreshBell(soon), [soon])
+  // Polls fast while the socket is down (chat off, connecting, offline) or the panel is open; catches up on connect and on focus.
   React.useEffect(() => {
     void refresh()
-    const every = window.setInterval(() => document.visibilityState === "visible" && void refresh(), live ? 120_000 : 30_000)
-    const onFocus = () => document.visibilityState === "visible" && void refresh()
+    const every = window.setInterval(() => document.visibilityState === "visible" && void refresh(), shown ? 15_000 : connected ? 120_000 : 30_000)
+    const onFocus = () => document.visibilityState === "visible" && soon()
     document.addEventListener("visibilitychange", onFocus)
-    return () => (window.clearInterval(every), document.removeEventListener("visibilitychange", onFocus))
-  }, [refresh, live])
+    window.addEventListener("focus", onFocus)
+    return () => (window.clearInterval(every), document.removeEventListener("visibilitychange", onFocus), window.removeEventListener("focus", onFocus))
+  }, [refresh, soon, connected, shown])
   const unread = all?.unread ?? 0
   useTitleCount(unread)
 
@@ -218,7 +220,8 @@ export function NotificationCenter({ side = "bottom" }: { side?: "bottom" | "rig
   const pool = !all ? [] : view === "inbox" ? all.groups.filter((g) => g.direct === (tab === "direct")) : view === "snoozed" ? all.snoozed : all.done
   const appsHere = APP_ORDER.filter((a) => pool.some((g) => g.app === a))
   const list = pool.filter((g) => (!unreadOnly || view !== "inbox" || g.unread) && (!appFilter || g.app === appFilter))
-  const current = list.find((g) => g.key === sel) ?? (wide ? list[0] : undefined)
+  // The first row is current until one is picked, so E/U/S/M work as soon as the panel opens.
+  const current = list.find((g) => g.key === sel) ?? list[0]
 
   /** Changes shown at once, then saved; a failure puts the list back as the server has it. */
   async function act(body: Action) {

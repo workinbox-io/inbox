@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, eq, mailDomains } from "@/db";
 import { listStorage } from "@/lib/server/mail/storage";
 import { HttpError } from "@/lib/server/api";
+import { readMailThreadNotifications } from "@/lib/server/notifications";
 import { queueRawSend } from "@/lib/server/mail/outbox";
 import { nativeDraftDelete, nativeDraftRaw, nativeDrafts, nativeDraftSave } from "@/lib/server/mail/native-drafts";
 import { mailDraftKey } from "@/lib/validation-mail";
@@ -55,7 +56,12 @@ const route: APIRoute = async ({ request, params, url }) => {
     } else if (request.method === "POST" && path.length === 2 && path[0] === "messages") {
       const input = z.object({ expected: nativeVersion, flags: nativeFlags.optional(), remove: z.boolean().optional() }).strict().parse(JSON.parse((await bytes(request, 32768)).toString()));
       if (input.remove) result = await nativeRemove(mailbox, id.parse(path[1]), input.expected);
-      else if (input.flags) result = await nativePatch(mailbox, id.parse(path[1]), input.expected, input.flags);
+      else if (input.flags) {
+        const patched = await nativePatch(mailbox, id.parse(path[1]), input.expected, input.flags);
+        // Read on a phone or mail app: that person's bell drops the thread too, as opening it in the web app does.
+        if (input.flags.seen && patched?.threadId) await readMailThreadNotifications(mailbox.orgId, userId, patched.threadId);
+        result = patched;
+      }
       else throw new HttpError(422, "Choose a mutation");
     } else if (request.method === "POST" && path.length === 2 && path[0] === "folders") {
       const input = z.object({ name: z.string().trim().min(1).max(255).regex(/^[^\x00-\x1f\x7f]+$/), remove: z.boolean().default(false) }).strict().parse(JSON.parse((await bytes(request, 32768)).toString()));
