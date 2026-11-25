@@ -289,6 +289,13 @@ export async function setSendingLimit(orgId: string, mailboxId: string | null, d
 }
 
 /** Only consume from the dedicated Cloudflare Email Service event queue, never from HTTP input. */
+/** The send's provider id isn't stored yet (the event raced the send). Callers retry; `fresh` ones aren't reported. */
+export class DeliveryNotCorrelated extends Error {
+  constructor(readonly at: number) { super("Delivery event has no correlated outbox message yet") }
+  get fresh() { return Date.now() - this.at < 30_000 }
+}
+export const quietRetry = (e: unknown) => e instanceof DeliveryNotCorrelated && e.fresh
+
 export async function handleDeliveryEvent(event: unknown) {
   if (!event || typeof event !== "object") throw new Error("Invalid email delivery event");
   const e = event as { type?: string; source?: { domain?: string }; payload?: { eventId?: string; messageId?: string; sender?: string; recipient?: string; bounce?: { type?: string } }; metadata?: { eventTimestamp?: string } };
@@ -300,7 +307,8 @@ export async function handleDeliveryEvent(event: unknown) {
     // The sending domain can also emit system mail outside the product outbox.
     const [senderMailbox] = await db.select({ id: mailboxes.id }).from(mailboxes).where(eq(mailboxes.address, e.payload.sender.toLowerCase()));
     if (!senderMailbox) return;
-    throw new Error("Delivery event has no correlated outbox message yet");
+    const at = Date.parse(e.metadata?.eventTimestamp ?? "")
+    throw new DeliveryNotCorrelated(Number.isFinite(at) ? at : Date.now())
   }
   const recipient = e.payload.recipient.toLowerCase();
   if (!uniqueRecipients(job.payload.email.to, job.payload.email.cc).includes(recipient) || e.payload.sender.toLowerCase() !== job.payload.email.fromEmail?.toLowerCase() || e.source.domain.toLowerCase() !== e.payload.sender.split("@")[1].toLowerCase()) throw new Error("Delivery event identity mismatch");

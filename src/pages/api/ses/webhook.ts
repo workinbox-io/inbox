@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { env } from "cloudflare:workers";
 import { fromSesEvent, type SesEvent } from "@/lib/mail/ses-events";
 import { reportError } from "@/lib/server/errors";
-import { handleDeliveryEvent } from "@/lib/server/mail/outbox";
+import { handleDeliveryEvent, quietRetry } from "@/lib/server/mail/outbox";
 import { enqueue } from "@/lib/server/queue";
 import { sesConfigured } from "@/lib/server/ses";
 import { isSnsCertUrl, verifySns, type SnsSigned } from "@/lib/mail/sns";
@@ -76,7 +76,7 @@ export const POST: APIRoute = async ({ request, url }) => {
       for (const event of fromSesEvent(message as SesEvent)) await handleDeliveryEvent(event);
     }
   } catch (e) {
-    await reportError("web", e, { route: "ses webhook" });
+    if (!quietRetry(e)) await reportError("web", e, { route: "ses webhook" });
     // 500 makes SNS retry (an event can arrive before its outbox row has the provider id).
     return new Response("handler error", { status: 500 });
   }

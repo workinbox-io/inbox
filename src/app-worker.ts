@@ -8,7 +8,7 @@ import { handleOrgMail, wakeDueSnoozed } from "@/lib/server/mail/store";
 import { backfillMailBodies } from "@/lib/server/mail/storage";
 import { cleanupNativeGarbage } from "@/lib/server/mail/native";
 import { backfillSentRaw } from "@/lib/server/mail/raw";
-import { recoverOutbox, handleDeliveryEvent } from "@/lib/server/mail/outbox";
+import { recoverOutbox, handleDeliveryEvent, quietRetry } from "@/lib/server/mail/outbox";
 import { sweepInboundMail } from "@/lib/server/mail/ses-inbound";
 import { noteSync } from "@/lib/server/notes/sync";
 import { chatSync } from "@/lib/server/chat/sync";
@@ -47,7 +47,7 @@ export default {
           await handleDeliveryEvent(msg.body);
           msg.ack();
         } catch (e) {
-          await reportError("queue", e, { job: "mail.delivery" });
+          if (!quietRetry(e)) await reportError("queue", e, { job: "mail.delivery" });
           msg.retry({ delaySeconds: 60 });
         }
       }
