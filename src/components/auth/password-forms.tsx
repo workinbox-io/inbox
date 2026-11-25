@@ -39,7 +39,7 @@ export function ForgotPasswordForm() {
           </a>
         </CardFooter>
       ) : (
-        <form onSubmit={onSubmit}>
+        <form method="post" onSubmit={onSubmit}>
           <CardContent className="grid gap-2">
             <Label htmlFor="email">{t("Email")}</Label>
             <Input id="email" name="email" type="email" autoComplete="email" required />
@@ -114,7 +114,7 @@ export function ResetPasswordForm({ token, invalid }: { token: string | null; in
         <CardTitle className="text-xl">{t("Choose a new password")}</CardTitle>
         <CardDescription>{t("At least 10 characters.")}</CardDescription>
       </CardHeader>
-      <form onSubmit={onSubmit}>
+      <form method="post" onSubmit={onSubmit}>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="password">{t("New password")}</Label>

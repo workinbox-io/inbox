@@ -5,6 +5,12 @@ Template releases. Note anything a product has to do by hand after `pnpm templat
 
 ## Unreleased
 
+## v1.20.1 (2026-11-25)
+
+- Sign-in, sign-up, 2FA, forgot and reset password forms submit with `method="post"`. Before the island hydrates
+  (slow network, a blocked script) a native submit used GET and put the password in the URL, history and server logs.
+  `test/auth-forms-post.test.ts` keeps it that way.
+
 ## v1.20.0 (2026-11-25)
 
 - Sign-up asks for email and password only; the account name defaults to the part of the address before `@`
