@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AlarmClock, Archive, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, FilePen, Inbox, Loader2, Mail, Menu, MailOpen, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, ShieldAlert, ShieldCheck, Star, StarOff, Trash2, X, type LucideIcon } from "lucide-react"
+import { AlarmClock, Archive, Sparkles, AtSign, CalendarClock, CheckCheck, Clock, CornerUpLeft, FilePen, Inbox, Loader2, Mail, Menu, MailOpen, Paperclip, PenLine, PenSquare, RotateCcw, Search, SearchX, Send, ShieldAlert, ShieldCheck, Star, StarOff, Trash2, X, type LucideIcon } from "lucide-react"
 
 import type { MailView as MailFolder } from "./types"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
@@ -303,7 +303,9 @@ export function ThreadList({
                       </span>
                     ) : null}
                     <span className="min-w-0 truncate">{th.subject || t("(no subject)")}</span>
-                    {th.labels?.map(label=><Badge key={label.id} variant="secondary">{label.name}</Badge>)}
+                    {th.labels?.map(label=>label.id==="ai"
+                      ? <Sparkles key={label.id} className="text-muted-foreground size-3.5 shrink-0" role="img" aria-label={label.name}><title>{label.name}</title></Sparkles>
+                      : <Badge key={label.id} variant="secondary">{label.name}</Badge>)}
                   </span>
                   <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                     {all && !rail ? (
