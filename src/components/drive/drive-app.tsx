@@ -664,7 +664,7 @@ export function DriveApp(props: DriveAppProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <Button size="icon-sm" className="rounded-full" onClick={() => fileInput.current?.click()} aria-label={t("Upload")}>
+                  <Button size="icon-sm" onClick={() => fileInput.current?.click()} aria-label={t("Upload")}>
                     <Upload />
                   </Button>
                   <AccountMenu user={props.account} canManage={props.canManage} compact />

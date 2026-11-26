@@ -16,6 +16,26 @@ import { MailboxImportProgress, useMailImportProgress } from "./mail-import-prog
 import { t } from "@/lib/i18n/panel"
 
 const COLLAPSED_KEY = "mail-rail-collapsed"
+const EXPANDED_KEY = "mail-rail-expanded"
+
+/** A list of ids kept in localStorage, toggled one at a time. */
+function useStoredList(key: string) {
+  const [list, setList] = React.useState<string[]>([])
+  React.useEffect(() => {
+    try {
+      setList(JSON.parse(localStorage.getItem(key) ?? "[]"))
+    } catch {}
+  }, [key])
+  const toggle = (id: string) =>
+    setList((c) => {
+      const next = c.includes(id) ? c.filter((x) => x !== id) : [...c, id]
+      try {
+        localStorage.setItem(key, JSON.stringify(next))
+      } catch {}
+      return next
+    })
+  return [list, toggle] as const
+}
 
 /** The left column like Outlook / Apple Mail: compose, "All mailboxes" folders, then each mailbox as a group with its own folders. */
 export function FolderRail({
@@ -28,6 +48,7 @@ export function FolderRail({
   onSettings,
   outboxJobs,
   footer,
+  labels,
   canManage = false,
   compact = false,
 }: {
@@ -42,6 +63,8 @@ export function FolderRail({
   onSettings: (mailbox?: string) => void
   /** Send jobs, counted per mailbox next to "Outbox". */
   outboxJobs: OutboxRow[]
+  /** The labels section (LabelRail), below the mailboxes. */
+  labels?: React.ReactNode
   /** The mail-only view's account menu; the dashboard has its own in the sidebar. */
   footer?: React.ReactNode
   canManage?: boolean
@@ -58,20 +81,9 @@ export function FolderRail({
   })
   const imports = useMailImportProgress(canManage)
   const draftKeys = useDraftKeys()
-  const [collapsed, setCollapsed] = React.useState<string[]>([])
-  React.useEffect(() => {
-    try {
-      setCollapsed(JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? "[]"))
-    } catch {}
-  }, [])
-  const toggle = (m: string) =>
-    setCollapsed((c) => {
-      const next = c.includes(m) ? c.filter((x) => x !== m) : [...c, m]
-      try {
-        localStorage.setItem(COLLAPSED_KEY, JSON.stringify(next))
-      } catch {}
-      return next
-    })
+  const [collapsed, toggle] = useStoredList(COLLAPSED_KEY)
+  // Other mailboxes start folded, so the rail isn't every folder once per mailbox.
+  const [expanded, toggleExpanded] = useStoredList(EXPANDED_KEY)
 
   const folders = (scope: string, boxes: string[]) => {
     const counts: Partial<Record<MailFolder, number>> = {
@@ -98,7 +110,8 @@ export function FolderRail({
 
   const renderMailbox = ({ address: m, index: i }: { address: string; index: number }) => {
     const current = mailbox === m
-    const open = !collapsed.includes(m)
+    // The open mailbox unfolds unless folded on purpose; the others stay folded unless unfolded on purpose.
+    const open = current ? !collapsed.includes(m) : expanded.includes(m)
     return (
       <div key={m} className="grid gap-px">
         <MailboxHeader
@@ -108,7 +121,7 @@ export function FolderRail({
           current={current}
           shortcut={i < 9 ? String(i + 1) : undefined}
           count={open ? 0 : (unread[m] ?? 0)}
-          onToggle={() => toggle(m)}
+          onToggle={() => (current ? toggle(m) : toggleExpanded(m))}
           onClick={() => onOpen(m, "inbox")}
           actions={() =>
             cleanActions([
@@ -166,6 +179,7 @@ export function FolderRail({
             </ul>
           </div>
         ) : null}
+        {labels}
       </RailNav>
     )
   }
@@ -241,6 +255,7 @@ export function FolderRail({
           </div>
         </>
       )}
+      {labels}
     </RailNav>
   )
 }

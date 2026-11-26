@@ -582,7 +582,7 @@ function StatusBadge({ status }: { status: Domain["status"] }) {
     failing: ["bg-destructive/10 text-destructive", t("Records changed")],
   } as const
   const [cls, label] = map[status]
-  return <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap", cls)}>{label}</span>
+  return <span className={cn("rounded-md px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap", cls)}>{label}</span>
 }
 
 function DnsRecords({ domain }: { domain: Domain }) {

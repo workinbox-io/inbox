@@ -344,7 +344,7 @@ function SessionsSection({ initial }: { initial: SessionRow[] }) {
                   </span>
                 </span>
                 {s.current ? (
-                  <span className="bg-background rounded-full px-2.5 py-0.5 text-xs text-emerald-600 dark:text-emerald-400">{t("This device")}</span>
+                  <span className="bg-background rounded-md px-1.5 py-0.5 text-xs text-emerald-600 dark:text-emerald-400">{t("This device")}</span>
                 ) : (
                   <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => void revoke(s)}>
                     {t("Sign out")}

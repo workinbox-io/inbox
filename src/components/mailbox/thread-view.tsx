@@ -240,7 +240,7 @@ export const ThreadView = React.forwardRef<
               ) : null}
             </p>
           </div>
-          <ol className="grid grid-cols-1 gap-2">
+          <ol className="divide-border/70 grid grid-cols-1 divide-y">
             {messages.map((msg, i) => {
               if (fold && hidden.some((h) => h.id === msg.id)) {
                 return hidden[0]!.id === msg.id ? (
@@ -277,18 +277,25 @@ export const ThreadView = React.forwardRef<
               onClose={() => setDraft(null)}
             />
           ) : (
-            <div className="flex flex-wrap gap-2 pl-1">
-              <Button variant="outline" size="sm" onClick={() => startReply("reply")}>
-                <Reply /> {t("Reply")}
-              </Button>
+            // A docked reply field (Superhuman, Gmail) rather than a row of outlined buttons.
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => startReply("reply")}
+                className="text-muted-foreground hover:text-foreground hover:border-foreground/20 focus-visible:ring-ring/50 flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border px-3 text-left text-[13px] shadow-[0_1px_2px_rgba(0,0,0,0.04)] outline-none transition-colors focus-visible:ring-[3px]"
+              >
+                <Reply className="size-4 shrink-0" />
+                <span className="truncate">{t("Reply…")}</span>
+                <Kbd className="ml-auto">R</Kbd>
+              </button>
               {replyAll ? (
-                <Button variant="outline" size="sm" onClick={() => startReply("replyAll")}>
-                  <ReplyAll /> {t("Reply all")}
-                </Button>
+                <IconAction label={t("Reply all (a)")} onClick={() => startReply("replyAll")}>
+                  <ReplyAll />
+                </IconAction>
               ) : null}
-              <Button variant="outline" size="sm" onClick={() => startReply("forward")}>
-                <Forward /> {t("Forward")}
-              </Button>
+              <IconAction label={t("Forward (f)")} onClick={() => startReply("forward")}>
+                <Forward />
+              </IconAction>
             </div>
           )}
         </div>

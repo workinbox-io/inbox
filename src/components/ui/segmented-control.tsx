@@ -31,7 +31,7 @@ interface ThumbRect {
 }
 
 const thumbClass =
-  "bg-background dark:bg-secondary rounded-full shadow-[0_1px_2px_rgb(0_0_0/0.08)] ring-1 ring-black/[0.06] dark:shadow-none dark:ring-white/[0.06]"
+  "bg-background dark:bg-secondary rounded-md shadow-[0_1px_2px_rgb(0_0_0/0.08)] ring-1 ring-black/[0.06] dark:shadow-none dark:ring-white/[0.06]"
 
 /**
  * Pick one of a few options (period, filter, view). A single thumb slides to the active segment.
@@ -91,7 +91,7 @@ function SegmentedControl<T extends string>({
       aria-label={props["aria-label"]}
       data-slot="segmented-control"
       className={cn(
-        "bg-foreground/[0.05] relative isolate inline-flex max-w-full items-center rounded-full p-0.5",
+        "bg-foreground/[0.05] relative isolate inline-flex max-w-full items-center rounded-lg p-0.5",
         size === "sm" ? "h-7" : "h-8",
         fullWidth ? "flex w-full" : "w-fit",
         disabled && "opacity-50",
@@ -117,7 +117,7 @@ function SegmentedControl<T extends string>({
             key={option.value}
             value={option.value}
             className={cn(
-              "relative inline-flex h-full min-w-0 items-center justify-center gap-1.5 rounded-full font-medium whitespace-nowrap outline-none transition-colors",
+              "relative inline-flex h-full min-w-0 items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap outline-none transition-colors",
               "text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none",
               size === "sm" ? "px-2.5 text-xs" : "px-3 text-[13px]",
               fullWidth && "flex-auto",

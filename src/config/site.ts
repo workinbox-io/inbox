@@ -21,7 +21,7 @@ export const siteConfig = {
   /** Production URL, used for canonical links and the sitemap (astro.config.mjs reads it too). */
   url: "https://workinbox.io",
   supportEmail: "support@workinbox.io",
-  accent: "#1a1a1a",
+  accent: "#3555e5",
   /** Top navigation on marketing pages: links, or dropdowns with `items`. */
   navItems: [
     {

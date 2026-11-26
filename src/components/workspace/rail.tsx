@@ -62,7 +62,7 @@ export function RailNav({ label, className, children, footer }: { label: string;
   }
   return (
     // The width comes from the CSS variable (set before paint); state only drives the separator's value.
-    <div className="relative flex h-full shrink-0 flex-col border-r" style={{ width: `var(--rail-w, ${RAIL_DEFAULT}px)` }}>
+    <div data-slot="rail" className="relative flex h-full shrink-0 flex-col border-r" style={{ width: `var(--rail-w, ${RAIL_DEFAULT}px)` }}>
       <nav aria-label={label} className={cn("flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-3", className)}>
         {children}
       </nav>

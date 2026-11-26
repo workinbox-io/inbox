@@ -159,7 +159,7 @@ function PeopleList({ team, setup, act, refresh }: { team: Team; setup: MailSetu
                     {aliases ? <Badge variant="secondary">{tp(aliases, { one: "{n} alias", other: "{n} aliases" })}</Badge> : null}
                     {hasDomain && !box ? <Badge variant="outline">{t("No mailbox")}</Badge> : null}
                   </span>
-                  <span className="text-muted-foreground bg-background shrink-0 rounded-full px-2.5 py-0.5 text-xs">{roleName(m.role)}</span>
+                  <span className="text-muted-foreground bg-background shrink-0 rounded-md px-1.5 py-0.5 text-xs">{roleName(m.role)}</span>
                   <ChevronRight className="text-muted-foreground size-4 shrink-0" />
                 </button>
               </li>

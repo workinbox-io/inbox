@@ -717,7 +717,7 @@ export function ChatApp(props: ChatAppProps) {
           {newDay ? (
             <div className="relative my-3 flex items-center justify-center" role="separator">
               <span className="bg-border absolute inset-x-4 h-px" />
-              <span className="bg-background text-muted-foreground relative rounded-full border px-2.5 text-xs leading-5 font-medium" suppressHydrationWarning>
+              <span className="bg-background text-muted-foreground relative rounded-md border px-2 text-xs leading-5 font-medium" suppressHydrationWarning>
                 {dayLabel(m.createdAt)}
               </span>
             </div>

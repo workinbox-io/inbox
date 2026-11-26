@@ -19,7 +19,7 @@ import { NEW_DRAFT, syncDrafts, syncTeamDrafts, useDraftKeys, useTeamDrafts, wri
 import { draftRows, isTeamRow, TeamDraftDetail, teamRowId, useDraftCount } from "./drafts-panel"
 import { SenderPanel } from "./sender-panel"
 import { ThreadList } from "./thread-list"
-import { LabelActions } from "./mail-rules"
+import { LabelActions, LabelRail } from "./mail-rules"
 import { onSettingsSaved, openSettings as openSettingsDialog, type SettingsSection } from "@/components/settings/open-settings"
 import { FolderRail } from "./folder-rail"
 import { AccountMenu, type MailUser } from "./account-menu"
@@ -653,7 +653,7 @@ export function MailboxApp(props: MailboxAppProps) {
 
   const listPane = (
     <div className="flex h-full min-h-0 flex-col">
-    <LabelActions threadIds={virtual ? [] : selection.size ? [...selection] : selectedId ? [selectedId] : []} onApplied={() => { void loadThreads() }} onFilter={setQuery} />
+    <LabelActions threadIds={virtual ? [] : selection.size ? [...selection] : selectedId ? [selectedId] : []} onApplied={() => { void loadThreads() }} />
     <div className="min-h-0 flex-1">
     <ThreadList
       mailboxes={props.mailboxes}
@@ -726,6 +726,7 @@ export function MailboxApp(props: MailboxAppProps) {
       onSettings={(m) => (m ? openSettingsDialog("signature", { mailbox: m }) : openSettings())}
       outboxJobs={outboxJobs}
       compact={!!close}
+      labels={<LabelRail query={query} onFilter={(q) => (setQuery(q), close?.())} />}
       footer={close ? undefined : <AccountMenu canManage={props.canManage} user={props.account} onSettings={openSettings} />}
     />
   )
@@ -782,7 +783,7 @@ export function MailboxApp(props: MailboxAppProps) {
     ) : (
       <div className="grid h-full place-items-center p-6">
         <EmptyState
-          variant="plain"
+          variant="plain" density="dense"
           icon={<Mail />}
           title={selectedId ? t("Opening…") : folder === "drafts" ? t("No draft open") : folder === "outbox" ? t("No send open") : t("No thread open")}
           description={

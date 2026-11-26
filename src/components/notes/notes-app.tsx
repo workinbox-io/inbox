@@ -505,7 +505,7 @@ export function NotesApp(props: NotesAppProps) {
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" className="rounded-full" onClick={() => createNote()}>
+              <Button size="sm" onClick={() => createNote()}>
                 <NotebookPen /> {t("New")}
               </Button>
               <AccountMenu user={props.account} canManage={props.canManage} compact />
@@ -596,7 +596,7 @@ export function NotesApp(props: NotesAppProps) {
   ) : (
     <div className="grid h-full place-items-center p-6">
       <EmptyState
-        variant="plain"
+        variant="plain" density="dense"
         icon={<FileText />}
         title={t("No note open")}
         description={

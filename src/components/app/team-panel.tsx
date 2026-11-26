@@ -135,7 +135,7 @@ export function TeamPanel(props: TeamPanelProps) {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <span className="text-muted-foreground bg-background rounded-full px-2.5 py-0.5 text-xs">{roleName(m.role)}</span>
+                  <span className="text-muted-foreground bg-background rounded-md px-1.5 py-0.5 text-xs">{roleName(m.role)}</span>
                 )}
                 {canManage && !m.isMe && m.role !== "owner" ? (
                   <ConfirmButton

@@ -9,7 +9,7 @@ export function AppFrame({ className, children, ref }: { className?: string; chi
       <div
         ref={ref}
         className={cn(
-"bg-background flex h-full min-h-0 overflow-hidden", className
+"workspace-frame bg-background flex h-full min-h-0 overflow-hidden", className
         )}
       >
         {children}

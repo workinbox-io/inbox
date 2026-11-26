@@ -16,7 +16,6 @@ import { animate, LayoutGroup, motion, MotionConfig, useMotionValue, useReducedM
 import { CalendarDays, ChevronsRightLeft, Plus, UserRound } from "lucide-react"
 import { UserAvatar } from "@/components/app/user-avatar"
 import { ActionMenu, ActionMenuButton, type MenuAction } from "@/components/workspace/action-menu"
-import { tint } from "@/components/workspace/ui"
 import { dueState, isDueField, NONE, spreadPositions } from "@/lib/collections/board"
 import { fieldStyle, isClosed, priorityFieldOf, priorityLevel, type CollectionField, type FieldValue } from "@/lib/collections/fields"
 import { compareRecords, type ViewConfig } from "@/lib/collections/view-config"
@@ -162,7 +161,7 @@ function cardInfo(fields: CollectionField[], props: string[] | null, skip: (stri
   return { date, person, today, priority: pf, chips: [...others.filter((f) => f.type === "select" && f !== pf).slice(0, 2), ...others.filter((f) => f.type === "multiselect").slice(0, 1)], extra: others.filter((f) => f !== person && f !== date && !choice(f) && f !== pf && !["checkbox", "person", "relation", "file"].includes(f.type)).slice(0, 1) }
 }
 
-const cardClass = "bg-background grid w-full gap-2 rounded-lg border p-3 text-left text-[13px] shadow-[0_1px_2px_rgba(0,0,0,0.04)] outline-none select-none hover:border-foreground/20 focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+const cardClass = "bg-background grid w-full gap-2 rounded-lg border border-border/80 p-3 text-left text-[13px] shadow-[0_1px_1px_rgba(0,0,0,0.03)] outline-none transition-colors select-none hover:border-foreground/20 focus-visible:ring-ring/50 focus-visible:ring-[3px]"
 
 export function Board({ ref, config, collection, records, index, people, openId, idOf, selection, onSelection, actions, onOpen, onConfig, onMove, onCreate }: {
   ref?: React.Ref<BoardHandle>
@@ -537,7 +536,7 @@ export function Board({ ref, config, collection, records, index, people, openId,
     const over = drag?.slot.lane === ln && drag.slot.col === col
     if (collapsed.has(col))
       return (
-        <div data-cell={`${ln}${SEP}${col}`} className="flex min-h-14 flex-1 justify-center rounded-xl pt-2" style={{ background: tint(g.color, over ? 12 : 4) }}>
+        <div data-cell={`${ln}${SEP}${col}`} className={cn("flex min-h-14 flex-1 justify-center rounded-xl pt-2 transition-colors", over ? "bg-foreground/[0.06]" : "bg-foreground/[0.025]")}>
           <span className="text-muted-foreground text-xs tabular-nums">{sorted.filter((r) => inCell(r, ln, col)).length}</span>
         </div>
       )
@@ -555,8 +554,8 @@ export function Board({ ref, config, collection, records, index, people, openId,
         layoutScroll
         data-cell={`${ln}${SEP}${col}`}
         aria-label={laneField ? `${colLabel(col)}, ${laneLabel(ln)}` : colLabel(col)}
-        className={cn("grid content-start gap-2 rounded-xl p-2 transition-colors", laneField ? "min-h-14" : "min-h-0 flex-1 overflow-y-auto overscroll-y-contain")}
-        style={{ background: tint(g.color, over ? 9 : 4) }}
+        // Neutral columns (Linear); the status colour stays on the column's icon.
+        className={cn("grid content-start gap-2 rounded-xl p-2 transition-colors", over ? "bg-foreground/[0.05]" : "bg-foreground/[0.025]", laneField ? "min-h-14" : "min-h-0 flex-1 overflow-y-auto overscroll-y-contain")}
       >
         {nodes}
       </motion.ul>

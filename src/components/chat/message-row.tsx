@@ -292,7 +292,7 @@ export function MessageRow({
                   title={names}
                   onClick={() => handlers.onReact(m, r.emoji)}
                   className={cn(
-                    "animate-in zoom-in-90 flex h-6 items-center gap-1 rounded-full border px-2 text-xs transition-colors duration-150 active:scale-95",
+                    "animate-in zoom-in-90 flex h-6 items-center gap-1 rounded-md border px-1.5 text-xs transition-colors duration-150 active:scale-95",
                     pressed ? "border-primary/40 bg-primary/10 text-primary" : "bg-background hover:border-foreground/20",
                   )}
                 >

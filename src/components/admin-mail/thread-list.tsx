@@ -122,7 +122,7 @@ export function ThreadList({
           <Button variant="ghost" size="icon-sm" onClick={onSettings} aria-label="Signatures" title="Signatures">
             <Settings2 />
           </Button>
-          <Button size="sm" className="rounded-full" onClick={onCompose} title="New e-mail (c)">
+          <Button size="sm" onClick={onCompose} title="New e-mail (c)">
             <PenSquare /> Compose
           </Button>
         </div>

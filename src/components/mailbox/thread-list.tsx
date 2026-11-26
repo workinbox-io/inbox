@@ -4,7 +4,6 @@ import { AlarmClock, Archive, Sparkles, AtSign, CalendarClock, CheckCheck, Clock
 import type { MailView as MailFolder } from "./types"
 import { ALL_MAILBOXES } from "@/lib/admin-mail/rules"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/app/empty-state"
 import { UserAvatar } from "@/components/app/user-avatar"
@@ -272,14 +271,15 @@ export function ThreadList({
           const color = mailboxColor(th.mailbox)
           return (
             <ThreadRowMenu key={th.id} rowId={th.id} actions={actionsFor ? () => actionsFor(th) : undefined}>
-              {/* Styled like a calendar event: the mailbox's colour as a bar, its tint when open. */}
+              {/* Neutral ink states; the mailbox's colour stays on its chip in "All mailboxes". */}
               <div
-                className={cn("relative rounded-md py-2 pr-2.5 pl-3.5 transition-colors", th.id !== selectedId && !checked && "hover:bg-foreground/[0.035] group-data-[menu-open]:bg-foreground/[0.035]")}
-                style={th.id === selectedId || checked ? { background: tint(color, th.id === selectedId ? 13 : 8) } : undefined}
+                className={cn(
+                  "relative rounded-md py-2 pr-2.5 pl-3.5 transition-colors duration-100",
+                  th.id === selectedId ? "bg-foreground/[0.07]" : checked ? "bg-foreground/[0.05]" : "hover:bg-foreground/[0.035] group-data-[menu-open]:bg-foreground/[0.035]",
+                )}
               >
-                <span className="absolute top-1.5 bottom-1.5 left-1 w-[3px] rounded-full" style={{ background: color, opacity: th.unread || th.id === selectedId ? 1 : 0.3 }} aria-hidden />
                 <span className="absolute top-[11px] left-3.5 grid size-3.5 place-items-center">
-                  {th.unread ? <span className={cn("size-1.5 rounded-full", (selecting || checked) && "hidden", "group-hover:hidden")} style={{ background: color }} aria-label={t("Unread")} /> : null}
+                  {th.unread ? <span className={cn("bg-primary size-1.5 rounded-full", (selecting || checked) && "hidden", "group-hover:hidden")} aria-label={t("Unread")} /> : null}
                   <Checkbox checked={checked} onCheckedChange={() => toggle(th.id)} aria-label={t("Select {name}", { name: th.subject || t("thread") })} className={cn("absolute inset-0 size-3.5", !(selecting || checked) && "opacity-0 group-hover:opacity-100")} />
                 </span>
                 <button type="button" onClick={() => onOpen(th.id)} className="grid w-full min-w-0 grid-cols-1 gap-0.5 text-left">
@@ -305,7 +305,7 @@ export function ThreadList({
                     <span className="min-w-0 truncate">{th.subject || t("(no subject)")}</span>
                     {th.labels?.map(label=>label.id==="ai"
                       ? <Sparkles key={label.id} className="text-muted-foreground size-3.5 shrink-0" role="img" aria-label={label.name}><title>{label.name}</title></Sparkles>
-                      : <Badge key={label.id} variant="secondary">{label.name}</Badge>)}
+                      : <span key={label.id} className="bg-foreground/[0.06] text-foreground/70 inline-flex h-4 shrink-0 items-center rounded-[4px] px-1.5 text-[11px] font-medium">{label.name}</span>)}
                   </span>
                   <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
                     {all && !rail ? (

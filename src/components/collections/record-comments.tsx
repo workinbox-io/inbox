@@ -164,7 +164,7 @@ export function RecordComments({ path, people, fields, version }: { path: string
                 const on = r.userIds.includes(me)
                 return (
                   <button key={r.emoji} type="button" aria-pressed={on} onClick={() => void react(c, r.emoji)} title={r.userIds.map((id) => byId.get(id)?.name ?? t("Someone")).join(", ")}
-                    className={cn("flex h-6 items-center gap-1 rounded-full border px-2 text-xs tabular-nums", on ? "border-primary/40 bg-primary/10" : "hover:bg-accent")}>
+                    className={cn("flex h-6 items-center gap-1 rounded-md border px-1.5 text-xs tabular-nums", on ? "border-primary/40 bg-primary/10" : "hover:bg-accent")}>
                     <span>{r.emoji}</span>{r.userIds.length}
                   </button>
                 )

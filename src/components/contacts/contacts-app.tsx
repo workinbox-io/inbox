@@ -454,7 +454,7 @@ export function ContactsApp(props: ContactsAppProps) {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button size="sm" className="rounded-full" onClick={() => open("new")}>
+                <Button size="sm" onClick={() => open("new")}>
                   <UserPlus /> {t("New")}
                 </Button>
               </>
@@ -594,7 +594,7 @@ export function ContactsApp(props: ContactsAppProps) {
     ) : (
       <div className="grid h-full place-items-center p-6">
         <EmptyState
-          variant="plain"
+          variant="plain" density="dense"
           icon={<BookUser />}
           title={t("No contact open")}
           description={
@@ -845,7 +845,7 @@ function ContactPane({
             {inGroups.length ? (
               <span className="flex flex-wrap justify-center gap-1 pt-0.5 sm:justify-start">
                 {inGroups.map((g) => (
-                  <span key={g.id} className="flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs">
+                  <span key={g.id} className="flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs">
                     <Tag className="text-muted-foreground size-3" /> {g.name}
                   </span>
                 ))}

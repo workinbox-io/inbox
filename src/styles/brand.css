@@ -1,24 +1,25 @@
-/* WorkInbox look: black and white. Ink buttons on white, white buttons on near-black, a gray frame,
-   hairline borders and no brand colour at all; colour belongs to the data only (mailboxes, charts).
+/* WorkInbox look, a lighter dose of the marketing site's Navy (styles/navy.css): indigo-tinted neutrals on a
+   lavender-white frame, indigo ink, one ultramarine accent (primary buttons, focus, unread);
+   a hairline between the app switcher and the app's rail. Colour otherwise belongs to the data (mailboxes, charts).
    Product file: overrides the template's tokens in global.css (loaded right after it by BaseLayout),
    so template updates to global.css merge cleanly. Keep siteConfig.accent and emails/colors.ts in step. */
 
 :root {
   --radius: 0.5rem;
-  --ink: #1a1a1a;
-  --background: #ffffff;
-  --card: #ffffff;
-  --popover: #ffffff;
-  --primary: #1a1a1a;
+  --ink: oklch(22% 0.035 275);
+  --background: oklch(99.7% 0.002 275);
+  --card: oklch(99.7% 0.002 275);
+  --popover: oklch(99.7% 0.002 275);
+  --primary: oklch(52% 0.22 268);
   --primary-foreground: #ffffff;
-  --secondary: #efefef;
+  --secondary: oklch(94.5% 0.012 275);
   --muted: color-mix(in srgb, var(--ink) 4%, transparent);
-  --muted-foreground: #707070;
+  --muted-foreground: oklch(48% 0.03 275);
   --accent: color-mix(in srgb, var(--ink) 5%, transparent);
   --border: color-mix(in srgb, var(--ink) 9%, transparent);
-  --input: color-mix(in srgb, var(--ink) 13%, transparent);
-  --ring: color-mix(in srgb, var(--ink) 35%, transparent);
-  --surface: #f7f7f7;
+  --input: color-mix(in srgb, var(--ink) 14%, transparent);
+  --ring: color-mix(in srgb, var(--primary) 55%, transparent);
+  --surface: oklch(97.3% 0.009 275);
   --sidebar: var(--surface);
   --sidebar-primary: var(--ink);
   --sidebar-primary-foreground: #ffffff;
@@ -26,48 +27,102 @@
   --sidebar-border: color-mix(in srgb, var(--ink) 8%, transparent);
   --sidebar-ring: var(--ring);
   --code-number: var(--muted-foreground);
-  --selection: color-mix(in srgb, var(--ink) 14%, transparent);
-  /* Charts keep colour, since ink would read as "no data". */
-  --chart-1: #1a1a1a;
+  --selection: color-mix(in srgb, var(--primary) 18%, transparent);
+  --chart-1: var(--primary);
   --chart-2: #2bb3a3;
   --chart-3: #8b7cf6;
   --chart-4: #e6a23c;
   --chart-5: #e66aa8;
-  --chart-upload: #1a1a1a;
+  --chart-upload: var(--primary);
   --chart-download: #2bb3a3;
 }
 
 .dark {
-  --ink: #ececec;
-  /* Near-black page, a step lighter frame, raised layers lighter again; borders do the work, not shadows. */
-  --background: #141414;
-  --card: #1b1b1b;
-  --popover: #1f1f1f;
-  --primary: #ececec;
-  --primary-foreground: #141414;
-  --secondary: #262626;
+  --ink: oklch(94% 0.01 275);
+  /* Indigo-black page, a step lighter for raised layers; borders do the work, not shadows. */
+  --background: oklch(19% 0.018 275);
+  --card: oklch(21.5% 0.02 275);
+  --popover: oklch(23% 0.02 275);
+  --primary: oklch(58% 0.2 268);
+  --primary-foreground: #ffffff;
+  --secondary: oklch(26% 0.02 275);
   --muted: color-mix(in srgb, var(--ink) 4%, transparent);
-  --muted-foreground: #8c8c8c;
+  --muted-foreground: oklch(68% 0.02 275);
   --accent: color-mix(in srgb, var(--ink) 6%, transparent);
   --border: color-mix(in srgb, var(--ink) 10%, transparent);
-  --input: color-mix(in srgb, var(--ink) 14%, transparent);
-  --ring: color-mix(in srgb, var(--ink) 40%, transparent);
-  --surface: #1a1a1a;
+  --input: color-mix(in srgb, var(--ink) 15%, transparent);
+  --ring: color-mix(in srgb, var(--primary) 60%, transparent);
+  --surface: oklch(21.5% 0.02 275);
   --sidebar: var(--surface);
   --sidebar-foreground: color-mix(in srgb, var(--ink) 62%, var(--sidebar));
   --sidebar-primary: var(--ink);
-  --sidebar-primary-foreground: #141414;
+  --sidebar-primary-foreground: oklch(19% 0.018 275);
   --sidebar-accent: color-mix(in srgb, var(--ink) 6%, transparent);
   --sidebar-border: color-mix(in srgb, var(--ink) 8%, transparent);
   --sidebar-ring: var(--ring);
-  --code: #1a1a1a;
-  --code-number: #8c8c8c;
-  --selection: color-mix(in srgb, var(--ink) 22%, transparent);
-  --chart-1: #ececec;
+  --code: oklch(21.5% 0.02 275);
+  --code-number: var(--muted-foreground);
+  --selection: color-mix(in srgb, var(--primary) 30%, transparent);
+  --chart-1: var(--primary);
   --chart-2: #34c2b1;
   --chart-3: #9d90f8;
   --chart-4: #ecb04f;
   --chart-5: #ec7cb5;
-  --chart-upload: #ececec;
+  --chart-upload: var(--primary);
   --chart-download: #34c2b1;
 }
+
+/* Craft pass: Inter with its sharper alternates (straight-sided 1/l, open digits), app-wide. Marketing keeps Switzer (.navy). */
+:root {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  /* The workspace's frame behind the raised panel: below it in light, darker than it in dark. */
+  --frame: var(--surface);
+  --panel-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 7%, transparent), 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 12px -4px rgb(0 0 0 / 0.05);
+}
+.dark {
+  --frame: oklch(14.5% 0.016 275);
+  --panel-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 9%, transparent), 0 1px 2px rgb(0 0 0 / 0.3);
+}
+body,
+.font-sans {
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01", "ss03";
+}
+.navy {
+  font-feature-settings: "liga" 1, "calt" 1;
+}
+
+/* Workspace apps from md up: the app rail and the app's own rail sit on the grey frame without dividers; the
+   working area (list + detail, board, calendar…) is one raised panel. AppFrame = .workspace-frame, rails = RailNav. */
+@media (min-width: 768px) {
+  .workspace-frame {
+    background: transparent;
+  }
+  .workspace-frame > [data-slot="rail"],
+  .workspace-frame > * > [data-slot="rail"] {
+    border-right-color: transparent;
+  }
+  .workspace-frame > :not([data-slot="rail"], :has(> [data-slot="rail"]), input, [hidden], [aria-hidden="true"]) {
+    height: auto;
+    align-self: stretch;
+    margin: 0.5rem 0.5rem 0.5rem 0;
+    border-radius: 0.75rem;
+    background: var(--background);
+    box-shadow: var(--panel-shadow);
+    overflow: hidden;
+  }
+  /* Screens without a rail of their own (settings, "not found", loading) are one panel too. */
+  [data-workspace-main] > :not(.workspace-frame, [role="status"], [hidden]) {
+    flex: 1 1 0;
+    min-height: 0;
+    margin: 0.5rem 0.5rem 0.5rem 0;
+    border-radius: 0.75rem;
+    background: var(--background);
+    box-shadow: var(--panel-shadow);
+    overflow: auto;
+  }
+  .workspace-frame > :first-child:not([data-slot="rail"], :has(> [data-slot="rail"])) {
+    margin-left: 0.5rem;
+  }
+}
+

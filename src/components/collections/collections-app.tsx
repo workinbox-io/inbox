@@ -143,7 +143,7 @@ function SharingButton({ collection, people, onClick }: { collection: Collection
     : collection.sharing === "team" ? (collection.teamRole === "edit" ? t("Everyone can edit") : t("Everyone can view"))
     : tp(faces.length, { one: "{n} person", other: "{n} people" })
   return (
-    <Button variant="outline" size="sm" className="h-7 gap-1.5 rounded-full px-2.5 text-xs" onClick={onClick} title={t("Share")}>
+    <Button variant="outline" size="sm" className="h-7 gap-1.5 px-2.5 text-xs" onClick={onClick} title={t("Share")}>
       {faces.length ? (
         <span className="flex -space-x-1.5">
           {faces.slice(0, 3).map((id) => <UserAvatar key={id} seed={byId.get(id)?.email ?? id} size={18} className="ring-background ring-2" />)}

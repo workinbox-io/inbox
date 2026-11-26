@@ -137,7 +137,7 @@ function PanelLayout({ initial }: { initial: AppPage }) {
   if (standalone) return <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-4">
     <a href="/" className="flex items-center gap-2 text-base font-medium"><img src="/logo.svg" alt="" className="size-7" />{siteConfig.name}</a>{content}<Toaster />
   </div>
-  return <WorkspacesProvider value={context}><div data-browser-theme-surface data-slot={userView ? undefined : "sidebar-wrapper"} className={userView ? "bg-background flex h-svh overflow-hidden" : "group/sidebar-wrapper bg-background md:bg-sidebar flex min-h-svh w-full"}>
+  return <WorkspacesProvider value={context}><div data-browser-theme-surface data-slot={userView ? undefined : "sidebar-wrapper"} className={userView ? "bg-background md:bg-(--frame) flex h-svh overflow-hidden" : "group/sidebar-wrapper bg-background md:bg-sidebar flex min-h-svh w-full"}>
     {userView ? <AppRail disabled={context.disabled} search={!mobile && <AppSearch compact disabled={context.disabled} admin={context.canManage} />} notifications={!mobile && <NotificationCenter side="right" />} /> : <AppShell nav={nav} badges={{ "/staff/mail": context.adminMail?.unread ?? 0 }} user={context.user} disabled={context.disabled} pathname={location.pathname} sidebarOpen={context.sidebarOpen} />}
     <div data-slot="sidebar-inset" className={userView ? "flex min-w-0 flex-1 flex-col" : "bg-background relative flex w-full min-w-0 flex-1 flex-col md:m-2 md:ml-0 md:rounded-2xl md:group-has-[[data-slot=sidebar][data-state=collapsed]]/sidebar-wrapper:ml-2"}>
       {(!userView || mobile) && <header className={userView ? "bg-background grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-2 border-b px-3 py-1" : "flex h-14 shrink-0 items-center gap-2 px-4"}>
@@ -146,7 +146,7 @@ function PanelLayout({ initial }: { initial: AppPage }) {
           <div className="ml-auto flex items-center gap-2"><NotificationCenter /><SearchButton /><ThemeToggle /></div>
         </>}
       </header>}
-      <main ref={mainRef} tabIndex={-1} aria-busy={navigation.state !== "idle"} className={userView ? "relative flex min-h-0 flex-1 flex-col outline-none" : fullBleed ? "relative flex min-h-0 w-full flex-1 flex-col p-2 pt-0 outline-none" : "relative mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 outline-none md:p-8"}>
+      <main ref={mainRef} tabIndex={-1} aria-busy={navigation.state !== "idle"} data-workspace-main={userView || undefined} className={userView ? "relative flex min-h-0 flex-1 flex-col outline-none" : fullBleed ? "relative flex min-h-0 w-full flex-1 flex-col p-2 pt-0 outline-none" : "relative mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 p-4 outline-none md:p-8"}>
         {navigation.state !== "idle" && <div role="status" className="absolute inset-x-0 top-0"><Skeleton className="h-0.5 w-full" /><span className="sr-only">{t("Loading…")}</span></div>}{content}
       </main>
     </div>

@@ -251,15 +251,15 @@ export const ThreadView = React.forwardRef<
             />
           ) : (
             <div className="flex flex-wrap gap-2 pl-1">
-              <Button variant="outline" className="rounded-full" onClick={() => startReply("reply")}>
+              <Button variant="outline" onClick={() => startReply("reply")}>
                 <Reply /> Reply
               </Button>
               {replyAll ? (
-                <Button variant="outline" className="rounded-full" onClick={() => startReply("replyAll")}>
+                <Button variant="outline" onClick={() => startReply("replyAll")}>
                   <ReplyAll /> Reply all
                 </Button>
               ) : null}
-              <Button variant="outline" className="rounded-full" onClick={() => startReply("forward")}>
+              <Button variant="outline" onClick={() => startReply("forward")}>
                 <Forward /> Forward
               </Button>
             </div>

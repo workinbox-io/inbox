@@ -292,7 +292,7 @@ export function MessageItem({
   }
 
   return (
-    <li className={cn("bg-background rounded-lg border border-border/70", out && "bg-foreground/[0.015]")}>
+    <li className="py-2">
       {out && (m.deliveryError || ["bounced", "failed", "rejected", "complained"].includes(m.deliveryStatus ?? "")) ? <p className="text-destructive px-4 pt-3 text-sm">{m.deliveryError ?? t("Delivery status: {status}", { status: m.deliveryStatus ?? "" })}</p> : null}
       <ActionMenu actions={actions}>
       <div className="flex items-start gap-3 p-4 pb-0">

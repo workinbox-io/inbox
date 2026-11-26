@@ -16,6 +16,7 @@ import { ConfirmButton } from "@/components/app/confirm-button"
 import { useSettingsDraft } from "@/components/settings/settings-draft"
 import { openSettings } from "@/components/settings/open-settings"
 import { t, tp } from "@/lib/i18n/panel"
+import { RailItem, RailList } from "@/components/workspace/rail"
 
 type Label = { id: string; mailboxId: string; name: string }
 type Rule = { id: string; mailboxId: string; name: string; position: number; enabled: boolean; conditions: FilterCondition[]; actions: FilterActions }
@@ -385,16 +386,28 @@ export function ForwardingSection({ rules: { box, targets, busy, run, refresh } 
     </div>
   )
 }
-export function LabelActions({threadIds,onApplied,onFilter}:{threadIds:string[];onApplied:()=>void;onFilter:(q:string)=>void}){
+/** The org's mail labels, refreshed when they change in settings. */
+function useLabels(){
   const [labels,setLabels]=React.useState<Label[]>([])
-  const [id,setId]=React.useState(NONE)
-  const [busy,setBusy]=React.useState(false)
   React.useEffect(()=>{
     const refresh=()=>{void api<{labels:Label[]}>("GET","/api/app/mail/labels").then(r=>setLabels(r.labels)).catch(e=>toast.error(e.message))};
     refresh();window.addEventListener("mail:labels-changed",refresh);
     return ()=>window.removeEventListener("mail:labels-changed",refresh);
-  },[threadIds.join(",")])
+  },[])
+  return labels
+}
+/** Labels in the folder rail: a click filters the list (`label:<id>`), a second click clears it. */
+export function LabelRail({query,onFilter}:{query:string;onFilter:(q:string)=>void}){
+  const labels=useLabels()
   if(!labels.length)return null
+  return <div className="grid gap-1"><p className="text-muted-foreground px-2 text-xs font-medium">{t("Labels")}</p><RailList>{labels.map(l=>{const q=`label:${l.id}`;return <RailItem key={l.id} icon={Tag} label={l.name} active={query===q} onClick={()=>onFilter(query===q?"":q)}/>})}</RailList></div>
+}
+/** Apply or remove a label on the selected threads; hidden while nothing is selected. */
+export function LabelActions({threadIds,onApplied}:{threadIds:string[];onApplied:()=>void}){
+  const labels=useLabels()
+  const [id,setId]=React.useState(NONE)
+  const [busy,setBusy]=React.useState(false)
+  if(!labels.length||!threadIds.length)return null
   async function apply(remove:boolean){if(id===NONE)return;setBusy(true);try{await api("PATCH","/api/app/mail/labels",{labelId:id,threadIds,remove});toast.success(remove?t("Label removed"):t("Label applied"));onApplied()}catch(e){toast.error((e as Error).message)}finally{setBusy(false)}}
-  return <div className="flex flex-wrap items-center gap-2 border-b p-2"><Choice value={id} label={t("Labels")} onChange={setId} options={[{value:NONE,label:t("Labels")},...labels.map(l=>({value:l.id,label:l.name}))]}/>{threadIds.length?<><Button size="sm" variant="outline" disabled={busy||id===NONE} onClick={()=>apply(false)}>{t("Apply")}</Button><Button size="sm" variant="ghost" disabled={busy||id===NONE} onClick={()=>apply(true)}>{t("Remove")}</Button></>:<Button size="sm" variant="outline" disabled={id===NONE} onClick={()=>onFilter(`label:${id}`)}>{t("Show")}</Button>}</div>
+  return <div className="flex flex-wrap items-center gap-2 border-b p-2"><Choice value={id} label={t("Labels")} onChange={setId} options={[{value:NONE,label:t("Labels")},...labels.map(l=>({value:l.id,label:l.name}))]}/><><Button size="sm" variant="outline" disabled={busy||id===NONE} onClick={()=>apply(false)}>{t("Apply")}</Button><Button size="sm" variant="ghost" disabled={busy||id===NONE} onClick={()=>apply(true)}>{t("Remove")}</Button></></div>
 }
