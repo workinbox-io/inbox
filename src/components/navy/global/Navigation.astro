@@ -106,7 +106,7 @@ const github = `<svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="currentCo
         <Logo class={`text-xl ${ink}`} />
       </a>
       <div class="flex items-center gap-1">
-        <Button isLink={true} href="/signup" data-auth-cta size="sm" variant="accent"><span data-auth-label data-dashboard={t("Dashboard")}>{t("Start free")}</span></Button>
+        <Button isLink={true} href="/signup" data-auth-cta size="sm" variant="accent" class="min-h-11"><span data-auth-label data-dashboard={t("Dashboard")}>{t("Start free")}</span></Button>
         <button id="menu-toggle" type="button" aria-label={t("Menu")} aria-expanded="false" aria-controls="mobile-menu" class={`grid place-items-center -mr-2 size-11 ${ink} ${hv}`}>
           <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
         </button>
@@ -123,7 +123,7 @@ const github = `<svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="currentCo
         <p class="flex-1 py-1.5 text-center lg:flex-none lg:text-left text-[13px] text-foreground/80 nav-dark:text-white/90">
           <span class="sm:hidden">{t("Free for your first {n} people.", { n: FREE_PEOPLE })}</span>
           <span class="hidden sm:inline">{t("Free for your first {n} people, then {price} per person a month.", { n: FREE_PEOPLE, price: lowest })} {t("14-day trial, no card.")}</span>
-          {" "}<a href={lp(locale, "/docs/self-host")} class="inline-flex items-center ml-1 font-medium underline underline-offset-2 min-h-6 text-foreground nav-dark:text-white">{t("Self-host for free")}</a>
+          {" "}<a href={lp(locale, "/docs/self-host")} class="inline-flex items-center ml-1 -my-2.5 -mx-1 px-1 font-medium underline underline-offset-2 min-h-11 text-foreground nav-dark:text-white">{t("Self-host for free")}</a>
         </p>
         <nav aria-label={t("Utility")} class="items-center hidden gap-1 lg:flex">
           <a href={lp(locale, "/docs")} class={stripLink}>{t("Docs")}</a>

@@ -17,6 +17,7 @@ interface Props {
 const { stars } = Astro.props;
 const locale = siteLocale(Astro.url);
 const t = tFor(locale);
+const heroShot = `/marketing/mail-thread-hero${locale === "pl" ? "-pl" : ""}.webp`;
 const facts = [
   { icon: Users, text: t("Free for {n} people", { n: FREE_PEOPLE }) },
   { icon: Code, text: t("Open source, AGPL-3.0") },
@@ -44,10 +45,10 @@ const facts = [
       </div>
     </div>
     <div class="mx-auto mt-12 max-w-6xl sm:mt-14">
-      <link rel="preload" as="image" href="/marketing/mail-thread-hero.webp" media="(min-width: 640px)" fetchpriority="high" />
+      <link rel="preload" as="image" href={heroShot} media="(min-width: 640px)" fetchpriority="high" />
       <BrowserWindow address="workinbox.io/app/mail">
         <!-- From sm up the real screen, cropped to the open thread (a background, so phones never download it); phones get a faux list and message that stay readable. -->
-        <div role="img" aria-label={t("The Work Inbox mail app: folders, thread list and an open conversation")} class="hidden aspect-2300/942 bg-cover bg-top bg-no-repeat sm:block" style="background-image:url(/marketing/mail-thread-hero.webp)"></div>
+        <div role="img" aria-label={t("The Work Inbox mail app: folders, thread list and an open conversation")} class="hidden aspect-2300/942 bg-cover bg-top bg-no-repeat sm:block" style={`background-image:url(${heroShot})`}></div>
         <div class="sm:hidden"><Faux app="custom-domain-email" bare /></div>
       </BrowserWindow>
     </div>
