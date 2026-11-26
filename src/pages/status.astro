@@ -1,0 +1,32 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import StatusBoard from "@/components/status/StatusBoard.astro";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+import { getStatusOverview } from "@/lib/server/status";
+import { siteConfig } from "@/config/site";
+
+const overview = await getStatusOverview();
+const t = tFor(siteLocale(Astro.url));
+Astro.response.headers.set("Cache-Control", "public, max-age=30");
+---
+
+<MarketingLayout
+  title={t("Status")}
+  description={t("Live status and 90-day uptime of Work Inbox: the web app and API, files, sending mail and mail apps.")}
+  ink
+>
+  <Hero>
+    <Fragment slot="title">{t("System")} <em>{t("status.")}</em></Fragment>
+    <Fragment slot="text">
+      {t("We check every part of {name} once a minute. Questions? Write to", { name: siteConfig.name })}{" "}
+      <a class="inline-block py-1 border-b border-inverse-foreground/50" href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a>.
+    </Fragment>
+  </Hero>
+  <Wrapper variant="standard" class="w-full pb-24">
+    <div class="w-full max-w-3xl mx-auto">
+      <StatusBoard overview={overview} />
+    </div>
+  </Wrapper>
+</MarketingLayout>

@@ -1,0 +1,76 @@
+---
+/**
+ * Landing page for "shared mailbox" (1,000 US searches a month, CPC about $72) and "shared inbox" (390), OpenSEO 2026-11-09.
+ * Explains how shared mailboxes work in Work Inbox (lib/server/mail/access.ts: members granted in mailbox_access, every
+ * shared mailbox for owners and admins) and how other products handle them (config/compare.ts, row "shared").
+ */
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import PriceLine from "@/components/site/PriceLine.astro";
+import Shot from "@/components/site/Shot.astro";
+import Faq from "@/components/site/Faq.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import { COMPETITORS } from "@/config/compare";
+import { PLANS } from "@/config/plans";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
+
+export const prerender = true;
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+
+const how = [
+  { title: "A real mailbox", text: "support@ has its own inbox, folders, unread count and spam filter, next to each person's own mailbox." },
+  { title: "You choose who answers", text: "Add the people who handle it. Owners and admins see every shared mailbox; members see the ones they're given." },
+  { title: "Replies from the shared address", text: "Customers see support@, not the name of whoever answered, and the thread stays in one place for everyone." },
+  { title: "No shared password", text: "Everyone signs in as themselves. Each person can enable two-factor authentication for password sign-in. Taking someone off is one click." },
+  { title: "Aliases into it", text: "help@ and hello@ can land in support@. A catch-all can send everything unknown there too." },
+  { title: "One view or many", text: "Read one mailbox at a time, or tick several to see your own mail and support@ in a single list." },
+];
+
+const faq = [
+  { question: "What is a shared mailbox?", answer: "A mailbox for an address like support@ or sales@ that several people open with their own accounts. Unlike forwarding, everyone sees the same threads and replies go out from the shared address." },
+  { question: "What does a shared mailbox cost in Work Inbox?", answer: `Nothing. You pay per person with a personal mailbox, from €${PLANS.starter.priceMonthly / 100} a month, and create as many shared mailboxes as you need.` },
+  { question: "What's the difference between a shared mailbox and an alias?", answer: "An alias is another address for a mailbox that already exists, for example hello@ delivering into support@. A shared mailbox is a mailbox of its own that several people work in." },
+  { question: "Can I see who has access?", answer: "Yes. Settings → Mail lists every mailbox; a shared one shows its members, and you can add or remove people there." },
+];
+
+const hows = how.map((h) => ({ ...h, title: t(h.title), text: t(h.text) }));
+const questions = faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: questions.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) };
+---
+
+<MarketingLayout title={t("Shared mailbox for your team's support@ and sales@")} description={t("Shared mailboxes for support@, sales@ and invoices@ on your domain: one address, the whole team, everyone signs in as themselves. Free on every plan.")} jsonLd={jsonLd} ink>
+  <Hero>
+    <Fragment slot="title">{t("One support@,")}{" "}<em>{t("the whole team on it.")}</em></Fragment>
+    <Fragment slot="text">{t("Stop forwarding mail around and sharing one password. In Work Inbox, support@ is a mailbox several people open with their own accounts, and replies go out from support@. Shared mailboxes are free on every plan.")}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">{t("Start free")}</Button>
+      <ArrowLink href={lp(locale, "/pricing")} tone="default">{t("See pricing")}</ArrowLink>
+    </Fragment>
+    <PriceLine />
+  </Hero>
+
+  <Wrapper variant="standard" class="pt-10">
+    <Shot name="shared-mailbox" alt={t("support@ open as a shared mailbox, with a customer question")} eager />
+  </Wrapper>
+
+  <Section label={t("Shared mailboxes")}>
+    <Fragment slot="title">{t("How it works")}</Fragment>
+    <ArrowLink href="/security" >{t("How individual logins and two-factor authentication protect access")}</ArrowLink>
+    <Features slot="full" items={hows} cols={3} />
+  </Section>
+
+  <Section label={t("Compare")} class="bg-muted">
+    <Fragment slot="title">{t("Shared mailboxes elsewhere")}</Fragment>
+    <Fragment slot="text">{t("From each vendor's own pages; the comparison pages link the sources.")}</Fragment>
+    <ComparisonTable slot="full" competitors={COMPETITORS.slice(0, 4)} rows={["shared", "aliases", "price"]} />
+  </Section>
+
+  <Faq items={questions} />
+</MarketingLayout>

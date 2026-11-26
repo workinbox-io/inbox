@@ -1,0 +1,45 @@
+name: Deploy
+
+# Every push to main: build, apply remote D1 migrations, then deploy the Worker. Typecheck and tests run in CI
+# (ci.yml) on every push and PR, so they aren't repeated here.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, and never cancel one that's halfway through a migration.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # The template repo has no Cloudflare secrets; apps copied from it deploy. workinbox.io deploys from the private
+    # repo (workinbox-io/inbox-dev); the public one only gets release commits.
+    if: github.repository != 'jakub-kalamarz/saas-template' && github.repository != 'workinbox-io/inbox'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: echo "BETTER_AUTH_SECRET=ci-dummy-secret" > .dev.vars
+      # The dummy .dev.vars only exists for types and the build; production secrets live in the Worker.
+      - run: pnpm build
+      - run: rm .dev.vars
+      # Migrations first: they must be backwards compatible with the code that's still running.
+      - run: pnpm wrangler d1 migrations apply DB --remote
+      - run: pnpm wrangler deploy
+      # Pings IndexNow (Bing, ChatGPT search, Copilot) with the sitemap URLs; only warns on failure.
+      - run: pnpm indexnow

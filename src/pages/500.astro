@@ -1,0 +1,11 @@
+---
+import ErrorPage from "@/components/site/ErrorPage.astro";
+
+// The error itself is reported by the middleware (core/src/errors.ts); nothing about it is shown here.
+---
+
+<ErrorPage
+  code={500}
+  title="Something went wrong"
+  message="We hit an unexpected error and have been notified. Try again in a moment. If it keeps happening, let us know."
+/>

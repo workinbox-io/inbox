@@ -1,0 +1,117 @@
+---
+/**
+ * Landing page for "cloudflare email routing" (2,400 US searches a month, KD 29, three times a year earlier; OpenSEO,
+ * 2026-11-10). The results are set-up guides and threads saying Email Routing only forwards and can't send, so this
+ * page answers the next question: how to reply from the domain. Hosted (Connect Cloudflare, docs/ses.md) or
+ * self-hosted on the same account (Email Routing catch-all → the Worker). Competitor facts from config/compare.ts.
+ */
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
+import Minus from "@/components/navy/fundations/icons/Minus.astro";
+import PriceLine from "@/components/site/PriceLine.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import Faq from "@/components/site/Faq.astro";
+import { competitorBySlug } from "@/config/compare";
+import { FREE_PEOPLE, PLANS, amount } from "@/config/plans";
+
+export const prerender = true;
+
+const agentic = competitorBySlug("cloudflare-agentic-inbox")!;
+const starter = `€${amount(PLANS.starter.priceMonthly)}`;
+
+/** Email Routing on its own next to Work Inbox on the same domain. */
+const rows: { label: string; routing: string | false; ours: string }[] = [
+  { label: "Mail to you@yourdomain arrives", routing: "Forwarded to Gmail or another inbox", ours: "In your own mailbox" },
+  { label: "Reply from you@yourdomain", routing: false, ours: "From the address the mail came to" },
+  { label: "A shared support@ for the team", routing: false, ours: "Shared mailboxes, free on every plan" },
+  { label: "Aliases and a catch-all", routing: "Forwarding rules", ours: "Aliases, catch-all, plus addressing" },
+  { label: "Spam filter and sender rules", routing: false, ours: "Spam score on every message, allow and block rules" },
+  { label: "Price", routing: "Free", ours: `Free for up to ${FREE_PEOPLE} people, then ${starter} a person` },
+];
+
+const hosted = [
+  { title: "Add the domain", text: "Sign up, then Settings → Mail → Add domain." },
+  { title: "Connect Cloudflare", text: "Paste an API token with Zone Read and DNS Edit: Work Inbox adds the MX, DKIM and DMARC records. Turn Email Routing off for the domain first, its MX records are locked." },
+  { title: "Add your people", text: "Each person gets a mailbox on the domain, plus shared ones like support@. Mail now arrives and goes out from your addresses." },
+];
+
+const faq = [
+  { question: "Can I reply from my domain with Cloudflare Email Routing?", answer: "Not with Email Routing alone: it only receives and forwards. To reply from the address you need something that sends, and an inbox to keep the conversation in. Work Inbox is both: mail to your domain lands in a mailbox, and replies go out from the same address, signed for your domain." },
+  { question: "Can I keep Email Routing turned on?", answer: "Yes, when you self-host: Work Inbox runs in the same Cloudflare account, Email Routing sends every address to it with a catch-all rule, and Cloudflare Email Service sends. Hosted, Work Inbox receives the mail itself, so Email Routing is turned off for that domain and its MX records are replaced." },
+  { question: "What about Gmail's \"Send mail as\"?", answer: "It needs an SMTP server for your domain, and Email Routing has none. Work Inbox is that server: each mailbox has IMAP and SMTP for mail apps, with a password per device, besides its own web app." },
+  { question: "What does it cost?", answer: `Hosted, up to ${FREE_PEOPLE} people are free for good, with shared mailboxes, aliases and notes; a bigger team pays from ${starter} a person a month. Self-hosted, Work Inbox is free and you pay Cloudflare for what it uses.` },
+  ...agentic.faq,
+];
+
+const url = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path);
+const jsonLd = [
+  { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) },
+  { "@context": "https://schema.org", "@type": "WebPage", name: "An inbox for Cloudflare Email Routing", url: url("/cloudflare-email-routing"), dateModified: agentic.checked },
+];
+---
+
+<MarketingLayout title="Cloudflare Email Routing: reply from your own domain" description={`Cloudflare Email Routing only forwards. Work Inbox gives your domain real mailboxes to reply from and share. Free for up to ${FREE_PEOPLE} people, or self-host it.`} jsonLd={jsonLd} ink>
+  <Hero>
+    <Fragment slot="title">Email Routing forwards. <em>Work Inbox answers.</em></Fragment>
+    <Fragment slot="text">
+      Cloudflare Email Routing sends your domain's mail on to Gmail, but you can't reply from your own address: it only
+      forwards. Work Inbox gives the domain real mailboxes, with shared ones for the team. Free for up to {FREE_PEOPLE}
+      people, or self-hosted on the same Cloudflare account.
+    </Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">Start free</Button>
+      <ArrowLink href="/docs/self-host" tone="default">Self-host on Cloudflare</ArrowLink>
+    </Fragment>
+    <PriceLine />
+  </Hero>
+
+  <Section label="Email Routing">
+    <Fragment slot="title">Forwarding, <em>or an inbox</em></Fragment>
+    <div slot="full" class="relative overflow-x-auto">
+      <table class="w-full text-sm text-left min-w-140">
+        <thead><tr><th scope="col" class="w-1/4 px-5 pb-6 font-medium align-bottom text-foreground"><span class="sr-only">Feature</span></th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">Email Routing alone</th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">With Work Inbox</th></tr></thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr class:list={["align-top", i % 2 === 0 && "bg-muted"]}>
+              <th scope="row" class="px-5 py-5 font-medium text-foreground">{r.label}</th>
+              <td class="py-5 pl-2 pr-6 text-foreground">{r.routing ? r.routing : <span class="flex items-center gap-2 text-muted-foreground"><Minus size="sm" class="text-faint-foreground" aria-hidden="true" /> No</span>}</td>
+              <td class="py-5 pl-2 pr-6 text-foreground"><span class="flex gap-2"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" />{r.ours}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Section>
+
+  <Section label="Hosted">
+    <Fragment slot="title">Hosted, <em>in a few minutes</em></Fragment>
+    <Fragment slot="text">We run it. Work Inbox receives your domain's mail itself and sends it signed for your domain, so Email Routing steps aside for that domain.</Fragment>
+    <Features slot="full" cards cols={3} items={hosted.map((h, i) => ({ ...h, tag: String(i + 1) }))} />
+  </Section>
+
+  <Section label="Self-hosted" class="bg-muted">
+    <Fragment slot="title">Self-hosted, <em>next to Email Routing</em></Fragment>
+    <Fragment slot="text">
+      Deploy Work Inbox to the Cloudflare account your domain is already on. Email Routing keeps receiving and hands
+      every address to the Worker with a catch-all rule; Cloudflare Email Service sends. Open source, every feature,
+      no fee to us: you pay Cloudflare for Workers, D1, R2 and sending.
+    </Fragment>
+    <ArrowLink href="/docs/self-host">The self-hosting guide</ArrowLink>
+  </Section>
+
+  <Section label="Compare">
+    <Fragment slot="title">Other inboxes on Cloudflare</Fragment>
+    <Fragment slot="text">{agentic.intro}</Fragment>
+    <div slot="full">
+      <ComparisonTable competitors={[agentic, competitorBySlug("zoho-mail")!, competitorBySlug("google-workspace")!]} />
+      <ArrowLink href={`/vs/${agentic.slug}`} class="mt-6">Work Inbox vs {agentic.name}, with sources</ArrowLink>
+    </div>
+  </Section>
+
+  <Faq items={faq} />
+</MarketingLayout>

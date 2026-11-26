@@ -1,0 +1,90 @@
+/*
+ * The marketing site's look: Lexington Themes' Navy (components/navy, licensed). A lavender-white ground, indigo ink, one
+ * ultramarine accent and the grainy gradient shader on heroes. Scoped to .navy (MarketingLayout's wrapper) so /app keeps
+ * the app's tokens; the extra token names (inverse, lilac…) are registered in global.css. Light only, like Navy.
+ */
+.navy {
+  --background: oklch(98.8% 0.006 275);
+  --foreground: oklch(20% 0.04 275);
+  --muted-foreground: oklch(48% 0.03 275);
+  --faint-foreground: oklch(64% 0.025 275);
+  --muted: oklch(97.2% 0.01 275);
+  --border: oklch(91% 0.016 275);
+  --input: oklch(82% 0.025 275);
+  --ring: oklch(52% 0.22 268);
+  --primary: oklch(52% 0.22 268);
+  --primary-foreground: oklch(1 0 0);
+  --primary-highlight: oklch(60% 0.2 268);
+  --inverse: oklch(16% 0.05 270);
+  --inverse-foreground: oklch(1 0 0);
+  --inverse-highlight: oklch(30% 0.06 270);
+  --mist: oklch(95% 0.02 275);
+  --lilac: oklch(91% 0.045 280);
+  --frost: oklch(94% 0.025 245);
+  /* The shader reads these from .navy (GradientShader's token()). */
+  --color-background: var(--background);
+  --color-primary: var(--primary);
+  --color-inverse: var(--inverse);
+  color-scheme: light;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: "Switzer", ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "liga" 1, "calt" 1;
+}
+body:has(.navy) {
+  background: oklch(98.8% 0.006 275);
+}
+.navy ::selection {
+  color: var(--inverse-foreground);
+  background: var(--inverse);
+}
+
+/* Headings stay one weight and upright: <em> left in titles reads like the rest */
+.navy :is(h1, h2, h3) em {
+  font-style: normal;
+  font-weight: inherit;
+}
+
+/* CSS fallbacks under GradientShader: the navy arch hanging from the top, the flip one rising from the bottom (the
+   footer), and the band across the middle. */
+.navy .arch-gradient {
+  background:
+    radial-gradient(
+      ellipse 150% 85% at 65% 0%,
+      var(--inverse) 0%,
+      var(--inverse) 38%,
+      oklch(30% 0.14 268) 52%,
+      var(--primary) 64%,
+      oklch(78% 0.1 275) 78%,
+      transparent 94%
+    ),
+    radial-gradient(ellipse 90% 50% at 0% 55%, oklch(60% 0.18 268 / 0.5) 0%, transparent 70%),
+    linear-gradient(to bottom, oklch(92% 0.04 275) 0%, var(--background) 100%);
+}
+.navy .band-gradient {
+  background: linear-gradient(
+    200deg,
+    var(--background) 0%,
+    oklch(78% 0.1 275) 24%,
+    var(--primary) 36%,
+    oklch(30% 0.14 268) 44%,
+    var(--inverse) 50%,
+    oklch(30% 0.14 268) 56%,
+    var(--primary) 64%,
+    oklch(78% 0.1 275) 76%,
+    var(--background) 100%
+  );
+}
+.navy .arch-gradient-flip {
+  background:
+    radial-gradient(
+      ellipse 150% 85% at 65% 100%,
+      var(--inverse) 0%,
+      var(--inverse) 38%,
+      oklch(30% 0.14 268) 52%,
+      var(--primary) 64%,
+      oklch(78% 0.1 275) 78%,
+      transparent 94%
+    ),
+    linear-gradient(to top, oklch(92% 0.04 275) 0%, var(--background) 100%);
+}

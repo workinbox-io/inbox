@@ -1,0 +1,46 @@
+---
+/**
+ * Collections ("custom apps for business": 170 US searches, KD 7, commercial; "equipment tracker" 720 KD 9,
+ * "project tracker" 3,600 KD 12), OpenSEO 2026-11-16. Not pitched as an Airtable alternative: no formulas or
+ * automations. Facts follow lib/collections/fields.ts and src/mcp/collections.ts.
+ */
+import AppPage from "@/components/site/AppPage.astro";
+
+export const prerender = true;
+---
+
+<AppPage
+  slug="custom-apps"
+  title="Custom lists, boards and a simple CRM for your team"
+  description="Collections: lists your company designs itself, such as an equipment tracker, inventory, a simple CRM or a project board, next to your mail and chat. Part of the open-source Work Inbox workspace."
+  h1={["The app you were missing,", "made in a minute."]}
+  lead="Deals, tasks, equipment: make a list with your own fields and work on it as a list, board, table or timeline, next to your mail and chat."
+  benefits={["IDs like TAS-12, statuses, priorities, cycles and sub-items.", "Automations: mail people or post in chat when something changes.", "Import a CSV, link GitHub PRs, comment and @mention."]}
+  url="workinbox.io/app/collections"
+  alt="A Tasks collection as a board: cards in To do, In progress, Review and Done columns with assignees and due dates"
+  features={[
+    { title: "Your own fields", text: "Text, number, date, choice, checkbox, person, link and e-mail. Rename a field and its values stay." },
+    { title: "Board or table", text: "Group by any choice field and drag cards between columns, or see every field in a table." },
+    { title: "Equipment tracker", text: "Who has which laptop, serial numbers, repairs and retired devices." },
+    { title: "Inventory", text: "SKU, quantity, location and the level to reorder at." },
+    { title: "A simple CRM", text: "Companies, deal value, owner and a pipeline from lead to won." },
+    { title: "From your spreadsheet", text: "Turn a CSV from Excel or Google Sheets into a collection: the fields are guessed from its columns. Import more and export any time." },
+    { title: "Shared on your terms", text: "Each collection is for you only, chosen people (view or edit) or the whole team: a CRM just for sales, equipment just for IT." },
+    { title: "Automations", text: "When Status changes to Low, e-mail purchasing; when a deal is Won, post in #sales. Built like a sentence." },
+    { title: "Claude and ChatGPT", text: "Ask an AI app to log a laptop or move a deal; it works with your collections by name.", href: "/docs/mcp" },
+  ]}
+  notYet="formulas, linked collections, and automations beyond e-mail and chat."
+  compare={["lists", "suite", "ai", "selfHost"]}
+  together={[
+    { title: "Mail", text: "E-mail fields open a new message to that address in one click; automations e-mail your people." },
+    { title: "Chat and mail mentions", text: "Type @ and a record's name in chat or mail; people without access get asked to be let in." },
+    { title: "One team", text: "Person fields are the same people who share your mailboxes, chat and calendars." },
+    { title: "Turn it on or off", text: "Owners and admins switch Collections, like every other app, in Settings → Organization → Apps." },
+  ]}
+  faq={[
+    { question: "What can I build with collections?", answer: "Any list with fields: an equipment or asset tracker, inventory, a simple CRM, a project or task board, a list of suppliers, job candidates or anything else your team keeps in a spreadsheet." },
+    { question: "Who can see a collection?", answer: "Whoever you share it with: only you, chosen people with view or edit access, or everyone in the organization. Owners and admins create collections; the one who made it changes its fields and sharing." },
+    { question: "Can an AI app work with my collections?", answer: "Yes. Claude, ChatGPT and other MCP apps read collections on every plan, and on Pro and Business they can add and change records, e.g. \"add the new MacBook to Equipment, assigned to Diana\"." },
+    { question: "Is it an Airtable replacement?", answer: "For simple lists, often yes. There are no formulas, automations or linked tables yet, so a team that relies on those should keep its database tool for now." },
+  ]}
+/>

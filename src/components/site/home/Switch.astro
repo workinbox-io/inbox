@@ -1,0 +1,63 @@
+---
+/** Switching (Where it lands): each Google thing, where it lands in Work Inbox and how it gets there, as a checklist, ending with what you give up. */
+import { ArrowRight, CalendarDays, Contact, HardDrive, Mail, Smartphone, Users } from "lucide-react";
+import Block from "./Block.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const logo = (name: string) => `/logos/brands/${name}.svg`;
+const rows = [
+  { from: t("Your mailbox"), fromLogo: logo("gmail"), to: t("Mail"), icon: Mail, text: t("Connect over IMAP, copy old mail later or upload a Takeout .mbox. Duplicates are skipped.") },
+  { from: t("Your contacts (CSV, vCard)"), fromLogo: logo("googlecontacts"), to: t("Contacts"), icon: Contact, text: t("Import the CSV or vCard. Addresses already in the book merge instead of doubling.") },
+  { from: t("Your calendars (sync, .ics)"), fromLogo: logo("googlecalendar"), to: t("Calendar"), icon: CalendarDays, text: t("Sync it in while you move, or import .ics files.") },
+  { from: t("Your files"), fromLogo: logo("googledrive"), to: t("Drive"), icon: HardDrive, text: t("Download and drop whole folders into the shared drive.") },
+  { from: t("Phone and desktop mail apps"), fromIcon: Smartphone, to: t("IMAP and SMTP"), icon: Mail, text: t("IMAP and SMTP, with a device profile for Apple devices.") },
+  { from: t("Groups like support@"), fromIcon: Users, to: t("Shared mailbox"), icon: Users, text: t("A real mailbox several people open, free on every plan.") },
+];
+---
+
+<Block id="setup" label={t("Getting started")} class="bg-muted">
+  <Fragment slot="title">{t("Bring what you have.")}{" "}<em>{t("Start with one thing.")}</em></Fragment>
+  <Fragment slot="text">{t("Connect the mailbox you already use, import contacts and calendars, drop in your files. Move at your own pace, the domain last.")}</Fragment>
+  <div data-switch data-total={rows.length}>
+    <ul role="list" class="mt-10 border-t border-border">
+      {
+        rows.map((r) => (
+          <li class="border-b border-border">
+            <label class="grid items-center min-h-11 py-4 cursor-pointer grid-cols-[auto_1fr] gap-x-4 gap-y-2 md:grid-cols-[auto_14rem_auto_13rem_1fr] md:gap-x-5">
+              <input type="checkbox" class="size-6 accent-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
+              <span class="flex items-center font-medium gap-2.5">
+                {r.fromLogo ? <img src={r.fromLogo} alt="" width="22" height="22" class="size-5.5 shrink-0" /> : <r.fromIcon className="size-5.5 shrink-0 text-muted-foreground" aria-hidden="true" />}
+                {r.from}
+              </span>
+              <ArrowRight className="hidden size-4 md:block text-faint-foreground" aria-hidden="true" />
+              <span class="flex items-center col-start-2 gap-2.5 text-primary md:col-start-auto">
+                <r.icon className="size-5 shrink-0" aria-hidden="true" />{r.to}
+              </span>
+              <span class="col-start-2 text-sm text-muted-foreground md:col-start-auto">{r.text}</span>
+            </label>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="flex flex-wrap items-center mt-6 gap-x-6 gap-y-3">
+      <p class="text-sm" aria-live="polite"><b class="text-primary" data-switch-n>0</b>{" "}{t("of {total} ticked", { total: rows.length })}</p>
+      <Button isLink={true} href={lp(locale, "/docs/quickstart")} size="base" variant="accent">{t("Read the quickstart")}</Button>
+      <a href={lp(locale, "/google-workspace-alternative")} class="inline-flex items-center text-sm underline min-h-11 underline-offset-4 text-primary hover:text-foreground">{t("Coming from Google Workspace? Read the guide")}</a>
+    </div>
+    <div class="max-w-3xl p-5 mt-8 text-sm border bg-background border-border">
+      <p class="font-medium">{t("Good to know")}</p>
+      <p class="mt-1 text-muted-foreground">{t("No Docs, Sheets or Meet equivalents beyond shared notes and Collections, no native phone apps (an installable web app instead), no CalDAV or CardDAV.")}</p>
+    </div>
+  </div>
+</Block>
+
+<script>
+  const root = document.querySelector<HTMLElement>("[data-switch]");
+  if (root) {
+    const n = root.querySelector("[data-switch-n]")!;
+    root.addEventListener("change", () => (n.textContent = String(root.querySelectorAll("input:checked").length)));
+  }
+</script>

@@ -1,0 +1,188 @@
+<!-- section: suite | Suite | It really does what Gmail, Slack, Notion and Drive do, in one login and one price. -->
+<section data-variant="A" data-name="App switcher" data-idea="A rail of the seven apps on the left, the real screen on the right and a plain 'replaces Gmail' caption: the visitor clicks through the product.">
+<div id="suite-a" class="bg-background py-16 sm:py-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-6">
+      <p class="label lg:col-span-3">The workspace</p>
+      <div class="lg:col-span-9 max-w-3xl">
+        <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight leading-tight">Gmail, Slack, Notion and Drive. <em>One login, one price.</em></h2>
+        <p class="mt-4 text-lg text-muted-foreground">Mail, chat, notes, calendar, drive, contacts and your own lists. They know about each other.</p>
+      </div>
+    </div>
+    <div class="mt-10 grid grid-cols-1 *:min-w-0 lg:grid-cols-12 gap-6 lg:gap-8">
+      <div class="lg:col-span-3">
+        <div role="tablist" aria-label="Apps" class="flex lg:flex-col gap-2 overflow-x-auto pb-2 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0" id="suite-a-tabs"></div>
+      </div>
+      <div class="lg:col-span-9">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-4">
+          <p class="text-lg"><b id="suite-a-name" class="font-semibold"></b> <span class="text-muted-foreground" id="suite-a-desc"></span></p>
+          <p class="text-sm text-primary" id="suite-a-repl"></p>
+        </div>
+        <img id="suite-a-img" src="../../public/marketing/mail-thread.webp" alt="" class="w-full border border-border bg-white shadow-[0_24px_60px_-30px_rgba(20,25,80,0.35)]" />
+        <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <a href="#" class="btn btn-accent">Try it in the demo</a>
+          <a href="#" id="suite-a-link" class="text-sm underline underline-offset-4">Read about this app</a>
+        </div>
+      </div>
+    </div>
+    <ul class="mt-12 grid sm:grid-cols-3 gap-px bg-border border border-border text-sm">
+      <li class="bg-background p-4"><b class="font-semibold">@ anything.</b> Mention people, files, notes, events, contacts and mail threads in chat and mail.</li>
+      <li class="bg-background p-4"><b class="font-semibold">One search.</b> One &#8984;K palette in every app.</li>
+      <li class="bg-background p-4"><b class="font-semibold">Attach from Drive.</b> Files go into mail, and mail attachments save to Drive.</li>
+    </ul>
+  </div>
+  <script>
+  (function () {
+    var root = document.getElementById("suite-a");
+    var apps = [
+      ["Mail", "mail-thread", "Mailboxes on your domain, shared ones like support@, aliases.", "Replaces Gmail"],
+      ["Chat", "chat", "Channels, direct messages and threads for the team.", "Replaces Slack"],
+      ["Notes", "notes", "Notes the team writes together, live.", "Replaces Notion"],
+      ["Calendar", "calendar", "Personal and shared calendars, invitations, time zones.", "Replaces Google Calendar"],
+      ["Drive", "drive", "Folders and files shared with people or the team.", "Replaces Google Drive"],
+      ["Contacts", "contacts", "One address book for the team, filled from your mail.", "Replaces Google Contacts"],
+      ["Collections", "collections", "Your own lists: equipment, inventory, deals, tasks, as a list, table, board, timeline or calendar.", "Replaces Airtable-style lists"]
+    ];
+    var slugs = ["custom-domain-email", "team-chat", "shared-notes", "team-calendar", "shared-drive", "shared-contacts", "custom-apps"];
+    var tabs = root.querySelector("#suite-a-tabs");
+    tabs.innerHTML = apps.map(function (a, i) {
+      return '<button role="tab" type="button" data-i="' + i + '" class="shrink-0 text-left px-4 py-3 border border-border text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring"><span class="block">' + a[0] + '</span><span class="hidden lg:block text-xs font-normal opacity-70 mt-0.5">' + a[3] + '</span></button>';
+    }).join("");
+    function pick(i) {
+      var a = apps[i];
+      root.querySelector("#suite-a-img").src = "../../public/marketing/" + a[1] + ".webp";
+      root.querySelector("#suite-a-img").alt = "The " + a[0] + " app in Work Inbox";
+      root.querySelector("#suite-a-name").textContent = a[0];
+      root.querySelector("#suite-a-desc").textContent = a[2];
+      root.querySelector("#suite-a-repl").textContent = a[3];
+      root.querySelector("#suite-a-link").setAttribute("href", "/" + slugs[i]);
+      tabs.querySelectorAll("button").forEach(function (b, j) {
+        var on = i === j; b.setAttribute("aria-selected", on);
+        b.className = b.className.replace(/ ?(bg-inverse text-inverse-foreground|bg-background hover:bg-muted)/g, "") + (on ? " bg-inverse text-inverse-foreground" : " bg-background hover:bg-muted");
+      });
+    }
+    tabs.addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) pick(+b.dataset.i); });
+    pick(0);
+  })();
+  </script>
+</div>
+</section>
+
+<section data-variant="B" data-name="Bento" data-idea="An unequal grid of tiles, each a cropped real screen with its 'replaces' tag: reads like a product overview at a glance, no clicking needed.">
+<div id="suite-b" class="bg-background py-16 sm:py-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-6">
+      <p class="label lg:col-span-3">The workspace</p>
+      <div class="lg:col-span-9 max-w-3xl">
+        <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight leading-tight">Gmail, Slack, Notion and Drive. <em>One login, one price.</em></h2>
+        <p class="mt-4 text-lg text-muted-foreground">Mail, chat, notes, calendar, drive, contacts and your own lists. They know about each other.</p>
+      </div>
+    </div>
+    <div class="mt-10 grid grid-cols-1 md:grid-cols-6 gap-4">
+      <!-- tile: label, replaces, text, img, span classes, crop -->
+      <a href="#" class="group md:col-span-4 md:row-span-2 bg-mist border border-border p-5 flex flex-col overflow-hidden">
+        <p class="text-xs uppercase tracking-wide text-primary">Replaces Gmail</p>
+        <h3 class="mt-1 text-2xl font-semibold">Mail</h3>
+        <p class="mt-1 text-sm text-muted-foreground max-w-md">Mailboxes on your domain, shared ones like support@, aliases.</p>
+        <img src="../../public/marketing/mail-thread.webp" alt="Work Inbox mail thread" class="mt-5 w-full border border-border bg-white object-cover object-top-left h-64 md:h-auto md:flex-1 md:min-h-[300px] transition group-hover:-translate-y-1" />
+      </a>
+      <a href="#" class="group md:col-span-2 bg-lilac border border-border p-5 flex flex-col overflow-hidden">
+        <p class="text-xs uppercase tracking-wide text-primary">Replaces Slack</p>
+        <h3 class="mt-1 text-xl font-semibold">Chat</h3>
+        <p class="mt-1 text-sm text-muted-foreground">Channels, direct messages and threads.</p>
+        <img src="../../public/marketing/chat.webp" alt="Work Inbox chat" class="mt-4 w-full border border-border bg-white object-cover object-top-left h-44" />
+      </a>
+      <a href="#" class="group md:col-span-2 bg-frost border border-border p-5 flex flex-col overflow-hidden">
+        <p class="text-xs uppercase tracking-wide text-primary">Replaces Notion</p>
+        <h3 class="mt-1 text-xl font-semibold">Notes</h3>
+        <p class="mt-1 text-sm text-muted-foreground">Written together, live.</p>
+        <img src="../../public/marketing/notes.webp" alt="Work Inbox notes" class="mt-4 w-full border border-border bg-white object-cover object-top-left h-44" />
+      </a>
+      <a href="#" class="md:col-span-3 bg-frost border border-border p-5 flex flex-col overflow-hidden">
+        <p class="text-xs uppercase tracking-wide text-primary">Replaces Google Calendar</p>
+        <h3 class="mt-1 text-xl font-semibold">Calendar</h3>
+        <p class="mt-1 text-sm text-muted-foreground">Personal and shared calendars, invitations, time zones.</p>
+        <img src="../../public/marketing/calendar.webp" alt="Work Inbox calendar" class="mt-4 w-full border border-border bg-white object-cover object-top-left h-52" />
+      </a>
+      <a href="#" class="md:col-span-3 bg-mist border border-border p-5 flex flex-col overflow-hidden">
+        <p class="text-xs uppercase tracking-wide text-primary">Replaces Google Drive</p>
+        <h3 class="mt-1 text-xl font-semibold">Drive</h3>
+        <p class="mt-1 text-sm text-muted-foreground">Folders and files shared with people or the team.</p>
+        <img src="../../public/marketing/drive.webp" alt="Work Inbox drive" class="mt-4 w-full border border-border bg-white object-cover object-top-left h-52" />
+      </a>
+      <a href="#" class="md:col-span-3 bg-lilac border border-border p-5 flex flex-col overflow-hidden">
+        <p class="text-xs uppercase tracking-wide text-primary">Replaces Google Contacts</p>
+        <h3 class="mt-1 text-xl font-semibold">Contacts</h3>
+        <p class="mt-1 text-sm text-muted-foreground">One address book for the team, filled from your mail.</p>
+        <img src="../../public/marketing/contacts.webp" alt="Work Inbox contacts" class="mt-4 w-full border border-border bg-white object-cover object-top-left h-52" />
+      </a>
+      <a href="#" class="md:col-span-3 bg-mist border border-border p-5 flex flex-col overflow-hidden">
+        <p class="text-xs uppercase tracking-wide text-primary">Replaces Airtable-style lists</p>
+        <h3 class="mt-1 text-xl font-semibold">Collections</h3>
+        <p class="mt-1 text-sm text-muted-foreground">Your own lists: equipment, deals, tasks, as a list, board or timeline.</p>
+        <img src="../../public/marketing/collections.webp" alt="Work Inbox collections" class="mt-4 w-full border border-border bg-white object-cover object-top-left h-52" />
+      </a>
+      <div class="md:col-span-6 bg-inverse text-inverse-foreground p-6 grid sm:grid-cols-3 gap-6 text-sm">
+        <p><b class="block text-base font-semibold">@ anything</b>Mention people, files, notes, events, contacts and mail threads in chat and mail.</p>
+        <p><b class="block text-base font-semibold">One &#8984;K</b>One search palette across every app.</p>
+        <p><b class="block text-base font-semibold">Attach from Drive</b>Files go into mail; mail attachments save to Drive.</p>
+      </div>
+    </div>
+    <div class="mt-8"><a href="#" class="btn btn-accent">Try it in the demo</a></div>
+  </div>
+</div>
+</section>
+
+<section data-variant="C" data-name="Scroll story" data-idea="One screen stays pinned while captions scroll past and the screen changes app by app, ending on the connections (@ anything, one search, Drive in mail): a guided tour in one scroll.">
+<div id="suite-c" class="bg-background py-16 sm:py-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-6">
+      <p class="label lg:col-span-3">The workspace</p>
+      <div class="lg:col-span-9 max-w-3xl">
+        <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight leading-tight">Gmail, Slack, Notion and Drive. <em>One login, one price.</em></h2>
+        <p class="mt-4 text-lg text-muted-foreground">Scroll through the real apps. Each replaces something you pay for today.</p>
+      </div>
+    </div>
+    <div class="mt-12 grid lg:grid-cols-12 gap-10">
+      <div class="lg:col-span-4" id="suite-c-steps"></div>
+      <div class="hidden lg:block lg:col-span-8">
+        <div class="sticky top-24">
+          <div class="relative border border-border bg-white shadow-[0_24px_60px_-30px_rgba(20,25,80,0.35)] aspect-[16/10] overflow-hidden" id="suite-c-stage"></div>
+          <p class="mt-3 text-sm text-muted-foreground" id="suite-c-cap"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function () {
+    var root = document.getElementById("suite-c");
+    var steps = [
+      ["Mail", "mail-thread", "Replaces Gmail", "Mailboxes on your own domain, shared ones like support@, and aliases. Apple Mail and Outlook work too over IMAP and SMTP."],
+      ["Chat", "chat", "Replaces Slack", "Channels, direct messages and threads. Ask a colleague about a mail thread without leaving it."],
+      ["Notes", "notes", "Replaces Notion", "Notes the whole team edits live, with @mentions and meeting notes made from calendar events."],
+      ["Calendar", "calendar", "Replaces Google Calendar", "Personal and shared calendars, invitations, time zones. Google Calendar syncs in."],
+      ["Drive", "drive", "Replaces Google Drive", "Folders and files shared with people or the team. Attach from Drive in mail; save attachments back."],
+      ["Contacts", "contacts", "Replaces Google Contacts", "One address book for the team, filled from the mail you send."],
+      ["Collections", "collections", "Replaces Airtable-style lists", "Your own lists: equipment, inventory, deals, tasks, as a list, table, board, timeline or calendar."]
+    ];
+    var box = root.querySelector("#suite-c-steps"), stage = root.querySelector("#suite-c-stage"), cap = root.querySelector("#suite-c-cap");
+    box.innerHTML = steps.map(function (s, i) {
+      return '<div data-i="' + i + '" class="step lg:min-h-[60vh] flex flex-col justify-center py-6 lg:py-0 transition-opacity"><p class="text-xs uppercase tracking-wide text-primary">' + s[2] + '</p><h3 class="mt-1 text-2xl sm:text-3xl font-semibold">' + s[0] + '</h3><p class="mt-2 text-muted-foreground">' + s[3] + '</p><img src="../../public/marketing/' + s[1] + '.webp" alt="The ' + s[0] + ' app in Work Inbox" class="lg:hidden mt-4 w-full border border-border bg-white" /></div>';
+    }).join("") +
+    '<div data-i="7" class="step lg:min-h-[60vh] flex flex-col justify-center py-6 lg:py-0 transition-opacity"><p class="text-xs uppercase tracking-wide text-primary">Connected</p><h3 class="mt-1 text-2xl sm:text-3xl font-semibold">They know about each other</h3><ul class="mt-3 space-y-3 text-muted-foreground"><li><b class="text-foreground">@ anything.</b> Mention people, files, notes, events, contacts and mail threads.</li><li><b class="text-foreground">One &#8984;K.</b> The same palette and search in every app.</li><li><b class="text-foreground">One login, one price.</b> Seven apps for EUR 1 per person after the first 5.</li></ul><a href="#" class="btn btn-accent mt-6 self-start">Try it in the demo</a></div>';
+    stage.innerHTML = steps.map(function (s, i) {
+      return '<img data-i="' + i + '" src="../../public/marketing/' + s[1] + '.webp" alt="The ' + s[0] + ' app in Work Inbox" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ' + (i ? "opacity-0" : "") + '" />';
+    }).join("");
+    var els = box.querySelectorAll(".step");
+    function show(i) {
+      var k = Math.min(i, steps.length - 1);
+      stage.querySelectorAll("img").forEach(function (im, j) { im.style.opacity = j === k ? 1 : 0; });
+      cap.textContent = i > 6 ? "Seven apps, one workspace." : steps[k][0] + ": " + steps[k][2].toLowerCase();
+      var d = matchMedia("(min-width:1024px)").matches; els.forEach(function (e, j) { e.style.opacity = d && j !== i ? 0.3 : 1; });
+    }
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) show(+e.target.dataset.i); }); }, { rootMargin: "-45% 0px -45% 0px" });
+    els.forEach(function (e) { io.observe(e); }); show(0);
+  })();
+  </script>
+</div>
+</section>

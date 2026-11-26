@@ -1,0 +1,1 @@
+CREATE INDEX `mail_messages_no_raw_idx` ON `mail_messages` (`created_at`) WHERE "mail_messages"."raw_key" is null;

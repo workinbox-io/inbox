@@ -1,0 +1,38 @@
+---
+/** Shared contacts ("shared contacts", 1,300 US searches, KD 10), OpenSEO 2026-11-15. */
+import AppPage from "@/components/site/AppPage.astro";
+
+export const prerender = true;
+---
+
+<AppPage
+  slug="shared-contacts"
+  title="Shared contacts: one address book filled from your mail"
+  description="A team address book filled from the mail you send, with groups, Google, Outlook and vCard import, and suggestions in the composer. Part of the open-source Work Inbox workspace."
+  h1={["One address book,", "filled by your mail."]}
+  lead="Everyone you write to lands in the team's contacts with their company and latest conversations."
+  benefits={["Saved automatically from sent mail, no duplicates.", "Groups, and suggestions in the composer.", "Company banner and logo on each contact; import and export vCard and CSV."]}
+  url="workinbox.io/app/contacts"
+  alt="The team address book: a group of partners and a contact with their details and the latest conversation"
+  features={[
+    { title: "Fills itself", text: "People you write to are saved automatically; no-reply addresses and your own domains stay out." },
+    { title: "Shared by everyone", text: "One book for the team: everyone reads it and keeps it up to date." },
+    { title: "Groups", text: "Clients, partners, suppliers: write to everyone in a group from one button." },
+    { title: "Latest conversations", text: "Each contact shows the recent threads with them from your mailboxes." },
+    { title: "Import and export", text: "Google and Outlook CSV or vCard in, CSV or vCard out." },
+    { title: "Directory", text: "Your people and shared mailboxes, always current, next to your contacts." },
+    { title: "Suggestions as you type", text: "To and Cc suggest contacts and groups in the composer." },
+    { title: "Save from a message", text: "Save a sender from the panel next to their e-mail." },
+    { title: "Claude and ChatGPT", text: "Look people up from your AI app.", href: "/docs/mcp" },
+  ]}
+  together={[
+    { title: "Mail", text: "The sender panel shows the contact; addresses are suggested in every composer." },
+    { title: "Chat and mail, one team", text: "The directory lists the same people you chat with and share mailboxes with." },
+    { title: "One address, one contact", text: "Imports merge into the contact that already owns an address: no duplicates." },
+  ]}
+  faq={[
+    { question: "Are contacts private per person?", answer: "No. There's one address book per team that everyone reads and edits, which is the point: nobody keeps customers in their own head." },
+    { question: "Can I import from Google Contacts or Outlook?", answer: "Yes: export a CSV from Google or Outlook, or a vCard file from anywhere, and import it in Contacts." },
+    { question: "Does it sync with my phone?", answer: "Not yet: there's no CardDAV. Export a vCard file whenever you need the contacts elsewhere." },
+  ]}
+/>

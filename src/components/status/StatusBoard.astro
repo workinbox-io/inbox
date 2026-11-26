@@ -1,0 +1,140 @@
+---
+/** The status page's body, rendered on the server: no client JS (the old React island pulled in recharts, radix and lucide). */
+import type { StatusOverview } from "@/lib/server/status";
+import { STATUS_LABELS, type ServiceStatus } from "@/lib/status";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+
+interface Props { overview: StatusOverview }
+const { overview } = Astro.props;
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+
+type Status = ServiceStatus | "unknown";
+const COLORS: Record<Status, string> = {
+  ok: "var(--color-emerald-500, #10b981)",
+  degraded: "var(--color-amber-500, #f59e0b)",
+  down: "var(--destructive, #dc2626)",
+  unknown: "var(--muted-foreground)",
+};
+const HEADLINE: Record<Status, string> = {
+  ok: "All systems operational",
+  degraded: "Some systems are degraded",
+  down: "We're having an outage",
+  unknown: "Status data is delayed",
+};
+// Feather-style paths, one per state.
+const ICONS: Record<Status, string> = {
+  ok: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  degraded: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  down: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  unknown: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+};
+
+const pct = (v: number | null) => (v === null ? "–" : `${(Math.floor(v * 10000) / 100).toFixed(2)}%`);
+const dayLabel = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleDateString(locale, { month: "short", day: "numeric", timeZone: "UTC" });
+const dateTime = (iso: string) => new Date(iso).toLocaleString(locale, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC" }) + " UTC";
+const minutes = (from: string, to: string | null) => Math.max(1, Math.round(((to ? new Date(to).getTime() : Date.now()) - new Date(from).getTime()) / 60_000));
+const duration = (m: number) => (m < 60 ? t("{n} min", { n: m }) : t("{h} h {m} min", { h: Math.floor(m / 60), m: m % 60 }));
+function ago(iso: string) {
+  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (s < 60) return t("{n}s ago", { n: s });
+  if (s < 3600) return t("{n}m ago", { n: Math.floor(s / 60) });
+  if (s < 86_400) return t("{n}h ago", { n: Math.floor(s / 3600) });
+  return t("{n}d ago", { n: Math.floor(s / 86_400) });
+}
+const tick = (d: StatusOverview["components"][number]["days"][number]) =>
+  d.status === null
+    ? `${dayLabel(d.day)}: ${t("No data")}`
+    : [dayLabel(d.day), t("{pct} uptime", { pct: pct(d.uptime) }), d.downMinutes ? t("Down for about {n} min", { n: d.downMinutes }) : "", d.status === "degraded" ? t("Degraded performance") : ""].filter(Boolean).join(" · ");
+
+const withData = overview.components.filter((c) => c.uptime !== null);
+const uptime = withData.length ? Math.min(...withData.map((c) => c.uptime!)) : null;
+const open = overview.incidents.filter((i) => !i.resolvedAt);
+const days = overview.components[0]?.days.length ?? 90;
+const badge = (s: Status) => ({ color: COLORS[s], bg: `color-mix(in oklab, ${COLORS[s]} 12%, transparent)` });
+---
+
+<div class="grid gap-4 text-foreground">
+  <div class="flex flex-wrap items-center gap-4 rounded-2xl p-6" style={`background-color: color-mix(in oklab, ${COLORS[overview.status]} 10%, var(--card))`}>
+    <svg class="size-8 shrink-0" style={`color: ${COLORS[overview.status]}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={ICONS[overview.status]} />
+    <div class="grid flex-1 gap-0.5">
+      <span class="text-lg font-medium">{t(HEADLINE[overview.status])}</span>
+      <span class="text-muted-foreground text-sm">{overview.updatedAt ? t("Checked every minute · last check {ago}", { ago: ago(overview.updatedAt) }) : t("No checks recorded yet")}</span>
+    </div>
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-3">
+    {[
+      [t("Uptime, last {n} days", { n: days }), uptime === null ? "–" : pct(uptime)],
+      [t("Incidents, last 30 days"), String(overview.incidents.length)],
+      [t("Open incidents"), String(open.length)],
+    ].map(([label, value]) => (
+      <div class="rounded-2xl bg-card p-5 ring-1 ring-foreground/10">
+        <div class="text-muted-foreground text-sm">{label}</div>
+        <div class="mt-1 text-2xl font-semibold tabular-nums">{value}</div>
+      </div>
+    ))}
+  </div>
+
+  <section class="rounded-2xl bg-card p-6 ring-1 ring-foreground/10">
+    <h2 class="font-medium">{t("Components")}</h2>
+    <p class="text-muted-foreground text-sm">{t("Each bar is one day. Hover for details.")}</p>
+    <div class="mt-6 grid gap-6">
+      {overview.components.map((c) => {
+        const b = badge(c.status);
+        return (
+          <div class="grid gap-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="grid">
+                <span class="font-medium">{t(c.name)}</span>
+                <span class="text-muted-foreground text-xs">{t(c.description)}</span>
+              </div>
+              <span class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium" style={`color: ${b.color}; background-color: ${b.bg}`}>
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={ICONS[c.status]} />
+                {t(STATUS_LABELS[c.status])}
+              </span>
+            </div>
+            <div class="flex h-8 gap-px sm:gap-[2px]">
+              {c.days.map((d) => <span class="h-full min-w-0 flex-1 rounded-[1px]" style={`background-color: ${d.status ? COLORS[d.status] : "var(--muted)"}`} title={tick(d)}></span>)}
+            </div>
+            <div class="text-muted-foreground flex justify-between text-xs">
+              <span>{t("{n} days ago", { n: days })}</span>
+              <span>{t("{pct} uptime", { pct: pct(c.uptime) })}</span>
+              <span>{t("Today")}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <section class="rounded-2xl bg-card p-6 ring-1 ring-foreground/10">
+    <h2 class="font-medium">{t("Incidents")}</h2>
+    <p class="text-muted-foreground text-sm">{t("Detected automatically by our checks. Last 30 days.")}</p>
+    <div class="mt-6">
+      {overview.incidents.length ? (
+        <ol class="grid">
+          {overview.incidents.map((i) => {
+            const s: Status = i.resolvedAt ? "ok" : i.status;
+            return (
+              <li class="flex gap-3 pb-6 last:pb-0">
+                <svg class="mt-0.5 size-5 shrink-0" style={`color: ${COLORS[s]}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={ICONS[s]} />
+                <div class="grid gap-0.5">
+                  <div class="flex flex-wrap items-baseline gap-x-3">
+                    <span class="font-medium">{t(i.component)}: {t(STATUS_LABELS[i.status]).toLowerCase()}</span>
+                    <time class="text-muted-foreground text-xs" datetime={i.startedAt}>{dateTime(i.startedAt)}</time>
+                  </div>
+                  <span class:list={["text-sm", i.resolvedAt ? "text-muted-foreground" : ""]}>
+                    {i.resolvedAt ? t("Resolved after {d}.", { d: duration(minutes(i.startedAt, i.resolvedAt)) }) : t("Ongoing for {d}. We're on it.", { d: duration(minutes(i.startedAt, null)) })}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <p class="text-muted-foreground text-sm">{t("No incidents in the last 30 days.")}</p>
+      )}
+    </div>
+  </section>
+</div>

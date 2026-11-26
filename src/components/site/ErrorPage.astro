@@ -1,0 +1,40 @@
+---
+/** 404 and 500 as Navy's error hero: the code, a title and the way back, over the gradient. */
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import GradientShader from "@/components/navy/assets/GradientShader.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import { grid, mainCol, mainStart } from "@/components/navy/fundations/containers/grid";
+import { siteConfig } from "@/config/site";
+interface Props {
+  code: number;
+  title: string;
+  message: string;
+}
+const { code, title, message } = Astro.props;
+(Astro.locals as { errorPage?: boolean }).errorPage = true;
+---
+
+<MarketingLayout title={title} description={message} ink>
+  <section class="relative overflow-hidden">
+    <div aria-hidden="true" class="absolute inset-0 arch-gradient"></div>
+    <GradientShader class="absolute inset-0 size-full" />
+    <div data-nav-dark aria-hidden="true" class="absolute inset-x-0 top-0 h-1/2"></div>
+    <Wrapper variant="standard" class={`relative grid w-full pt-36 pb-60 ${grid}`}>
+      <div class:list={[mainCol, mainStart]}>
+        <Text tag="p" variant="textSM" class="font-medium uppercase text-inverse-foreground/70">Error {code}</Text>
+        <Text tag="h1" variant="displayLG" class="max-w-2xl mt-6 tracking-tight text-balance text-inverse-foreground">{title}</Text>
+        <Text tag="p" variant="textBase" class="max-w-xl mt-5 text-inverse-foreground/90 text-pretty">
+          {message} Need a hand? Write to <a href={`mailto:${siteConfig.supportEmail}`} class="underline underline-offset-4 text-inverse-foreground">{siteConfig.supportEmail}</a>.
+        </Text>
+        <div class="flex flex-wrap gap-3 mt-8">
+          <Button isLink={true} href="/" size="lg" variant="muted">Back to home</Button>
+          <Button isLink={true} href="/pricing" size="lg" variant="accent">Pricing</Button>
+          <Button isLink={true} href="/docs" size="lg" variant="muted">Read the docs</Button>
+          <Button isLink={true} href="/demo" size="lg" variant="muted">Try the demo</Button>
+        </div>
+      </div>
+    </Wrapper>
+  </section>
+</MarketingLayout>

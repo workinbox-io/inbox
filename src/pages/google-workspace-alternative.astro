@@ -1,0 +1,137 @@
+---
+/**
+ * Landing page for "google workspace alternative(s)" (480 US searches a month each, KD 0; OpenSEO, 2026-11-09). The
+ * results are list articles, so this page answers what a list can't: what a team keeps and gives up, and what five
+ * people cost. Competitor facts from config/compare.ts (their own pages, `checked`).
+ */
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
+import Minus from "@/components/navy/fundations/icons/Minus.astro";
+import PriceLine from "@/components/site/PriceLine.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import Faq from "@/components/site/Faq.astro";
+import { COMPETITORS, competitorBySlug } from "@/config/compare";
+import { FREE_PEOPLE, PLANS, TRIAL_DAYS } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+import { localizedPath } from "@/lib/i18n/locales";
+
+export const prerender = true;
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const google = competitorBySlug("google-workspace")!;
+const checked = new Date(google.checked).toLocaleDateString(locale === "en" ? "en-GB" : locale, { day: "numeric", month: "long", year: "numeric" });
+
+/** Five people and one shared support@ mailbox, cheapest plan with custom-domain mail, annual billing, list prices before tax. */
+const team = [
+  { name: "Work Inbox Starter", each: `€${PLANS.starter.priceMonthly / 100}`, total: `€0 (up to ${FREE_PEOPLE} people free)`, shared: "Included, free" },
+  { name: "Work Inbox self-hosted", each: "€0", total: "€0 + your Cloudflare usage", shared: "Included, free" },
+  { name: "Google Workspace Business Starter", each: "$7", total: "$35", shared: "Google Groups' collaborative inbox" },
+  { name: "Microsoft 365 Business Basic", each: "$7", total: "$35", shared: "Free up to 50 GB and 25 users" },
+  { name: "Zoho Workplace Standard", each: "$3", total: "$15", shared: "Shared mailbox group" },
+  { name: "Proton Mail Essentials", each: "$6.99", total: "$34.95", shared: "No shared mailboxes listed" },
+];
+
+const keep = [
+  "Mail on your own domain, for every person",
+  "Shared mailboxes like support@ and sales@",
+  "Aliases, a catch-all and plus addressing",
+  "Your old mail, imported from a Google Takeout .mbox",
+  "Team chat with channels, DMs and threads, instead of Google Chat",
+  "Notes your team edits together, live",
+  "One address book for the team, with Google contacts imported",
+  "A shared drive with folders, previews and public links",
+  "Team calendars with invitations Gmail and Outlook users can answer",
+  "Search with from:, has:attachment, is:unread",
+  "Two-factor sign-in, an audit log and an API",
+];
+const giveUp = [
+  "Calendar sync with phone apps over CalDAV, and booking pages (not yet)",
+  "Sheets, Slides and Meet (not planned)",
+  "Gmail's own phone apps (Work Inbox mail works in your phone's mail app over IMAP)",
+];
+
+const steps = [
+  { title: "Add the domain", text: "In Settings → Mail. Work Inbox shows the DNS records it needs (MX, DKIM, DMARC); on Cloudflare, Connect Cloudflare adds them." },
+  { title: "Add your people", text: "Each person gets a mailbox with the same address they had in Gmail." },
+  { title: "Switch the MX records", text: "Replace Google's MX records with the one Work Inbox lists. New mail arrives in Work Inbox; keep Google as an archive." },
+];
+
+const faq = [
+  ...google.faq,
+  { question: "Is there a free Google Workspace alternative?", answer: `Work Inbox is free when you run it on your own Cloudflare account; you pay Cloudflare for what you use. Hosted, up to ${FREE_PEOPLE} people are free for good, with shared mailboxes, aliases and notes; a bigger team pays from €${PLANS.starter.priceMonthly / 100} a person a month, the first ${FREE_PEOPLE} still free. Zoho Mail also has a free plan for up to five people, without shared mailboxes.` },
+  { question: "Is there an open-source Google Workspace alternative?", answer: "Work Inbox is open source and runs on Cloudflare. Nextcloud is open source too and covers files, calendar and office documents, but it has no mail server of its own." },
+];
+
+const questions = faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+const url = (path: string) => (Astro.site ? new URL(localizedPath(locale, path), Astro.site).href : path);
+const jsonLd = [
+  { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: questions.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) },
+  { "@context": "https://schema.org", "@type": "WebPage", name: t("Google Workspace alternative"), url: url("/google-workspace-alternative"), dateModified: google.checked },
+];
+---
+
+<MarketingLayout title={t("Open-source Google Workspace alternative")} description={t("Open-source Google Workspace alternative: email on your domain, chat, notes, calendar, drive and contacts. Free for 5 people, then €1 each, or self-host.")} jsonLd={jsonLd} ink>
+  <Hero>
+    <Fragment slot="title">{t("Leave Google,")}{" "}<em>{t("keep your addresses.")}</em></Fragment>
+    <Fragment slot="text">{t("Work Inbox is an open-source workspace: email on your own domain, chat, notes, calendars, a shared drive and contacts. It does less than Google Workspace, costs less, and can run on your own Cloudflare account.")}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">{t("Start free")}</Button>
+      <ArrowLink href="/docs/self-host" tone="default">{t("Self-host on Cloudflare")}</ArrowLink>
+    </Fragment>
+    <PriceLine />
+  </Hero>
+
+  <Section label={t("Switch")}>
+    <Fragment slot="title">{t("What changes when you leave Google")}</Fragment>
+    <div class="grid gap-16 md:grid-cols-2 md:gap-x-8">
+      <div>
+        <Text tag="h3" variant="displaySM" class="text-balance text-foreground">{t("What you keep")}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{keep.map((k) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(k)}</Text></li>)}</ul>
+      </div>
+      <div>
+        <Text tag="h3" variant="displaySM" class="text-balance text-foreground">{t("What you give up,")}{" "}<em>{t("for now")}</em></Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{giveUp.map((k) => <li class="flex items-start gap-3"><Minus size="sm" class="mt-0.5 shrink-0 text-faint-foreground" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-muted-foreground text-pretty">{t(k)}</Text></li>)}</ul>
+      </div>
+    </div>
+  </Section>
+
+  <Section label={t("Pricing")} class="bg-muted">
+    <Fragment slot="title">{t("What five people and a support@ mailbox cost")}</Fragment>
+    <Fragment slot="text">{t("The cheapest plan with mail on your own domain, a month, billed yearly, list prices before tax, in the currency each vendor shows.")}{" "}{t("Checked {date}.", { date: checked })}</Fragment>
+    <div slot="full" class="relative overflow-x-auto">
+      <table class="w-full text-sm text-left min-w-140">
+        <thead><tr><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Plan")}</th><th scope="col" class="pb-6 pl-2 pr-6 font-medium align-bottom text-foreground">{t("Per person")}</th><th scope="col" class="pb-6 pl-2 pr-6 font-medium align-bottom text-foreground">{t("Five people")}</th><th scope="col" class="pb-6 pl-2 pr-6 font-medium align-bottom text-foreground">{t("The shared mailbox")}</th></tr></thead>
+        <tbody>
+          {team.map((r, i) => (
+            <tr class:list={["align-top", i < 2 ? "bg-lilac" : i % 2 === 0 ? "bg-background" : ""]}>
+              <th scope="row" class="px-5 py-5 font-medium text-foreground">{r.name}</th><td class="py-5 pl-2 pr-6 tabular-nums text-foreground">{t(r.each)}</td><td class="py-5 pl-2 pr-6 tabular-nums text-foreground">{t(r.total)}</td><td class="py-5 pl-2 pr-6 text-foreground">{t(r.shared)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Section>
+
+  <Section label={t("Compare")}>
+    <Fragment slot="title">{t("Feature by feature")}</Fragment>
+    <div slot="full">
+      <ComparisonTable competitors={[google, competitorBySlug("microsoft-365")!, competitorBySlug("zoho-mail")!]} />
+      <Text tag="p" variant="textSM" class="mt-6 text-muted-foreground">{t("More detail, with sources:")}{" "}{COMPETITORS.map((c, i) => <>{i ? ", " : ""}<a href={`/vs/${c.slug}`} class="inline-block py-1 text-foreground border-b border-foreground">{c.name}</a></>)}.</Text>
+    </div>
+  </Section>
+
+  <Section label={t("Switching")}>
+    <Fragment slot="title">{t("Moving your domain's mail")}</Fragment>
+    <Features slot="full" cards cols={3} items={steps.map((s, i) => ({ tag: String(i + 1), title: t(s.title), text: t(s.text) }))} />
+  </Section>
+
+  <Faq items={questions} />
+</MarketingLayout>

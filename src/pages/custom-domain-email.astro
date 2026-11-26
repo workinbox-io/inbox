@@ -1,0 +1,43 @@
+---
+/** Mail on your own domain ("custom domain email", 3,600 US searches, KD 28; "business email" 18,100), OpenSEO 2026-11-15. */
+import AppPage from "@/components/site/AppPage.astro";
+import { FREE_PEOPLE, PLANS } from "@/config/plans";
+
+export const prerender = true;
+---
+
+<AppPage
+  slug="custom-domain-email"
+  title="Team email on your own domain, with shared mailboxes"
+  description="Personal and shared mailboxes, aliases, drafts your team sees, signatures and out-of-office. Works in Apple Mail and Outlook. Open source, free for 5 people."
+  h1={["Email on your own domain,", "for the whole team."]}
+  lead="Personal mailboxes, shared ones like support@, aliases that land where you say. Drafts the team can see, signatures that look right, and it works in Apple Mail and Outlook too."
+  benefits={["A shared inbox where \"Draft by Anna\" stops double replies, and Ben can take over.", "Signatures, out-of-office and templates per mailbox.", "Mail apps over IMAP/SMTP, drafts sync both ways."]}
+  url="workinbox.io/app/mail"
+  alt="Work Inbox mail: folders, the inbox of anna@ and support@, an open message and the sender panel"
+  features={[
+    { title: "A mailbox per person", text: "Each person gets their own address on the domain, or start on a free yourname.workinbox.io address." },
+    { title: "Shared mailboxes, free", text: "support@ or sales@ answered by several people from the shared address.", href: "/shared-mailbox" },
+    { title: "Aliases and catch-all", text: "Unlimited aliases, a catch-all per domain and plus addressing." },
+    { title: "Search and shortcuts", text: "from:, to:, has:attachment, is:unread and keyboard shortcuts for everything." },
+    { title: "Spam score and rules", text: "Every message scored; always allow or block a sender or a domain. Filters, labels and forwarding." },
+    { title: "Signatures and templates", text: "Signatures from a company template, reply templates and out of office per mailbox." },
+    { title: "Snooze, schedule, undo", text: "Snooze a thread, schedule a send, undo it; drafts follow you across devices." },
+    { title: "Bring your old mail", text: "Import .mbox (Google Takeout) or .eml files; every message keeps its original .eml." },
+    { title: "Any mail app", text: "IMAP and SMTP for Apple Mail, Outlook, Thunderbird and your phone, a password per device.", href: "/docs/mail-clients" },
+    { title: "Claude and ChatGPT", text: "Search and read mail from your AI app; replies come back as drafts you send yourself.", href: "/docs/mcp" },
+  ]}
+  notYet="native mobile apps: use your phone's mail app over IMAP, or install the web app."
+  compare={["shared", "aliases", "imap", "price"]}
+  together={[
+    { title: "Contacts fill themselves", text: "Everyone you write to lands in the team's address book, suggested as you type." },
+    { title: "Attach from Drive", text: "Attach a drive file to a message, or save an attachment to a shared folder." },
+    { title: "Invitations in the calendar", text: "Invites from Google or Outlook land in the calendar, with Accept and Decline in the mail." },
+  ]}
+  faq={[
+    { question: "Do I have to move my domain to Cloudflare?", answer: "No. On Cloudflare, Connect Cloudflare adds the records with an API token. Anywhere else, add the MX, DKIM and DMARC records the setup shows and click Check DNS." },
+    { question: "Do I need my own domain?", answer: "No. Claim a free address like yourname.workinbox.io in Settings → Mail and start right away; add your own domain later." },
+    { question: "What does it cost?", answer: `The first ${FREE_PEOPLE} people are free. After that you pay per person with a personal mailbox; shared mailboxes, aliases and the catch-all cost nothing. Self-hosting is free.` },
+    { question: "Can I use Outlook or my phone's mail app?", answer: "Yes: every mailbox works over IMAP and SMTP with a password per device. Settings → Mail clients shows the server and creates the password." },
+  ]}
+/>

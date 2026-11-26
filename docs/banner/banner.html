@@ -1,0 +1,50 @@
+<!doctype html>
+<!-- README header. Re-render: see docs/banner/render.mjs. -->
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @font-face { font-family: "Inter"; src: url("../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "Funnel Display"; src: url("../../node_modules/@fontsource-variable/funnel-display/files/funnel-display-latin-wght-normal.woff2") format("woff2"); font-weight: 300 800; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 560px; }
+  body { font-family: "Inter", system-ui, sans-serif; color: #141414; overflow: hidden; position: relative; background: #ffffff; }
+  body[data-theme="dark"] { color: #ededed; background: #141414; }
+  .copy { position: absolute; left: 72px; top: 84px; width: 540px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 600; letter-spacing: -.02em; }
+  .brand img { width: 36px; height: 36px; }
+  body[data-theme="dark"] .brand img { box-shadow: 0 0 0 1px rgba(255,255,255,.18); border-radius: 8px; }
+  h1 { margin-top: 44px; font-size: 50px; line-height: 1.04; font-weight: 600; letter-spacing: -.035em; font-family: "Funnel Display", system-ui, sans-serif; }
+  h1 em { display: block; font-style: normal; color: #8a8a8a; }
+  body[data-theme="dark"] h1 em { color: #8f8f8f; }
+  p { margin-top: 22px; font-size: 20px; line-height: 1.45; color: #5c5c5c; letter-spacing: -.01em; }
+  body[data-theme="dark"] p { color: #a8a8a8; }
+  .chips { margin-top: 34px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font: 500 13px/1 ui-monospace, Menlo, monospace; padding: 8px 12px; border: 1px solid #e2e2e2; }
+  body[data-theme="dark"] .chip { border-color: #333; }
+  .chip.cf { color: #c25e07; border-color: rgba(243,128,32,.35); }
+  body[data-theme="dark"] .chip.cf { color: #ffa45c; }
+  .shot { position: absolute; width: 640px; border: 1px solid #d6d6d6; overflow: hidden; background: #fff; box-shadow: -12px 12px 0 rgba(0,0,0,.05); }
+  body[data-theme="dark"] .shot { border-color: #3a3a3a; background: #141414; box-shadow: -12px 12px 0 rgba(0,0,0,.35); }
+  .s1 { left: 820px; top: 40px; } .s2 { left: 740px; top: 150px; } .s3 { left: 660px; top: 260px; }
+  .shot img { display: block; width: 100%; }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <div class="brand"><img src="../../public/logo.svg" alt="" />Work Inbox</div>
+    <h1>Your team's workspace. <em>Open source.</em></h1>
+    <p>Email on your own domain, chat, notes, calendars, a shared drive and contacts. Self-host on Cloudflare or use workinbox.io.</p>
+    <div class="chips">
+      <span class="chip cf">Workers</span><span class="chip cf">D1</span><span class="chip cf">R2</span><span class="chip cf">Durable Objects</span>
+      <span class="chip">MCP</span><span class="chip">AGPL-3.0</span>
+    </div>
+  </div>
+  <div class="shot s1"><img data-name="calendar" alt="" /></div>
+  <div class="shot s2"><img data-name="drive" alt="" /></div>
+  <div class="shot s3"><img data-name="mail-thread" alt="" /></div>
+  <script>
+    for (const img of document.querySelectorAll("[data-name]")) img.src = `../../public/marketing/${img.dataset.name}.webp`;
+  </script>
+</body>
+</html>

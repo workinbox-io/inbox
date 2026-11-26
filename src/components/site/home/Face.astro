@@ -1,0 +1,14 @@
+---
+/** A static face avatar like the app's (boring-avatars "beam": coloured disc, two eyes, a smile), without shipping the React package. */
+interface Props { who: keyof typeof palette; size?: number }
+const palette = { anna: ["#f97316", "#12404a"], marta: ["#e3a553", "#2a2740"], oliver: ["#ea9a54", "#1f8a82"], tomasz: ["#d62828", "#d62828"], felix: ["#d62828", "#d62828"], diana: ["#4b4b6b", "#4b4b6b"], lena: ["#2f9e8f", "#2f9e8f"] } as const;
+const { who, size = 20 } = Astro.props;
+const [bg, side] = palette[who];
+---
+
+<svg viewBox="0 0 36 36" width={size} height={size} class="fx-face" aria-hidden="true">
+  <circle cx="18" cy="18" r="18" fill={bg}></circle>
+  <path d="M18 0A18 18 0 0 0 7 4v4h12z" fill={side} opacity=".9"></path>
+  <circle cx="14" cy="17" r="1.7" fill="#1c1c28"></circle><circle cx="22" cy="17" r="1.7" fill="#1c1c28"></circle>
+  <path d="M14 23c2 2.2 6 2.2 8 0" fill="none" stroke="#1c1c28" stroke-width="1.7" stroke-linecap="round"></path>
+</svg>

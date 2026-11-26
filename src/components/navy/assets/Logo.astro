@@ -1,0 +1,11 @@
+---
+// The app icon (/logo.svg, same as the favicon and the app rail) and the name, set the way the app sets it (sidebar,
+// sign-in): Figtree medium, sentence case. Size it with a text-* class, colour it with text-*.
+import { siteConfig } from "@/config/site";
+const { class: className, ...rest } = Astro.props;
+---
+
+<span class:list={["inline-flex items-center gap-[0.4em] font-sans font-medium tracking-tight leading-none whitespace-nowrap", className]} {...rest}>
+  <img src="/logo.svg" alt="" width="28" height="28" class="size-[1.6em] shrink-0 rounded-[0.36em] ring-1 ring-current/10" />
+  {siteConfig.name}
+</span>

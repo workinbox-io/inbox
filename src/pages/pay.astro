@@ -1,0 +1,196 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { env } from "cloudflare:workers";
+import { PLANS, planFeatures, type PlanId } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+import { paddleFetch } from "@/lib/server/paddle";
+import { t } from "@/lib/i18n/panel";
+import { tFor } from "@/lib/i18n/site";
+
+// Paddle's default payment link. Checkout URLs land here as /pay?_ptxn=txn_…, and Paddle.js renders
+// the checkout inline next to our own order summary.
+const token = env.PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
+const sandbox = env.PADDLE_ENV !== "production";
+const successUrl = `${env.PUBLIC_APP_URL ?? Astro.url.origin}/app/billing?checkout=success`;
+
+interface Line {
+  priceId: string;
+  label: string;
+  quantity: number;
+  /** Before tax, in the currency's minor unit. */
+  amount: number;
+}
+
+interface Transaction {
+  currency_code: string;
+  items: { quantity: number; price: { id: string; name: string | null; description: string; custom_data: Record<string, unknown> | null } }[];
+  details: {
+    line_items: { price_id: string; totals: { subtotal: string } }[];
+    totals: { subtotal: string; tax: string; total: string };
+  } | null;
+}
+
+// The summary is rendered from the transaction, then kept in sync with Paddle.js events
+// (tax changes once the buyer enters a country).
+let plan: (typeof PLANS)[PlanId] | null = null;
+let interval: "month" | "year" = "month";
+let currency = "EUR";
+let lines: Line[] = [];
+let totals = { subtotal: 0, tax: 0, total: 0 };
+const txnId = Astro.url.searchParams.get("_ptxn");
+if (txnId && /^txn_[a-z0-9]+$/.test(txnId)) {
+  try {
+    const txn = await paddleFetch<Transaction>("GET", `/transactions/${txnId}`);
+    currency = txn.currency_code;
+    for (const item of txn.items) {
+      const data = item.price.custom_data ?? {};
+      if (data.interval === "year") interval = "year";
+      const amount = Number(txn.details?.line_items.find((l) => l.price_id === item.price.id)?.totals.subtotal ?? 0);
+      if (typeof data.plan === "string" && data.plan in PLANS) {
+        plan = PLANS[data.plan as PlanId];
+        lines.unshift({ priceId: item.price.id, label: t("{plan} plan", { plan: plan.name }), quantity: item.quantity, amount });
+      } else {
+        lines.push({ priceId: item.price.id, label: item.price.name ?? item.price.description, quantity: item.quantity, amount });
+      }
+    }
+    const t = txn.details?.totals;
+    if (t) totals = { subtotal: Number(t.subtotal), tax: Number(t.tax), total: Number(t.total) };
+  } catch {
+    // The checkout still works without our summary, it just shows Paddle's own.
+  }
+}
+
+const money = (minor: number) => new Intl.NumberFormat("en-IE", { style: "currency", currency }).format(minor / 100);
+const per = interval === "year" ? "year" : "month";
+const siteWords = tFor(Astro.locals.locale); // plan features are translated with the pricing page
+---
+
+<BaseLayout title={t("Checkout")} lang={Astro.locals.locale} words={false}>
+  <div class="flex min-h-svh flex-col">
+    <header class="container-page flex h-16 items-center justify-between">
+      <a href="/" class="flex items-center gap-2 text-base font-medium tracking-tight">
+        <img src="/logo.svg" alt="" class="size-7" />{siteConfig.name}
+      </a>
+      <a href="/app/billing" class="text-muted-foreground hover:text-foreground text-sm transition-colors">{t("Back to billing")}</a>
+    </header>
+
+    <main class="container-page grid flex-1 gap-8 pt-6 pb-16 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14 lg:pt-12">
+      <section class="bg-surface h-fit rounded-2xl p-6 sm:p-8" aria-label={t("Order summary")}>
+        <span class="eyebrow text-foreground">{t("Order summary")}</span>
+        <h1 class="mt-3 text-2xl font-medium tracking-tight sm:text-3xl">
+          {plan ? `${siteConfig.name} ${plan.name}` : t("Your {product} subscription", { product: siteConfig.name })}
+        </h1>
+        <p class="text-muted-foreground mt-1 text-sm">{per === "year" ? t("Billed every year. Cancel any time from the Billing page.") : t("Billed every month. Cancel any time from the Billing page.")}</p>
+
+        {
+          plan ? (
+            <ul class="mt-6 space-y-2.5 text-sm">
+              {planFeatures(plan)
+                .filter((f) => !f.soon && !f.label.startsWith("Everything in"))
+                .map((f) => (
+                  <li class="flex items-center gap-2.5">
+                    <span class="bg-primary size-2 shrink-0 rounded-full" />
+                    {siteWords(f.label)}
+                  </li>
+                ))}
+            </ul>
+          ) : null
+        }
+
+        {
+          lines.length ? (
+            <dl class="border-border mt-8 space-y-3 border-t pt-6 text-sm" data-summary data-currency={currency}>
+              {lines.map((l) => (
+                <div class="flex items-baseline justify-between gap-4">
+                  <dt>
+                    {l.label}
+                    {l.quantity > 1 ? <span class="text-muted-foreground"> × {l.quantity}</span> : null}
+                  </dt>
+                  <dd class="tabular-nums" data-line={l.priceId}>{money(l.amount)}</dd>
+                </div>
+              ))}
+              <div class="text-muted-foreground flex items-baseline justify-between gap-4">
+                <dt>{t("Tax")}</dt>
+                <dd class="tabular-nums" data-total="tax">{money(totals.tax)}</dd>
+              </div>
+              <div class="border-border flex items-baseline justify-between gap-4 border-t pt-4 text-base font-medium">
+                <dt>{t("Due today")}</dt>
+                <dd class="tabular-nums" data-total="total">{money(totals.total)}</dd>
+              </div>
+            </dl>
+          ) : null
+        }
+
+        <p class="text-muted-foreground mt-8 text-xs leading-5">
+          {t("Payments are processed by Paddle.com, our reseller and merchant of record. They handle VAT and send your invoices. Tax is calculated from your billing country.")}
+        </p>
+      </section>
+
+      <section aria-label={t("Payment")}>
+        <div class="paddle-checkout min-h-[450px]"></div>
+        <p data-checkout-fallback class="text-muted-foreground hidden text-sm">
+          {t("The checkout didn't load.")} <a href="/app/billing" class="text-foreground underline underline-offset-4">{t("Back to billing")}</a>
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <script is:inline src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+  <script is:inline define:vars={{ token, sandbox, successUrl }}>
+    const summary = document.querySelector("[data-summary]");
+    let completed = false;
+    let failed = false;
+    const format = (major, currency) => new Intl.NumberFormat("en-IE", { style: "currency", currency }).format(major);
+
+    // checkout.loaded and checkout.updated carry live totals in major units.
+    function sync(data) {
+      if (!summary || !data?.totals) return;
+      const currency = data.currency_code ?? summary.dataset.currency;
+      for (const item of data.items ?? []) {
+        const el = summary.querySelector(`[data-line="${item.price_id}"]`);
+        if (el && item.totals) el.textContent = format(item.totals.subtotal, currency);
+      }
+      for (const key of ["tax", "total"]) {
+        const el = summary.querySelector(`[data-total="${key}"]`);
+        if (el) el.textContent = format(data.totals[key], currency);
+      }
+    }
+
+    if (!window.Paddle || !token) {
+      window.tapll?.("track", "checkout_failed", { reason: "checkout_unavailable" }, { feature: "checkout", role: "failure" });
+      document.querySelector("[data-checkout-fallback]")?.classList.remove("hidden");
+    } else {
+      if (sandbox) Paddle.Environment.set("sandbox");
+      // A default payment link opens with the settings passed to Initialize.
+      Paddle.Initialize({
+        token,
+        checkout: {
+          settings: {
+            displayMode: "inline",
+            variant: "one-page",
+            frameTarget: "paddle-checkout",
+            frameInitialHeight: 450,
+            frameStyle: "width: 100%; min-width: 312px; background-color: transparent; border: none;",
+            theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
+            locale: "en",
+            allowLogout: false,
+            showAddDiscounts: false,
+            successUrl,
+          },
+        },
+        eventCallback: (e) => {
+          if (e.name === "checkout.loaded" || e.name === "checkout.updated") sync(e.data);
+          if (e.name === "checkout.completed" && !completed) {
+            completed = true;
+            window.tapll?.("track", "checkout_completed", undefined, { feature: "checkout", role: "success" });
+          }
+          if (e.name === "checkout.error" && !failed && !completed) {
+            failed = true;
+            window.tapll?.("track", "checkout_failed", { reason: "checkout_error" }, { feature: "checkout", role: "failure" });
+          }
+          if (e.name === "checkout.error") document.querySelector("[data-checkout-fallback]")?.classList.remove("hidden");
+        },
+      });
+    }
+  </script>
+</BaseLayout>

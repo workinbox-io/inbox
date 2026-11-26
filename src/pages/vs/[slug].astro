@@ -1,0 +1,90 @@
+---
+/** Work Inbox vs one competitor, from config/compare.ts. */
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
+import ComparisonTable from "@/components/site/ComparisonTable.astro";
+import Faq from "@/components/site/Faq.astro";
+import { COMPETITORS, type Competitor } from "@/config/compare";
+import { TRIAL_DAYS } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+import { siteLocale, tFor, lp } from "@/lib/i18n/site";
+import { localizedPath } from "@/lib/i18n/locales";
+
+export const prerender = true;
+export function getStaticPaths() {
+  return COMPETITORS.map((c) => ({ params: { slug: c.slug }, props: { c } }));
+}
+
+const { c } = Astro.props as { c: Competitor };
+const others = COMPETITORS.filter((o) => o.slug !== c.slug);
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const checked = new Date(c.checked).toLocaleDateString(locale === "en" ? "en-GB" : locale, { day: "numeric", month: "long", year: "numeric" });
+const url = (path: string) => (Astro.site ? new URL(localizedPath(locale, path), Astro.site).href : path);
+const faq = c.faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: t("Compare"), item: url("/vs") },
+      { "@type": "ListItem", position: 2, name: `${siteConfig.name} ${t("vs")} ${c.name}`, item: url(`/vs/${c.slug}`) },
+    ],
+  },
+  ...(faq.length
+    ? [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) }]
+    : []),
+];
+---
+
+<MarketingLayout title={`${siteConfig.name} ${t("vs")} ${c.name}`} description={`${siteConfig.name} ${t("vs")} ${c.name}: ${t("Prices, shared mailboxes, self-hosting and what each does better, checked {date}.", { date: checked })}`} jsonLd={jsonLd} ink>
+  <Hero label={`${t("Compare")} / ${c.name}`}>
+    <Fragment slot="title">{t(c.tagline)}</Fragment>
+    <Fragment slot="text">{t(c.intro)}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">{t("Start free")}</Button>
+      <span class="text-sm text-foreground/80">{t("{days} days, no card. Or self-host for free.", { days: TRIAL_DAYS })}</span>
+    </Fragment>
+  </Hero>
+
+  <Section label={t("Compare")}>
+    <Fragment slot="title">{t("Side by side")}</Fragment>
+    <Fragment slot="text">{t("{name}'s facts from its own pages, checked {date}. Prices as {name} shows them, before tax.", { name: c.name, date: checked })}</Fragment>
+    <div slot="full"><ComparisonTable competitors={[c]} /></div>
+  </Section>
+
+  <Section label={t("Pricing")} class="bg-muted">
+    <Fragment slot="title">{t("{name}'s plans", { name: c.name })}</Fragment>
+    <ul role="list" class="border-t border-border">
+      {c.theirPricing.map((p) => <li class="py-5 border-b border-border"><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(p)}</Text></li>)}
+    </ul>
+  </Section>
+
+  <Section label={siteConfig.name}>
+    <div class="grid gap-16 md:grid-cols-2 md:gap-x-8">
+      <div>
+        <Text tag="h2" variant="displaySM" class="text-balance text-foreground">{t("Why teams pick {name}", { name: siteConfig.name })}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{c.whyUs.map((p) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(p)}</Text></li>)}</ul>
+      </div>
+      <div>
+        <Text tag="h2" variant="displaySM" class="text-balance text-foreground">{t("Pick {name} if", { name: c.name })}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{c.pickThemIf.map((p) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-faint-foreground" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(p)}</Text></li>)}</ul>
+      </div>
+    </div>
+  </Section>
+
+  {faq.length ? <Faq items={faq} /> : null}
+
+  <Section label={t("Sources")}>
+    <ul role="list" class="border-t border-border">{c.sources.map((s) => <li class="py-3 text-sm break-all border-b border-border"><a href={s} rel="nofollow noopener" target="_blank" class="inline-block py-1 text-muted-foreground hover:text-foreground">{s}</a></li>)}</ul>
+    <Text tag="h2" variant="textBase" class="mt-16 font-medium text-foreground">{t("Other comparisons")}</Text>
+    <div class="flex flex-wrap mt-4 gap-x-6 gap-y-3">
+      {others.map((o) => <ArrowLink href={lp(locale, `/vs/${o.slug}`)}>{t("vs")}{" "}{o.name}</ArrowLink>)}
+    </div>
+  </Section>
+</MarketingLayout>

@@ -1,0 +1,13 @@
+---
+import { t } from "@/lib/i18n/panel";
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { AuthForm } from "@/components/auth/auth-form";
+import { safeNext } from "@/lib/signup";
+
+const next = Astro.url.searchParams.get("next") ?? "/app";
+const email = Astro.url.searchParams.get("email") ?? undefined;
+---
+
+<AuthLayout title={t("Sign up")}>
+  <AuthForm client:load mode="signup" next={safeNext(next)} email={email} />
+</AuthLayout>

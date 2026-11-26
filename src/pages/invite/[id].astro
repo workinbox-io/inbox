@@ -1,0 +1,85 @@
+---
+import { t } from "@/lib/i18n/panel";
+import AuthLayout from "@/layouts/AuthLayout.astro";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { InviteActions } from "@/components/auth/invite-actions";
+import { db, eq, invitation, organization, user } from "@/db";
+import { getAuth } from "@/lib/server/auth";
+
+// Landing page for the link in the invitation e-mail. Public; the invitation id is the secret.
+const id = Astro.params.id ?? "";
+const [row] = await db
+  .select({ invitation, orgName: organization.name, inviterName: user.name })
+  .from(invitation)
+  .innerJoin(organization, eq(invitation.organizationId, organization.id))
+  .innerJoin(user, eq(invitation.inviterId, user.id))
+  .where(eq(invitation.id, id));
+const session = await getAuth().api.getSession({ headers: Astro.request.headers });
+
+const here = `/invite/${id}`;
+const state = !row
+  ? "missing"
+  : row.invitation.status !== "pending"
+    ? "used"
+    : row.invitation.expiresAt < new Date()
+      ? "expired"
+      : !session
+        ? "signed-out"
+        : session.user.email.toLowerCase() !== row.invitation.email.toLowerCase()
+          ? "wrong-account"
+          : "ready";
+
+const title = {
+  missing: t("Invitation not found"),
+  used: t("Invitation no longer valid"),
+  expired: t("Invitation expired"),
+  "signed-out": t("Join {org}", { org: row?.orgName ?? "" }),
+  "wrong-account": t("Wrong account"),
+  ready: t("Join {org}", { org: row?.orgName ?? "" }),
+}[state];
+
+const description = {
+  missing: t("This link doesn't match any invitation. Check that you copied the whole link."),
+  used: t("This invitation was already accepted, declined or revoked. Ask for a new one if you still need access."),
+  expired: t("Invitations work for 7 days. Ask the person who invited you to send a new one."),
+  "signed-out": t("{inviter} invited {email} to join {org}. Create an account or sign in with that address to accept.", { inviter: row?.inviterName ?? "", email: row?.invitation.email ?? "", org: row?.orgName ?? "" }),
+  "wrong-account": t("This invitation is for {email}, but you're signed in as {current}. Sign out and sign in with the invited address.", { email: row?.invitation.email ?? "", current: session?.user.email ?? "" }),
+  ready: row?.invitation.role === "admin"
+    ? t("{inviter} invited you to join as an admin.", { inviter: row?.inviterName ?? "" })
+    : t("{inviter} invited you to join as a member.", { inviter: row?.inviterName ?? "" }),
+}[state];
+---
+
+<AuthLayout title={title}>
+  <Card className="w-full max-w-sm">
+    <CardHeader>
+      <CardTitle className="text-xl">{title}</CardTitle>
+      <CardDescription>{description}</CardDescription>
+    </CardHeader>
+    <CardFooter className="flex-col gap-2">
+      {
+        state === "ready" ? (
+          <InviteActions client:load invitationId={id} />
+        ) : state === "signed-out" ? (
+          <>
+            <Button asChild className="w-full">
+              <a href={`/signup?next=${encodeURIComponent(here)}&email=${encodeURIComponent(row!.invitation.email)}`}>{t("Create account")}</a>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <a href={`/login?next=${encodeURIComponent(here)}&email=${encodeURIComponent(row!.invitation.email)}`}>{t("Sign in")}</a>
+            </Button>
+          </>
+        ) : state === "wrong-account" ? (
+          <Button asChild variant="outline" className="w-full">
+            <a href="/api/auth/sign-out-redirect">{t("Sign out")}</a>
+          </Button>
+        ) : (
+          <Button asChild variant="outline" className="w-full">
+            <a href={session ? "/app" : "/"}>{session ? t("Open dashboard") : t("Go to homepage")}</a>
+          </Button>
+        )
+      }
+    </CardFooter>
+  </Card>
+</AuthLayout>

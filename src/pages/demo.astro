@@ -1,0 +1,80 @@
+---
+/**
+ * The public demo: "Try the demo" posts here, we build a fresh demo org (lib/server/demo/seed.ts) and sign the visitor
+ * in as Anna, a member. GET only shows the button, so crawlers never create orgs. The story is in the page's language
+ * (`?lang=` from the site, the cookie or the browser: Polish gets content-pl.ts). In dev, `?domain=acme.test` rebuilds
+ * the org the marketing screenshots use (scripts/marketing-shots.ts).
+ */
+import { env } from "cloudflare:workers";
+import { makeSignature } from "better-auth/crypto";
+import { t } from "@/lib/i18n/panel";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import { clientIp } from "@/lib/server/api";
+import { getAuth } from "@/lib/server/auth";
+import { DEMO_LOCALES, createDemoOrg, demoOrgsSince, type DemoLocale } from "@/lib/server/demo/seed";
+
+/** New demo orgs a day, all visitors together; beyond it the page asks to come back later. */
+const DAILY_LIMIT = 500;
+
+let error = "";
+if (Astro.request.method === "POST") {
+  const domain = import.meta.env.DEV ? (Astro.url.searchParams.get("domain") ?? undefined) : undefined;
+  const { success } = await env.AUTH_RATE_LIMIT.limit({ key: `demo:${clientIp(Astro.request) || "unknown"}` });
+  if (!success && !domain) error = t("Too many attempts. Wait a minute and try again.");
+  else if (!domain && (await demoOrgsSince(new Date(Date.now() - 86_400_000))) >= DAILY_LIMIT) error = t("The demo is busy right now. Try again in a few hours, or sign up free.");
+  else {
+    const locale = (DEMO_LOCALES as readonly string[]).includes(Astro.locals.locale) ? (Astro.locals.locale as DemoLocale) : "en";
+    const demo = await createDemoOrg({ domain, locale });
+    const ctx = await getAuth().$context;
+    const session = await ctx.internalAdapter.createSession(demo.userId, true, { activeOrganizationId: demo.orgId });
+    const cookie = ctx.authCookies.sessionToken;
+    Astro.cookies.set(cookie.name, `${session.token}.${await makeSignature(session.token, ctx.secret)}`, {
+      ...cookie.attributes,
+      sameSite: "lax",
+      encode: encodeURIComponent,
+      expires: session.expiresAt,
+    });
+    return Astro.redirect("/app/mail", 303);
+  }
+}
+const story = [
+  [t("Mail"), t("Threads with the signed Brightloop contract, a question to support@, and a colleague's draft you can take over.")],
+  [t("Chat"), t("Channels and DMs with @mentions of files, notes and events, so the bell has something in it.")],
+  [t("Notes"), t("Shared notes, including the client call, written with the meeting's attendees.")],
+  [t("Calendar"), t("The week's meetings, with the kickoff and a meeting note linked to it.")],
+  [t("Drive"), t("The campaign brief and the signed contract, attachable to mail.")],
+  [t("Contacts and collections"), t("An address book, and Tasks, Deals and Equipment rental lists you can edit.")],
+];
+const facts = [t("No signup, no card."), t("Mail is never sent out of the demo."), t("The workspace is deleted after 24 hours.")];
+---
+
+<MarketingLayout title={t("Try the demo")} ink>
+  <Hero>
+    <Fragment slot="title">{t("Try Work Inbox")}</Fragment>
+    <Fragment slot="text"><span role={error ? "alert" : undefined}>{error || t("You'll get your own copy of a small team's workspace for a day: mail, chat, notes, calendar, files, contacts and collections. Nothing leaves it: mail isn't sent out.")}</span></Fragment>
+    <Fragment slot="actions">
+      <form method="post" data-demo-steps={JSON.stringify([t("Setting up your workspace…"), t("Filling the inbox…"), t("Adding chat and notes…"), t("Planning the calendar…"), t("Putting files in Drive…"), t("Almost ready…")])}>
+        <Button type="submit" size="lg" variant="muted" aria-live="polite">{t("Open the demo")}</Button>
+      </form>
+    </Fragment>
+  </Hero>
+  <Section label={t("What you get")}>
+    <Fragment slot="title">{t("A week at Acme Studio, already under way")}</Fragment>
+    <Fragment slot="text">{t("You are Anna, an account manager. The studio just signed Brightloop for its spring campaign, and every app holds a piece of that story.")}</Fragment>
+    <Features slot="full" cols={3} items={story.map(([title, text]) => ({ title, text }))} />
+  </Section>
+  <Section label={t("Good to know")} class="bg-muted">
+    <Fragment slot="title">{t("Nothing to sign up for, nothing left behind")}</Fragment>
+    <ul role="list" class="grid gap-4 text-muted-foreground sm:grid-cols-3">
+      {facts.map((f) => <li class="text-pretty">{f}</li>)}
+    </ul>
+  </Section>
+</MarketingLayout>
+
+<script>
+  import "@/scripts/demo-progress";
+</script>

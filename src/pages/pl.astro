@@ -1,0 +1,8 @@
+---
+/** Polish twin of the home page: the same page, rendered in the language of its URL (lib/i18n/site.ts). A file (not pl/index) so it is served at /pl, like pricing.html at /pricing. */
+import Page from "./index.astro";
+
+export const prerender = true;
+---
+
+<Page />

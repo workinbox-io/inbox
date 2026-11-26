@@ -1,0 +1,22 @@
+---
+/** A home page section: a small uppercase eyebrow, the title (key words in <em>), text, then the content, full width. */
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+interface Props {
+  id?: string;
+  label?: string;
+  class?: string;
+}
+const { id, label, class: className } = Astro.props;
+---
+
+<section id={id} class:list={["scroll-mt-20", className]}>
+  <Wrapper variant="standard" class="py-20 sm:py-24">
+    <div class="max-w-3xl">
+      {label && <Text tag="p" variant="textSM" class="font-medium tracking-wide uppercase text-primary">{label}</Text>}
+      <Text tag="h2" variant="displayMD" class:list={["tracking-tight text-balance text-foreground", label && "mt-3"]}><slot name="title" /></Text>
+      {Astro.slots.has("text") && <Text tag="p" variant="textBase" class="mt-4 text-muted-foreground text-pretty"><slot name="text" /></Text>}
+    </div>
+    <slot />
+  </Wrapper>
+</section>

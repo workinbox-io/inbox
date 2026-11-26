@@ -1,0 +1,84 @@
+// Cloudflare config. `pnpm setup` (scripts/setup.ts) fills in the name and the resource ids.
+// After changing bindings run `pnpm cf-types` to regenerate worker-configuration.d.ts.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "inbox",
+  // Our entry wraps Astro's handler and adds the queue consumer and cron handler (src/worker.ts).
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": { "enabled": true },
+  "upload_source_maps": true,
+  // The app and the website live on workinbox.io (Cloudflare creates the DNS record and certificate).
+  "routes": [
+    { "pattern": "workinbox.io", "custom_domain": true },
+    // Mail apps' autodiscovery on every host of the zone: custom hostnames (autoconfig.<org domain>) and <org>.workinbox.io.
+    { "pattern": "*/mail/config-v1.1.xml*", "zone_name": "workinbox.io" },
+    { "pattern": "*/.well-known/autoconfig/*", "zone_name": "workinbox.io" },
+    { "pattern": "*/autodiscover/*", "zone_name": "workinbox.io" },
+    { "pattern": "*/Autodiscover/*", "zone_name": "workinbox.io" }
+  ],
+
+  "vars": {
+    "PUBLIC_APP_URL": "https://workinbox.io",
+    "EMAIL_FROM_ADDRESS": "noreply@workinbox.io",
+    "PADDLE_ENV": "production",
+    "ADMIN_EMAILS": "",
+    // Staff mailboxes on your domain, read and answered at /app/admin-mail (lib/server/admin-mail.ts),
+    // comma-separated, e.g. "support@example.com,legal@example.com". Each needs an Email Routing rule
+    // "Send to Worker"; incoming mail is also forwarded to ADMIN_MAIL_FORWARD (a verified destination).
+    "ADMIN_MAILBOXES": "",
+    "ADMIN_MAIL_FORWARD": "",
+    // "self": one company on its own Cloudflare account, billing off (self-hosters set this). "cloud": workinbox.io,
+    // hosted, per-person plans on (lib/server/seats.ts).
+    "DEPLOY_MODE": "cloud",
+    // Contacts' pixel banners: Jev (Workers AI) picks a theme and colour per e-mail domain (lib/server/contacts-banner.ts).
+    // Optional AI Gateway id to route those calls through (logs, caching, rate limits); empty calls Workers AI directly.
+    "AI_GATEWAY_ID": "work-inbox",
+    // cloud: orgs can claim <name>.<MAIL_BASE_DOMAIN> at once, on SES, with the MAIL_ZONE_TOKEN secret (DNS edit on
+    // this zone). Without SES or the token: custom domains only.
+    "MAIL_BASE_DOMAIN": "workinbox.io",
+    // cloud: the orgs' own domains receive and send through Amazon SES in this region (lib/server/ses.ts, docs/ses.md);
+    // off until the AWS secrets are set. Self-hosted ignores it.
+    "AWS_SES_REGION": "eu-west-1",
+    // Mail apps: the IMAP/SMTP host (mail bridge, infra/mail) that autoconfig/autodiscover and profiles point to.
+    // Empty: those answers are off (self-hosted without the bridge).
+    "MAIL_CLIENT_HOST": "mail.workinbox.io",
+    // cloud: Cloudflare for SaaS fallback origin on MAIL_BASE_DOMAIN's zone. Orgs' domains CNAME autoconfig.<domain> to
+    // it and get a custom hostname (lib/server/mail/custom-hostnames.ts, docs/ses.md). Empty: no client records.
+    "MAIL_SETUP_ORIGIN": "setup.workinbox.io"
+  },
+  // Secrets (wrangler secret put …, locally in .dev.vars): every one is listed in .dev.vars.example and src/env.d.ts.
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "inbox",
+      "database_id": "e997abaa-8673-49c2-a779-61d89b6e9366",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "inbox-files" }],
+  "send_email": [{ "name": "EMAIL" }],
+  "ai": { "binding": "AI" },
+  // Shared notes: one object per note holds the live Yjs document (src/notes/room.ts).
+  // Chat: one object per organization fans out live events (src/chat/room.ts).
+  "durable_objects": { "bindings": [{ "name": "NOTE_ROOM", "class_name": "NoteRoom" }, { "name": "CHAT_ROOM", "class_name": "ChatRoom" }] },
+  "migrations": [{ "tag": "notes-v1", "new_sqlite_classes": ["NoteRoom"] }, { "tag": "chat-v1", "new_sqlite_classes": ["ChatRoom"] }],
+  "queues": {
+    "producers": [{ "binding": "JOBS", "queue": "inbox-jobs" }],
+    "consumers": [{ "queue": "inbox-jobs", "max_retries": 5, "max_batch_size": 10, "dead_letter_queue": "inbox-jobs-dlq" },
+      { "queue": "inbox-mail-events", "max_retries": 10, "max_batch_size": 10, "dead_letter_queue": "inbox-mail-events-dlq" },
+      { "queue": "inbox-jobs-dlq", "max_retries": 3 }]
+  },
+  "ratelimits": [
+    // Public API: requests per API key per minute.
+    { "name": "API_RATE_LIMIT", "namespace_id": "1001", "simple": { "limit": 300, "period": 60 } },
+    // Sign-in, sign-up and password reset: per client IP.
+    { "name": "AUTH_RATE_LIMIT", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } }
+  ],
+  "triggers": {
+    // Daily housekeeping and trial reminders (see src/jobs/cron.ts); every minute and hourly: src/app-worker.ts.
+    "crons": ["17 3 * * *", "* * * * *", "41 * * * *"]
+  }
+}

@@ -1,0 +1,40 @@
+---
+/** Team calendar ("team calendar", 1,900 US searches, KD 16; "shared calendar" 6,600; "shared calendar app" 12,100), OpenSEO 2026-11-15. */
+import AppPage from "@/components/site/AppPage.astro";
+import { FREE_PEOPLE } from "@/config/plans";
+
+export const prerender = true;
+---
+
+<AppPage
+  slug="team-calendar"
+  title="Team calendar with shared calendars and invitations"
+  description="A calendar per person and shared ones, colleagues side by side, recurring events, time zones and e-mail invitations. Part of the open-source Work Inbox workspace."
+  h1={["Your week,", "next to your team's."]}
+  lead="A calendar per person and shared ones, colleagues side by side, time zones that make sense, invitations that work with Gmail and Outlook."
+  benefits={["See colleagues' busy blocks while you plan.", "Recurring events, reminders and up to three time zones.", "Meeting notes in one click; subscribe Google Calendars in, feed out as .ics."]}
+  url="workinbox.io/app/calendar"
+  alt="Calendar week view with a weekly check-in, a kickoff, a design review and Q4 planning"
+  features={[
+    { title: "Personal and shared", text: "Everyone has a calendar; add shared ones, private, for chosen people or the whole team." },
+    { title: "Colleagues side by side", text: "Overlay a colleague's calendar; private events show only as busy." },
+    { title: "Recurring events", text: "Repeat events and change this one, this and following, or all of them." },
+    { title: "Time zones", text: "Up to three time zones side by side for a team spread across them." },
+    { title: "Free time", text: "Pick free slots in the grid and copy them as text to send." },
+    { title: "Invitations by e-mail", text: "Invite people outside the team; Gmail, Outlook and Apple Mail show Accept and Decline, and answers update the event." },
+    { title: "Reminders", text: "Browser notifications before an event starts." },
+    { title: "Google Calendar and .ics", text: "Sync a Google Calendar in (read-only), subscribe to yours from Google, Apple or Outlook, or import an .ics file." },
+    { title: "Claude and ChatGPT", text: "List events, find free time and create events from your AI app.", href: "/docs/mcp" },
+  ]}
+  notYet="CalDAV sync, two-way Google Calendar sync and booking pages."
+  together={[
+    { title: "Meeting notes", text: "One click on an event makes a shared note for the people in it, linked both ways." },
+    { title: "Invitations from your mailbox", text: "Invites go out from your own address and the answers come back to the event." },
+    { title: "The same people", text: "Invited colleagues see the event in their own calendar, no copies or e-mails between you." },
+  ]}
+  faq={[
+    { question: "Can I keep using Google Calendar?", answer: "Yes, side by side: Google's secret iCal address syncs into Work Inbox as a read-only calendar about every 30 minutes, and Work Inbox's .ics link subscribes the other way." },
+    { question: "Does it work with CalDAV apps?", answer: "Not yet. Use the web app (it installs on phones and computers), or subscribe to the .ics link from your calendar app." },
+    { question: "What does it cost?", answer: `Nothing extra: the calendar is on every plan, free for up to ${FREE_PEOPLE} people or when self-hosted.` },
+  ]}
+/>

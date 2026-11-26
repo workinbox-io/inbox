@@ -1,0 +1,32 @@
+const brand = { company: "Example", website: "example.test", logoUrl: "", color: "#445566", footer: "" };
+const boxes = ["me@example.test", "team@example.test"].map((address, i) => ({ id: `box-${i}`, address, storage: { usedBytes: 1024, quotaBytes: 10 * 1024 ** 3 } }));
+export const prefs = { timezones: ["Europe/Warsaw"], weekStart: 1, hourCycle: "h23", workStart: 9, workEnd: 17, defaultReminder: null };
+export const fixtures: Record<string, unknown> = {
+  "/api/app/notifications": { groups: [], unread: 0 },
+  "/api/app/notifications/prefs": { digest: true, muted: [] },
+  "/api/app/settings/mailbox": { mailboxes: boxes.map(box => box.address), signatures: {}, signatureBrand: brand },
+  "/api/app/settings/calendar": { prefs },
+  "/api/app/settings/account": { user: { name: "Test", email: boxes[0].address, twoFactorEnabled: false }, hasPassword: true, googleEnabled: false, googleAccountId: null, sessions: [], deletionBlockers: [] },
+  "/api/app/settings/organization": { orgId: "org", name: "Example", role: "owner", canManage: true, billingDetails: { legalName: "", vatId: "", addressLine1: "", addressLine2: "", postalCode: "", city: "", region: "", country: "" }, others: [], orgs: [{ id: "org", name: "Example", active: true }, { id: "other", name: "Other organization", active: false }] },
+  "/api/app/settings/team": { members: [], invitations: [], canManage: true, canChangeRoles: true, seats: { limit: 5, plan: "free" }, orgs: [] },
+  "/api/app/settings/people": { team: { members: [], invitations: [], canManage: true, canChangeRoles: true, seats: { limit: 5, plan: "free" } }, setup: { domains: [], mailboxes: [], aliases: [], members: [], signatureBrand: brand, subdomainBase: null } },
+  "/api/app/settings/mail-admin": { setup: { domains: [], mailboxes: [], aliases: [], members: [], signatureBrand: brand, subdomainBase: null } },
+  "/api/app/settings/mail-clients": { configured: true },
+  "/api/app/settings/ai-apps": { apps: [], mcpUrl: "https://example.test/mcp", upsell: null },
+  "/api/app/settings/api-keys": { keys: [] },
+  "/api/app/settings/audit": { initial: { rows: [], nextCursor: null } },
+  "/api/app/mail/mailboxes": { mailboxes: boxes },
+  "/api/app/mail/labels": { labels: [] },
+  "/api/app/mail/filters": { filters: [], targets: [] },
+  "/api/app/mail/templates": { templates: [] },
+  "/api/app/mail/auto-reply": { enabled: false, subject: "", text: "I am away", startsAt: null, endsAt: null },
+  "/api/app/account/recovery": { email: null, pending: null },
+  "/api/app/calendar/calendars": { calendars: [] },
+  "/api/app/calendar/feed": { url: null },
+  "/api/app/mail/native": { configured: true, mailboxes: [] },
+  "/api/app/mail/external-accounts": [],
+  "/api/app/mail/settings/sending": { orgId: "org", limits: [], caps: { mailbox: 500, organization: 5000, newUntil: null }, reputation: { paused: null, sent: 0, bounced: 0, complained: 0 } },
+  "/api/app/mail/storage": { storage: [] },
+  "/api/app/mail/imports": [],
+  "/api/app/mail/imap-imports": { configured: true, imports: [] },
+};

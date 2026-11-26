@@ -1,0 +1,82 @@
+---
+import LegalLayout from "@/layouts/LegalLayout.astro";
+import { siteConfig } from "@/config/site";
+import { TRIAL_DAYS } from "@/config/plans";
+
+export const prerender = true;
+const l = siteConfig.legal;
+
+/** The policy's terms, kept here so they're easy to change. */
+const policy = {
+  updated: "22 October 2026",
+  moneyBackDays: 14,
+  payoutDays: "5–10 business days",
+  paddleTerms: "https://www.paddle.com/legal/invoiced-consumer-terms",
+  paddleHelp: "https://paddle.net",
+};
+---
+
+<LegalLayout title="Refund policy" description={`When ${siteConfig.name} refunds a payment, how to ask for one, and how cancelling a monthly or yearly plan works.`} updated={policy.updated}>
+  <p>
+    This policy explains when you can get your money back for {siteConfig.name}, provided by {l.company} ("we"). It
+    complements our <a href="/terms">terms of service</a>.
+  </p>
+
+  <h2>1. Who processes payments</h2>
+  <p>
+    Our order process is conducted by our online reseller Paddle.com, which is the merchant of record for all our
+    orders. Paddle processes every payment and refund, and its
+    <a href={policy.paddleTerms}>buyer terms</a> apply to your purchase. You can send a refund request to us or
+    directly to Paddle at <a href={policy.paddleHelp}>paddle.net</a>.
+  </p>
+
+  <h2>2. Free trial</h2>
+  <p>
+    New accounts get a {TRIAL_DAYS}-day free trial with no card required. You aren't charged for the trial, so there's
+    nothing to refund.
+  </p>
+
+  <h2>3. {policy.moneyBackDays}-day money-back guarantee</h2>
+  <p>
+    If you're not happy, we refund the first payment of your subscription in full when you ask within
+    {policy.moneyBackDays} days of that payment, no questions asked. Email
+    <a href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a> from your account address or contact
+    Paddle. This applies once per customer, to new customers only.
+  </p>
+
+  <h2>4. Renewals and plan changes</h2>
+  <p>
+    Renewal payments and plan upgrades are not refunded, except where the law requires it or when you were charged by
+    mistake, for example a duplicate charge or a billing error. We always correct those in full.
+  </p>
+  <p>
+    You can switch plans under Manage billing on the billing page. Paddle shows the amount due or any credit before
+    you confirm the change.
+  </p>
+
+  <h2>5. Cancelling</h2>
+  <p>
+    You can cancel at any time from the billing page. Your plan stays active until the end of the period you've paid
+    for, and you won't be charged again.
+  </p>
+
+  <h2>6. Right of withdrawal for EU and UK consumers</h2>
+  <p>
+    The service is intended for business customers. If you buy as a consumer in the EU or UK, you have a statutory
+    right to withdraw from the contract within 14 days. By starting to use the service right away, you agree that it
+    begins immediately. Either way, the money-back guarantee above refunds your first payment in full within the same
+    {policy.moneyBackDays} days.
+  </p>
+
+  <h2>7. Service outages</h2>
+  <p>
+    If an outage seriously affects your use of the service, contact
+    <a href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a>. We handle credits case by case.
+  </p>
+
+  <h2>8. How refunds are paid</h2>
+  <p>
+    Paddle refunds the original payment method. The money usually reaches you within {policy.payoutDays}, depending on
+    your bank or card provider.
+  </p>
+</LegalLayout>

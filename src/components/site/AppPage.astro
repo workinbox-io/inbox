@@ -1,0 +1,114 @@
+---
+/**
+ * One app of the workspace as a landing page (pages/custom-domain-email, team-chat, shared-notes, team-calendar,
+ * shared-drive, shared-contacts, custom-apps) on Navy's layout: hero, the real screen, what it does, optional
+ * comparison, how it works with the other apps, questions. Same parts as pages/shared-mailbox.astro. Claim only what ships.
+ */
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "./Hero.astro";
+import Section from "./Section.astro";
+import Features, { type FeatureItem } from "./Features.astro";
+import BrowserWindow from "./home/BrowserWindow.astro";
+import Faux from "./home/Faux.astro";
+import Faq from "./Faq.astro";
+import ComparisonTable from "./ComparisonTable.astro";
+import PriceLine from "./PriceLine.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import { APPS } from "@/config/apps";
+import { COMPETITORS, type RowKey } from "@/config/compare";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
+
+interface Props {
+  slug: string;
+  title: string;
+  description: string;
+  /** Plain part of the headline, then the emphasised part. */
+  h1: [string, string];
+  lead: string;
+  /** Three one-line benefits under the lead. */
+  benefits?: string[];
+  /** The screen's address; kept for the callers, Navy shows the screen without a browser frame. */
+  url?: string;
+  alt: string;
+  features: FeatureItem[];
+  /** How this app works with the others. */
+  together: FeatureItem[];
+  faq: { question: string; answer: string }[];
+  compare?: RowKey[];
+  /** Under the features: what it doesn't do yet. */
+  notYet?: string;
+}
+const props = Astro.props;
+const { slug, compare } = props;
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+// The page's English copy is the dictionary key (lib/i18n/site.ts); the English page renders it as it is.
+const title = t(props.title);
+const description = t(props.description);
+const h1 = [t(props.h1[0]), t(props.h1[1])];
+const lead = t(props.lead);
+const alt = t(props.alt);
+const benefits = (props.benefits ?? []).map((b) => t(b));
+const notYet = props.notYet && t(props.notYet);
+const ledger = (items: FeatureItem[]) => items.map((i) => ({ ...i, title: t(i.title), text: t(i.text), href: i.href && lp(locale, i.href) }));
+const features = ledger(props.features);
+const together = ledger(props.together);
+const faq = props.faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+const app = APPS.find((a) => a.slug === slug)!;
+// Columns that leave no orphan cell on the last row.
+const colsFor = (n: number) => (n % 3 === 0 ? 3 : n % 4 === 0 ? 4 : 2) as 2 | 3 | 4;
+const others = APPS.filter((a) => a.slug !== slug);
+const otherApps = ledger([...others.map((a) => ({ title: a.label, text: a.description, href: `/${a.slug}` })), { title: "AI apps", text: "Claude and ChatGPT read and act across the workspace.", href: "/docs/mcp" }]);
+const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) };
+---
+
+<MarketingLayout title={title} description={description} jsonLd={jsonLd} ink>
+  <Hero>
+    <Fragment slot="title">{h1[0]}{" "}<em>{h1[1]}</em></Fragment>
+    <Fragment slot="text">{lead}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">{t("Start free")}</Button>
+      <ArrowLink href="/docs/self-host" tone="default">{t("Self-host for free")}</ArrowLink>
+    </Fragment>
+    {benefits.length > 0 && <ul class="mt-6 max-w-xl space-y-2 text-inverse-foreground/90">{benefits.map((b) => <li class="flex gap-3 text-pretty"><span aria-hidden="true">·</span><span>{b}</span></li>)}</ul>}
+    <PriceLine workspace />
+  </Hero>
+
+  <Wrapper variant="standard" class="w-full pt-10">
+    <div role="img" aria-label={alt} class="w-full mx-auto max-w-5xl">
+      <BrowserWindow address={`workinbox.io/app/${app.shot.replace("mail-thread", "mail")}`}><Faux app={slug} bare /></BrowserWindow>
+    </div>
+  </Wrapper>
+
+  <Section>
+    <Fragment slot="title">{t("What it does")}</Fragment>
+    <div slot="full">
+      <Features items={features} cols={3} />
+      {notYet && <Text tag="p" variant="textSM" class="mt-6 text-muted-foreground">{t("Not yet:")}{" "}{notYet}</Text>}
+    </div>
+  </Section>
+
+  {
+    compare && (
+      <Section label={t("Compare")} class="bg-muted">
+        <Fragment slot="title">{t("Compared with the big suites")}</Fragment>
+        <Fragment slot="text">{t("From each vendor's own pages; the comparison pages link the sources.")}</Fragment>
+        <ComparisonTable slot="full" competitors={COMPETITORS.slice(0, 4)} rows={compare} />
+      </Section>
+    )
+  }
+
+  <Section>
+    <Fragment slot="title">{t("Part of one workspace")}</Fragment>
+    <Fragment slot="text">{t("{app} shares the people and the search of the rest of Work Inbox. One sign-in, one price per person.", { app: t(app.label) })}</Fragment>
+    <div slot="full">
+      <Features items={together} cols={colsFor(together.length)} cards />
+      <Features items={otherApps} cols={colsFor(otherApps.length)} class="mt-12" />
+    </div>
+  </Section>
+
+  <Faq items={faq} />
+</MarketingLayout>

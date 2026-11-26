@@ -1,0 +1,39 @@
+---
+/** Shared drive ("shared drive", 14,800 US searches, KD 64; "dropbox alternative" 1,300), OpenSEO 2026-11-15. */
+import AppPage from "@/components/site/AppPage.astro";
+import { PLANS } from "@/config/plans";
+
+export const prerender = true;
+---
+
+<AppPage
+  slug="shared-drive"
+  title="Shared drive for your team, attached straight to mail"
+  description="Folders and files shared with people or the whole team, previews, public links with a password and expiry, attached straight to mail. Part of the open-source Work Inbox workspace."
+  h1={["A shared drive", "that sits in your work."]}
+  lead="Folders for one person, chosen people or everyone. Preview files full screen, attach them to mail in a click, share a link with a password."
+  benefits={["Quick look for images, PDFs, video, text and CSV.", "Attach from Drive, save attachments to Drive.", "Share with people or a public link with password and expiry; ZIP downloads."]}
+  url="workinbox.io/app/drive"
+  alt="The shared drive: folders and files in a list, with a folder's details, access and public links"
+  features={[
+    { title: "Share with people or the team", text: "Private, view or edit for chosen people, or the whole team. Sharing a folder covers everything inside." },
+    { title: "Previews", text: "Images, PDF, text, CSV, video and audio open in the app, full screen." },
+    { title: "Public links", text: "A link for anyone, with an optional password and expiry." },
+    { title: "A real file explorer", text: "Folder tree, list and grid, multi-select, drag and drop, whole folders from your computer." },
+    { title: "Stars and recent", text: "Star what you open often; Recent and Shared with me find the rest." },
+    { title: "ZIP downloads", text: "Download a selection or a whole folder as one ZIP." },
+    { title: "Trash for 30 days", text: "Deleted files wait 30 days before they're gone." },
+    { title: "Large uploads", text: "Big files upload in parts, straight to storage." },
+    { title: "Claude and ChatGPT", text: "Find and read drive files from your AI app.", href: "/docs/mcp" },
+  ]}
+  together={[
+    { title: "Attach from Drive", text: "Attach any drive file to a message from the composer." },
+    { title: "Save to Drive", text: "Save an attachment from a thread into a shared folder." },
+    { title: "Storage per person, pooled", text: `${Object.values(PLANS).map((p) => `${p.name} ${p.driveGbPerPerson} GB`).join(", ")} per person, shared by the whole team; unlimited self-hosted.` },
+  ]}
+  faq={[
+    { question: "How much storage do we get?", answer: `Per person on the hosted plans (${Object.values(PLANS).map((p) => `${p.name} ${p.driveGbPerPerson} GB`).join(", ")}), pooled across the team. Self-hosted, it's as much as your R2 bucket holds.` },
+    { question: "Where are the files stored?", answer: "In Cloudflare R2. Self-hosted, in your own Cloudflare account." },
+    { question: "Can I edit documents and spreadsheets in it?", answer: "Not yet: Drive stores, previews and shares files. Office documents are edited in the apps you already use." },
+  ]}
+/>

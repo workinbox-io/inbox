@@ -1,0 +1,59 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import PricingCards from "@/components/site/PricingCards.astro";
+import PriceCalculator from "@/components/site/PriceCalculator.astro";
+import Faq from "@/components/site/Faq.astro";
+import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, TRIAL_DAYS, TRIAL_PLAN, PLANS } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+import { formatMoney } from "@/lib/i18n/format";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+import { localizedPath } from "@/lib/i18n/locales";
+
+export const prerender = true;
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const money = (cents: number) => formatMoney(locale, cents);
+
+const faq = [
+  { question: "Is two-factor authentication included?", answer: "Yes. Optional authenticator-based 2FA for password sign-in is included on every plan, including free and self-hosted. Google sign-in uses Google's own security settings. Organization-wide enforcement is not available yet." },
+  { question: "Who counts as a person?", answer: `Everyone with a personal mailbox on your domains, and the first ${FREE_PEOPLE} are free: a team of twelve pays for seven. Shared mailboxes like support@ and aliases like hello@ are free and unlimited.` },
+  { question: "Is there a free plan?", answer: `Yes. Up to ${FREE_PEOPLE} people are free for good: a personal mailbox each on your own domain, plus shared mailboxes, aliases, catch-all and notes. A plan is needed from person ${FREE_PEOPLE + 1}, and the first ${FREE_PEOPLE} stay free on it. Every plan bills at least ${MIN_SEATS} people, so ${PLANS.starter.name} is €${(MIN_SEATS * PLANS.starter.priceMonthly) / 100} a month for up to ${FREE_PEOPLE + MIN_SEATS} people. That minimum also applies to a smaller team that buys a plan for the API, the AI connector or the audit log.` },
+  { question: "How does the trial work?", answer: `You get ${TRIAL_DAYS} days of ${PLANS[TRIAL_PLAN].name} without a card. Choose a plan any time from the Billing page; with up to ${FREE_PEOPLE} people, mail keeps working for free after the trial.` },
+  { question: "What does self-hosting cost?", answer: "Nothing to us. Work Inbox is open source; on your own Cloudflare account you pay Cloudflare for Workers, D1, R2 and e-mail sending, usually on the Workers Paid plan." },
+  { question: "Can I change plans later?", answer: "Yes, upgrade or downgrade from Billing. Paddle prorates the difference." },
+  { question: "Do you charge VAT?", answer: "Prices exclude VAT. Paddle, our merchant of record, adds it at checkout where it applies." },
+];
+
+const questions = faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+
+const url = (path: string) => (Astro.site ? new URL(localizedPath(locale, path), Astro.site).href : path);
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: siteConfig.name,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    url: url("/pricing"),
+    offers: PLAN_LIST.map((p) => ({ "@type": "Offer", name: p.name, price: p.priceMonthly / 100, priceCurrency: CURRENCY, description: t(`Per person (personal mailbox) a month, the first ${FREE_PEOPLE} free, at least ${MIN_SEATS} billed`) })),
+  },
+  { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: questions.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) },
+];
+---
+
+<MarketingLayout title={t("Pricing")} description={t(`${siteConfig.name} pricing: free for up to ${FREE_PEOPLE} people, then from €${PLANS.starter.priceMonthly / 100} per person a month, shared mailboxes free, self-hosted free. ${TRIAL_DAYS}-day trial, no card needed.`)} jsonLd={jsonLd} ink>
+  <Hero>
+    <Fragment slot="title">{t("Free for up to {n} people.", { n: FREE_PEOPLE })}{" "}<em>{t("Then {price} a person.", { price: money(PLANS.starter.priceMonthly) })}</em></Fragment>
+    <Fragment slot="text">{t("Shared mailboxes and aliases are free on every plan. {days}-day free trial, no card needed. Pay yearly and get two months free. Prices exclude VAT.", { days: TRIAL_DAYS })}</Fragment>
+  </Hero>
+  <Wrapper variant="standard" class="pb-24">
+    <PricingCards yearly />
+    <p class="mt-12 text-sm text-muted-foreground">{t("Optional two-factor authentication is included on every plan.")}{" "}<ArrowLink href="/security">{t("See account security")}</ArrowLink></p>
+  </Wrapper>
+  <PriceCalculator />
+  <Faq items={questions} />
+</MarketingLayout>

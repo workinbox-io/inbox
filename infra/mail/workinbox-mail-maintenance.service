@@ -1,0 +1,10 @@
+[Unit]
+Description=Renew mail certificates and back up the isolated Workinbox mail store
+RequiresMountsFor=/opt/workinbox-mail/state
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/workinbox-mail/source/infra/mail/maintenance.sh
+TimeoutStartSec=15min
+Nice=19
+CPUQuota=25%

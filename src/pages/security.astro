@@ -1,0 +1,66 @@
+---
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import Faq from "@/components/site/Faq.astro";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
+
+export const prerender = true;
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+
+const rawFeatures = [
+  { title: "An extra code at sign-in", text: "Turn on two-factor authentication for password sign-in. Use an authenticator app such as Google Authenticator, Microsoft Authenticator or 1Password." },
+  { title: "Backup codes for lost devices", text: "Save single-use backup codes outside your mailbox. Use one with your password if you lose your phone. Regenerating codes invalidates the previous set." },
+  { title: "Change phones without a gap", text: "Your current authenticator works until you verify the new one. Changing it signs out other sessions and clears remembered devices; unused backup codes still work." },
+  { title: "Shared inbox, individual access", text: "Everyone opens shared mailboxes with their own account. Choose which members can access each mailbox; owners and admins can access every shared mailbox." },
+  { title: "Review active sessions", text: "Account settings lists your signed-in browsers and devices. Sign out individual sessions or the other sessions when you change your password." },
+  { title: "Manage connected access", text: "Review API keys and connected AI apps separately. Two-factor authentication protects password sign-in; it does not add a code to each API request or revoke existing integrations." },
+];
+const rawFaq = [
+  { question: "Is two-factor authentication included in the free plan?", answer: "Yes. Optional authenticator-based 2FA is available for individual accounts on every plan, including free and self-hosted installations." },
+  { question: "Can I protect a shared mailbox with 2FA?", answer: "Each person can enable 2FA on their own account for password sign-in. Shared mailboxes such as support@ use individual accounts and access permissions, so nobody needs to share a password or authenticator setup." },
+  { question: "Do I need a code when I sign in with a Google account?", answer: "No. Google sign-in uses Google's security settings. Enable two-step verification in your Google account separately. Work Inbox does not enforce Google's two-step verification policy." },
+  { question: "What happens if I lose my authenticator?", answer: "Use an unused backup code after your password, then change your authenticator in Account settings. Resetting your password does not disable 2FA. Without an authenticator and backup codes, access recovery is not guaranteed." },
+  { question: "Can an administrator require 2FA for the team?", answer: "Not yet. Each person currently chooses whether to enable 2FA. Organization-wide enforcement is not available." },
+  { question: "Does 2FA make my account phishing-proof?", answer: "No. Authenticator codes add protection to password sign-in, but can still be stolen through phishing. Never share your password, authenticator key or backup codes, and check the site's address before signing in." },
+];
+const link = (href: string, label: string) => `<a class="inline-block py-1 text-foreground border-b border-foreground" href="${lp(locale, href)}">${label}</a>`;
+const features = rawFeatures.map((f) => ({ title: t(f.title), text: t(f.text) }));
+const faq = rawFaq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+const steps = [
+  { tag: "1", title: "Scan the QR code", text: "Confirm your password and scan the QR code with your authenticator app." },
+  { tag: "2", title: "Enter a code", text: "Enter a six-digit code to activate protection. Scanning alone does not turn it on." },
+  { tag: "3", title: "Save backup codes", text: "Save your backup codes somewhere outside your Work Inbox account." },
+].map((x) => ({ ...x, title: t(x.title), text: t(x.text) }));
+---
+
+<MarketingLayout title={t("Security: how Work Inbox protects your team's mail")} description={t("Protect your Work Inbox account with authenticator-based two-factor authentication. Learn how individual logins and mailbox permissions control team access.")} ink>
+  <Hero>
+    <Fragment slot="title">{t("How we protect")} <em>{t("your team's mail")}</em></Fragment>
+    <Fragment slot="text">{t("Every person signs in with their own login, optional two-factor authentication guards password sign-in on every plan, and the code is open for you to read or run yourself.")}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">{t("Start free")}</Button>
+      <ArrowLink href={lp(locale, "/docs/two-factor-authentication")} tone="default">{t("Learn how to enable 2FA")}</ArrowLink>
+    </Fragment>
+  </Hero>
+  <Section label={t("Access")}>
+    <Fragment slot="title">{t("Control how people access your inbox")}</Fragment>
+    <Features slot="full" cols={3} items={features} />
+  </Section>
+  <Section label={t("Setup")}>
+    <Fragment slot="title">{t("Set up an authenticator in Account settings")}</Fragment>
+    <ArrowLink href="/app/settings/account#two-factor-authentication">{t("Open your security settings")}</ArrowLink>
+    <Features slot="full" cards cols={3} items={steps} />
+  </Section>
+  <Faq items={faq} />
+  <Wrapper variant="standard" class="pb-20">
+    <Text tag="p" variant="textSM" class="text-muted-foreground"><Fragment set:html={t("Read the {guide}, or learn how {shared} works.", { guide: link("/docs/two-factor-authentication", t("setup and recovery guide")), shared: link("/shared-mailbox", t("shared mailbox access")) })} /></Text>
+  </Wrapper>
+</MarketingLayout>

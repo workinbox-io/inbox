@@ -1,0 +1,454 @@
+---
+/**
+ * A faux screen per app, built from the real app's layout (icon rail, folder sidebar, list pane, detail pane; the
+ * screenshots in public/marketing are the reference). HTML, no screenshots, crisp at any size. Everything sits in
+ * `.fx`, which carries the app's font and tokens so none of it leaks into the page. Panes drop out by container
+ * width: sidebar from 820px, the list from 560px, so phones get the detail alone. `data-link="<app>"` marks the
+ * spots Suite's "works with" chips light up (class `su-hl`).
+ */
+import { Archive, AtSign, BookmarkIcon, Calendar, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Clock, Contact, Copy, Database, FileText, Folder, FolderOpen, Forward, Globe, HardDrive, Hash, Inbox, LayoutGrid, List, Mail, MessagesSquare, NotebookPen, Paperclip, PanelTop, Phone, Pin, Plus, Reply, Search, Send, Shield, Smile, Star, Tag, Trash2, Users, Bell, Building2, CalendarClock, Check, Code2, Bold, Italic, Underline, Undo2, Redo2, ListOrdered, Link2, Table2, Image, ArrowUpDown, PanelRight, Circle, CircleDot, SignalHigh, GitPullRequest, X, FilePen } from "lucide-react";
+import Face from "./Face.astro";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+
+interface Props {
+  app: string;
+  /** Inside another frame: no border or shadow. */
+  bare?: boolean;
+}
+const { app, bare = false } = Astro.props;
+const t = tFor(siteLocale(Astro.url));
+const ic = "size-[15px] shrink-0 stroke-[1.6]";
+const railApps: [string, typeof Mail, string?][] = [
+  ["custom-domain-email", Mail, "3"],
+  ["team-chat", MessagesSquare, "1"],
+  ["team-calendar", CalendarDays],
+  ["shared-notes", NotebookPen],
+  ["shared-contacts", Contact],
+  ["shared-drive", HardDrive],
+  ["custom-apps", Database],
+];
+const mails = [
+  { who: "marta" as const, name: "Marta Kaczmarek", subject: t("Contract for the spring campaign"), preview: t("Hi Anna, Attached is the signed contract for the spring campaign."), time: "08:00 PM", label: "Brightloop", unread: true, bar: "#2f9e8f" },
+  { who: "oliver" as const, name: "Oliver Smith", subject: t("Can't log in after the password reset"), preview: t("Hello, I reset my password this morning but the new one doesn't work."), time: "07:45 PM", unread: true, bar: "#8b7ae6" },
+  { who: "lena" as const, name: "Lena Weber", subject: t("Invoice 2026-114 has the wrong VAT number"), preview: t("Hi team, Our VAT number on invoice 2026-114 is wrong."), time: "07:17 PM", unread: true, bar: "#8b7ae6" },
+  { who: "tomasz" as const, name: "Tomasz Wiśniewski", subject: t("Notes from the client call"), preview: t("Anna, I put the notes from today's call in the shared folder."), time: "06:54 PM", bar: "#bfe6df" },
+  { who: "diana" as const, name: "Diana Nowak", subject: t("Design review moved to Thursday"), preview: t("Moved the design review to Thursday 11:00, same room."), time: "03:49 PM", bar: "#bfe6df" },
+];
+const files = [
+  { name: t("Media plan.csv"), size: "160 B" },
+  { name: t("Signed contract.pdf"), size: "857 B", link: "mail" },
+  { name: t("Spring campaign brief.pdf"), size: "2.1 MB", link: "chat" },
+];
+const hours = ["08", "09", "10", "11", "12", "13", "14", "15"];
+const days = [t("Monday") + " 16", t("Tuesday") + " 17", t("Wednesday") + " 18", t("Thursday") + " 19", t("Friday") + " 20"];
+// day, start hour offset from 8, length in hours, title, time text, dashed
+const events: [number, number, number, string, string, string?, boolean?][] = [
+  [0, 2, 0.5, t("Weekly check-in"), "10:00"],
+  [1, 1, 3, t("Focus: landing page"), "09:00 – 12:00"],
+  [2, 3, 1.5, t("Kickoff: Brightloop spring campaign"), "11:00 – 12:30", t("Room 2 / video")],
+  [2, 5, 1, t("Lunch with Marta"), "13:00 – 14:00", "Bistro Wola"],
+  [3, 3, 1, t("Design review"), "11:00 – 12:00", undefined, true],
+  [4, 6, 1.5, t("Q4 planning"), "14:00 – 15:30", undefined, true],
+];
+const board: { name: string; n: number; icon: string; cards: { id: string; title: string; tag?: [string, string, string]; date?: string; who: "anna" | "diana" | "tomasz"; hot?: boolean; note?: boolean }[] }[] = [
+  { name: t("Backlog"), n: 1, icon: "dash", cards: [{ id: "TAS-1", title: t("Post-launch report template"), tag: [t("Improvement"), "#fde6dc", "#b4501f"], date: "Dec 1", who: "diana" }] },
+  { name: t("To do"), n: 4, icon: "ring", cards: [
+    { id: "TAS-11", title: t("Legal review of the claims"), who: "anna" },
+    { id: "TAS-4", title: t("Fix the broken link in the newsletter footer"), tag: [t("Bug"), "#dcf3ee", "#1c7a6b"], date: "Nov 19", who: "diana", hot: true },
+  ] },
+  { name: t("In progress"), n: 2, icon: "half", cards: [
+    { id: "TAS-6", title: t("Social posts for week one"), date: "Nov 20", who: "tomasz" },
+    { id: "TAS-5", title: t("Hero visuals, three versions"), tag: [t("Feature"), "#e8e5fb", "#5b4fc4"], date: "Nov 21", who: "diana", note: true },
+  ] },
+  { name: t("Review"), n: 1, icon: "full", cards: [{ id: "TAS-7", title: t("Landing page copy"), tag: [t("Feature"), "#e8e5fb", "#5b4fc4"], date: "Nov 18", who: "anna", hot: true, note: true }] },
+];
+const sideItem = "fx-nav";
+---
+
+<div aria-hidden="true" class:list={["fx", !bare && "fx-framed"]}>
+  <nav class="fx-rail">
+    <i class="fx-logo"><PanelTop className="size-4" /></i>
+    <i class="fx-rail-i"><Search className={ic} /></i>
+    {railApps.map(([slug, Icon, badge]) => (
+      <i class:list={["fx-rail-i", slug === app && "is-on"]}><Icon className="size-[17px] stroke-[1.6]" />{badge && <b>{badge}</b>}</i>
+    ))}
+    <i class="fx-rail-i fx-rail-bell"><Bell className={ic} /><b>9</b></i>
+  </nav>
+
+  {app === "custom-domain-email" && (<>
+    <aside class="fx-side">
+      <p class="fx-new"><Plus className="size-3.5" />{t("New e-mail")}<kbd>C</kbd></p>
+      <p class="fx-sec">{t("All mailboxes")}</p>
+      <p class="fx-nav is-on"><Inbox className={ic} />{t("Inbox")}<b>3</b></p>
+      <p class="fx-nav"><Star className={ic} />{t("Starred")}</p>
+      <p class="fx-nav"><Clock className={ic} />{t("Snoozed")}</p>
+      <p class="fx-nav"><FilePen className={ic} />{t("Drafts")}<b>2</b></p>
+      <p class="fx-nav"><Send className={ic} />{t("Sent")}</p>
+      <p class="fx-nav"><Archive className={ic} />{t("Archived")}</p>
+      <p class="fx-nav"><Shield className={ic} />{t("Spam")}</p>
+      <p class="fx-nav"><Trash2 className={ic} />{t("Trash")}</p>
+      <p class="fx-sec">{t("Mailboxes")}</p>
+      <p class="fx-nav"><i class="fx-dot" style="background:#2fb5a1"></i>anna@acme.example</p>
+    </aside>
+    <section class="fx-list">
+      <p class="fx-h">{t("Inbox")} <span>{t("3 unread")} · {t("All mailboxes")}</span></p>
+      <p class="fx-search"><Search className="size-3.5" />{t("Search mail")}<kbd>/</kbd></p>
+      <ul class="fx-rows">
+        {mails.map((m, i) => (
+          <li class:list={["fx-row", i === 0 && "is-on"]} style={`--bar:${m.bar}`}>
+            <span class="fx-r1">{m.unread && <i class="fx-ud"></i>}<Face who={m.who} size={16} /><b class:list={[!m.unread && "fx-n"]}>{m.name}</b>{i === 0 && <><Star className="ml-auto size-3 fill-[#f5b301] text-[#f5b301]" /><Paperclip className="size-3 text-[#6d6d6d]" /></>}<em class:list={[i !== 0 && "ml-auto"]}>{m.time}</em></span>
+            <span class="fx-r2"><span>{m.subject}</span>{m.label && <u>{m.label}</u>}</span>
+            <span class="fx-r3">{m.preview}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+    <section class="fx-main fx-thread">
+      <div class="fx-bar"><Archive className={ic} /><Clock className={ic} /><Trash2 className={ic} /><Mail className={ic} /><Star className="size-[15px] fill-[#f5b301] text-[#f5b301]" /><Shield className={ic} /></div>
+      <div class="fx-pad">
+        <h3 class="fx-title">{t("Contract for the spring campaign")}</h3>
+        <p class="fx-meta"><span class="fx-pill-mint"><i class="fx-dot" style="background:#2fb5a1"></i>anna@acme.example</span><span><MessagesSquare className="size-3" />{t("1 message")}</span><span><Paperclip className="size-3" />{t("1 file")}</span>
+          <span data-link="contacts" class="fx-contact"><Face who="marta" size={14} />{t("Marketing lead")} · Brightloop <Contact className="size-3" /></span></p>
+        <div class="fx-card">
+          <div class="fx-msg-h"><Face who="marta" size={28} /><p><b>Marta Kaczmarek</b> <span>&lt;marta@brightloop.io&gt;</span><br /><span>{t("to")} anna@acme.example</span></p><span class="fx-msg-t"><Paperclip className="size-3" />1 08:00 PM<Reply className="size-3" /><Forward className="size-3" /></span></div>
+          <p class="fx-body"><span class="block mb-1.5">{t("Hi Anna,")}</span>{t("Attached is the signed contract for the spring campaign. Could you confirm the kickoff date? We'd like to start on the 18th if that works for your team.")}</p>
+          <p data-link="drive" class="fx-file"><i><FileText className="size-4" /></i><span><b>{t("Signed contract.pdf")}</b><br />857 B</span><u><HardDrive className="size-3" />{t("Save to Drive")}</u></p>
+        </div>
+        <p class="fx-reply"><span class="fx-btn"><Reply className="size-3.5" />{t("Reply")}</span><span class="fx-btn"><Forward className="size-3.5" />{t("Forward")}</span></p>
+        <p data-link="at" class="fx-draft">{t("Thanks Marta! Sending the kickoff date now,")} <span class="fx-mention">@Diana Nowak</span> {t("will join.")}</p>
+      </div>
+    </section>
+  </>)}
+
+  {app === "team-chat" && (<>
+    <aside class="fx-side">
+      <p class="fx-new"><Search className="size-3.5" />{t("Jump to...")}<kbd>⌘K</kbd></p>
+      <p class="fx-nav"><MessagesSquare className={ic} />{t("Threads")}<b>1</b></p>
+      <p class="fx-nav"><AtSign className={ic} />{t("Mentions")}</p>
+      <p class="fx-nav"><BookmarkIcon className={ic} />{t("Saved")}</p>
+      <p class="fx-sec">{t("Channels")}<Plus className="ml-auto size-3.5" /></p>
+      <p class="fx-nav"><Hash className={ic} />general</p>
+      <p class="fx-nav is-on"><Hash className={ic} />spring-campaign</p>
+      <p class="fx-sec">{t("Direct messages")}<Plus className="ml-auto size-3.5" /></p>
+      <p class="fx-nav"><Face who="diana" size={16} />Diana Nowak</p>
+    </aside>
+    <section class="fx-main fx-chat">
+      <div class="fx-bar fx-bar-t"><Hash className="size-4" /><b>spring-campaign</b><span>{t("Brightloop's spring campaign: kickoff on the 18th")}</span><em><Users className="size-3" />3</em><Pin className={ic} /><Search className={ic} /></div>
+      <div class="fx-msgs">
+        <p class="fx-day"><span>{t("Today")}</span></p>
+        <div class="fx-m"><Face who="anna" size={28} /><p><small class="fx-pin"><Pin className="size-3" />{t("Pinned")}</small><b>Anna Kowalska</b> <i>6:34 PM</i><br />{t("Brightloop signed the contract")} 🎉 {t("Kickoff is on the 18th, notes from the call:")} <span data-link="notes" class="fx-ref"><FileText className="size-3 text-[#d9822b]" />{t("Client call: Brightloop")}</span><br /><span class="fx-react">🎉 2</span><span class="fx-react">🙌 1</span></p></div>
+        <div class="fx-m"><Face who="diana" size={28} /><p><b>Diana Nowak</b> <i>6:49 PM</i><br />{t("Great!")} <span data-link="at" class="fx-mention">@Anna Kowalska</span> {t("do we have their brand assets yet? I'd like to start on the landing page.")}</p></div>
+        <div class="fx-m"><Face who="anna" size={28} /><p><b>Anna Kowalska</b> <i>6:55 PM</i><br />{t("Marta sends them by Friday. I'll drop them in Drive")} → Brightloop.</p></div>
+        <div class="fx-m"><Face who="diana" size={28} /><p><b>Diana Nowak</b> <i>7:57 PM</i><br />{t("The brief is here if you need it:")} <span data-link="drive" class="fx-ref"><FileText className="size-3 text-[#c2410c]" />{t("Spring campaign brief.pdf")}</span> 👀</p></div>
+      </div>
+      <p class="fx-comp"><span>{t("Message")} #spring-campaign</span><i><Bold className="size-3.5" /><Italic className="size-3.5" /><Code2 className="size-3.5" /><Paperclip className="size-3.5" /><AtSign className="size-3.5" /></i></p>
+    </section>
+  </>)}
+
+  {app === "shared-notes" && (<>
+    <aside class="fx-side">
+      <p class="fx-new"><Plus className="size-3.5" />{t("New note")}<kbd>C</kbd></p>
+      <p class="fx-nav is-on"><FileText className={ic} />{t("All notes")}</p>
+      <p class="fx-nav"><Users className={ic} />{t("My notes")}</p>
+      <p class="fx-nav"><Users className={ic} />{t("Shared with me")}</p>
+      <p class="fx-nav"><Pin className={ic} />{t("Pinned")}</p>
+      <p class="fx-nav"><Archive className={ic} />{t("Archive")}</p>
+      <p class="fx-sec">{t("Folders")}</p>
+      <p class="fx-nav"><Folder className={ic} />{t("Clients")}</p>
+    </aside>
+    <section class="fx-list">
+      <p class="fx-h">{t("All notes")}</p>
+      <p class="fx-search"><Search className="size-3.5" />{t("Search notes")}<kbd>/</kbd></p>
+      <ul class="fx-rows">
+        {[[t("Hero visuals: feedback wanted"), t("Three directions for the hero, mock-ups in Drive → Brightloop.")], [t("Client call: Brightloop"), t("Call with Marta Kaczmarek (Brightloop) about the spring campaign."), 1], [t("Onboarding checklist"), t("Mailbox and password Access to support@ Read the brand guide")], [t("Q4 planning"), t("Goals Two new retainer clients Launch the Brightloop campaign")]].map(([title, text, on]) => (
+          <li class:list={["fx-row", on && "is-on"]} style={`--bar:${on ? "#2f9e8f" : "#bfe6df"}`}>
+            <span class="fx-r1"><b class="fx-n">{title}</b><em class="ml-auto"><Globe className="size-3" />08:10 PM</em></span>
+            <span class="fx-r3 fx-wrap">{text}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+    <section class="fx-main fx-doc">
+      <div class="fx-bar fx-bar-t"><Globe className="size-3.5 text-[#2f9e8f]" /><span>{t("Everyone in the organization")}</span><Pin className="ml-auto size-3.5" /></div>
+      <div class="fx-tools"><Undo2 className="size-3.5" /><Redo2 className="size-3.5" /><i></i><Plus className="size-3.5" /><span>{t("Text")} <ChevronDown className="inline size-3" /></span><i></i><Bold className="size-3.5" /><Italic className="size-3.5" /><Underline className="size-3.5" /><Code2 className="size-3.5" /><i></i><ListOrdered className="size-3.5" /><Link2 className="size-3.5" /><Table2 className="size-3.5" /><Image className="size-3.5" /></div>
+      <div class="fx-page">
+        <h3>{t("Client call: Brightloop")}</h3>
+        <p>{t("Call with")} <b data-link="contacts" class="fx-ref2">Marta Kaczmarek</b> (Brightloop) {t("about the spring campaign.")}</p>
+        <h4>{t("Decisions")}</h4>
+        <ul><li>{t("Kickoff on the 18th, weekly check-ins on Mondays")}</li><li>{t("Brightloop sends the brand assets by Friday")}</li></ul>
+        <h4>{t("Links")}</h4>
+        <ul>
+          <li>{t("Contract:")} <u data-link="drive">{t("Signed contract.pdf")}</u></li>
+          <li>{t("Kickoff:")} <u data-link="calendar">{t("Kickoff: Brightloop spring campaign")}</u></li>
+          <li>{t("Task:")} <u data-link="collections">{t("Landing page copy")}</u></li>
+        </ul>
+        <h4>{t("To do")}</h4>
+        <p class="fx-todo"><i class="is-done"><Check className="size-2.5" /></i><s>{t("Send the signed contract to finance")}</s></p>
+      </div>
+    </section>
+  </>)}
+
+  {app === "team-calendar" && (<>
+    <aside class="fx-side">
+      <p class="fx-new"><CalendarClock className="size-3.5" />{t("New event")}<kbd>C</kbd></p>
+      <p class="fx-mh"><ChevronLeft className="size-3.5" />{t("November 2026")}<ChevronRight className="size-3.5" /></p>
+      <div class="fx-mini">
+        {[t("Mo"), t("Tu"), t("We"), t("Th"), t("Fr"), t("Sa"), t("Su")].map((d) => <b>{d}</b>)}
+        {[26,27,28,29,30,31,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30].map((d, i) => <span class:list={[i < 6 && "is-out", d === 17 && i === 22 && "is-today", i >= 21 && i <= 27 && "is-week"]}>{d}</span>)}
+      </div>
+      <p class="fx-sec">{t("Calendars")}<Plus className="ml-auto size-3.5" /></p>
+      <p class="fx-nav"><i class="fx-sq" style="background:#4b86f0"></i>Anna Kowalska</p>
+    </aside>
+    <section class="fx-main fx-cal">
+      <div class="fx-ctool"><span class="fx-btn">{t("Today")}</span><ChevronLeft className={ic} /><ChevronRight className={ic} /><b>{t("November 16 – 22, 2026")}</b><span class="fx-seg"><i>{t("Day")}</i><i class="is-on">{t("Week")}</i><i>{t("Month")}</i></span></div>
+      <div class="fx-grid">
+        <i></i>
+        {days.map((d, i) => <p class:list={["fx-dh", i > 2 && "fx-hide-s"]}><span>{d.split(" ")[0]}</span> <b class:list={[i === 1 && "is-today"]}>{d.split(" ")[1]}</b></p>)}
+        <div class="fx-hours">{hours.map((h) => <span>{h}</span>)}</div>
+        {days.map((_, d) => (
+          <div class:list={["fx-col", d > 2 && "fx-hide-s"]}>
+            {events.filter((e) => e[0] === d).map((e) => (
+              <p class:list={["fx-ev", e[6] && "is-dashed"]} style={`top:${e[1] * 34}px;height:${e[2] * 34 - 2}px`}>{e[3]} <small>{e[4]}</small>{e[5] && <small class="block">{e[5]}</small>}</p>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div class="fx-strip">
+        <p class="fx-st-t"><b>{t("Kickoff: Brightloop spring campaign")}</b> <span>{t("Wed")} 18 · 11:00 – 12:30 · {t("Room 2 / video")}</span></p>
+        <p class="fx-st-r">
+          <span><Face who="anna" size={16} />Anna</span>
+          <span data-link="mail"><Face who="marta" size={16} />Marta Kaczmarek <em>{t("invited by e-mail")}</em></span>
+          <span data-link="notes" class="fx-btn fx-btn-p"><NotebookPen className="size-3" />{t("Meeting note")}</span>
+        </p>
+      </div>
+    </section>
+  </>)}
+
+  {app === "shared-drive" && (<>
+    <aside class="fx-side">
+      <p class="fx-new"><Plus className="size-3.5" />{t("New")}<ChevronDown className="ml-auto size-3.5" /></p>
+      <p class="fx-nav"><HardDrive className={ic} />{t("My drive")}<ChevronDown className="ml-auto size-3.5" /></p>
+      <p class="fx-nav is-on fx-in"><FolderOpen className={ic} />Brightloop</p>
+      <p class="fx-nav fx-in"><Folder className={ic} />{t("Contracts")}<ChevronRight className="ml-auto size-3.5" /></p>
+      <p class="fx-nav fx-in"><Folder className={ic} />{t("Finance")}<ChevronRight className="ml-auto size-3.5" /></p>
+      <p class="fx-nav fx-in"><Folder className={ic} />{t("Onboarding")}<ChevronRight className="ml-auto size-3.5" /></p>
+      <p class="fx-nav"><Users className={ic} />{t("Shared with me")}<ChevronRight className="ml-auto size-3.5" /></p>
+      <p class="fx-nav fx-gap"><Star className={ic} />{t("Starred")}</p>
+      <p class="fx-nav"><Clock className={ic} />{t("Recent")}</p>
+      <p class="fx-nav"><Trash2 className={ic} />{t("Trash")}</p>
+    </aside>
+    <section class="fx-main fx-drive">
+      <p class="fx-crumb">{t("My drive")} <ChevronRight className="inline size-3.5" /> <b>Brightloop</b></p>
+      <div class="fx-dtool"><p class="fx-search"><Search className="size-3.5" />{t("Search the drive")}<kbd>/</kbd></p><ArrowUpDown className={ic} /><span class="fx-seg"><i class="is-on"><List className="size-3.5" /></i><i><LayoutGrid className="size-3.5" /></i></span><PanelRight className={ic} /></div>
+      <div class="fx-thead"><i></i><span>{t("Name")} ↑</span><span class="fx-hide-s">{t("Owner")}</span><span class="fx-hide-s">{t("Modified")}</span><span>{t("Size")}</span></div>
+      {files.map((f) => (
+        <p data-link={f.link} class="fx-trow"><i></i><span><FileText className="size-4 text-[#6d6d6d]" />{f.name}</span><span class="fx-hide-s fx-mut">Anna Kowalska</span><span class="fx-hide-s fx-mut">08:10 PM</span><span class="fx-mut">{f.size}</span></p>
+      ))}
+    </section>
+  </>)}
+
+  {app === "shared-contacts" && (<>
+    <aside class="fx-side">
+      <p class="fx-new"><Users className="size-3.5" />{t("New contact")}<kbd>C</kbd></p>
+      <p class="fx-nav"><Contact className={ic} />{t("All contacts")}</p>
+      <p class="fx-nav"><Clock className={ic} />{t("Recently e-mailed")}</p>
+      <p class="fx-nav"><Building2 className={ic} />{t("Directory")}</p>
+      <p class="fx-sec">{t("Groups")}<Plus className="ml-auto size-3.5" /></p>
+      <p class="fx-nav is-on"><Tag className={ic} />{t("Partners")}</p>
+    </aside>
+    <section class="fx-list">
+      <p class="fx-h">{t("Partners")}</p>
+      <p class="fx-search"><Search className="size-3.5" />{t("Search contacts")}<kbd>/</kbd></p>
+      <p class="fx-write"><Mail className="size-3.5" />{t("Write to everyone in Partners")}</p>
+      <ul class="fx-rows">
+        {[["F", "felix", "Felix Wagner", "Studio Wagner", "felix@studio-wagner.de"], ["L", "lena", "Lena Weber", "Fjord", "lena.weber@fjord.de"], ["M", "marta", "Marta Kaczmarek", "Brightloop", "marta@brightloop.io", 1], ["O", "oliver", "Oliver Smith", "Northwind", "oliver@northwind.co"]].map(([l, who, name, co, mail, on]) => (
+          <>
+            <li class="fx-letter">{l}</li>
+            <li class:list={["fx-row", on && "is-on"]} style={`--bar:${on ? "#2f9e8f" : "#bfe6df"}`}>
+              <span class="fx-r1"><Face who={who as "felix"} size={16} /><b class="fx-n">{name}</b><em class="ml-auto">{co}</em></span>
+              <span class="fx-r3">{mail}</span>
+            </li>
+          </>
+        ))}
+      </ul>
+    </section>
+    <section class="fx-main fx-prof">
+      <svg class="fx-banner" viewBox="0 0 400 70" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="400" height="70" fill="#eaf6f3"></rect><g fill="#6dbfae" stroke="#6dbfae" stroke-width="1.5"><rect x="30" y="14" width="34" height="18"></rect><rect x="170" y="30" width="30" height="20"></rect><rect x="290" y="12" width="36" height="20"></rect><path d="M64 23H120V50H170M200 40H260V20H290M326 22H380" fill="none"></path><rect x="118" y="48" width="5" height="5"></rect><rect x="258" y="18" width="5" height="5"></rect><rect x="378" y="20" width="5" height="5"></rect></g></svg>
+      <div class="fx-pad">
+        <span class="fx-big"><Face who="marta" size={60} /></span>
+        <h3 data-link="at" class="fx-title">Marta Kaczmarek</h3>
+        <p class="fx-sub"><Building2 className="size-3.5" />{t("Marketing lead")} · Brightloop <span class="fx-tag"><Tag className="size-3" />{t("Partners")}</span></p>
+        <div class="fx-acts"><span><i><Mail className="size-3.5" /></i>{t("E-mail")}</span><span><i><Phone className="size-3.5" /></i>{t("Call")}</span><span><i><Copy className="size-3.5" /></i>{t("Copy e-mail")}</span></div>
+        <div class="fx-box"><p class="fx-box-h">{t("Contact details")}</p><p><Mail className="size-3.5" /><span>marta@brightloop.io<br /><small>{t("Work")}</small></span></p><p><Phone className="size-3.5" /><span>+48 601 234 567<br /><small>{t("Work")}</small></span></p></div>
+        <div data-link="mail" class="fx-box"><p class="fx-box-h">{t("Conversations")}<em><FilePen className="size-3" />{t("New e-mail")}</em></p><p class="fx-conv"><span>{t("Contract for the spring campaign")}<br /><small>anna@acme.example</small></span><small>08:00 PM</small></p></div>
+      </div>
+    </section>
+  </>)}
+
+  {app === "custom-apps" && (<>
+    <aside class="fx-side">
+      <p class="fx-new"><Plus className="size-3.5" />{t("New record")}<kbd>C</kbd></p>
+      <p class="fx-sec">{t("Collections")}</p>
+      <p class="fx-nav"><i class="fx-dot" style="background:#2fb5a1"></i>{t("Deals")}<b>4</b></p>
+      <p class="fx-nav is-on"><i class="fx-dot" style="background:#8b7ae6"></i>{t("Tasks")}<b>11</b></p>
+      <p class="fx-nav fx-in"><Trash2 className={ic} />{t("Trash")}</p>
+    </aside>
+    <section class="fx-main fx-board">
+      <p class="fx-h2">{t("Tasks")} <span>11</span></p>
+      <div class="fx-tabs"><span><List className="size-3.5" />{t("List")}</span><span class="fx-hide-s"><Table2 className="size-3.5" />{t("Table")}</span><span class="is-on"><LayoutGrid className="size-3.5" />{t("Board")}</span><span class="fx-hide-s">{t("Timeline")}</span><span class="fx-hide-s">{t("Calendar")}</span><b class="fx-new-b"><Plus className="size-3.5" />{t("New")}</b></div>
+      <div class="fx-cols">
+        {board.map((c, ci) => (
+          <div class:list={["fx-bcol", ci > 1 && "fx-hide-s"]}>
+            <p class="fx-bh"><i class={`fx-st fx-st-${c.icon}`}></i><b>{c.name}</b> <span>{c.n}</span></p>
+            {c.cards.map((k) => (
+              <div class="fx-kard">
+                <p class="fx-kid"><SignalHigh className="size-3" />{k.id}</p>
+                <p class="fx-kt">{k.title}</p>
+                {k.tag && <p><u style={`background:${k.tag[1]};color:${k.tag[2]}`}>{k.tag[0]}</u></p>}
+                <p class="fx-kf">{k.date && <span data-link="calendar" class:list={["fx-kd", k.hot && "is-hot"]}><Calendar className="size-3" />{k.date}</span>}{k.note && <span data-link="notes" class="fx-kn"><FileText className="size-3" />1</span>}<Face who={k.who} size={16} /></p>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </section>
+  </>)}
+</div>
+
+<style is:global>
+  .fx { --fx-ink: #292929; --fx-mut: #6d6d6d; --fx-line: rgb(41 41 41 / 0.1); --fx-surface: #f6f6f6; --fx-sel: #e3f4f1;
+    container-type: inline-size; display: flex; height: 27.5rem; overflow: hidden; background: #fff; color: var(--fx-ink); text-align: left;
+    font: 400 12.5px/1.4 "Figtree Variable", ui-sans-serif, system-ui, sans-serif; user-select: none; }
+  .fx-framed { border: 1px solid var(--fx-line); box-shadow: 0 24px 60px -30px rgba(20, 25, 80, 0.35); }
+  .fx *, .fx *::before { box-sizing: border-box; }
+  .fx :where(p, ul, li, h3, h4, section, aside, nav, div) { margin: 0; padding: 0; list-style: none; }
+  .fx svg { flex-shrink: 0; }
+  .fx b { font-weight: 600; } .fx em, .fx i, .fx u { font-style: normal; text-decoration: none; }
+  .fx kbd { margin-left: auto; font: 500 9px/1 inherit; color: var(--fx-mut); background: #fff; border: 1px solid var(--fx-line); border-radius: 4px; padding: 2px 4px; }
+  .fx-face { border-radius: 9999px; flex-shrink: 0; }
+  /* rail */
+  .fx-rail { width: 2.75rem; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0; border-right: 1px solid var(--fx-line); }
+  .fx-logo { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: #111; color: #fff; margin-bottom: 6px; }
+  .fx-rail-i { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; color: #444; }
+  .fx-rail-i.is-on { background: var(--fx-surface); color: #111; }
+  .fx-rail-i b { position: absolute; top: -2px; right: -2px; min-width: 14px; height: 14px; display: grid; place-items: center; border-radius: 9999px; background: #111; color: #fff; font-size: 8px; font-weight: 600; padding: 0 3px; border: 1.5px solid #fff; }
+  .fx-rail-bell { margin-top: auto; }
+  /* sidebar */
+  .fx-side { display: none; width: 10.5rem; flex-shrink: 0; flex-direction: column; gap: 1px; padding: 8px; border-right: 1px solid var(--fx-line); overflow: hidden; }
+  .fx-new { display: flex; align-items: center; gap: 6px; padding: 6px 8px; margin-bottom: 8px; border: 1px solid var(--fx-line); border-radius: 8px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); font-size: 12px; }
+  .fx-sec { display: flex; align-items: center; padding: 10px 8px 4px; color: var(--fx-mut); font-size: 11px; }
+  .fx-nav { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 7px; color: #3a3a3a; white-space: nowrap; }
+  .fx-nav b { margin-left: auto; font-weight: 500; font-size: 11px; }
+  .fx-nav.is-on { background: var(--fx-surface); color: #111; font-weight: 500; }
+  .fx-nav.fx-in { padding-left: 14px; } .fx-gap { margin-top: 12px; }
+  .fx-dot { width: 7px; height: 7px; border-radius: 9999px; flex-shrink: 0; display: inline-block; } .fx-sq { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  /* list pane */
+  .fx-list { display: none; width: 15rem; flex-shrink: 0; flex-direction: column; border-right: 1px solid var(--fx-line); min-width: 0; overflow: hidden; }
+  .fx-h { padding: 12px 12px 8px; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; } .fx-h span { font-size: 11px; font-weight: 400; color: var(--fx-mut); letter-spacing: 0; }
+  .fx-search { display: flex; align-items: center; gap: 6px; margin: 0 8px 8px; padding: 6px 8px; border-radius: 8px; background: var(--fx-surface); color: var(--fx-mut); }
+  .fx-write { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 8px 6px; padding: 5px; border: 1px solid var(--fx-line); border-radius: 9999px; font-size: 11px; }
+  .fx-rows { overflow: hidden; padding: 0 6px; display: flex; flex-direction: column; gap: 4px; }
+  .fx-row { position: relative; display: block; padding: 6px 8px 6px 10px; border-radius: 8px; min-width: 0; }
+  .fx-row::before { content: ""; position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; border-radius: 3px; background: var(--bar); }
+  .fx-row.is-on { background: var(--fx-sel); }
+  .fx-row > span { display: block; min-width: 0; }
+  .fx-row > .fx-r1 { display: flex; align-items: center; gap: 5px; } .fx-r1 b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .fx-r1 b.fx-n { font-weight: 500; }
+  .fx-r1 em { display: inline-flex; align-items: center; gap: 3px; } .fx-r1 em, .fx-letter { flex-shrink: 0; color: var(--fx-mut); font-size: 11px; white-space: nowrap; }
+  .fx-ud { width: 5px; height: 5px; border-radius: 9999px; background: #8b7ae6; flex-shrink: 0; }
+  .fx-row > .fx-r2 { display: flex; align-items: center; gap: 5px; margin-top: 1px; } .fx-r2 > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } .fx-r2 u { flex-shrink: 0; padding: 1px 6px; border-radius: 9999px; background: #ececec; font-size: 10px; }
+  .fx-r3 { margin-top: 1px; color: var(--fx-mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .fx-wrap { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .fx-letter { padding: 4px 8px 0; font-weight: 500; }
+  /* main */
+  .fx-main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .fx-bar { display: flex; align-items: center; gap: 14px; padding: 9px 14px; border-bottom: 1px solid var(--fx-line); color: #444; }
+  .fx-bar-t { gap: 8px; } .fx-bar-t span { color: var(--fx-mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } .fx-bar-t em { margin-left: auto; display: flex; gap: 3px; align-items: center; padding: 1px 6px; border: 1px solid var(--fx-line); border-radius: 6px; }
+  .fx-bar-t b { font-size: 13px; }
+  .fx-pad { padding: 12px 14px; overflow: hidden; }
+  .fx-title { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+  .fx-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 6px 0 10px; color: var(--fx-mut); font-size: 11px; } .fx-meta > span { display: inline-flex; align-items: center; gap: 4px; }
+  .fx-pill-mint { background: #dff3ef; color: #1c5f55 !important; padding: 1px 7px; border-radius: 6px; }
+  .fx-contact { padding: 1px 7px 1px 3px; border: 1px solid var(--fx-line); border-radius: 9999px; color: var(--fx-ink); }
+  .fx-card { border: 1px solid var(--fx-line); border-radius: 10px; padding: 10px; }
+  .fx-msg-h { display: flex; gap: 8px; align-items: flex-start; } .fx-msg-h p { line-height: 1.35; min-width: 0; } .fx-msg-h p span { color: var(--fx-mut); }
+  .fx-msg-t { margin-left: auto; display: flex; align-items: center; gap: 6px; color: var(--fx-mut); white-space: nowrap; font-size: 11px; }
+  .fx-body { margin: 10px 0; font-size: 12.5px; line-height: 1.5; }
+  .fx-file { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border: 1px solid var(--fx-line); border-radius: 10px; line-height: 1.3; }
+  .fx-file i { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: #fde8e8; color: #d63a3a; } .fx-file span { color: var(--fx-mut); } .fx-file b { color: var(--fx-ink); font-weight: 500; }
+  .fx-file u { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 2px 7px; border-radius: 6px; background: var(--fx-surface); color: #333; font-size: 11px; }
+  .fx-reply { display: flex; gap: 6px; margin-top: 10px; }
+  .fx-btn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border: 1px solid var(--fx-line); border-radius: 9999px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); font-weight: 500; background: #fff; white-space: nowrap; }
+  .fx-btn-p { background: #2f5bff; color: #fff; border-color: #2f5bff; }
+  .fx-draft { margin-top: 8px; padding: 7px 10px; border: 1px solid var(--fx-line); border-radius: 9px; color: var(--fx-mut); }
+  .fx-mention { padding: 0 3px; border-radius: 4px; background: #fdecc8; color: #9a5b00; }
+  /* chat */
+  .fx-msgs { flex: 1; overflow: hidden; padding: 6px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .fx-day { text-align: center; position: relative; color: var(--fx-mut); font-size: 11px; } .fx-day::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--fx-line); } .fx-day span { position: relative; background: #fff; padding: 1px 10px; border: 1px solid var(--fx-line); border-radius: 9999px; }
+  .fx-m { display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45; } .fx-m i { color: var(--fx-mut); font-size: 11px; } .fx-m b { font-size: 12.5px; }
+  .fx-pin { display: flex; align-items: center; gap: 3px; color: var(--fx-mut); font-size: 11px; }
+  .fx-ref { display: inline-flex; align-items: center; gap: 3px; border-bottom: 1px solid #aaa; vertical-align: baseline; }
+  .fx-react { display: inline-block; margin: 3px 4px 0 0; padding: 0 7px; border: 1px solid var(--fx-line); border-radius: 9999px; font-size: 11px; }
+  .fx-comp { margin: 0 14px 10px; padding: 8px 10px; border: 1px solid var(--fx-line); border-radius: 10px; color: var(--fx-mut); } .fx-comp i { display: flex; gap: 10px; margin-top: 8px; color: #555; }
+  /* notes */
+  .fx-tools { display: flex; align-items: center; gap: 10px; padding: 7px 14px; border-bottom: 1px solid var(--fx-line); color: #444; overflow: hidden; white-space: nowrap; } .fx-tools i { width: 1px; height: 14px; background: var(--fx-line); }
+  .fx-page { padding: 18px 22px; overflow: hidden; font-size: 12.5px; line-height: 1.5; }
+  .fx-page h3 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; } .fx-page h4 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin: 12px 0 4px; }
+  .fx-page ul { padding-left: 18px; list-style: disc; } .fx-page li { list-style: disc; margin: 2px 0; } .fx-page u { text-decoration: underline; text-underline-offset: 2px; text-decoration-color: #999; }
+  .fx-ref2 { font-weight: 600; } .fx-todo { display: flex; align-items: center; gap: 7px; } .fx-todo s { color: var(--fx-mut); }
+  .fx-todo i { display: grid; place-items: center; width: 13px; height: 13px; border-radius: 4px; border: 1px solid #bbb; } .fx-todo i.is-done { background: #111; border-color: #111; color: #fff; }
+  /* calendar */
+  .fx-mh { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px 6px; font-size: 12.5px; }
+  .fx-mini { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 1px 0; font-size: 11px; } .fx-mini b { color: var(--fx-mut); font-weight: 500; padding: 2px 0; } .fx-mini span { padding: 3px 0; border-radius: 9999px; } .fx-mini .is-out { color: #aaa; } .fx-mini .is-week { background: var(--fx-surface); border-radius: 0; } .fx-mini .is-today { background: #c0121b; color: #fff; border-radius: 9999px; font-weight: 600; }
+  .fx-ctool { display: flex; align-items: center; gap: 8px; padding: 8px 12px; } .fx-ctool b { font-size: 13px; font-weight: 600; white-space: nowrap; } .fx-ctool .fx-seg { margin-left: auto; }
+  .fx-seg { display: inline-flex; padding: 2px; border-radius: 9999px; background: var(--fx-surface); } .fx-seg i { padding: 2px 9px; border-radius: 9999px; color: var(--fx-mut); display: grid; place-items: center; } .fx-seg i.is-on { background: #fff; color: #111; box-shadow: 0 1px 2px rgb(0 0 0 / 0.1); }
+  .fx-grid { display: grid; grid-template-columns: 1.75rem repeat(3, minmax(0, 1fr)); grid-template-rows: auto 1fr; flex: none; height: 17.5rem; overflow: hidden; border-top: 1px solid var(--fx-line); }
+  .fx-dh { padding: 5px 6px; text-align: center; color: var(--fx-mut); font-size: 11px; text-transform: uppercase; border-left: 1px solid var(--fx-line); } .fx-dh b { font-size: 12.5px; font-weight: 500; color: var(--fx-ink); display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 9999px; } .fx-dh b.is-today { background: #c0121b; color: #fff; }
+  .fx-hours { display: flex; flex-direction: column; } .fx-hours span { height: 34px; text-align: right; padding-right: 4px; font-size: 10px; color: var(--fx-mut); transform: translateY(-6px); }
+  .fx-col { position: relative; border-left: 1px solid var(--fx-line); background: repeating-linear-gradient(to bottom, transparent 0 33px, var(--fx-line) 33px 34px); }
+  .fx-ev { position: absolute; left: 2px; right: 3px; padding: 2px 5px; overflow: hidden; border-radius: 4px; background: #dce8fb; color: #1f3d78; font-size: 11px; line-height: 1.25; } .fx-ev small { color: #5a6f9c; font-size: 10.5px; } .fx-ev.is-dashed { background: #f4f8ff; border: 1px dashed #7ba2e6; }
+  .fx-strip { border-top: 1px solid var(--fx-line); padding: 8px 12px; background: #fcfcfc; flex: 1; } .fx-st-t span { color: var(--fx-mut); margin-left: 6px; } .fx-st-t b { font-size: 12.5px; }
+  .fx-st-r { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 6px; } .fx-st-r > span { display: inline-flex; align-items: center; gap: 5px; } .fx-st-r em { color: var(--fx-mut); } .fx-st-r .fx-btn { padding: 2px 9px; font-size: 11px; }
+  /* drive */
+  .fx-crumb { padding: 12px 14px 8px; font-size: 15px; color: var(--fx-mut); } .fx-crumb b { color: var(--fx-ink); font-weight: 600; }
+  .fx-dtool { display: flex; align-items: center; gap: 10px; padding: 0 12px 8px; } .fx-dtool .fx-search { flex: 1; margin: 0; }
+  .fx-thead, .fx-trow { display: grid; grid-template-columns: 1.5rem 1fr 4.5rem; align-items: center; gap: 8px; padding: 7px 14px; }
+  .fx-thead { border-top: 1px solid var(--fx-line); border-bottom: 1px solid var(--fx-line); color: var(--fx-mut); }
+  .fx-trow { padding-top: 9px; padding-bottom: 9px; border-radius: 6px; margin: 0 4px; } .fx-trow > span:first-of-type, .fx-trow > span:nth-of-type(1) { display: flex; align-items: center; gap: 8px; } .fx-trow > i, .fx-thead > i { width: 13px; height: 13px; border: 1px solid #c5c5c5; border-radius: 4px; }
+  .fx-mut { color: var(--fx-mut); } .fx-trow > span:last-child, .fx-thead > span:last-child { text-align: right; }
+  /* contacts */
+  .fx-banner { width: 100%; height: 3.6rem; flex-shrink: 0; display: block; }
+  .fx-prof .fx-pad { padding-top: 0; position: relative; overflow: visible; } .fx-big { display: block; margin-top: -26px; width: 66px; height: 66px; padding: 3px; border-radius: 9999px; background: #fff; box-shadow: 0 0 0 1px var(--fx-line); } .fx-big svg { width: 60px; height: 60px; }
+  .fx-prof .fx-title { margin-top: 4px; font-size: 20px; } .fx-sub { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin-top: 2px; color: var(--fx-mut); } .fx-tag { display: inline-flex; gap: 3px; align-items: center; padding: 0 7px; border: 1px solid var(--fx-line); border-radius: 9999px; color: var(--fx-ink); }
+  .fx-acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; max-width: 26rem; } .fx-acts > span { display: grid; justify-items: center; gap: 3px; padding: 7px 4px; border: 1px solid var(--fx-line); border-radius: 10px; font-weight: 500; font-size: 11px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); } .fx-acts i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 9999px; background: #dff3ef; color: #1c7a6b; }
+  .fx-box { border: 1px solid var(--fx-line); border-radius: 10px; margin-bottom: 8px; padding: 0 10px; max-width: 34rem; } .fx-box-h { display: flex; align-items: center; padding: 7px 0 3px; color: var(--fx-mut); font-size: 11px; font-weight: 500; } .fx-box-h em { margin-left: auto; display: inline-flex; gap: 3px; align-items: center; }
+  .fx-box p:not(.fx-box-h) { display: flex; align-items: center; gap: 8px; padding: 5px 0; } .fx-box small { color: var(--fx-mut); font-size: 10.5px; } .fx-conv { justify-content: space-between; border-left: 2px solid #e88b3b; padding-left: 8px !important; } .fx-conv small:last-child { align-self: flex-start; }
+  /* collections */
+  .fx-h2 { padding: 12px 14px 4px; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; } .fx-h2 span { color: var(--fx-mut); font-size: 12px; font-weight: 400; }
+  .fx-tabs { display: flex; align-items: center; gap: 14px; padding: 4px 14px 0; border-bottom: 1px solid var(--fx-line); color: var(--fx-mut); } .fx-tabs span { display: inline-flex; gap: 4px; align-items: center; padding: 5px 0 7px; margin-bottom: -1px; } .fx-tabs .is-on { color: #111; font-weight: 500; border-bottom: 2px solid #111; }
+  .fx-new-b { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; margin-bottom: 4px; border-radius: 8px; background: #2b2b2b; color: #fff; font-weight: 500; }
+  .fx-cols { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 8px 10px 0; overflow: hidden; }
+  .fx-bcol { min-width: 0; padding: 4px 4px 0; border-radius: 10px; background: linear-gradient(#faf8f5, #fff); } .fx-bh { display: flex; align-items: center; gap: 5px; padding: 4px; } .fx-bh span { color: var(--fx-mut); }
+  .fx-st { width: 11px; height: 11px; border-radius: 9999px; border: 1.5px solid #888; } .fx-st-dash { border-style: dotted; } .fx-st-half { border-color: #e88b3b; background: conic-gradient(#e88b3b 0 50%, transparent 0); } .fx-st-full { border-color: #2fa968; background: conic-gradient(#2fa968 0 75%, transparent 0); }
+  .fx-kard { margin: 0 0 6px; padding: 7px 8px; border: 1px solid var(--fx-line); border-radius: 9px; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); } .fx-kard p + p { margin-top: 4px; } .fx-kid { display: flex; align-items: center; gap: 4px; color: var(--fx-mut); font-size: 11px; } .fx-kt { font-weight: 500; line-height: 1.3; }
+  .fx-kard u { display: inline-block; padding: 0 6px; border-radius: 5px; font-size: 10.5px; }
+  .fx-kf { display: flex; align-items: center; gap: 8px; color: var(--fx-mut); font-size: 11px; } .fx-kf svg:last-child { margin-left: auto; } .fx-kd, .fx-kn { display: inline-flex; align-items: center; gap: 3px; } .fx-kd.is-hot { color: #c0521b; background: #fdeee0; padding: 0 5px; border-radius: 5px; }
+  /* what the chips light up */
+  .fx [data-link] { transition: background-color 0.15s, outline-color 0.15s; border-radius: 6px; }
+  .fx .su-hl { outline: 2px solid #2f5bff; outline-offset: 2px; background-color: rgb(47 91 255 / 0.09); animation: fx-p 1.6s ease-in-out infinite; }
+  @keyframes fx-p { 50% { outline-offset: 4px; } }
+  @media (prefers-reduced-motion: reduce) { .fx .su-hl { animation: none; } }
+  /* panes by the frame's own width */
+  @container (min-width: 560px) {
+    .fx-list { display: flex; }
+    .fx-grid { grid-template-columns: 2rem repeat(5, minmax(0, 1fr)); } .fx-cols { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .fx-thead, .fx-trow { grid-template-columns: 1.5rem 1fr 7rem 5rem 4rem; }
+  }
+  @container (min-width: 560px) { .fx-thread .fx-title { font-size: 20px; } }
+  @container (min-width: 820px) { .fx-side { display: flex; } .fx-thread .fx-title { font-size: 20px; } }
+  /* notes/contacts/mail: below 560 only the detail pane; below 820 no sidebar (set by default) */
+  @container (max-width: 559px) {
+    .fx-hide-s { display: none !important; }
+    .fx-rail { width: 2.25rem; gap: 6px; } .fx-rail-i { width: 26px; height: 26px; }
+    .fx-pad { padding: 10px; } .fx-title { font-size: 16px; } .fx-page { padding: 12px; } .fx-meta { gap: 4px 8px; }
+    .fx-file u { display: none; } .fx-msg-t svg:not(:first-child) { display: none; }
+  }
+</style>

@@ -1,0 +1,67 @@
+---
+import LegalLayout from "@/layouts/LegalLayout.astro";
+import { siteConfig } from "@/config/site";
+import { TRIAL_DAYS } from "@/config/plans";
+
+export const prerender = true;
+const l = siteConfig.legal;
+---
+
+<LegalLayout title="Terms of service" description={`The terms for using ${siteConfig.name}: accounts, plans and billing, acceptable use, liability and termination.`}>
+  <p>
+    These terms govern your use of {siteConfig.name}, provided by {l.company} ("we"). By creating an account you accept
+    them on behalf of yourself or the organization you represent. The service is intended for business customers.
+  </p>
+
+  <h2>1. The service</h2>
+  <p>
+    We provide {siteConfig.name} as described on our website and in the documentation. We may improve the service over time without reducing its core functionality.
+  </p>
+
+  <h2>2. Trial and subscription</h2>
+  <p>
+    New accounts get a {TRIAL_DAYS}-day free trial. After the trial, continued use requires a paid plan. Subscriptions
+    renew automatically each month or year until cancelled. If payment fails, we may suspend your account until it
+    succeeds. Your data is retained during suspension.
+  </p>
+  <p>
+    Our order process is conducted by our online reseller Paddle.com, which is the merchant of record for all our
+    orders. Paddle provides all customer service inquiries and handles returns. Prices are shown without VAT, which
+    Paddle adds at checkout where applicable. Refunds are covered by our <a href="/refunds">refund policy</a>.
+  </p>
+
+  <h2>3. Acceptable use</h2>
+  <p>
+    You must not use the service for unlawful content, malware distribution, attacks on other systems or to infringe
+    others' rights. You are responsible for the users you create and the credentials you share.
+  </p>
+
+  <h2>4. Your data</h2>
+  <p>
+    You keep all rights to the content you store. We process it only to provide the service, as your processor under
+    Art. 28 GDPR, following your instructions given through the service. We apply appropriate technical and
+    organizational measures and notify you without undue delay of any personal data breach.
+  </p>
+
+  <h2>5. Availability and support</h2>
+  <p>
+    We aim for high availability but don't guarantee uninterrupted service. Planned maintenance is announced in advance
+    where possible. Support is available at <a href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a>.
+  </p>
+
+  <h2>6. Liability</h2>
+  <p>
+    To the extent permitted by law, our total liability is limited to the fees you paid in the 12 months before the
+    claim. We are not liable for indirect or consequential damages. This doesn't limit liability for intent or gross
+    negligence.
+  </p>
+
+  <h2>7. Termination</h2>
+  <p>
+    You can cancel at any time from the billing page. The plan stays active until the end of the paid period. After
+    termination, your data is deleted within 30 days.
+  </p>
+
+  <h2>8. Governing law</h2>
+  <p>These terms are governed by Polish law. Courts competent for our registered office have jurisdiction.</p>
+</LegalLayout>

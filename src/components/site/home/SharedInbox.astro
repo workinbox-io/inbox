@@ -1,0 +1,66 @@
+---
+/** Shared mailbox (One email, four steps): the story of one customer email, each step a small faux screen (no screenshots). */
+import { Eye, Inbox, PenLine, Send } from "lucide-react";
+import Block from "./Block.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
+
+const t = tFor(siteLocale(Astro.url));
+const locale = siteLocale(Astro.url);
+const steps = [
+  { icon: Inbox, title: t("1 · It arrives"), text: t("A customer writes to support@. It lands in the shared inbox, unread for everyone with access.") },
+  { icon: PenLine, title: t("2 · Anna drafts"), text: t("Anna opens the thread and starts a reply. It saves as a draft on the server as she types.") },
+  { icon: Eye, title: t("3 · Ben sees it"), text: t("Ben opens the same thread and sees \"Draft by Anna\", read-only, so nobody answers twice.") },
+  { icon: Send, title: t("4 · It goes out"), text: t("If Anna is away, Ben takes the draft over and sends. The customer sees support@.") },
+];
+---
+
+<Block id="shared-inbox" label={t("Shared mailbox")}>
+  <Fragment slot="title">{t("One customer email,")}{" "}<em>{t("nobody answers twice.")}</em></Fragment>
+  <Fragment slot="text">{t("Follow a message to support@ from arrival to answer: live drafts, take over, replies from the shared address. Shared mailboxes are free.")}</Fragment>
+  <ol role="list" class="grid grid-cols-1 mt-10 *:min-w-0 gap-px border md:grid-cols-2 lg:grid-cols-4 bg-border border-border">
+    {
+      steps.map((s, i) => (
+        <li class="flex flex-col p-5 bg-background">
+          <p class="flex items-center text-xs font-medium tracking-wide uppercase gap-2 text-primary"><s.icon className="size-4" aria-hidden="true" />{s.title}</p>
+          <p class="mt-2 text-sm text-muted-foreground">{s.text}</p>
+          <div class="pt-4 mt-auto" aria-hidden="true">
+            <div class="mt-4 text-xs border border-border bg-muted">
+              {i === 0 && (
+                <ul class="divide-y divide-border">
+                  <li class="flex items-center gap-2 px-3 py-2 font-medium"><i class="block rounded-full size-2 shrink-0 bg-primary"></i><span class="truncate">Sofía García</span><span class="ml-auto truncate text-muted-foreground">{t("Two people answering?")}</span></li>
+                  <li class="flex items-center gap-2 px-3 py-2 font-medium"><i class="block rounded-full size-2 shrink-0 bg-primary"></i><span class="truncate">Jonas Weber</span><span class="ml-auto truncate text-muted-foreground">{t("Invoice question")}</span></li>
+                  <li class="flex items-center gap-2 px-3 py-2 text-muted-foreground"><i class="block size-2 shrink-0"></i><span class="truncate">Marek Zieliński</span><span class="ml-auto truncate">{t("Thanks!")}</span></li>
+                </ul>
+              )}
+              {i === 1 && (
+                <div class="p-3">
+                  <p class="text-faint-foreground">{t("Reply to {name}", { name: "Sofía García" })}</p>
+                  <p class="mt-1 text-foreground">{t("Hi Sofía, yes: two of us can answer from the same address…")}</p>
+                  <p class="mt-2 text-faint-foreground">{t("Draft saved")}</p>
+                </div>
+              )}
+              {i === 2 && (
+                <div class="flex items-center justify-between gap-2 p-3">
+                  <span>{t("Draft by {name}", { name: "Anna" })}</span>
+                  <span class="px-2 py-1 border border-input bg-background">{t("Take over")}</span>
+                </div>
+              )}
+              {i === 3 && (
+                <div class="p-3">
+                  <p class="text-faint-foreground">{t("From")}</p>
+                  <p class="text-foreground">support@acme.example</p>
+                  <p class="mt-2 text-faint-foreground">{t("Replies leave from the shared address")}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+  <div class="flex flex-wrap items-center mt-8 gap-x-4 gap-y-3">
+    <Button isLink={true} href={lp(locale, "/shared-mailbox")} size="base" variant="accent">{t("See shared mailboxes")}</Button>
+    <span class="text-sm text-muted-foreground">{t("Plus signatures per mailbox, out-of-office and templates.")}</span>
+  </div>
+</Block>

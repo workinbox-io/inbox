@@ -1,0 +1,39 @@
+# Local secrets for `astro dev` / `wrangler dev`. Copy to .dev.vars (git-ignored).
+# In production: wrangler secret put <NAME>. Only BETTER_AUTH_SECRET is required; empty ones turn their feature off.
+# Every secret the app reads is declared in src/env.d.ts.
+BETTER_AUTH_SECRET=change-me-to-32-random-characters-or-more
+
+# Sign in with Google
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# E-mails to you about new kinds of errors and about sign-ups
+ALERT_EMAIL=
+NOTIFY_EMAIL=
+
+# Web push (notifications, calendar reminders): `npx web-push generate-vapid-keys`; subject = mailto:you@example.com
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=
+
+# Mail apps over IMAP/SMTP: your mail bridge (infra/mail) and the shared token between it and the Worker
+MAIL_BRIDGE_URL=
+MAIL_BRIDGE_TOKEN=
+
+# Optional: a read-only GitHub token so Collections links show private pull requests' and issues' state
+GITHUB_TOKEN=
+
+# Hosted mode only (DEPLOY_MODE=cloud), not needed self-hosted:
+# billing (Paddle)
+PADDLE_API_KEY=
+PADDLE_WEBHOOK_SECRET=
+PUBLIC_PADDLE_CLIENT_TOKEN=
+# the orgs' own domains through Amazon SES (docs/ses.md): these four plus AWS_SES_REGION in wrangler.jsonc, or SES is off
+AWS_SES_ACCESS_KEY_ID=
+AWS_SES_SECRET_ACCESS_KEY=
+AWS_ACCOUNT_ID=
+SES_EVENTS_SECRET=
+# free <name>.<MAIL_BASE_DOMAIN> addresses: DNS edit token for that zone
+MAIL_ZONE_TOKEN=
+# ChatGPT plugin portal verification
+OPENAI_APPS_CHALLENGE=

@@ -1,0 +1,163 @@
+---
+/**
+ * Landing page for "self-hosted email" (self hosted email server / mail server / self hosting email: 390-480 US searches
+ * a month each, KD 11-15; OpenSEO, 2026-11-16). The results are Reddit threads, lists and mail servers (mailcow,
+ * Mail-in-a-Box, mox) whose readers worry about port 25, IP reputation and uptime: this page answers that, then compares
+ * self-hosted with hosted. Facts follow docs/self-host.md and config/plans.ts; the servers' facts are from their own
+ * pages (`SERVERS_CHECKED`), re-check before editing.
+ */
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import PriceLine from "@/components/site/PriceLine.astro";
+import Faq from "@/components/site/Faq.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
+import { FREE_PEOPLE, PLANS } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+import { localizedPath } from "@/lib/i18n/locales";
+
+export const prerender = true;
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+
+const hard = [
+  { title: "Port 25", text: "Home connections and many clouds block it, and your server must keep it open. Here mail goes in through Cloudflare Email Routing and out through Cloudflare Email Service: you open no ports." },
+  { title: "IP reputation and the spam folder", text: "A new server's IP has no sending history, and one bad neighbour can get it blocklisted. Here mail leaves from Cloudflare's network; you still publish SPF, DKIM and DMARC for your domain, and Work Inbox shows the records." },
+  { title: "Uptime, patches and backups", text: "A mail server that's down loses mail, and it needs updates. Work Inbox runs on Cloudflare Workers, D1 and R2: there's no machine to patch or keep running." },
+];
+
+const SERVERS_CHECKED = "16 November 2026";
+const servers = [
+  { name: "Work Inbox self-hosted", runs: "Cloudflare Workers on your account; no server", port: "Cloudflare's: Email Routing in, Email Service out", beyond: "Team chat, notes, calendars, a drive, contacts" },
+  { name: "mailcow", href: "https://docs.mailcow.email/getstarted/prerequisite-system/", runs: "A server or full VM (not a NAS or container platform), 6 GiB RAM + 1 GiB swap at least", port: "You open 25 and the other mail ports", beyond: null },
+  { name: "Mail-in-a-Box", href: "https://mailinabox.email/guide.html", runs: "A fresh machine dedicated to it, Ubuntu 22.04, 512 MB RAM at least", port: "You open 25 and set reverse DNS; home connections won't do", beyond: "Contacts and calendar sync, a static website" },
+  { name: "mox", href: "https://www.xmox.nl/", runs: "A machine running the mox binary", port: "Your machine's", beyond: null },
+];
+
+const rows = [
+  { label: "Where your data lives", self: "Your Cloudflare account: D1, R2, Durable Objects", hosted: "Our Cloudflare account, in the same services" },
+  { label: "What it costs", self: "What Cloudflare bills you: the Workers Paid plan and usage", hosted: `Free for up to ${FREE_PEOPLE} people, then from €${PLANS.starter.priceMonthly / 100} a person a month` },
+  { label: "Features", self: "Every app and feature, no plans or limits from us", hosted: "Every app; the API, writing AI apps and the audit log by plan" },
+  { label: "Mail domains", self: "Your own domains, through Cloudflare Email Routing and Email Service", hosted: "Your own domains, or a free <name>.workinbox.io address" },
+  { label: "IMAP and SMTP for mail apps", self: "Optional: run the mail bridge (infra/mail), which needs a server", hosted: "Included, at mail.workinbox.io" },
+  { label: "Who can sign up", self: "The first account, then people you invite or add", hosted: "Anyone; each team gets its own organization" },
+  { label: "Updates", self: "You pull the code and deploy", hosted: "We deploy them" },
+  { label: "Source code", self: "AGPL-3.0, change what you like", hosted: "The same code" },
+];
+
+const pickSelf = [
+  "Your mail and files must stay in an account you control",
+  "You already run things on Cloudflare",
+  "You'd rather pay Cloudflare's usage than a price per person",
+  "You want to change the code",
+];
+const pickHosted = [
+  "You want it working today without looking after a deployment",
+  `You're ${FREE_PEOPLE} people or fewer: it's free`,
+  "You want IMAP and SMTP for Apple Mail, Outlook and phones without running a server",
+  "You want a free address on workinbox.io while you set up your domain",
+];
+
+const steps = [
+  { title: "Get the code", text: "Clone the repository and run pnpm install. Node 22.18 or newer." },
+  { title: "Run the setup", text: "pnpm run setup asks for your address and sender, switches to self-hosted mode and creates the database, storage and queues." },
+  { title: "Deploy", text: "Set BETTER_AUTH_SECRET, onboard your mail domain in Cloudflare Email Service, then pnpm run deploy." },
+  { title: "Receive mail", text: "Point Email Routing's catch-all at the Worker, sign up as the first account and add your domain." },
+];
+
+const faq = [
+  { question: "Is self-hosting email worth it?", answer: "Running your own mail server means keeping port 25 open, earning an IP reputation and keeping the machine up; many people who self-host everything else skip it. Work Inbox self-hosted keeps your mail, files and accounts in your own Cloudflare account while Cloudflare carries the mail, so you get the control without running a mail server." },
+  { question: "Will my mail land in spam?", answer: "Mail leaves through Cloudflare Email Service from your own domain. Publish the SPF, DKIM and DMARC records Work Inbox lists in Settings → Mail and check them there; that's what receiving servers look at first." },
+  { question: "Do I need port 25 or a static IP?", answer: "No. Cloudflare receives your domain's mail and hands it to the Worker, and sends what you write. Only the optional IMAP and SMTP bridge for desktop and phone mail apps needs a server." },
+  { question: "Is self-hosted Work Inbox really free?", answer: "We charge nothing for it. You pay Cloudflare for what it runs on: the Workers Paid plan and usage of D1, R2, Queues and Durable Objects." },
+  { question: "Does self-hosted miss any features?", answer: "No app or feature is switched off. What you don't get is what we run for the hosted service: IMAP and SMTP at mail.workinbox.io (you can run the mail bridge yourself) and free workinbox.io addresses." },
+  { question: "Can anyone sign up on my instance?", answer: "No. The first account becomes the admin; after that only people invited to the organization or added in Settings → Mail can get in." },
+  { question: "Can I move between hosted and self-hosted?", answer: "Yes, through mail import: export .mbox files and import them in Settings → Mail → Import mail on the other side." },
+  { question: "Do I need a server?", answer: "No. Work Inbox runs on Cloudflare Workers; there is no machine to patch. Only the optional IMAP and SMTP bridge needs a server." },
+];
+
+const questions = faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+const url = (path: string) => (Astro.site ? new URL(localizedPath(locale, path), Astro.site).href : path);
+const jsonLd = [
+  { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: questions.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) },
+  { "@context": "https://schema.org", "@type": "WebPage", name: t("Self-hosted email without running a mail server"), url: url("/self-hosted"), dateModified: "2026-11-16" },
+];
+---
+
+<MarketingLayout title={t("Self-hosted email without running a mail server")} description={t("Self-hosted email on your own Cloudflare account: no mail server, no port 25, no IP to warm up. Open source, with chat, notes, calendar and a drive.")} jsonLd={jsonLd} ink>
+  <Hero>
+    <Fragment slot="title">{t("Self-hosted email,")}{" "}<em>{t("no mail server to run.")}</em></Fragment>
+    <Fragment slot="text">{t("Work Inbox is open-source email for teams, with chat, notes, calendars and a drive, that runs on your own Cloudflare account. Your mail stays in your account; Cloudflare carries it, so there's no port 25, no IP reputation and no machine to patch. Or use it hosted at workinbox.io.")}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/docs/self-host" size="base" variant="accent">{t("Self-hosting guide")}</Button>
+      <ArrowLink href="/signup" tone="default">{t("Start hosted, free")}</ArrowLink>
+    </Fragment>
+    <PriceLine />
+  </Hero>
+
+  <Section label={t("Self-hosted")}>
+    <Fragment slot="title">{t("Why self-hosting email is hard,")}{" "}<em>{t("and what's different here")}</em></Fragment>
+    <Features slot="full" cards cols={3} items={hard.map((h) => ({ title: t(h.title), text: t(h.text) }))} />
+  </Section>
+
+  <Section label={t("Compare")} class="bg-muted">
+    <Fragment slot="title">{t("Next to mail servers you run yourself")}</Fragment>
+    <Fragment slot="text">{t("From each project's own page (linked), checked {date}. They're full mail servers with IMAP and SMTP built in; Work Inbox is a workspace that leaves the mail transport to Cloudflare.", { date: t(SERVERS_CHECKED) })}</Fragment>
+    <div slot="full" class="relative overflow-x-auto">
+      <table class="w-full text-sm text-left min-w-160">
+        <thead><tr><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground"><span class="sr-only">{t("Plan")}</span></th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("What you run")}</th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Port 25 and sending")}</th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Beyond mail")}</th></tr></thead>
+        <tbody>
+          {servers.map((r, i) => (
+            <tr class:list={["align-top", i === 0 ? "bg-lilac" : i % 2 === 0 ? "bg-background" : ""]}>
+              <th scope="row" class="px-5 py-5 font-medium text-foreground">{r.href ? <a href={r.href} rel="nofollow noopener" class="inline-block py-1 border-b border-foreground">{r.name}</a> : r.name}</th>
+              <td class="py-5 pl-2 pr-6 text-foreground">{t(r.runs)}</td><td class="py-5 pl-2 pr-6 text-foreground">{t(r.port)}</td><td class="py-5 pl-2 pr-6 text-foreground">{r.beyond ? t(r.beyond) : <span class="text-muted-foreground">{t("Not listed on the page we checked")}</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Section>
+
+  <Section label={t("Hosted")}>
+    <Fragment slot="title">{t("Self-hosted or hosted")}</Fragment>
+    <div slot="full" class="relative overflow-x-auto">
+      <table class="w-full text-sm text-left min-w-140">
+        <thead><tr><th scope="col" class="w-1/4 px-5 pb-6 font-medium align-bottom text-foreground"><span class="sr-only">{t("Feature")}</span></th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Self-hosted")}</th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Hosted")}</th></tr></thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr class:list={["align-top", i % 2 === 0 && "bg-muted"]}>
+              <th scope="row" class="px-5 py-5 font-medium text-foreground">{t(r.label)}</th><td class="py-5 pl-2 pr-6 text-foreground">{t(r.self)}</td><td class="py-5 pl-2 pr-6 text-foreground">{t(r.hosted)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <div slot="full" class="grid gap-16 mt-20 md:grid-cols-2 md:gap-x-8">
+      <div>
+        <Text tag="h2" variant="displaySM" class="text-balance text-foreground">{t("Self-host when")}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{pickSelf.map((k) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(k)}</Text></li>)}</ul>
+      </div>
+      <div>
+        <Text tag="h2" variant="displaySM" class="text-balance text-foreground">{t("Use hosted when")}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{pickHosted.map((k) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(k)}</Text></li>)}</ul>
+      </div>
+    </div>
+  </Section>
+
+  <Section label={t("Setup")}>
+    <Fragment slot="title">{t("Self-hosting in four steps")}</Fragment>
+    <Fragment slot="text">
+      {t("Every step in detail:")}{" "}<a href="/docs/self-host" class="inline-block py-1 text-foreground border-b border-foreground">{t("the self-hosting guide")}</a>.
+      {t("Code:")}{" "}<a href={siteConfig.repoUrl} class="inline-block py-1 text-foreground border-b border-foreground">GitHub</a>.
+    </Fragment>
+    <Features slot="full" cards cols={4} items={steps.map((s, i) => ({ tag: String(i + 1), title: t(s.title), text: t(s.text) }))} />
+  </Section>
+
+  <Faq items={questions} />
+</MarketingLayout>

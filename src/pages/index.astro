@@ -1,0 +1,129 @@
+---
+/**
+ * The home page, built from the owner's picked section variants (design/home-variants): hero with the real inbox in a
+ * browser window, the app switcher, the switching checklist, the shared-mailbox story, the AI conversation, the trust
+ * strip and the FAQ; the footer carries the closing call to action. Only claim what ships; no testimonials or numbers
+ * we can't show. Prices come from config/plans.ts.
+ */
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/home/Hero.astro";
+import Suite from "@/components/site/home/Suite.astro";
+import Day from "@/components/site/home/Day.astro";
+import Switch from "@/components/site/home/Switch.astro";
+import SharedInbox from "@/components/site/home/SharedInbox.astro";
+import Ai from "@/components/site/home/Ai.astro";
+import Own from "@/components/site/home/Own.astro";
+import Faq from "@/components/site/home/Faq.astro";
+import { CURRENCY, FREE_PEOPLE, PLAN_LIST, PLANS, TRIAL_DAYS } from "@/config/plans";
+import { organizationJsonLd, siteConfig } from "@/config/site";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+import { localizedPath } from "@/lib/i18n/locales";
+
+export const prerender = true;
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const description = "Open-source team workspace: email on your own domain, chat, notes, calendar, drive and contacts that work together. Free for 5 people or self-host on Cloudflare.";
+const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly)) / 100;
+
+/** GitHub stars at build time (deploys rebuild the page); nothing shown while the repo is private or the API fails. */
+let stars: number | null = null;
+try {
+  const res = await fetch(`https://api.github.com/repos/${siteConfig.repoUrl.replace("https://github.com/", "")}`, { headers: { accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(3000) });
+  if (res.ok) stars = ((await res.json()) as { stargazers_count?: number }).stargazers_count ?? null;
+} catch {
+  stars = null;
+}
+
+const faq = [
+  {
+    question: "Is Work Inbox really open source?",
+    answer: `Yes. The code is public at ${siteConfig.repoUrl}, and you can run it on your own Cloudflare account with every feature and no fee to us. The hosted version is the same app, run by us.`,
+  },
+  {
+    question: "Can I use Outlook, Apple Mail or my phone's mail app?",
+    answer: "Yes. Every mailbox works over IMAP and SMTP: create a password for the device in Settings → Mail clients and add the account in Apple Mail, Outlook, Thunderbird or your phone's mail app. The web app installs on phones and computers too.",
+  },
+  {
+    question: "Do I have to move my domain to Cloudflare?",
+    answer: "No. If your domain is on Cloudflare, Connect Cloudflare adds the records for you with an API token. Anywhere else, add the MX, DKIM and DMARC records the setup shows and click Check DNS.",
+  },
+  {
+    question: "Can we start with the mailbox we have?",
+    answer: "No. Each person can connect the mailbox they already have (Settings → Mail clients → External accounts, over IMAP and SMTP) and read and send from Work Inbox while mail keeps arriving where it does today. When you're ready, copy the old mailbox in from its server or upload an .mbox, then point the domain's MX here.",
+  },
+  {
+    question: "Do I need my own domain?",
+    answer: "No. Claim a free address like yourname.workinbox.io in Settings → Mail and start right away; it's set up for you in a few minutes. Add your own domain whenever you're ready.",
+  },
+  {
+    question: "What does a shared mailbox cost?",
+    answer: `Nothing. You pay per person with a personal mailbox, from ${lowest} ${CURRENCY} a month on ${PLANS.starter.name}, and the first ${FREE_PEOPLE} people are free. Shared mailboxes, aliases and the catch-all are free on every plan.`,
+  },
+  {
+    question: "Where is my mail stored?",
+    answer: "On Cloudflare: messages in D1 and each original message (.eml) and its attachments in R2. Self-hosted, all of it lives on your own Cloudflare account.",
+  },
+  {
+    question: "What do chat and notes cover?",
+    answer: "Everyday team chat and shared notes: channels, DMs, threads, mentions and files; notes with live editing, checklists, tables and mentions. For Notion-style databases there are Collections: lists with your own fields, table and board views. There are no voice or video calls.",
+  },
+  {
+    question: "Is there a free trial?",
+    answer: `Yes. Every hosted account starts with a ${TRIAL_DAYS}-day trial, no card needed, and up to ${FREE_PEOPLE} people stay free after it. Self-hosting is free for good.`,
+  },
+];
+
+const missAnswer = "There are no native phone apps (the web app installs on phones and computers, and IMAP and SMTP make Apple Mail, Outlook and phone mail apps work), no CalDAV or CardDAV, no booking pages, and no Docs, Sheets or Meet equivalents beyond shared notes and Collections. There are no voice or video calls. The comparison pages list what to pick them for.";
+const deliveredAnswer = "Hosted custom domains send through Amazon SES, and setup checks your DKIM, SPF and DMARC records before you switch. New unpaid workspaces have a sending cap for the first 14 days, and sending pauses automatically on bounces or complaints. Nobody can promise inbox placement; we make sure the technical side is right.";
+
+const byQuestion = Object.fromEntries(faq.map((f) => [f.question, f]));
+const pick = (qs: string[]) => qs.map((q) => byQuestion[q]!);
+const before = [
+  { question: "What is not in Work Inbox (yet)?", answer: missAnswer },
+  { question: "Will my mail be delivered?", answer: deliveredAnswer },
+  ...pick(["Can we start with the mailbox we have?", "Do I have to move my domain to Cloudflare?", "Do I need my own domain?", "Is Work Inbox really open source?", "Is there a free trial?"]),
+];
+const after = pick(["What does a shared mailbox cost?", "Can I use Outlook, Apple Mail or my phone's mail app?", "What do chat and notes cover?", "Where is my mail stored?"]);
+const tr = (items: { question: string; answer: string }[]) => items.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
+const beforeItems = tr(before);
+const afterItems = tr(after);
+const questions = [...beforeItems, ...afterItems];
+
+const url = (path: string) => (Astro.site ? new URL(localizedPath(locale, path), Astro.site).href : path);
+const prices = PLAN_LIST.map((p) => p.priceMonthly / 100);
+const jsonLd = [
+  organizationJsonLd(url),
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: siteConfig.name,
+    description: t(description),
+    applicationCategory: "BusinessApplication",
+    applicationSubCategory: "Productivity suite",
+    operatingSystem: "Web",
+    url: url("/"),
+    offers: { "@type": "AggregateOffer", lowPrice: Math.min(...prices), highPrice: Math.max(...prices), priceCurrency: CURRENCY, offerCount: prices.length },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: questions.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })),
+  },
+];
+---
+
+<MarketingLayout title={t("Team email, chat, notes and files in one workspace")} description={t(description)} jsonLd={jsonLd} ink>
+  <Hero stars={stars} />
+  <Suite />
+  <Day />
+  <SharedInbox />
+  <Ai />
+  <Switch />
+  <Own />
+  <Faq before={beforeItems} after={afterItems} />
+</MarketingLayout>
+
+<script>
+  import "@/scripts/demo-progress";
+</script>

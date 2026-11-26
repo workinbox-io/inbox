@@ -1,0 +1,9 @@
+[Unit]
+Description=Check Workinbox mail certificates and backup schedule
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=60s
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,7 @@
+# Enable only after configuring trusted TLS and the client-access authorization checks.
+# Submission requires MAIL_HOSTED_ENABLED and uses Workinbox's send policy and queue.
+services:
+  bridge:
+    ports:
+      - "993:1993"
+      - "465:1465"
