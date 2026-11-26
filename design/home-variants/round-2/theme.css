@@ -1,0 +1,74 @@
+/* Navy tokens for the variant mock-ups (copied from src/styles/navy.css + global.css). Loaded as Tailwind browser CSS. */
+@theme inline {
+  --font-sans: "Switzer", ui-sans-serif, system-ui, sans-serif;
+  --color-background: oklch(98.8% 0.006 275);
+  --color-foreground: oklch(20% 0.04 275);
+  --color-muted-foreground: oklch(48% 0.03 275);
+  --color-faint-foreground: oklch(64% 0.025 275);
+  --color-muted: oklch(97.2% 0.01 275);
+  --color-border: oklch(91% 0.016 275);
+  --color-input: oklch(82% 0.025 275);
+  --color-ring: oklch(52% 0.22 268);
+  --color-primary: oklch(52% 0.22 268);
+  --color-primary-foreground: oklch(1 0 0);
+  --color-primary-highlight: oklch(60% 0.2 268);
+  --color-inverse: oklch(16% 0.05 270);
+  --color-inverse-foreground: oklch(1 0 0);
+  --color-inverse-highlight: oklch(30% 0.06 270);
+  --color-mist: oklch(95% 0.02 275);
+  --color-lilac: oklch(91% 0.045 280);
+  --color-frost: oklch(94% 0.025 245);
+}
+@theme {
+  --text-display-lg: 10rem;
+  --text-display-lg--line-height: 1;
+  --text-display-xl: 12rem;
+  --text-display-xl--line-height: 1;
+  --shadow-button-inverse:
+    0 0 0 1px oklch(12% 0.05 270), inset 0 1px 0 0 rgb(255 255 255 / 0.18), inset 0 -1px 0 0 rgb(0 0 0 / 0.3),
+    inset 0 0 0 1px rgb(255 255 255 / 0.05), 0 1px 2px 0 rgb(14 20 50 / 0.2), 0 2px 3px -1px rgb(14 20 50 / 0.25),
+    0 4px 6px -3px rgb(14 20 50 / 0.25);
+  --shadow-button-primary:
+    0 0 0 1px oklch(44% 0.2 268), inset 0 1px 0 0 rgb(255 255 255 / 0.3), inset 0 -1px 0 0 rgb(0 0 0 / 0.15),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 1px 2px 0 rgb(40 60 200 / 0.2), 0 2px 3px -1px rgb(40 60 200 / 0.3),
+    0 4px 6px -3px rgb(40 60 200 / 0.3);
+  --shadow-button-muted:
+    0 0 0 1px rgb(30 31 37 / 0.1), inset 0 1px 0 0 rgb(255 255 255 / 1), inset 0 -1px 0 0 rgb(30 31 37 / 0.06),
+    0 1px 2px 0 rgb(30 31 37 / 0.06), 0 2px 3px -1px rgb(30 31 37 / 0.08), 0 4px 6px -3px rgb(30 31 37 / 0.08);
+}
+
+/* Navy's buttons as classes: .btn + .btn-default (ink) | .btn-accent (ultramarine) | .btn-muted, sizes .btn-sm/.btn-lg */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 h-10 text-sm font-medium whitespace-nowrap transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring;
+  }
+  .btn-sm { @apply h-8 px-3 text-xs rounded-md; }
+  .btn-lg { @apply h-12 px-6 text-base; }
+  .btn-default { @apply text-inverse-foreground bg-linear-to-b from-inverse-highlight to-inverse shadow-button-inverse hover:brightness-125; }
+  .btn-accent { @apply text-primary-foreground bg-linear-to-b from-primary-highlight to-primary shadow-button-primary hover:brightness-110; }
+  .btn-muted { @apply text-foreground bg-linear-to-b from-background to-muted shadow-button-muted hover:brightness-97; }
+  /* Section label in the side column: <p class="label">Apps</p> */
+  .label { @apply text-xs font-medium uppercase tracking-wide text-primary; }
+}
+
+:root { color-scheme: light; }
+body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); }
+h1 em, h2 em { font-style: italic; font-weight: 600; }
+::selection { color: white; background: var(--color-inverse); }
+
+/* Gradient grounds (the site uses a WebGL shader on top of these; the CSS versions are close enough for choosing) */
+.arch-gradient {
+  background:
+    radial-gradient(ellipse 150% 85% at 65% 0%, var(--color-inverse) 0%, var(--color-inverse) 38%, oklch(30% 0.14 268) 52%, var(--color-primary) 64%, oklch(78% 0.1 275) 78%, transparent 94%),
+    radial-gradient(ellipse 90% 50% at 0% 55%, oklch(60% 0.18 268 / 0.5) 0%, transparent 70%),
+    linear-gradient(to bottom, oklch(92% 0.04 275) 0%, var(--color-background) 100%);
+}
+.arch-gradient-flip {
+  background:
+    radial-gradient(ellipse 150% 85% at 65% 100%, var(--color-inverse) 0%, var(--color-inverse) 38%, oklch(30% 0.14 268) 52%, var(--color-primary) 64%, oklch(78% 0.1 275) 78%, transparent 94%),
+    linear-gradient(to top, oklch(92% 0.04 275) 0%, var(--color-background) 100%);
+}
+.band-gradient {
+  background: linear-gradient(200deg, var(--color-background) 0%, oklch(78% 0.1 275) 24%, var(--color-primary) 36%, oklch(30% 0.14 268) 44%, var(--color-inverse) 50%, oklch(30% 0.14 268) 56%, var(--color-primary) 64%, oklch(78% 0.1 275) 76%, var(--color-background) 100%);
+}
+.grain { background-image: url("../../../public/marketing/noise.png"); mix-blend-mode: overlay; opacity: 0.35; pointer-events: none; }

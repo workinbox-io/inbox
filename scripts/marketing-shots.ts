@@ -3,6 +3,7 @@
  *
  *   node scripts/marketing-shots.ts --seed   rebuild the demo org first (the public demo's story, lib/server/demo)
  *   node scripts/marketing-shots.ts          all shots
+ *   node scripts/marketing-shots.ts --lang pl [--seed] [name]   the Polish set (*-pl.webp)
  *   node scripts/marketing-shots.ts notes    only the ones whose file name contains "notes"
  *
  * Needs `pnpm dev` (localhost:4321). The org is the public demo's (`POST /demo?domain=acme.example`, dev only), so the
@@ -11,12 +12,21 @@
  * light theme (the site and the README are light only).
  */
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
+import { registerHooks } from "node:module";
 import { mkdirSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { chromium, type Page } from "playwright";
 import sharp from "sharp";
-import { CHANNEL, CLIENT_NOTE, CONTACT_GROUP, CONTRACT_SUBJECT, PROJECT_FOLDER, SUPPORT, SUPPORT_SUBJECT, TASKS } from "../src/lib/server/demo/content.ts";
+
+// `--lang pl`: the Polish story (content-pl.ts), the demo org seeded in Polish (user.locale = pl, so the app speaks it), files get a -pl suffix.
+const LANG = process.argv.includes("--lang") ? process.argv[process.argv.indexOf("--lang") + 1] : "en";
+// The demo content files import "./files" without an extension, which plain node can't resolve: try ".ts" for those.
+registerHooks({ resolve: (spec, ctx, next) => { try { return next(spec, ctx); } catch (e) { if (spec.startsWith(".")) return next(`${spec}.ts`, ctx); throw e; } } });
+const { CHANNEL, CLIENT_NOTE, CONTACT_GROUP, CONTRACT_SUBJECT, PROJECT_FOLDER, SUPPORT, SUPPORT_SUBJECT, TASKS } = await import(
+  LANG === "pl" ? "../src/lib/server/demo/content-pl.ts" : "../src/lib/server/demo/content.ts"
+);
+const SUFFIX = LANG === "pl" ? "-pl" : "";
 
 const BASE = process.env.SHOTS_URL ?? "http://localhost:4321";
 const DOMAIN = process.env.SHOTS_DOMAIN ?? "acme.example";
@@ -130,13 +140,13 @@ const secret = () => {
 
 async function main() {
   const args = process.argv.slice(2);
-  const only = args.find((a) => !a.startsWith("--"));
+  const only = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--lang");
   const shots = only ? SHOTS.filter((s) => s.file.includes(only)) : SHOTS;
   if (!shots.length) throw new Error(`No shot matches "${only}"`);
   mkdirSync(OUT, { recursive: true });
 
   if (args.includes("--seed")) {
-    const res = await fetch(`${BASE}/demo?domain=${DOMAIN}`, { method: "POST", headers: { origin: BASE }, redirect: "manual" });
+    const res = await fetch(`${BASE}/demo?domain=${DOMAIN}&lang=${LANG}`, { method: "POST", headers: { origin: BASE }, redirect: "manual" });
     if (res.status !== 303) throw new Error(`POST /demo: ${res.status} ${(await res.text()).slice(0, 500)}`);
     console.log(`seeded the demo org on ${DOMAIN}`);
   }
@@ -178,8 +188,10 @@ async function main() {
         await shot.prepare?.(page);
         for (const frame of page.frames()) await frame.evaluate(() => document.querySelector("astro-dev-toolbar")?.remove()).catch(() => {});
         const png = await page.screenshot({ type: "png" });
-        const file = shot.file;
+        const file = shot.file.replace(".webp", `${SUFFIX}.webp`);
         await sharp(png).resize(viewport.width * 2).webp({ quality: 86 }).toFile(join(OUT, file));
+        // The home hero shows the open thread cropped to its top 942px at 2300px wide, the hero box ratio.
+        if (shot.file === "mail-thread.webp") await sharp(png).resize(2300).extract({ left: 0, top: 0, width: 2300, height: 942 }).webp({ quality: 86 }).toFile(join(OUT, `mail-thread-hero${SUFFIX}.webp`));
         console.log(`${file}  ${path}`);
       } finally {
         await context.close();

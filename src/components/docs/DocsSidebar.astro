@@ -26,7 +26,7 @@ const t = tFor(siteLocale(Astro.url));
                 <a
                   href={docHref(d)}
                   data-active={d.id === current}
-                  class="text-foreground/80 hover:bg-accent data-[active=true]:border-accent data-[active=true]:bg-accent data-[active=true]:text-foreground inline-flex h-[30px] items-center gap-2 rounded-md border border-transparent px-2 text-[0.8rem] font-medium transition-colors"
+                  class="text-foreground/80 hover:bg-accent data-[active=true]:border-accent data-[active=true]:bg-accent data-[active=true]:text-foreground relative inline-flex h-[30px] items-center before:absolute before:inset-x-0 before:-inset-y-[7px] before:content-[''] gap-2 rounded-md border border-transparent px-2 text-[0.8rem] font-medium transition-colors"
                 >
                   {d.data.title}
                 </a>

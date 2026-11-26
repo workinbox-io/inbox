@@ -17,7 +17,7 @@ const items = Astro.props.headings.filter((h) => h.depth === 2 || h.depth === 3)
         <a
           href={`#${h.slug}`}
           data-depth={h.depth}
-          class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[active=true]:font-medium data-[depth=3]:pl-4"
+          class="relative before:absolute before:-inset-y-1.5 before:inset-x-0 before:content-[''] text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[active=true]:font-medium data-[depth=3]:pl-4"
         >
           {h.text}
         </a>

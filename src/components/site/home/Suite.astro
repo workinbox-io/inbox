@@ -1,8 +1,9 @@
 ---
-/** The suite (App switcher): a rail of the apps, the a faux screen of the chosen one and the product it replaces, with its logo. */
-import { AtSign, Command, Paperclip } from "lucide-react";
+/** The suite: tabs for the apps, a faux screen of the chosen one, chips for what it works with (they light up the matching spot in the screen) and the three cross-app perks as small working demos. */
+import { AtSign, Calendar, CalendarDays, Command, Contact, Database, FileText, HardDrive, Mail, MessagesSquare, NotebookPen, Paperclip, Search, Check } from "lucide-react";
 import Block from "./Block.astro";
 import DemoForm from "./DemoForm.astro";
+import Face from "./Face.astro";
 import Faux from "./Faux.astro";
 import { APPS } from "@/config/apps";
 import { lp, siteLocale, tFor } from "@/lib/i18n/site";
@@ -19,23 +20,66 @@ const replaces: Record<string, { name: string; logo: string }> = {
   "shared-contacts": { name: "Google Contacts", logo: "googlecontacts" },
   "custom-apps": { name: "Airtable", logo: "airtable" },
 };
-const apps = APPS.map((a) => ({ ...a, label: t(a.label), description: t(a.description), href: lp(locale, `/${a.slug}`), replaces: replaces[a.slug]! }));
+/** The spots in Faux marked `data-link`: kind -> icon and tab label. */
+const kinds = {
+  mail: { icon: Mail, label: t("Mail") },
+  chat: { icon: MessagesSquare, label: t("Chat") },
+  notes: { icon: NotebookPen, label: t("Notes") },
+  calendar: { icon: CalendarDays, label: t("Calendar") },
+  drive: { icon: HardDrive, label: t("Drive") },
+  contacts: { icon: Contact, label: t("Contacts") },
+  collections: { icon: Database, label: t("Collections") },
+  at: { icon: AtSign, label: t("@ mentions") },
+};
+/** Per app: what it works with, and in one line how. */
+const links: Record<string, [keyof typeof kinds, string][]> = {
+  "custom-domain-email": [["drive", t("Save an attachment to Drive, or attach a file from it.")], ["contacts", t("The sender's card is one click away; anyone you write to is added.")], ["at", t("Mention people, files and notes in a reply.")]],
+  "team-chat": [["notes", t("Share a note in a message and it opens in place.")], ["at", t("Mention a colleague and they get a notification.")], ["drive", t("Post a file from Drive; people without access are asked.")]],
+  "shared-notes": [["contacts", t("Mention a client or a colleague right in the text.")], ["drive", t("Link a file from Drive.")], ["calendar", t("Link an event, or make a note from one.")], ["collections", t("Link a record from your lists.")]],
+  "team-calendar": [["mail", t("Invitations to outside guests leave from your mailbox.")], ["notes", t("A meeting note for everyone invited, made from the event.")]],
+  "shared-drive": [["mail", t("Attachments saved straight from a message.")], ["chat", t("Files shared in a channel stay one click away.")]],
+  "shared-contacts": [["mail", t("Every conversation with this person, from your mailboxes.")], ["at", t("Mention a contact in chat, mail or notes.")]],
+  "custom-apps": [["calendar", t("Due dates show up in the calendar.")], ["notes", t("Notes linked to a record, one click away.")]],
+};
+const apps = APPS.map((a) => ({ ...a, label: t(a.label), description: t(a.description), href: lp(locale, `/${a.slug}`), replaces: replaces[a.slug]!, links: links[a.slug]! }));
+
 const perks = [
-  { icon: AtSign, title: t("@ anything:"), text: t("people, files, notes, events, contacts, mail threads, in chat and mail.") },
-  { icon: Command, title: t("One ⌘K:"), text: t("jump, search and act in every app.") },
-  { icon: Paperclip, title: t("Drive in mail:"), text: t("attach a file, or save an attachment to Drive.") },
+  { id: "at", icon: AtSign, title: t("@ anything:"), text: t("people, files, notes, events, contacts, mail threads, in chat and mail.") },
+  { id: "cmd", icon: Command, title: t("One ⌘K:"), text: t("jump, search and act in every app.") },
+  { id: "drive", icon: Paperclip, title: t("Drive in mail:"), text: t("attach a file, or save an attachment to Drive.") },
 ];
+const pickKinds: [string, string][] = [["all", t("All")], ["person", t("People")], ["file", t("Files")], ["note", t("Notes")], ["event", t("Events")], ["contact", t("Contacts")], ["thread", t("Mail threads")]];
+const picks = [
+  { k: "person", icon: Contact, title: "Diana Nowak", sub: t("Person") },
+  { k: "file", icon: FileText, title: t("Spring campaign brief.pdf"), sub: t("File") },
+  { k: "note", icon: NotebookPen, title: t("Client call: Brightloop"), sub: t("Note") },
+  { k: "event", icon: Calendar, title: t("Kickoff: Brightloop spring campaign"), sub: t("Event") },
+  { k: "contact", icon: Contact, title: "Marta Kaczmarek", sub: t("Contact") },
+  { k: "thread", icon: Mail, title: t("Contract for the spring campaign"), sub: t("Mail thread") },
+];
+const cmds = [
+  { icon: Mail, title: t("Contract for the spring campaign"), sub: "Marta Kaczmarek · Brightloop", app: t("Mail") },
+  { icon: MessagesSquare, title: "#spring-campaign", sub: t("Brightloop's spring campaign: kickoff on the 18th"), app: t("Chat") },
+  { icon: NotebookPen, title: t("Client call: Brightloop"), sub: t("Decisions"), app: t("Notes") },
+  { icon: CalendarDays, title: t("Kickoff: Brightloop spring campaign"), sub: "11:00 – 12:30", app: t("Calendar") },
+  { icon: HardDrive, title: t("Signed contract.pdf"), sub: "Brightloop", app: t("Drive") },
+  { icon: Contact, title: "Marta Kaczmarek", sub: "marta@brightloop.io", app: t("Contacts") },
+  { icon: Database, title: t("Landing page copy"), sub: "TAS-7 · " + t("Tasks"), app: t("Collections") },
+  { icon: NotebookPen, title: t("Q4 planning"), sub: t("Goals"), app: t("Notes") },
+];
+const tab = "flex items-center text-left transition-colors border border-border bg-background hover:bg-muted aria-selected:border-inverse aria-selected:bg-inverse aria-selected:text-inverse-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const pill = "border border-border px-3 py-1.5 text-xs transition-colors hover:bg-muted aria-pressed:border-inverse aria-pressed:bg-inverse aria-pressed:text-inverse-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 ---
 
 <Block id="features" label={t("One workspace")}>
-  <Fragment slot="title">{t("Six apps that")}{" "}<em>{t("know about each other.")}</em></Fragment>
+  <Fragment slot="title">{t("Seven apps that")}{" "}<em>{t("know about each other.")}</em></Fragment>
   <Fragment slot="text">{t("Mail, chat, notes, calendar, drive, contacts and your own lists. Mention anything with @, search everything with ⌘K, attach files without leaving the message.")}</Fragment>
   <div data-suite class="grid grid-cols-1 mt-10 *:min-w-0 gap-6 lg:grid-cols-12 lg:gap-8">
     <div class="lg:col-span-3">
-      <div role="tablist" aria-label={t("Apps")} aria-orientation="vertical" class="flex flex-wrap gap-2 lg:flex-col">
+      <div role="tablist" data-tabs aria-label={t("Apps")} aria-orientation="vertical" class="flex flex-wrap gap-2 lg:flex-col">
         {
           apps.map((a, i) => (
-            <button type="button" role="tab" id={`suite-tab-${a.slug}`} aria-controls={`suite-panel-${a.slug}`} aria-selected={String(i === 0)} tabindex={i === 0 ? 0 : -1} data-tab={a.slug} class="flex items-center text-left transition-colors border gap-2.5 px-3 py-2.5 lg:gap-3 lg:px-4 lg:py-3 border-border bg-background hover:bg-muted aria-selected:border-inverse aria-selected:bg-inverse aria-selected:text-inverse-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+            <button type="button" role="tab" id={`suite-tab-${a.slug}`} aria-controls={`suite-panel-${a.slug}`} aria-selected={String(i === 0)} tabindex={i === 0 ? 0 : -1} class:list={[tab, "gap-2.5 px-3 py-2.5 lg:gap-3 lg:px-4 lg:py-3"]}>
               <a.icon className="size-5 shrink-0" aria-hidden="true" />
               <span class="min-w-0">
                 <span class="block text-sm font-medium">{a.label}</span>
@@ -52,15 +96,27 @@ const perks = [
     <div class="lg:col-span-9">
       {
         apps.map((a, i) => (
-          <div role="tabpanel" id={`suite-panel-${a.slug}`} aria-labelledby={`suite-tab-${a.slug}`} data-panel={a.slug} hidden={i !== 0}>
+          <div role="tabpanel" id={`suite-panel-${a.slug}`} aria-labelledby={`suite-tab-${a.slug}`} data-panel hidden={i !== 0}>
             <div class="flex flex-wrap items-center justify-between mb-4 gap-x-6 gap-y-2">
               <p class="text-lg"><b class="font-semibold">{a.label}</b>{" "}<span class="text-muted-foreground">{a.description}</span></p>
               <p class="flex items-center text-sm gap-2 text-foreground">
-                <img src={`/logos/brands/${a.replaces.logo}.svg`} alt="" width="20" height="20" class="size-5" />
+                <span class="grid bg-white rounded-sm place-items-center size-6 shrink-0 ring-1 ring-border"><img src={`/logos/brands/${a.replaces.logo}.svg`} alt="" width="16" height="16" class="size-4" /></span>
                 {t("Replaces {name}", { name: a.replaces.name })}
               </p>
             </div>
-            <Faux app={a.slug} />
+            <div data-screen><Faux app={a.slug} /></div>
+            <p class="mt-4 text-xs font-medium tracking-wide uppercase text-faint-foreground">{t("{name} works with", { name: a.label })}</p>
+            <div class="grid gap-2 mt-2 sm:grid-cols-2 xl:grid-cols-4" style={`--n:${a.links.length}`}>
+              {a.links.map(([kind, text]) => {
+                const k = kinds[kind];
+                return (
+                  <button type="button" data-to={kind} aria-pressed="false" class="flex items-start p-3 text-sm text-left transition-colors border gap-2.5 border-border bg-background hover:bg-muted aria-pressed:border-primary aria-pressed:bg-lilac focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+                    <k.icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <span><b class="block font-medium">{k.label}</b><span class="text-muted-foreground">{text}</span></span>
+                  </button>
+                );
+              })}
+            </div>
             <div class="flex flex-wrap items-center mt-6 gap-x-6 gap-y-3">
               <DemoForm label={t("Try it in the demo")} variant="accent" />
               <a href={a.href} class="inline-flex items-center text-sm underline min-h-11 underline-offset-4 hover:text-muted-foreground">{t("Read about this app")}</a>
@@ -70,40 +126,143 @@ const perks = [
       }
     </div>
   </div>
-  <ul role="list" class="grid mt-12 text-sm border-t border-l sm:grid-cols-3 border-border">
-    {
-      perks.map((p) => (
-        <li class="flex gap-3 p-5 border-b border-r border-border">
-          <p.icon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
-          <p><b class="font-semibold">{p.title}</b>{" "}<span class="text-muted-foreground">{p.text}</span></p>
-        </li>
-      ))
-    }
-  </ul>
+
+  <div data-perks class="grid gap-6 pt-8 mt-12 border-t border-border *:min-w-0 lg:grid-cols-12 lg:gap-8">
+    <div class="lg:col-span-4">
+      <p class="text-sm font-medium">{t("Across all of them")}</p>
+      <div role="tablist" data-tabs aria-label={t("Across the apps")} aria-orientation="vertical" class="flex flex-col gap-2 mt-3">
+        {
+          perks.map((p, i) => (
+            <button type="button" role="tab" id={`perk-tab-${p.id}`} aria-controls={`perk-panel-${p.id}`} aria-selected={String(i === 0)} tabindex={i === 0 ? 0 : -1} class:list={[tab, "items-start gap-3 px-4 py-3"]}>
+              <p.icon className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+              <span class="text-sm"><b class="font-semibold">{p.title}</b>{" "}<span class="opacity-80">{p.text}</span></span>
+            </button>
+          ))
+        }
+      </div>
+    </div>
+    <div class="lg:col-span-8">
+      <div role="tabpanel" id="perk-panel-at" aria-labelledby="perk-tab-at" data-panel class="p-4 border border-border bg-muted sm:p-5">
+        <p class="text-sm text-muted-foreground">{t("Pick what the @ should find:")}</p>
+        <div role="group" aria-label={t("Kinds")} class="flex flex-wrap mt-3 gap-1.5">
+          {pickKinds.map(([k, label], i) => <button type="button" data-kind={k} aria-pressed={String(i === 0)} class={pill}>{label}</button>)}
+        </div>
+        <p class="px-3 py-2 mt-3 text-sm border rounded-lg border-input bg-background text-muted-foreground">{t("Can you take a look at")} <span class="text-primary">@</span><span class="inline-block w-px h-4 ml-px align-middle bg-foreground"></span></p>
+        <ul role="list" class="mt-2 border border-border bg-background shadow-[0_1px_2px_rgba(20,25,60,.06),0_16px_40px_-16px_rgba(20,25,60,.22)]">
+          {
+            picks.map((p) => (
+              <li data-k={p.k} class="flex items-center px-3 py-2 text-sm gap-2.5">
+                <span class="grid size-6 shrink-0 place-items-center bg-lilac text-primary">{p.k === "person" ? <Face who="diana" size={18} /> : <p.icon className="size-3.5" aria-hidden="true" />}</span>
+                <span class="flex-1 min-w-0 truncate">{p.title}</span><span class="text-xs text-faint-foreground">{p.sub}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div role="tabpanel" id="perk-panel-cmd" aria-labelledby="perk-tab-cmd" data-panel hidden class="p-4 border border-border bg-muted sm:p-5">
+        <label class="sr-only" for="perk-q">{t("Search the demo workspace")}</label>
+        <div class="flex items-center px-3 py-2.5 text-sm border gap-2 border-input bg-background">
+          <Search className="size-4 text-faint-foreground" aria-hidden="true" />
+          <input id="perk-q" autocomplete="off" class="flex-1 min-w-0 bg-transparent outline-none placeholder:text-faint-foreground" placeholder={t("Search or jump to…")} value="" />
+          <kbd class="text-xs text-faint-foreground">⌘K</kbd>
+        </div>
+        <ul role="list" class="mt-2 border border-border bg-background">
+          {
+            cmds.map((c) => (
+              <li data-cmd class="flex items-center px-3 py-1.5 text-sm gap-2.5">
+                <span class="grid size-6 shrink-0 place-items-center bg-lilac text-primary"><c.icon className="size-3.5" aria-hidden="true" /></span>
+                <span class="flex-1 min-w-0 truncate">{c.title} <span class="text-xs text-faint-foreground">{c.sub}</span></span><span class="text-xs text-faint-foreground">{c.app}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p data-none hidden class="mt-3 text-sm text-muted-foreground">{t("Nothing here yet. Try \"brightloop\".")}</p>
+      </div>
+      <div role="tabpanel" id="perk-panel-drive" aria-labelledby="perk-tab-drive" data-panel hidden class="p-4 border border-border bg-muted sm:p-5">
+        <div role="group" aria-label={t("Direction")} class="flex gap-1.5">
+          <button type="button" data-dir="a" aria-pressed="true" class={pill}>{t("Attach from Drive")}</button>
+          <button type="button" data-dir="s" aria-pressed="false" class={pill}>{t("Save to Drive")}</button>
+        </div>
+        <div data-d="a" class="p-3 mt-3 text-sm border border-border bg-background">
+          <p class="text-xs text-muted-foreground">{t("New message to")} marta@brightloop.io</p>
+          <p class="flex items-center p-2 mt-3 border gap-2 border-border bg-muted"><HardDrive className="size-4 text-primary" aria-hidden="true" /><span class="flex-1 truncate">Brightloop / {t("Spring campaign brief.pdf")}</span><button type="button" data-do class="px-2 py-0.5 text-xs border border-border bg-background hover:bg-lilac focus-visible:outline-2 focus-visible:outline-ring">{t("Attach")}</button></p>
+          <p data-done hidden class="inline-flex items-center gap-1.5 px-2 py-1 mt-3 text-xs bg-lilac text-primary" aria-live="polite"><Paperclip className="size-3" aria-hidden="true" />{t("Spring campaign brief.pdf")} {t("attached")}</p>
+        </div>
+        <div data-d="s" hidden class="p-3 mt-3 text-sm border border-border bg-background">
+          <p class="flex items-center gap-2"><Paperclip className="size-4 text-muted-foreground" aria-hidden="true" /><span class="flex-1 truncate">{t("Signed contract.pdf")}</span><button type="button" data-do class="inline-flex items-center gap-1 px-2 py-0.5 text-xs border border-border bg-background hover:bg-lilac focus-visible:outline-2 focus-visible:outline-ring"><HardDrive className="size-3.5 text-primary" aria-hidden="true" />{t("Save to Drive")}</button></p>
+          <p data-done hidden class="inline-flex items-center mt-3 text-xs gap-1.5 text-muted-foreground" aria-live="polite"><Check className="size-3.5 text-primary" aria-hidden="true" />{t("Saved in Brightloop")}</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </Block>
 
 <script>
-  // Tabs: click, arrows, Home and End.
-  const root = document.querySelector<HTMLElement>("[data-suite]");
+  // Roving-tabindex tablists: click, arrows, Home and End; each list's panels are its sibling panels in document order.
+  const root = document.querySelector<HTMLElement>("#features");
   if (root) {
-    const tabs = [...root.querySelectorAll<HTMLButtonElement>("[data-tab]")];
-    const select = (tab: HTMLButtonElement) => {
-      for (const b of tabs) {
-        const on = b === tab;
-        b.setAttribute("aria-selected", String(on));
-        b.tabIndex = on ? 0 : -1;
-        root.querySelector<HTMLElement>(`[data-panel="${b.dataset.tab}"]`)!.hidden = !on;
-      }
-    };
-    tabs.forEach((b, n) => {
-      b.addEventListener("click", () => select(b));
-      b.addEventListener("keydown", (e) => {
-        const next = e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : ["ArrowRight", "ArrowDown"].includes(e.key) ? (n + 1) % tabs.length : ["ArrowLeft", "ArrowUp"].includes(e.key) ? (n + tabs.length - 1) % tabs.length : -1;
-        if (next < 0) return;
-        e.preventDefault();
-        select(tabs[next]!);
-        tabs[next]!.focus();
+    const wire = (list: HTMLElement, panels: HTMLElement[], on?: (i: number) => void) => {
+      const tabs = [...list.querySelectorAll<HTMLButtonElement>("[role=tab]")];
+      const select = (n: number) => {
+        tabs.forEach((b, k) => { b.setAttribute("aria-selected", String(k === n)); b.tabIndex = k === n ? 0 : -1; panels[k]!.hidden = k !== n; });
+        on?.(n);
+      };
+      tabs.forEach((b, n) => {
+        b.addEventListener("click", () => select(n));
+        b.addEventListener("keydown", (e) => {
+          const next = e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : ["ArrowRight", "ArrowDown"].includes(e.key) ? (n + 1) % tabs.length : ["ArrowLeft", "ArrowUp"].includes(e.key) ? (n + tabs.length - 1) % tabs.length : -1;
+          if (next < 0) return;
+          e.preventDefault();
+          select(next);
+          tabs[next]!.focus();
+        });
       });
+    };
+    const suite = root.querySelector<HTMLElement>("[data-suite]")!;
+    wire(suite.querySelector<HTMLElement>("[data-tabs]")!, [...suite.querySelectorAll<HTMLElement>(":scope > div > [data-panel]")]);
+    const perks = root.querySelector<HTMLElement>("[data-perks]")!;
+    wire(perks.querySelector<HTMLElement>("[data-tabs]")!, [...perks.querySelectorAll<HTMLElement>(":scope > div > [data-panel]")]);
+
+    // "Works with" chips light up the matching spot in this app's screen (hover, focus, or pinned by click).
+    suite.querySelectorAll<HTMLElement>(":scope > div > [data-panel]").forEach((p) => {
+      const chips = [...p.querySelectorAll<HTMLButtonElement>("[data-to]")];
+      const screen = p.querySelector<HTMLElement>("[data-screen]")!;
+      const show = (to: string) => screen.querySelectorAll<HTMLElement>("[data-link]").forEach((e) => e.classList.toggle("su-hl", e.dataset.link === to));
+      const pinned = () => chips.find((c) => c.getAttribute("aria-pressed") === "true")?.dataset.to ?? "";
+      chips.forEach((c) => {
+        c.addEventListener("click", () => {
+          const on = c.getAttribute("aria-pressed") !== "true";
+          chips.forEach((x) => x.setAttribute("aria-pressed", "false"));
+          c.setAttribute("aria-pressed", String(on));
+          show(on ? c.dataset.to! : "");
+        });
+        for (const ev of ["mouseenter", "focus"]) c.addEventListener(ev, () => show(c.dataset.to!));
+        for (const ev of ["mouseleave", "blur"]) c.addEventListener(ev, () => show(pinned()));
+      });
+    });
+
+    // Perk demos.
+    const pressOne = (group: string, btn: HTMLElement) => root.querySelectorAll<HTMLElement>(group).forEach((x) => x.setAttribute("aria-pressed", String(x === btn)));
+    root.querySelectorAll<HTMLElement>("[data-kind]").forEach((b) => b.addEventListener("click", () => {
+      pressOne("[data-kind]", b);
+      root.querySelectorAll<HTMLElement>("[data-k]").forEach((r) => { r.hidden = b.dataset.kind !== "all" && r.dataset.k !== b.dataset.kind; });
+    }));
+    root.querySelectorAll<HTMLElement>("[data-dir]").forEach((b) => b.addEventListener("click", () => {
+      pressOne("[data-dir]", b);
+      root.querySelectorAll<HTMLElement>("[data-d]").forEach((d) => { d.hidden = d.dataset.d !== b.dataset.dir; });
+    }));
+    root.querySelectorAll<HTMLButtonElement>("[data-do]").forEach((b) => b.addEventListener("click", () => {
+      b.disabled = true;
+      b.parentElement!.parentElement!.querySelector<HTMLElement>("[data-done]")!.hidden = false;
+    }));
+    const q = root.querySelector<HTMLInputElement>("#perk-q")!;
+    const rows = [...root.querySelectorAll<HTMLElement>("[data-cmd]")];
+    const none = root.querySelector<HTMLElement>("[data-none]")!;
+    q.addEventListener("input", () => {
+      const v = q.value.trim().toLowerCase();
+      let n = 0;
+      for (const r of rows) { const ok = !v || r.textContent!.toLowerCase().includes(v); r.hidden = !ok; if (ok) n++; }
+      none.hidden = n > 0;
     });
   }
 </script>

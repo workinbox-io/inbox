@@ -83,7 +83,7 @@ const navBtn =
                     {docs
                       .filter((d) => d.data.section === section)
                       .map((d) => (
-                        <a href={docHref(d)} class:list={["flex items-center gap-2 py-1 text-sm", d.id === doc.id ? "font-medium" : "text-muted-foreground"]}>
+                        <a href={docHref(d)} class:list={["flex min-h-11 items-center gap-2 text-sm", d.id === doc.id ? "font-medium" : "text-muted-foreground"]}>
                           {d.data.title}
                         </a>
                       ))}
@@ -109,13 +109,13 @@ const navBtn =
               {english && (
                 <>
                   {" · "}
-                  <a href={`${docHref(doc)}.md`} class="hover:text-foreground underline underline-offset-4">Markdown</a>
+                  <a href={`${docHref(doc)}.md`} class="hover:text-foreground inline-flex min-h-11 -my-3.5 items-center underline underline-offset-4">Markdown</a>
                 </>
               )}
               {askLinks.map((l) => (
                 <>
                   {" · "}
-                  <a href={l.href} target="_blank" rel="noopener noreferrer" class="hover:text-foreground underline underline-offset-4">{l.label}</a>
+                  <a href={l.href} target="_blank" rel="noopener noreferrer" class="hover:text-foreground inline-flex min-h-11 -my-3.5 items-center underline underline-offset-4">{l.label}</a>
                 </>
               ))}
             </p>

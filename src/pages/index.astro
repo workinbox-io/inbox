@@ -8,6 +8,7 @@
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import Hero from "@/components/site/home/Hero.astro";
 import Suite from "@/components/site/home/Suite.astro";
+import Day from "@/components/site/home/Day.astro";
 import Switch from "@/components/site/home/Switch.astro";
 import SharedInbox from "@/components/site/home/SharedInbox.astro";
 import Ai from "@/components/site/home/Ai.astro";
@@ -115,6 +116,7 @@ const jsonLd = [
 <MarketingLayout title={t("Team email, chat, notes and files in one workspace")} description={t(description)} jsonLd={jsonLd} ink>
   <Hero stars={stars} />
   <Suite />
+  <Day />
   <SharedInbox />
   <Ai />
   <Switch />
