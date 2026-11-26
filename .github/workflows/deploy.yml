@@ -1,6 +1,7 @@
 name: Deploy
 
-# Every push to main: check, apply remote D1 migrations, then deploy the Worker.
+# Every push to main: build, apply remote D1 migrations, then deploy the Worker. Typecheck and tests run in CI
+# (ci.yml) on every push and PR, so they aren't repeated here.
 on:
   push:
     branches: [main]
@@ -33,9 +34,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: echo "BETTER_AUTH_SECRET=ci-dummy-secret" > .dev.vars
-      - run: pnpm typecheck
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test
       # The dummy .dev.vars only exists for types and the build; production secrets live in the Worker.
       - run: pnpm build
       - run: rm .dev.vars
