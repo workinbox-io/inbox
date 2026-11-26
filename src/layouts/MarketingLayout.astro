@@ -4,9 +4,10 @@ import BaseLayout from "./BaseLayout.astro";
 import Navigation from "@/components/navy/global/Navigation.astro";
 import Footer from "@/components/navy/global/Footer.astro";
 import { DEFAULT_LOCALE, localizedPath, stripLocale } from "@/lib/i18n/locales";
-import { pageLocales } from "@/lib/i18n/site";
+import { pageLocales, tFor } from "@/lib/i18n/site";
 import { pagePath } from "@/lib/page-path";
 import { siteConfig } from "@/config/site";
+import { APPS } from "@/config/apps";
 
 interface Props {
   title: string;
@@ -23,10 +24,24 @@ const { locale, path } = stripLocale(pagePath(Astro.url.pathname));
 // hreflang only on pages that exist in several languages (lib/i18n/site.ts).
 const versions = pageLocales(path);
 const alternates = versions.length > 1 ? versions.map((l) => ({ l, href: new URL(localizedPath(l, path), siteConfig.url).href })) : [];
+// App pages get a BreadcrumbList here, so AppPage needn't build it; pages that bring their own (/vs/*) keep theirs.
+const app = APPS.find((a) => `/${a.slug}` === path);
+const given = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+const crumbs =
+  app && !given.some((j) => j["@type"] === "BreadcrumbList")
+    ? [{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
+        { "@type": "ListItem", position: 1, name: siteConfig.name, item: new URL(localizedPath(locale, "/"), siteConfig.url).href },
+        { "@type": "ListItem", position: 2, name: tFor(locale)(app.label), item: new URL(localizedPath(locale, path), siteConfig.url).href },
+      ] }]
+    : [];
+const allLd = [...given, ...crumbs];
+const ogLocale = (l: string) => (l === "pl" ? "pl_PL" : "en_US");
 ---
 
-<BaseLayout title={title} description={description} jsonLd={jsonLd} lang={locale} words={false}>
+<BaseLayout title={title} description={description} jsonLd={allLd.length ? allLd : undefined} lang={locale} words={false}>
   <Fragment slot="head">
+    <meta property="og:locale" content={ogLocale(locale)} />
+    {alternates.filter((a) => a.l !== locale).map((a) => <meta property="og:locale:alternate" content={ogLocale(a.l)} />)}
     {alternates.map((a) => <link rel="alternate" hreflang={a.l} href={a.href} />)}
     {alternates.length > 0 && <link rel="alternate" hreflang="x-default" href={alternates.find((a) => a.l === DEFAULT_LOCALE)!.href} />}
     <!-- Switzer, Navy's one typeface: https://www.fontshare.com/fonts/switzer -->

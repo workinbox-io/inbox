@@ -15,7 +15,7 @@ const facts = [
   { icon: Code, big: "AGPL-3.0", text: t("Public on GitHub. The hosted service runs the same code.") },
   { icon: Banknote, big: formatMoney(locale, 0, CURRENCY), text: t("Self-hosted on your Cloudflare account, every feature, no fee to us.") },
   { icon: Users, big: formatMoney(locale, Math.min(...PLAN_LIST.map((p) => p.priceMonthly)), CURRENCY), text: t("per person a month after the first {n}, every app included. Shared mailboxes free.", { n: FREE_PEOPLE }) },
-  { icon: FileArchive, big: ".eml vCard CSV .ics ZIP", text: t("Plus IMAP: your data leaves readable.") },
+  { icon: FileArchive, big: ".eml vCard CSV|.ics ZIP IMAP", text: t("Plus IMAP: your data leaves readable.") },
 ];
 const safe = [
   { icon: ShieldCheck, text: t("Everyone signs in as themselves, with two-factor") },
@@ -35,7 +35,7 @@ const safe = [
         facts.map((f) => (
           <li class="p-6 bg-inverse/80 backdrop-blur">
             <f.icon className="size-6 text-inverse-foreground/80" aria-hidden="true" />
-            {f.big.includes(" ") ? <p class="flex flex-wrap mt-4 text-xl font-semibold gap-x-3 gap-y-1 sm:text-2xl">{f.big.split(" ").map((x) => <span class="whitespace-nowrap">{x}</span>)}</p> : <p class="mt-4 text-2xl font-semibold text-balance sm:text-3xl">{f.big}</p>}
+            {f.big.includes("|") ? <p class="mt-4 text-xl font-semibold leading-snug whitespace-nowrap sm:text-2xl">{f.big.split("|").map((l) => <span class="block">{l}</span>)}</p> : <p class="mt-4 text-2xl font-semibold text-balance sm:text-3xl">{f.big}</p>}
             <p class="mt-2 text-sm text-inverse-foreground/85">{f.text}</p>
           </li>
         ))

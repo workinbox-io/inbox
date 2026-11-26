@@ -8,7 +8,8 @@ import MarketingLayout from "@/layouts/MarketingLayout.astro";
 import Hero from "./Hero.astro";
 import Section from "./Section.astro";
 import Features, { type FeatureItem } from "./Features.astro";
-import Shot from "./Shot.astro";
+import BrowserWindow from "./home/BrowserWindow.astro";
+import Faux from "./home/Faux.astro";
 import Faq from "./Faq.astro";
 import ComparisonTable from "./ComparisonTable.astro";
 import PriceLine from "./PriceLine.astro";
@@ -57,8 +58,6 @@ const features = ledger(props.features);
 const together = ledger(props.together);
 const faq = props.faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
 const app = APPS.find((a) => a.slug === slug)!;
-// Shots with blank space in them are cropped here, not re-shot.
-const cropOf: Record<string, string> = { "team-chat": "aspect-[2/1] object-cover object-bottom", "custom-apps": "aspect-[21/10] object-cover object-top" };
 // Columns that leave no orphan cell on the last row.
 const colsFor = (n: number) => (n % 3 === 0 ? 3 : n % 4 === 0 ? 4 : 2) as 2 | 3 | 4;
 const others = APPS.filter((a) => a.slug !== slug);
@@ -78,8 +77,10 @@ const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntit
     <PriceLine workspace />
   </Hero>
 
-  <Wrapper variant="standard" class="pt-10">
-    <Shot name={app.shot} alt={alt} class={cropOf[slug]} eager />
+  <Wrapper variant="standard" class="w-full pt-10">
+    <div role="img" aria-label={alt} class="w-full mx-auto max-w-5xl">
+      <BrowserWindow address={`workinbox.io/app/${app.shot.replace("mail-thread", "mail")}`}><Faux app={slug} bare /></BrowserWindow>
+    </div>
   </Wrapper>
 
   <Section>

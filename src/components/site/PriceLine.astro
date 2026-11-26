@@ -14,6 +14,6 @@ const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly));
 const line = t("Free for up to {n} people · then {price} per person a month · free on your own Cloudflare account", { n: FREE_PEOPLE, price: formatMoney(locale, lowest, CURRENCY) });
 ---
 
-<p class="max-w-xl mt-4 text-sm text-inverse-foreground/90 text-pretty">
+<p class="max-w-xl mt-4 text-sm text-inverse-foreground text-pretty">
   {workspace && <><b class="font-semibold">{t("One workspace, one price.")}</b>{" "}</>}{line} · {t("{days}-day trial, no card", { days: TRIAL_DAYS })}
 </p>

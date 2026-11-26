@@ -8,13 +8,13 @@ interface Props {
 const { address, class: className } = Astro.props;
 ---
 
-<div class:list={["overflow-hidden rounded-xl border border-border bg-white shadow-[0_30px_80px_-20px_rgba(20,25,80,0.45)]", className]}>
+<div class:list={["min-w-0 overflow-hidden rounded-xl border border-border bg-white shadow-[0_30px_80px_-20px_rgba(20,25,80,0.45)]", className]}>
   <div class="flex items-center h-10 gap-3 px-4 border-b bg-muted border-border">
     <span class="flex gap-1.5" aria-hidden="true">
       <i class="block rounded-full size-3 bg-[#ff5f57]"></i><i class="block rounded-full size-3 bg-[#febc2e]"></i><i class="block rounded-full size-3 bg-[#28c840]"></i>
     </span>
-    <span class="flex items-center justify-center flex-1 h-6 max-w-md gap-1.5 mx-auto text-xs border rounded-md bg-background border-border text-muted-foreground">
-      <Lock className="size-3" aria-hidden="true" />{address}
+    <span class="flex items-center justify-center flex-1 min-w-0 h-6 max-w-md overflow-hidden whitespace-nowrap gap-1.5 mx-auto text-xs border rounded-md bg-background border-border text-muted-foreground">
+      <Lock className="size-3 shrink-0" aria-hidden="true" />{address}
     </span>
     <span class="hidden w-14 sm:block" aria-hidden="true"></span>
   </div>

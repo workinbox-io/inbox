@@ -22,14 +22,14 @@ const features = [
 const faq = [
   { question: "Is two-factor authentication included in the free plan?", answer: "Yes. Optional authenticator-based 2FA is available for individual accounts on every plan, including free and self-hosted installations." },
   { question: "Can I protect a shared mailbox with 2FA?", answer: "Each person can enable 2FA on their own account for password sign-in. Shared mailboxes such as support@ use individual accounts and access permissions, so nobody needs to share a password or authenticator setup." },
-  { question: "Does Work Inbox ask for a code when I sign in with Google?", answer: "No. Google sign-in uses Google's security settings. Enable two-step verification in your Google account separately. Work Inbox does not enforce Google's two-step verification policy." },
+  { question: "Do I need a code when I sign in with a Google account?", answer: "No. Google sign-in uses Google's security settings. Enable two-step verification in your Google account separately. Work Inbox does not enforce Google's two-step verification policy." },
   { question: "What happens if I lose my authenticator?", answer: "Use an unused backup code after your password, then change your authenticator in Account settings. Resetting your password does not disable 2FA. Without an authenticator and backup codes, access recovery is not guaranteed." },
   { question: "Can an administrator require 2FA for the team?", answer: "Not yet. Each person currently chooses whether to enable 2FA. Organization-wide enforcement is not available." },
   { question: "Does 2FA make my account phishing-proof?", answer: "No. Authenticator codes add protection to password sign-in, but can still be stolen through phishing. Never share your password, authenticator key or backup codes, and check the site's address before signing in." },
 ];
 ---
 
-<MarketingLayout title="Email Security & Two-Factor Authentication" description="Protect your Work Inbox account with authenticator-based two-factor authentication. Learn how individual logins and mailbox permissions control team access." ink>
+<MarketingLayout title="Security: how Work Inbox protects your team's mail" description="Protect your Work Inbox account with authenticator-based two-factor authentication. Learn how individual logins and mailbox permissions control team access." ink>
   <Hero>
     <Fragment slot="title">How we protect <em>your team's mail</em></Fragment>
     <Fragment slot="text">Every person signs in with their own login, optional two-factor authentication guards password sign-in on every plan, and the code is open for you to read or run yourself.</Fragment>

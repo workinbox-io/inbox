@@ -19,9 +19,17 @@ interface Props {
   words?: boolean;
 }
 
-const { title, description = siteConfig.description, jsonLd, noindex = false, lang = "en", words = true } = Astro.props;
+const { title, description: fullDescription = siteConfig.description, jsonLd, noindex = false, lang = "en", words = true } = Astro.props;
 // The dashboard's words in the user's language (lib/i18n/panel.ts), before any island runs.
 const panelWords = words && lang !== "en" ? `/i18n/${lang}.js?v=${dictionaryVersion(lang)}` : null;
+// Search results cut descriptions near 155 characters: end on a sentence, else a word, so the cut is ours.
+const description = (() => {
+  if (fullDescription.length <= 155) return fullDescription;
+  const head = fullDescription.slice(0, 155);
+  const sentence = head.lastIndexOf(". ");
+  if (sentence > 80) return head.slice(0, sentence + 1);
+  return head.slice(0, 154).replace(/[\s,;:.]*\S*$/, "") + "…";
+})();
 const fullTitle = `${title} · ${siteConfig.name}`;
 // workinbox.io's analytics (docs/tapll.md): hosted only, never from dev or a self-hosted instance.
 const analytics = !import.meta.env.DEV && env.DEPLOY_MODE !== "self";

@@ -19,7 +19,8 @@ import { pagePath } from "@/lib/page-path";
 
 const locale = siteLocale(Astro.url);
 const t = tFor(locale);
-const here = stripLocale(pagePath(Astro.url.pathname)).path;
+// Error pages (404/500) set this: the address is whatever was mistyped, so the language links go to the home page.
+const here = (Astro.locals as { errorPage?: boolean }).errorPage ? "/" : stripLocale(pagePath(Astro.url.pathname)).path;
 const available = pageLocales(here);
 const nav = siteConfig.navItems;
 const lowest = formatMoney(locale, Math.min(...PLAN_LIST.map((p) => p.priceMonthly)), CURRENCY);

@@ -13,6 +13,13 @@ interface Props {
 const { yearly = false } = Astro.props;
 const locale = siteLocale(Astro.url);
 const t = tFor(locale);
+const SELF_HOSTED = [
+  "Every app and feature, no plan or per-person fee",
+  "Your data stays in your own Cloudflare account",
+  "No limit on people, domains or storage",
+  "API, AI apps and audit log included",
+  "Open source under AGPL-3.0",
+];
 const money = (cents: number) => formatMoney(locale, cents);
 ---
 
@@ -24,11 +31,11 @@ const money = (cents: number) => formatMoney(locale, cents);
           <Text tag="h2" variant="textBase" class="font-medium text-foreground">{p.name}</Text>
           {p.id === POPULAR_PLAN && <Text tag="span" variant="textXS" class="text-primary">{t("Most popular")}</Text>}
         </div>
-        <p class="flex items-baseline gap-1.5 mt-16 lg:mt-24">
+        <p class="flex items-baseline gap-1.5 mt-8">
           <Text tag="span" variant="displayLG" class="tracking-tight text-foreground tabular-nums">{money(p.priceMonthly)}</Text>
           <Text tag="span" variant="textSM" class="text-muted-foreground">{t(PRICE_UNIT)}</Text>
         </p>
-        <Text tag="p" variant="textSM" class="mt-3 text-muted-foreground text-pretty">
+        <Text tag="p" variant="textSM" class="mt-3 text-muted-foreground text-pretty lg:min-h-[4.5rem]">
           {t(FREE_NOTE)}{yearly ? t(", or {price} a year with two months free", { price: money(priceYearly(p)) }) : ""}
         </Text>
         <ul role="list" class="flex flex-col mt-10 gap-4">
@@ -52,12 +59,20 @@ const money = (cents: number) => formatMoney(locale, cents);
   }
   <li class="flex flex-col">
     <Text tag="h2" variant="textBase" class="font-medium text-foreground">{t("Self-hosted")}</Text>
-    <p class="mt-16 lg:mt-24">
+    <p class="mt-8">
       <Text tag="span" variant="displayLG" class="tracking-tight text-foreground">{money(0)}</Text>
     </p>
-    <Text tag="p" variant="textSM" class="mt-3 text-muted-foreground text-pretty">
+    <Text tag="p" variant="textSM" class="mt-3 text-muted-foreground text-pretty lg:min-h-[4.5rem]">
       {t("The same app on your own Cloudflare account. Open source, every feature, you pay Cloudflare for what you use.")}
     </Text>
+    <ul role="list" class="flex flex-col mt-10 gap-4">
+      {SELF_HOSTED.map((f) => (
+        <li class="flex items-start gap-3">
+          <Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
+          <Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(f)}</Text>
+        </li>
+      ))}
+    </ul>
     <div class="pt-10 mt-auto">
       <Button isLink={true} href="/docs/self-host" size="base" variant="muted" class="w-full">{t("How to deploy")}</Button>
     </div>

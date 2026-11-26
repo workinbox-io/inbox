@@ -42,7 +42,7 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout title={`${siteConfig.name} ${t("vs")} ${c.name}`} description={`${t(c.intro).split(". ")[0]}. ${t("Prices, shared mailboxes, self-hosting and what each does better, checked {date}.", { date: checked })}`} jsonLd={jsonLd} ink>
+<MarketingLayout title={`${siteConfig.name} ${t("vs")} ${c.name}`} description={`${siteConfig.name} ${t("vs")} ${c.name}: ${t("Prices, shared mailboxes, self-hosting and what each does better, checked {date}.", { date: checked })}`} jsonLd={jsonLd} ink>
   <Hero label={`${t("Compare")} / ${c.name}`}>
     <Fragment slot="title">{t(c.tagline)}</Fragment>
     <Fragment slot="text">{t(c.intro)}</Fragment>

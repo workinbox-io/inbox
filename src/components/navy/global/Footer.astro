@@ -22,7 +22,8 @@ interface Props {
 const { slim = false } = Astro.props;
 const locale = siteLocale(Astro.url);
 const t = tFor(locale);
-const here = stripLocale(pagePath(Astro.url.pathname)).path;
+// Error pages (404/500) set this: the address is whatever was mistyped, so the language links go to the home page.
+const here = (Astro.locals as { errorPage?: boolean }).errorPage ? "/" : stripLocale(pagePath(Astro.url.pathname)).path;
 
 const footerLinks: { heading: string; links: { href: string; label: string; icon?: LucideIcon }[] }[] = [
   {
@@ -35,7 +36,7 @@ const footerLinks: { heading: string; links: { href: string; label: string; icon
     ],
   },
   {
-    heading: "Switch",
+    heading: "Guides",
     links: [
       { href: "/google-workspace-alternative", label: "Google Workspace alternative" },
       { href: "/cloudflare-email-routing", label: "Cloudflare Email Routing inbox" },

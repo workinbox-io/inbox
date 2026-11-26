@@ -39,16 +39,16 @@ const points = [
           <div class="p-4 text-sm space-y-4 sm:p-6" aria-hidden="true">
             <div class="flex justify-end"><p class="max-w-[85%] bg-lilac px-4 py-3 rounded-2xl rounded-br-sm">{t("Find the Brightloop contract and draft a reply to Marek saying we can start on the 3rd.")}</p></div>
             <div class="text-xs space-y-1.5 text-muted-foreground">
-              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">mail_search</span><span class="truncate">from:marek brightloop</span><span class="ml-auto shrink-0">{t("3 threads")}</span></p>
-              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">drive_search</span><span class="truncate">Brightloop contract</span><span class="ml-auto shrink-0">{t("1 file")}</span></p>
-              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">mail_read_thread</span><span class="truncate">Re: Contract and kickoff</span></p>
+              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">mail_search</span><span class="truncate">{t("from:marek brightloop")}</span><span class="ml-auto shrink-0">{t("3 threads")}</span></p>
+              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">drive_search</span><span class="truncate">{t("Brightloop contract")}</span><span class="ml-auto shrink-0">{t("1 file")}</span></p>
+              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">mail_read_thread</span><span class="truncate">{t("Re: Contract and kickoff")}</span></p>
             </div>
             <p class="max-w-[90%]">{t("The signed contract is in Drive / Clients / Brightloop. Marek's last mail asks for a start date. I wrote a reply and left it in your Drafts for you to check.")}</p>
             <div class="max-w-md border bg-background border-border">
               <div class="flex justify-between gap-3 px-4 py-2 text-xs border-b border-border text-muted-foreground"><span class="truncate">{t("Draft · from {address}", { address: "anna@acme.studio" })}</span><span class="shrink-0">{t("Not sent")}</span></div>
               <div class="px-4 py-3 space-y-1">
                 <p class="text-xs text-muted-foreground">{t("To: {name}", { name: "Marek Zieliński" })}</p>
-                <p class="font-medium">Re: Contract and kickoff</p>
+                <p class="font-medium">{t("Re: Contract and kickoff")}</p>
                 <p class="text-muted-foreground">{t("Hi Marek, thanks for the signed contract. We can start on the 3rd, I'll send the kickoff agenda tomorrow…")}</p>
               </div>
               <div class="flex gap-2 px-4 py-3 text-xs font-medium border-t border-border">

@@ -45,7 +45,7 @@ const questions = faq.map((f) => ({ question: t(f.question), answer: t(f.answer)
 const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: questions.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) };
 ---
 
-<MarketingLayout title={t("Shared mailbox for your team's support@ and sales@")} description={t("Shared mailboxes for support@, sales@ and invoices@ on your own domain: the whole team answers from one address, everyone signs in as themselves, and shared mailboxes are free on every plan.")} jsonLd={jsonLd} ink>
+<MarketingLayout title={t("Shared mailbox for your team's support@ and sales@")} description={t("Shared mailboxes for support@, sales@ and invoices@ on your domain: one address, the whole team, everyone signs in as themselves. Free on every plan.")} jsonLd={jsonLd} ink>
   <Hero>
     <Fragment slot="title">{t("One support@,")}{" "}<em>{t("the whole team on it.")}</em></Fragment>
     <Fragment slot="text">{t("Stop forwarding mail around and sharing one password. In Work Inbox, support@ is a mailbox several people open with their own accounts, and replies go out from support@. Shared mailboxes are free on every plan.")}</Fragment>

@@ -6,4 +6,4 @@ const locale = siteLocale(Astro.url);
 const show = isUntranslated(locale, href);
 ---
 
-{show && (<><span aria-hidden="true" class="ml-1.5 px-1 text-[10px] font-semibold leading-4 border rounded border-current opacity-70">EN</span><span class="sr-only">, {tFor(locale)("in English")}</span></>)}
+{show && (<><span aria-hidden="true" class="ml-1 text-xs font-normal opacity-60">(EN)</span><span class="sr-only">, {tFor(locale)("in English")}</span></>)}

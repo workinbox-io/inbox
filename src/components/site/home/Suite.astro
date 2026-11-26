@@ -32,10 +32,10 @@ const perks = [
   <Fragment slot="text">{t("Mail, chat, notes, calendar, drive, contacts and your own lists. Mention anything with @, search everything with ⌘K, attach files without leaving the message.")}</Fragment>
   <div data-suite class="grid grid-cols-1 mt-10 *:min-w-0 gap-6 lg:grid-cols-12 lg:gap-8">
     <div class="lg:col-span-3">
-      <div role="tablist" aria-label={t("Apps")} aria-orientation="vertical" class="flex gap-2 pb-2 max-lg:[mask-image:linear-gradient(to_right,#000_88%,transparent)] -mx-8 overflow-x-auto px-8 lg:mx-0 lg:flex-col lg:px-0 lg:pb-0">
+      <div role="tablist" aria-label={t("Apps")} aria-orientation="vertical" class="flex flex-wrap gap-2 lg:flex-col">
         {
           apps.map((a, i) => (
-            <button type="button" role="tab" id={`suite-tab-${a.slug}`} aria-controls={`suite-panel-${a.slug}`} aria-selected={String(i === 0)} tabindex={i === 0 ? 0 : -1} data-tab={a.slug} class="flex items-center text-left transition-colors border shrink-0 gap-3 px-4 py-3 border-border bg-background hover:bg-muted aria-selected:border-inverse aria-selected:bg-inverse aria-selected:text-inverse-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+            <button type="button" role="tab" id={`suite-tab-${a.slug}`} aria-controls={`suite-panel-${a.slug}`} aria-selected={String(i === 0)} tabindex={i === 0 ? 0 : -1} data-tab={a.slug} class="flex items-center text-left transition-colors border gap-2.5 px-3 py-2.5 lg:gap-3 lg:px-4 lg:py-3 border-border bg-background hover:bg-muted aria-selected:border-inverse aria-selected:bg-inverse aria-selected:text-inverse-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
               <a.icon className="size-5 shrink-0" aria-hidden="true" />
               <span class="min-w-0">
                 <span class="block text-sm font-medium">{a.label}</span>
