@@ -42,7 +42,9 @@ export function HtmlFrame({ html, remoteImages, showQuoted }: { html: string; re
   const doc = React.useMemo(() => mailSrcDoc(html, { origin: location.origin, remoteImages, showQuoted }), [html, remoteImages, showQuoted])
   const measure = React.useCallback(() => {
     const d = ref.current?.contentDocument
-    if (d?.documentElement) setHeight(Math.max(40, d.documentElement.scrollHeight))
+    const w = ref.current?.contentWindow
+    // The frame never scrolls vertically (html{overflow-y:hidden}): it takes the content's height plus a wide mail's horizontal scrollbar.
+    if (d?.documentElement && w) setHeight(Math.max(40, d.documentElement.scrollHeight + w.innerHeight - d.documentElement.clientHeight))
   }, [])
   const observer = React.useRef<ResizeObserver | null>(null)
   React.useEffect(() => () => observer.current?.disconnect(), [])
@@ -53,7 +55,7 @@ export function HtmlFrame({ html, remoteImages, showQuoted }: { html: string; re
     if (!d?.body) return
     observer.current?.disconnect()
     observer.current = new ResizeObserver(measure)
-    observer.current.observe(d.body)
+    observer.current.observe(d.documentElement)
     for (const img of Array.from(d.images)) img.addEventListener("load", measure)
   }
   return (

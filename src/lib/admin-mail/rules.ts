@@ -147,7 +147,7 @@ const QUOTE_SELECTORS = [
 export const hasQuotedHtml = (html: string) => /gmail_quote|type=["']?cite|yahoo_quoted|moz-cite-prefix|divRplyFwdMsg|appendonsend|name=["']?quote/i.test(html);
 
 const BASE_CSS =
-  "html,body{margin:0;background:#fff;color:#1f1f1f}body{padding:16px;font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;overflow-wrap:anywhere}img{max-width:100%;height:auto}table{max-width:100%}pre{white-space:pre-wrap}a{color:#0b57d0}";
+  "html,body{margin:0;background:#fff;color:#1f1f1f}html{overflow-y:hidden}body{padding:16px;font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;overflow-wrap:anywhere}img{max-width:100%;height:auto}table{max-width:100%}pre{white-space:pre-wrap}a{color:#0b57d0}";
 
 /**
  * The document for an incoming mail's iframe. The iframe is sandboxed without scripts; the CSP also
