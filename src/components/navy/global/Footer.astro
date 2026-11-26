@@ -10,7 +10,7 @@ import Text from "@/components/navy/fundations/elements/Text.astro";
 import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
 import { siteConfig } from "@/config/site";
 import { APPS } from "@/config/apps";
-import type { LucideIcon } from "lucide-react";
+import { Plug, Tag, UsersRound, type LucideIcon } from "lucide-react";
 import { FREE_PEOPLE } from "@/config/plans";
 import { stripLocale } from "@/lib/i18n/locales";
 import { lp, siteLocale, tFor } from "@/lib/i18n/site";
@@ -29,9 +29,9 @@ const footerLinks: { heading: string; links: { href: string; label: string; icon
     heading: "Product",
     links: [
       ...APPS.map((a) => ({ href: `/${a.slug}`, label: a.label, icon: a.icon })),
-      { href: "/shared-mailbox", label: "Shared mailboxes" },
-      { href: "/docs/mcp", label: "AI apps" },
-      { href: "/pricing", label: "Pricing" },
+      { href: "/shared-mailbox", label: "Shared mailboxes", icon: UsersRound },
+      { href: "/docs/mcp", label: "AI apps", icon: Plug },
+      { href: "/pricing", label: "Pricing", icon: Tag },
     ],
   },
   {
@@ -108,10 +108,7 @@ const github = `<svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="currentCo
             <div class="lg:col-span-3">
               <a href={lp(locale, "/")} class="inline-flex">
                 <span class="sr-only">{t("Go to homepage")}</span>
-                <span class="inline-flex items-center gap-2.5">
-                  <img src="/logo.svg" alt="" width="28" height="28" class="size-7 rounded-md ring-1 ring-white/15" />
-                  <Logo class="text-xl text-inverse-foreground" />
-                </span>
+                <Logo class="text-xl text-inverse-foreground" />
               </a>
               <p class="mt-3 text-sm text-white/80 max-w-[26ch]">{t("Mail, chat, notes, calendar, drive and contacts for teams.")}</p>
             </div>
@@ -122,7 +119,7 @@ const github = `<svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="currentCo
                   <ul role="list" class="mt-2">
                     {section.links.map((link) => (
                       <li>
-                        <a href={lp(locale, link.href)} class={linkClass}>{link.icon && <link.icon size={16} strokeWidth={1.8} class="mr-2 shrink-0 text-white/60" aria-hidden="true" />}{t(link.label)}<EnTag href={link.href} /></a>
+                        <a href={lp(locale, link.href)} class={linkClass}>{link.icon && <link.icon size={16} strokeWidth={1.8} className="mr-2 shrink-0 text-white/60" aria-hidden="true" />}{t(link.label)}<EnTag href={link.href} /></a>
                       </li>
                     ))}
                   </ul>
