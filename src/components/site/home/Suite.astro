@@ -1,6 +1,6 @@
 ---
 /** The suite: tabs for the apps, a faux screen of the chosen one, chips for what it works with (they light up the matching spot in the screen) and the three cross-app perks as small working demos. */
-import { AtSign, Calendar, CalendarDays, Command, Contact, Database, FileText, HardDrive, Mail, MessagesSquare, NotebookPen, Paperclip, Search, Check } from "lucide-react";
+import { AtSign, Calendar, CalendarDays, Contact, Database, FileText, HardDrive, Mail, MessagesSquare, NotebookPen, Paperclip, Search, Check } from "lucide-react";
 import Block from "./Block.astro";
 import DemoForm from "./DemoForm.astro";
 import Face from "./Face.astro";
@@ -45,7 +45,7 @@ const apps = APPS.map((a) => ({ ...a, label: t(a.label), description: t(a.descri
 
 const perks = [
   { id: "at", icon: AtSign, title: t("@ anything:"), text: t("people, files, notes, events, contacts, mail threads, in chat and mail.") },
-  { id: "cmd", icon: Command, title: t("One ⌘K:"), text: t("jump, search and act in every app.") },
+  { id: "cmd", icon: Search, title: t("One search:"), text: t("find and open anything, from every app.") },
   { id: "drive", icon: Paperclip, title: t("Drive in mail:"), text: t("attach a file, or save an attachment to Drive.") },
 ];
 const pickKinds: [string, string][] = [["all", t("All")], ["person", t("People")], ["file", t("Files")], ["note", t("Notes")], ["event", t("Events")], ["contact", t("Contacts")], ["thread", t("Mail threads")]];
@@ -73,7 +73,7 @@ const pill = "border border-border px-3 py-1.5 text-xs transition-colors hover:b
 
 <Block id="features" label={t("One workspace")}>
   <Fragment slot="title">{t("Seven apps that")}{" "}<em>{t("know about each other.")}</em></Fragment>
-  <Fragment slot="text">{t("Mail, chat, notes, calendar, drive, contacts and your own lists. Mention anything with @, search everything with ⌘K, attach files without leaving the message.")}</Fragment>
+  <Fragment slot="text">{t("Mail, chat, notes, calendar, drive, contacts and your own lists. Mention anything with @, search everything in one place, attach files without leaving the message.")}</Fragment>
   <div data-suite class="grid grid-cols-1 mt-10 *:min-w-0 gap-6 lg:grid-cols-12 lg:gap-8">
     <div class="lg:col-span-3">
       <div role="tablist" data-tabs aria-label={t("Apps")} aria-orientation="vertical" class="flex flex-wrap gap-2 lg:flex-col">

@@ -400,8 +400,8 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
   disclosure menus in `global/menus.ts`, `LanguageMenu` dropdown in header and footer). Tokens on `.navy` (`styles/navy.css`,
   MarketingLayout's wrapper, so /app keeps its own), extra names registered in `global.css`; light only, Switzer from
   Fontshare. Rules from Navy's design skill: lavender-white ground, indigo ink, one ultramarine accent, the shader only on
-  heroes/band/footer, 12-column grid, plain section labels (never `///`), square except buttons and inputs, hairlines, `<em>`
-  key words in headings (italic semibold), small lucide icons and brand logos (`public/logos/brands/`, what an app
+  heroes/band/footer, 12-column grid, plain section labels (never `///`), square except buttons and inputs, hairlines, headings in one
+  weight, upright (`<em>` in them renders plain), small lucide icons and brand logos (`public/logos/brands/`, what an app
   replaces) where they explain, no monospace. Real screenshots only where they persuade (home: hero browser window and
   the app switcher); elsewhere faux UI in HTML. Home sections in `components/site/home/` (mock-ups they were picked
   from: `design/home-variants/`). Site blocks in `components/site`: `Hero`

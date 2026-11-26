@@ -103,7 +103,7 @@ const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntit
 
   <Section>
     <Fragment slot="title">{t("Part of one workspace")}</Fragment>
-    <Fragment slot="text">{t("{app} shares the people, the search and the ⌘K of the rest of Work Inbox. One sign-in, one price per person.", { app: t(app.label) })}</Fragment>
+    <Fragment slot="text">{t("{app} shares the people and the search of the rest of Work Inbox. One sign-in, one price per person.", { app: t(app.label) })}</Fragment>
     <div slot="full">
       <Features items={together} cols={colsFor(together.length)} cards />
       <Features items={otherApps} cols={colsFor(otherApps.length)} class="mt-12" />

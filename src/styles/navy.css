@@ -39,10 +39,10 @@ body:has(.navy) {
   background: var(--inverse);
 }
 
-/* Key words in headings: wrap them in <em> */
-.navy :is(h1, h2) em {
-  font-style: italic;
-  font-weight: 600;
+/* Headings stay one weight and upright: <em> left in titles reads like the rest */
+.navy :is(h1, h2, h3) em {
+  font-style: normal;
+  font-weight: inherit;
 }
 
 /* CSS fallbacks under GradientShader: the navy arch hanging from the top, the flip one rising from the bottom (the
