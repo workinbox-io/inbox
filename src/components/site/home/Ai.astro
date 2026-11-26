@@ -1,0 +1,66 @@
+---
+/** AI apps (Conversation): a faux Claude conversation, one prompt, tool calls and a draft card with a Send button only the person presses. */
+import { Eye, Pencil, ShieldCheck } from "lucide-react";
+import Block from "./Block.astro";
+import DemoForm from "./DemoForm.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+
+const t = tFor(siteLocale(Astro.url));
+const points = [
+  { icon: Eye, bold: t("Reading is free"), text: t("on every plan.") },
+  { icon: ShieldCheck, bold: t("Mail is drafted, never sent"), text: t("on the model's word. The Send button is yours.") },
+  { icon: Pencil, bold: t("Changes"), text: t("(notes, contacts, chat posts) are on Pro and Business.") },
+];
+---
+
+<section id="ai" class="scroll-mt-20">
+  <div class="px-8 py-20 sm:py-24 mx-auto max-w-340">
+    <div class="grid grid-cols-1 *:min-w-0 gap-10 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <Text tag="p" variant="textSM" class="font-medium tracking-wide uppercase text-primary">{t("AI apps")}</Text>
+        <Text tag="h2" variant="displayMD" class="mt-3 tracking-tight text-balance text-foreground">{t("Your workspace,")}{" "}<em>{t("in the AI you already use.")}</em></Text>
+        <Text tag="p" variant="textBase" class="mt-5 text-muted-foreground text-pretty">{t("Connect Claude, ChatGPT, Claude Code or Cursor once. Ask about a client and it finds the thread, the contract in Drive and the meeting note, then drafts the reply. Only what you can open.")}</Text>
+        <ul role="list" class="mt-6 space-y-3 text-sm">
+          {points.map((p) => <li class="flex gap-3"><p.icon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" /><span><b>{p.bold}</b>{" "}{p.text}</span></li>)}
+        </ul>
+        <div class="flex flex-wrap mt-8 gap-3">
+          <Button isLink={true} href="/docs/mcp" size="lg" variant="accent">{t("Connect an AI app")}</Button>
+          <DemoForm size="lg" />
+        </div>
+      </div>
+      <div class="lg:col-span-7">
+        <div class="border border-border bg-muted" role="img" aria-label={t("Example: a person asks Claude to find the Brightloop contract and draft a reply; Claude searches mail and drive and returns a draft card with a Send button.")}>
+          <div class="flex items-center h-10 gap-2 px-4 text-xs border-b border-border bg-background text-muted-foreground" aria-hidden="true">
+            <span class="rounded-full size-2 bg-border"></span><span class="rounded-full size-2 bg-border"></span><span class="rounded-full size-2 bg-border"></span>
+            <span class="ml-3 truncate">{t("Claude · connected to {org} on Work Inbox", { org: "Acme Studio" })}</span>
+          </div>
+          <div class="p-4 text-sm space-y-4 sm:p-6" aria-hidden="true">
+            <div class="flex justify-end"><p class="max-w-[85%] bg-lilac px-4 py-3 rounded-2xl rounded-br-sm">{t("Find the Brightloop contract and draft a reply to Marek saying we can start on the 3rd.")}</p></div>
+            <div class="text-xs space-y-1.5 text-muted-foreground">
+              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">mail_search</span><span class="truncate">from:marek brightloop</span><span class="ml-auto shrink-0">{t("3 threads")}</span></p>
+              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">drive_search</span><span class="truncate">Brightloop contract</span><span class="ml-auto shrink-0">{t("1 file")}</span></p>
+              <p class="flex items-center gap-2 px-3 py-2 border bg-background border-border"><span class="font-medium text-primary">mail_read_thread</span><span class="truncate">Re: Contract and kickoff</span></p>
+            </div>
+            <p class="max-w-[90%]">{t("The signed contract is in Drive / Clients / Brightloop. Marek's last mail asks for a start date. I wrote a reply and left it in your Drafts for you to check.")}</p>
+            <div class="max-w-md border bg-background border-border">
+              <div class="flex justify-between gap-3 px-4 py-2 text-xs border-b border-border text-muted-foreground"><span class="truncate">{t("Draft · from {address}", { address: "anna@acme.studio" })}</span><span class="shrink-0">{t("Not sent")}</span></div>
+              <div class="px-4 py-3 space-y-1">
+                <p class="text-xs text-muted-foreground">{t("To: {name}", { name: "Marek Zieliński" })}</p>
+                <p class="font-medium">Re: Contract and kickoff</p>
+                <p class="text-muted-foreground">{t("Hi Marek, thanks for the signed contract. We can start on the 3rd, I'll send the kickoff agenda tomorrow…")}</p>
+              </div>
+              <div class="flex gap-2 px-4 py-3 text-xs font-medium border-t border-border">
+                <span class="px-3 py-1.5 text-white rounded-md bg-primary">{t("Send")}</span>
+                <span class="px-3 py-1.5 border rounded-md border-input bg-background">{t("Edit")}</span>
+                <span class="px-3 py-1.5 border rounded-md border-input bg-background">{t("Discard")}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-muted-foreground">{t("Illustration of the flow. The draft card is the one the app returns (mail_draft); Send and Undo are only in the card.")}</p>
+      </div>
+    </div>
+  </div>
+</section>

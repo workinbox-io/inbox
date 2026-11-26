@@ -1,0 +1,42 @@
+---
+// A side label and the content on the site grid (see grid.ts), with an
+// optional `full` slot that spans all 12 columns underneath. Use the `side`
+// slot instead of `label` when the side column needs more than a label.
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import { grid, sideCol, mainCol } from "@/components/navy/fundations/containers/grid";
+interface Props {
+  label?: string;
+  class?: string;
+}
+const { label, class: extraClass = "" } = Astro.props;
+---
+
+<div class:list={["grid gap-y-12", grid, extraClass]}>
+  <div class={sideCol}>
+    {
+      Astro.slots.has("side") ? (
+        <slot name="side" />
+      ) : (
+        label && (
+          <Text
+            tag="p"
+            variant="textSM"
+            class="font-medium uppercase text-foreground"
+          >
+            {label}
+          </Text>
+        )
+      )
+    }
+  </div>
+  <div class={mainCol}>
+    <slot />
+  </div>
+  {
+    Astro.slots.has("full") && (
+      <div class="mt-10 lg:col-span-12">
+        <slot name="full" />
+      </div>
+    )
+  }
+</div>

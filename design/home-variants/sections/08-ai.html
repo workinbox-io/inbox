@@ -1,0 +1,141 @@
+<!-- section: ai | AI apps | "The workspace is ready for the AI tools I already use, and mail never leaves on the model's word." -->
+<section id="ai-a" data-variant="A" data-name="Conversation" data-idea="A faux Claude conversation: one prompt, tool calls, and a draft card with a Send button that only the person can press. Shows the product doing real work in 10 seconds.">
+  <div class="bg-background py-16 sm:py-24 border-t border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10">
+      <div class="lg:col-span-5">
+        <p class="label">AI apps</p>
+        <h2 class="mt-4 text-4xl sm:text-5xl font-semibold tracking-tight">Ask Claude about your <em>whole workspace.</em></h2>
+        <p class="mt-5 text-lg text-muted-foreground">Connect Claude, ChatGPT, Claude Code or Cursor once. They search your mail, chat, notes and files, plan the week and draft replies, with your access and nothing more.</p>
+        <ul class="mt-6 space-y-3 text-sm">
+          <li class="flex gap-3"><svg class="size-5 shrink-0 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg><span><b>Reading is free</b> on every plan.</span></li>
+          <li class="flex gap-3"><svg class="size-5 shrink-0 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg><span><b>Mail is drafted, never sent</b> on the model's word. The Send button is yours.</span></li>
+          <li class="flex gap-3"><svg class="size-5 shrink-0 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg><span><b>Changes</b> (notes, contacts, chat posts) are on Pro and Business.</span></li>
+        </ul>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/docs/mcp" class="btn btn-accent btn-lg">Connect an AI app</a>
+          <a href="/demo" class="btn btn-muted btn-lg">Try the demo</a>
+        </div>
+      </div>
+      <div class="lg:col-span-7">
+        <div class="border border-border bg-muted" role="img" aria-label="Example: a person asks Claude to find the Brightloop contract and draft a reply; Claude searches mail and drive and returns a draft card with a Send button.">
+          <div class="flex items-center gap-2 px-4 h-10 border-b border-border bg-background text-xs text-muted-foreground"><span class="size-2 rounded-full bg-border"></span><span class="size-2 rounded-full bg-border"></span><span class="size-2 rounded-full bg-border"></span><span class="ml-3">Claude · connected to Acme Studio on Work Inbox</span></div>
+          <div class="p-4 sm:p-6 space-y-4 text-sm">
+            <div class="flex justify-end"><p class="max-w-[85%] bg-lilac px-4 py-3 rounded-2xl rounded-br-sm">Find the Brightloop contract and draft a reply to Marek saying we can start on the 3rd.</p></div>
+            <div class="space-y-1.5 text-xs text-muted-foreground">
+              <p class="flex items-center gap-2 bg-background border border-border px-3 py-2"><span class="text-primary font-medium">mail_search</span> from:marek brightloop <span class="ml-auto">3 threads</span></p>
+              <p class="flex items-center gap-2 bg-background border border-border px-3 py-2"><span class="text-primary font-medium">drive_search</span> Brightloop contract <span class="ml-auto">1 file</span></p>
+              <p class="flex items-center gap-2 bg-background border border-border px-3 py-2"><span class="text-primary font-medium">mail_read_thread</span> Re: Contract and kickoff</p>
+            </div>
+            <p class="max-w-[90%]">The signed contract is in <b>Drive / Clients / Brightloop</b>. Marek's last mail asks for a start date. I wrote a reply and left it in your Drafts for you to check.</p>
+            <div class="bg-background border border-border max-w-md">
+              <div class="px-4 py-2 border-b border-border text-xs text-muted-foreground flex justify-between"><span>Draft · from anna@acme.studio</span><span>Not sent</span></div>
+              <div class="px-4 py-3 space-y-1">
+                <p class="text-xs text-muted-foreground">To: Marek Zieliński</p>
+                <p class="font-medium">Re: Contract and kickoff</p>
+                <p class="text-muted-foreground">Hi Marek, thanks for the signed contract. We can start on the 3rd, I'll send the kickoff agenda tomorrow…</p>
+              </div>
+              <div class="px-4 py-3 border-t border-border flex gap-2"><span class="btn btn-accent btn-sm" aria-hidden="true">Send</span><span class="btn btn-muted btn-sm" aria-hidden="true">Edit</span><span class="btn btn-muted btn-sm" aria-hidden="true">Discard</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="mt-3 text-xs text-faint-foreground">Illustration of the flow. The draft card is the one the app returns (mail_draft); Send and Undo are only in the card.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ai-b" data-variant="B" data-name="Can / cannot matrix" data-idea="A trust-first table of what AI can read, change and never do, per app, with the clients named. Answers 'what is it allowed to do with my mail?' before anyone asks.">
+  <div class="bg-muted py-16 sm:py-24 border-t border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 gap-6">
+        <p class="label lg:col-span-3">AI apps</p>
+        <div class="lg:col-span-9">
+          <h2 class="text-4xl sm:text-5xl font-semibold tracking-tight max-w-3xl">The AI you already use, <em>on a short leash.</em></h2>
+          <p class="mt-5 text-lg text-muted-foreground max-w-2xl">Claude, ChatGPT, Claude Code and Cursor connect to your workspace over MCP, signed in as you. This is exactly what they can do.</p>
+        </div>
+      </div>
+      <div class="mt-10 lg:ml-[25%] overflow-x-auto">
+        <table class="w-full min-w-[620px] text-sm bg-background border border-border">
+          <caption class="sr-only">What AI apps can read, change and never do in each Work Inbox app</caption>
+          <thead><tr class="border-b border-border text-left">
+            <th scope="col" class="p-4 font-medium">App</th>
+            <th scope="col" class="p-4 font-medium">Reads (free)</th>
+            <th scope="col" class="p-4 font-medium">Changes (Pro)</th>
+            <th scope="col" class="p-4 font-medium">Never</th>
+          </tr></thead>
+          <tbody class="[&_tr]:border-b [&_tr]:border-border [&_td]:p-4 [&_td]:align-top [&_th]:p-4 [&_th]:text-left [&_th]:font-medium">
+            <tr><th scope="row">Mail</th><td>Search, read threads, list drafts</td><td>Create and edit drafts, attach files</td><td class="text-primary font-medium">Send on its own</td></tr>
+            <tr><th scope="row">Calendar</th><td>List events, find free time</td><td>Create, update, delete events</td><td class="text-primary font-medium">Invite outside people (only the app mails them)</td></tr>
+            <tr><th scope="row">Notes</th><td>Search and read what you can open</td><td>Create, update, archive</td><td class="text-primary font-medium">Open private notes of others</td></tr>
+            <tr><th scope="row">Chat</th><td>Channels, search, read</td><td>Post to a channel</td><td class="text-primary font-medium">Read DMs you are not in</td></tr>
+            <tr><th scope="row">Drive</th><td>Search, read text, list folders</td><td>Create folders and text files, move, rename</td><td class="text-primary font-medium">Go beyond your access</td></tr>
+            <tr><th scope="row">Contacts and lists</th><td>Search contacts and Collections</td><td>Create and update records</td><td class="text-primary font-medium">See other organizations</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-8 lg:ml-[25%] flex flex-wrap items-center gap-x-6 gap-y-4">
+        <p class="text-sm text-muted-foreground">Works with</p>
+        <ul class="flex flex-wrap gap-2 text-sm font-medium">
+          <li class="border border-border bg-background px-3 py-1.5">Claude</li><li class="border border-border bg-background px-3 py-1.5">ChatGPT</li><li class="border border-border bg-background px-3 py-1.5">Claude Code</li><li class="border border-border bg-background px-3 py-1.5">Cursor</li>
+        </ul>
+        <div class="flex gap-3 sm:ml-auto"><a href="/docs/mcp" class="btn btn-accent">Connect an AI app</a><a href="/pricing" class="btn btn-muted">What Pro adds</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ai-c" data-variant="C" data-name="Three steps, clip" data-idea="An auto-playing faux clip (ask, find, draft) in a dark panel with the three guarantees underneath. Visual and quick; the person sees the result before reading a word.">
+  <div class="bg-inverse text-inverse-foreground py-16 sm:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <p class="label text-white/50">AI apps</p>
+      <h2 class="mt-4 text-4xl sm:text-5xl font-semibold tracking-tight max-w-3xl">Say it once. <em>Review the draft.</em> Press Send.</h2>
+      <div class="mt-10 grid lg:grid-cols-12 gap-8 items-start">
+        <div class="lg:col-span-7 bg-background text-foreground border border-white/10 min-h-[340px]" aria-label="Looping example of an AI app drafting a reply" role="group">
+          <div class="flex items-center justify-between px-4 h-10 border-b border-border text-xs text-muted-foreground"><span>Claude · Work Inbox</span><button type="button" class="ai-c-toggle underline focus-visible:outline-2 focus-visible:outline-ring" aria-pressed="false">Pause</button></div>
+          <div class="p-4 sm:p-6 text-sm space-y-3">
+            <p class="ai-c-step ai-c-1 bg-lilac px-4 py-3 rounded-2xl w-fit max-w-[90%] ml-auto">What is on my calendar Thursday, and reply to Marek's mail that I'm free after 2.</p>
+            <p class="ai-c-step ai-c-2 border border-border bg-muted px-3 py-2 text-xs text-muted-foreground"><span class="text-primary font-medium">calendar_find_free_time</span> Thursday · free from 14:00</p>
+            <div class="ai-c-step ai-c-3 border border-border max-w-md">
+              <div class="px-4 py-2 border-b border-border text-xs text-muted-foreground">Draft · not sent</div>
+              <p class="px-4 py-3">Hi Marek, Thursday works for me after 14:00. Does 15:00 suit you?</p>
+              <div class="px-4 py-3 border-t border-border flex gap-2"><span class="btn btn-accent btn-sm">Send</span><span class="btn btn-muted btn-sm">Edit</span></div>
+            </div>
+            <p class="ai-c-step ai-c-4 text-xs text-primary font-medium">You press Send. Undo is open for 10 seconds.</p>
+          </div>
+        </div>
+        <div class="lg:col-span-5 space-y-6">
+          <div class="border-t border-white/15 pt-4"><p class="font-semibold">1. Connect once</p><p class="mt-1 text-white/70 text-sm">Sign in with your Work Inbox account, pick the workspace. Or use an API key from the admin console.</p></div>
+          <div class="border-t border-white/15 pt-4"><p class="font-semibold">2. It sees what you see</p><p class="mt-1 text-white/70 text-sm">Private notes, other people's mailboxes and other organizations stay closed. Reading is free on every plan.</p></div>
+          <div class="border-t border-white/15 pt-4"><p class="font-semibold">3. You stay in control</p><p class="mt-1 text-white/70 text-sm">Replies arrive as drafts. Changes to notes, contacts and chat need Pro.</p></div>
+          <div class="flex flex-wrap gap-3 pt-2"><a href="/docs/mcp" class="btn btn-accent btn-lg">Connect an AI app</a><a href="/demo" class="btn btn-muted btn-lg">Try the demo</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <style>
+    @keyframes ai-c-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    #ai-c-clip .ai-c-step { opacity: 0; }
+    #ai-c-clip.on .ai-c-step { animation: ai-c-in .5s forwards; }
+    #ai-c-clip.on .ai-c-1 { animation-delay: .2s } #ai-c-clip.on .ai-c-2 { animation-delay: 1.4s } #ai-c-clip.on .ai-c-3 { animation-delay: 2.6s } #ai-c-clip.on .ai-c-4 { animation-delay: 4s }
+    @media (prefers-reduced-motion: reduce) { #ai-c-clip .ai-c-step { opacity: 1; animation: none !important; } }
+  </style>
+  <script>
+    (function () {
+      var root = document.getElementById("ai-c");
+      var clip = root.querySelector('[role="group"]');
+      clip.id = "ai-c-clip";
+      var btn = root.querySelector(".ai-c-toggle");
+      var paused = false, timer;
+      function play() {
+        clip.classList.remove("on"); void clip.offsetWidth; clip.classList.add("on");
+        clearTimeout(timer);
+        if (!paused) timer = setTimeout(play, 9000);
+      }
+      btn.addEventListener("click", function () {
+        paused = !paused; btn.setAttribute("aria-pressed", paused); btn.textContent = paused ? "Play" : "Pause";
+        if (!paused) play(); else clearTimeout(timer);
+      });
+      play();
+    })();
+  </script>
+</section>

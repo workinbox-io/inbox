@@ -44,3 +44,6 @@ export function pluralForms(locale: SiteLocale, one: string, other: string): Rec
   const cats = new Intl.PluralRules(locale).resolvedOptions().pluralCategories;
   return Object.fromEntries(cats.map((c) => [c, own?.[`${other}|${c}`] ?? siteT(locale, c === "one" ? one : other)]));
 }
+
+/** True for an internal link that has no version in this language, so it opens in English (lp() leaves it as is). */
+export const isUntranslated = (locale: SiteLocale, href: string): boolean => locale !== DEFAULT_LOCALE && lp(locale, href) === href && href.startsWith("/");

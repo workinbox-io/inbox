@@ -1,0 +1,19 @@
+---
+/** A page section in the home's look (home/Block.astro: blue label, title with key words in <em>, text), then the default
+ * slot and the `full` slot underneath, full width. */
+import Block from "./home/Block.astro";
+interface Props {
+  label?: string;
+  id?: string;
+  /** Ground classes for the section (bg-muted…). */
+  class?: string;
+}
+const { label, id, class: className } = Astro.props;
+---
+
+<Block id={id} label={label} class={className}>
+  <Fragment slot="title"><slot name="title" /></Fragment>
+  {Astro.slots.has("text") && <Fragment slot="text"><slot name="text" /></Fragment>}
+  {Astro.slots.has("default") && <div class="mt-8"><slot /></div>}
+  {Astro.slots.has("full") && <div class="mt-12"><slot name="full" /></div>}
+</Block>

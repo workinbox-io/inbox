@@ -1,29 +1,29 @@
 ---
 /** Team chat ("slack alternative", 1,000 US searches, KD 2; "open source slack alternative" 260), OpenSEO 2026-11-15. */
 import AppPage from "@/components/site/AppPage.astro";
-import { AtSign, Bell, Bot, Hash, Lock, MessageSquareReply, Paperclip, Search, Smile } from "lucide-react";
 
 export const prerender = true;
 ---
 
 <AppPage
   slug="team-chat"
-  title="Team chat: an open-source Slack alternative"
-  description="Channels, direct messages and threads for your team, next to its email, notes, calendar and files. Open source, free for up to 5 people, or self-hosted on Cloudflare."
-  h1={["Team chat,", "next to the rest of your work."]}
-  lead="Channels for projects, direct messages for quick questions, threads that keep a discussion in one place. In the same app as your team's email, notes, calendar and files."
+  title="Team chat linked to your mail, notes and files"
+  description="Channels, DMs and threads where you can @mention files, notes, events and mail threads. Open source, part of the Work Inbox workspace."
+  h1={["Team chat that", "knows your work."]}
+  lead="Channels, DMs and threads. Mention a file, a note, an event or a mail thread, and it opens right there."
+  benefits={["@ people, files, notes, events, contacts, mail threads.", "Saved messages, pins, a Threads view and mentions view.", "Push for DMs and mentions, and one notification bell with mail."]}
   url="workinbox.io/app/chat"
   alt="The #spring-campaign channel: messages from three people, a thread with two replies and reactions"
   features={[
-    { icon: Hash, title: "Channels", text: "Public channels anyone can join, #general for everyone, and private ones for chosen people." },
-    { icon: Lock, title: "Direct messages", text: "One to one or a small group, private to the people in it. Admins don't see them either." },
-    { icon: MessageSquareReply, title: "Threads", text: "Reply in a thread so the channel stays readable; follow threads in their own view." },
-    { icon: AtSign, title: "Mentions", text: "@someone and they get notified; mentions collect in their own view." },
-    { icon: Smile, title: "Reactions, pins, saved", text: "React with an emoji, pin what matters to a channel, save a message for later." },
-    { icon: Paperclip, title: "Files and formatting", text: "Attach files, use bold, italics and code (⌘B, ⌘I, ⌘E)." },
-    { icon: Bell, title: "Live, with notifications", text: "Messages, presence and typing appear live; DMs and mentions send a push when you're away." },
-    { icon: Search, title: "Search", text: "Search a channel, and jump to any conversation or person with ⌘K." },
-    { icon: Bot, title: "Claude and ChatGPT", text: "List channels, read and search conversations, or post from your AI app.", href: "/docs/mcp" },
+    { title: "Channels", text: "Public channels anyone can join, #general for everyone, and private ones for chosen people." },
+    { title: "Direct messages", text: "One to one or a small group, private to the people in it. Admins don't see them either." },
+    { title: "Threads", text: "Reply in a thread so the channel stays readable; follow threads in their own view." },
+    { title: "Mentions", text: "@someone and they get notified; mentions collect in their own view." },
+    { title: "Reactions, pins, saved", text: "React with an emoji, pin what matters to a channel, save a message for later." },
+    { title: "Files and formatting", text: "Attach files, use bold, italics and code (⌘B, ⌘I, ⌘E)." },
+    { title: "Live, with notifications", text: "Messages, presence and typing appear live; DMs and mentions send a push when you're away." },
+    { title: "Search", text: "Search a channel, and jump to any conversation or person with ⌘K." },
+    { title: "Claude and ChatGPT", text: "List channels, read and search conversations, or post from your AI app.", href: "/docs/mcp" },
   ]}
   notYet="voice and video calls."
   together={[

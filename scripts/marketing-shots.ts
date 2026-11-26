@@ -8,7 +8,7 @@
  * Needs `pnpm dev` (localhost:4321). The org is the public demo's (`POST /demo?domain=acme.example`, dev only), so the
  * site shows exactly what a visitor gets: Anna Kowalska (member) in the apps, Marek (owner) in the admin console.
  * It signs in by writing a Better Auth session row (removed at the end). 1440x900 at 2x, saved as webp, each shot in the
- * light theme and as <name>-dark.webp in the dark one (the marketing pages are dark).
+ * light theme (the site and the README are light only).
  */
 import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, readdirSync } from "node:fs";
@@ -161,10 +161,9 @@ async function main() {
 
   const browser = await chromium.launch();
   try {
-    // Each shot in both themes: <name>.webp (light, docs and comparisons) and <name>-dark.webp (the dark marketing pages).
-    for (const [shot, scheme] of shots.flatMap((s) => (["light", "dark"] as const).map((c) => [s, c] as const))) {
+    for (const shot of shots) {
       const viewport = shot.viewport ?? { width: 1440, height: 900 };
-      const context = await browser.newContext({ viewport, deviceScaleFactor: 2, colorScheme: scheme, reducedMotion: "reduce" });
+      const context = await browser.newContext({ viewport, deviceScaleFactor: 2, colorScheme: "light", reducedMotion: "reduce" });
       const who = signed[shot.view ?? "user"];
       await context.addCookies([
         { name: "better-auth.session_token", value: who.cookie, url: BASE },
@@ -179,7 +178,7 @@ async function main() {
         await shot.prepare?.(page);
         for (const frame of page.frames()) await frame.evaluate(() => document.querySelector("astro-dev-toolbar")?.remove()).catch(() => {});
         const png = await page.screenshot({ type: "png" });
-        const file = scheme === "dark" ? shot.file.replace(/\.webp$/, "-dark.webp") : shot.file;
+        const file = shot.file;
         await sharp(png).resize(viewport.width * 2).webp({ quality: 86 }).toFile(join(OUT, file));
         console.log(`${file}  ${path}`);
       } finally {

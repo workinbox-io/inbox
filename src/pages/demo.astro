@@ -8,9 +8,12 @@
 import { env } from "cloudflare:workers";
 import { makeSignature } from "better-auth/crypto";
 import { t } from "@/lib/i18n/panel";
-import AuthLayout from "@/layouts/AuthLayout.astro";
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import GradientShader from "@/components/navy/assets/GradientShader.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import { grid, mainCol, mainStart } from "@/components/navy/fundations/containers/grid";
 import { clientIp } from "@/lib/server/api";
 import { getAuth } from "@/lib/server/auth";
 import { DEMO_LOCALES, createDemoOrg, demoOrgsSince, type DemoLocale } from "@/lib/server/demo/seed";
@@ -41,21 +44,27 @@ if (Astro.request.method === "POST") {
 }
 ---
 
-<AuthLayout title={t("Try the demo")}>
-  <Card className="w-full max-w-sm">
-    <CardHeader>
-      <CardTitle className="text-xl">{t("Try Work Inbox")}</CardTitle>
-      <CardDescription>
-        {error || t("You'll get your own copy of a small team's workspace for a day: mail, chat, notes, calendar, files, contacts and collections. Nothing leaves it: mail isn't sent out.")}
-      </CardDescription>
-    </CardHeader>
-    <CardFooter>
-      <form method="post" class="w-full" data-demo-steps={JSON.stringify([t("Setting up your workspace…"), t("Filling the inbox…"), t("Adding chat and notes…"), t("Planning the calendar…"), t("Putting files in Drive…"), t("Almost ready…")])}>
-        <Button type="submit" className="w-full" aria-live="polite">{t("Open the demo")}</Button>
-      </form>
-    </CardFooter>
-  </Card>
-</AuthLayout>
+<MarketingLayout title={t("Try the demo")} footer={false} ink>
+  <section class="relative overflow-hidden">
+    <div class="flex flex-col min-h-svh">
+      <div aria-hidden="true" class="absolute inset-0 arch-gradient"></div>
+      <GradientShader class="absolute inset-0 size-full" />
+      <div data-nav-dark aria-hidden="true" class="absolute inset-x-0 top-0 h-1/2"></div>
+      <Wrapper variant="standard" class={`relative grid content-center flex-1 w-full pt-32 pb-16 ${grid}`}>
+        <div class:list={[mainCol, mainStart]}>
+          <Text tag="p" variant="textSM" class="font-medium uppercase text-inverse-foreground/70">{t("Try the demo")}</Text>
+          <Text tag="h1" variant="displayLG" class="max-w-2xl mt-6 tracking-tight text-balance text-inverse-foreground">{t("Try Work Inbox")}</Text>
+          <Text tag="p" variant="textBase" role={error ? "alert" : undefined} class="max-w-xl mt-5 text-inverse-foreground/90 text-pretty">
+            {error || t("You'll get your own copy of a small team's workspace for a day: mail, chat, notes, calendar, files, contacts and collections. Nothing leaves it: mail isn't sent out.")}
+          </Text>
+          <form method="post" class="mt-8" data-demo-steps={JSON.stringify([t("Setting up your workspace…"), t("Filling the inbox…"), t("Adding chat and notes…"), t("Planning the calendar…"), t("Putting files in Drive…"), t("Almost ready…")])}>
+            <Button type="submit" size="lg" variant="muted" aria-live="polite">{t("Open the demo")}</Button>
+          </form>
+        </div>
+      </Wrapper>
+    </div>
+  </section>
+</MarketingLayout>
 
 <script>
   import "@/scripts/demo-progress";

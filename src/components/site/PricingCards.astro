@@ -1,56 +1,65 @@
 ---
-/** Plan cards from config/plans.ts, used on the home page and /pricing, plus the self-hosted line under them. */
-import { ArrowRight, Check, Server } from "lucide-react";
+/** The plans from config/plans.ts as Navy's plan columns, with self-hosting as the last one. Used on /pricing. */
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
 import { FREE_NOTE, PLAN_LIST, POPULAR_PLAN, PRICE_UNIT, planFeatures, priceYearly } from "@/config/plans";
-
+import { formatMoney } from "@/lib/i18n/format";
+import { siteLocale, tFor } from "@/lib/i18n/site";
 interface Props {
   /** Show the yearly price under the monthly one. */
   yearly?: boolean;
 }
-import { formatMoney } from "@/lib/i18n/format";
-import { siteLocale, tFor } from "@/lib/i18n/site";
 const { yearly = false } = Astro.props;
 const locale = siteLocale(Astro.url);
 const t = tFor(locale);
 const money = (cents: number) => formatMoney(locale, cents);
 ---
 
-<div class="grid gap-4 sm:gap-5 lg:grid-cols-3">
+<ul role="list" class="grid gap-16 sm:grid-cols-2 sm:gap-8 lg:grid-cols-4">
   {
     PLAN_LIST.map((p) => (
-      <div data-reveal-item class="price-card flex flex-col p-6 sm:p-8" data-popular={String(p.id === POPULAR_PLAN)}>
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-semibold">{p.name}</span>
-          {p.id === POPULAR_PLAN ? <span class="rounded-full bg-foreground px-2.5 py-0.5 text-xs font-medium text-background">{t("Most popular")}</span> : null}
+      <li class="flex flex-col">
+        <div class="flex items-baseline gap-3">
+          <Text tag="h2" variant="textBase" class="font-medium text-foreground">{p.name}</Text>
+          {p.id === POPULAR_PLAN && <Text tag="span" variant="textXS" class="text-primary">{t("Most popular")}</Text>}
         </div>
-        <p class="mt-6 flex items-baseline gap-2">
-          <span class="font-display text-6xl tabular-nums">{money(p.priceMonthly)}</span>
-          <span class="text-sm text-foreground/60">{t(PRICE_UNIT)}</span>
+        <p class="flex items-baseline gap-1.5 mt-16 lg:mt-24">
+          <Text tag="span" variant="displayLG" class="tracking-tight text-foreground tabular-nums">{money(p.priceMonthly)}</Text>
+          <Text tag="span" variant="textSM" class="text-muted-foreground">{t(PRICE_UNIT)}</Text>
         </p>
-        <p class="mt-1 text-sm text-foreground/60">{t(FREE_NOTE)}{yearly ? t(", or {price} a year with two months free", { price: money(priceYearly(p)) }) : ""}</p>
-        <ul class="mt-6 flex-1 space-y-2.5 text-sm">
+        <Text tag="p" variant="textSM" class="mt-3 text-muted-foreground text-pretty">
+          {t(FREE_NOTE)}{yearly ? t(", or {price} a year with two months free", { price: money(priceYearly(p)) }) : ""}
+        </Text>
+        <ul role="list" class="flex flex-col mt-10 gap-4">
           {planFeatures(p).map((f) => (
-            <li class="flex items-start gap-2.5">
-              <Check className="mt-0.5 size-4 shrink-0" />
-              <span>
+            <li class="flex items-start gap-3">
+              <Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
+              <Text tag="p" variant="textSM" class="text-foreground text-pretty">
                 {t(f.label)}
-                {f.soon ? <span class="ml-1.5 rounded-full border border-(--border) px-1.5 py-px text-[11px] text-foreground/60">{t("Soon")}</span> : null}
-              </span>
+                {f.soon && <span class="ml-1 text-xs uppercase text-muted-foreground">{t("Soon")}</span>}
+              </Text>
             </li>
           ))}
         </ul>
-        <a href="/signup" class:list={["mk-btn mt-8 w-full", p.id !== POPULAR_PLAN && "mk-btn-ghost"]}>
-          {t("Start free trial")}
-        </a>
-      </div>
+        <div class="pt-10 mt-auto">
+          <Button isLink={true} href="/signup" size="base" variant={p.id === POPULAR_PLAN ? "accent" : "muted"} class="w-full">
+            {t("Start free trial")}
+          </Button>
+        </div>
+      </li>
     ))
   }
-</div>
-<a href="/docs/self-host" class="mt-5 flex flex-col gap-3 rounded-2xl border border-dashed border-(--border) p-5 transition-colors hover:bg-(--accent) sm:flex-row sm:items-center sm:p-6">
-  <Server className="size-5 shrink-0" />
-  <span class="flex-1">
-    <b class="font-semibold">{t("Self-hosted: free.")}</b>
-    <span class="text-foreground/65"> {t("The same app on your own Cloudflare account. Open source, every feature, you pay Cloudflare for what you use.")}</span>
-  </span>
-  <span class="inline-flex items-center gap-1.5 text-sm font-medium">{t("How to deploy")} <ArrowRight className="size-4" /></span>
-</a>
+  <li class="flex flex-col">
+    <Text tag="h2" variant="textBase" class="font-medium text-foreground">{t("Self-hosted")}</Text>
+    <p class="mt-16 lg:mt-24">
+      <Text tag="span" variant="displayLG" class="tracking-tight text-foreground">{money(0)}</Text>
+    </p>
+    <Text tag="p" variant="textSM" class="mt-3 text-muted-foreground text-pretty">
+      {t("The same app on your own Cloudflare account. Open source, every feature, you pay Cloudflare for what you use.")}
+    </Text>
+    <div class="pt-10 mt-auto">
+      <Button isLink={true} href="/docs/self-host" size="base" variant="muted" class="w-full">{t("How to deploy")}</Button>
+    </div>
+  </li>
+</ul>

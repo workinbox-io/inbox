@@ -28,19 +28,11 @@ export const siteConfig = {
       label: "Product",
       items: [
         ...APPS.map((a) => ({ href: `/${a.slug}`, label: a.label, description: a.description, icon: a.icon })),
-        { href: "/docs/mcp", label: "AI apps", description: "Claude and ChatGPT read and act across the workspace.", icon: Plug },
+        { href: "/docs/mcp", label: "AI apps", description: "Claude and ChatGPT work with your mail, notes and files. Mail is only ever drafted.", icon: Plug },
         { href: "/cloudflare-email-routing", label: "For Cloudflare Email Routing", description: "Reply from your domain, not just forward.", icon: Cloud },
         { href: "/self-hosted", label: "Self-hosted email", description: "On your own Cloudflare account, no mail server to run.", icon: Server },
       ],
       footer: { href: "/docs/quickstart", label: "Get started" },
-    },
-    {
-      label: "Compare",
-      items: [
-        { href: "/google-workspace-alternative", label: "Google Workspace alternative", description: "What you keep, what you give up, what it costs.", logo: "/logos/google-workspace.png" },
-        ...COMPETITORS.filter((c) => c.slug !== "google-workspace").map((c) => ({ href: `/vs/${c.slug}`, label: `vs ${c.name}`, logo: c.logo })),
-      ],
-      footer: { href: "/vs", label: "All comparisons" },
     },
     { href: "/pricing", label: "Pricing" },
     {
@@ -51,6 +43,14 @@ export const siteConfig = {
         { href: "/docs/api", label: "API reference", description: "Connect your tools and build integrations.", icon: Code },
         { href: "/#faq", label: "FAQ", description: "Answers to common questions about the product.", icon: HelpCircle },
       ],
+    },
+    {
+      label: "Compare",
+      items: [
+        { href: "/google-workspace-alternative", label: "Google Workspace alternative", description: "What you keep, what you give up, what it costs.", logo: "/logos/google-workspace.png" },
+        ...COMPETITORS.filter((c) => c.slug !== "google-workspace").map((c) => ({ href: `/vs/${c.slug}`, label: `vs ${c.name}`, logo: c.logo })),
+      ],
+      footer: { href: "/vs", label: "All comparisons" },
     },
   ] as NavItem[],
   /** Shown on the legal pages and in the footer. */

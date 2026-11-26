@@ -5,11 +5,11 @@ import { msg } from "@/lib/i18n/panel";
 export type AppInfo = { slug: string; label: string; description: string; icon: LucideIcon; shot: string };
 
 export const APPS: AppInfo[] = [
-  { slug: "custom-domain-email", label: msg("Mail"), description: "Mailboxes on your domain, shared ones like support@, aliases.", icon: Mail, shot: "mail-thread" },
-  { slug: "team-chat", label: msg("Chat"), description: "Channels, direct messages and threads for the team.", icon: MessagesSquare, shot: "chat" },
+  { slug: "custom-domain-email", label: msg("Mail"), description: "Personal and shared mailboxes on your domain, with drafts your team sees.", icon: Mail, shot: "mail-thread" },
+  { slug: "team-chat", label: msg("Chat"), description: "Channels, DMs and threads, with files and mentions from the rest of the workspace.", icon: MessagesSquare, shot: "chat" },
   { slug: "shared-notes", label: msg("Notes"), description: "Notes the team writes together, live.", icon: NotebookPen, shot: "notes" },
-  { slug: "team-calendar", label: msg("Calendar"), description: "Personal and shared calendars, invitations, time zones.", icon: CalendarDays, shot: "calendar" },
+  { slug: "team-calendar", label: msg("Calendar"), description: "Your week next to your colleagues', with invitations and time zones.", icon: CalendarDays, shot: "calendar" },
   { slug: "shared-drive", label: msg("Drive"), description: "Folders and files shared with people or the team.", icon: HardDrive, shot: "drive" },
   { slug: "shared-contacts", label: msg("Contacts"), description: "One address book for the team, filled from your mail.", icon: Contact, shot: "contacts" },
-  { slug: "custom-apps", label: msg("Collections"), description: "Your own lists: equipment, inventory, deals, tasks, as a list, table, board, timeline or calendar.", icon: Database, shot: "collections" },
+  { slug: "custom-apps", label: msg("Collections"), description: "Your own lists: deals, tasks, equipment, as a list, board or timeline.", icon: Database, shot: "collections" },
 ];

@@ -1,0 +1,19 @@
+---
+/** The price in one line under a page's hero text: free for the first people, the cheapest plan, self-hosting, the trial.
+ * `workspace` opens with "One workspace, one price." (app pages). Prices come from config/plans.ts. */
+import { CURRENCY, FREE_PEOPLE, PLAN_LIST, TRIAL_DAYS } from "@/config/plans";
+import { formatMoney } from "@/lib/i18n/format";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+interface Props {
+  workspace?: boolean;
+}
+const { workspace = false } = Astro.props;
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const lowest = Math.min(...PLAN_LIST.map((p) => p.priceMonthly));
+const line = t("Free for up to {n} people · then {price} per person a month · free on your own Cloudflare account", { n: FREE_PEOPLE, price: formatMoney(locale, lowest, CURRENCY) });
+---
+
+<p class="max-w-xl mt-4 text-sm text-inverse-foreground/90 text-pretty">
+  {workspace && <><b class="font-semibold">{t("One workspace, one price.")}</b>{" "}</>}{line} · {t("{days}-day trial, no card", { days: TRIAL_DAYS })}
+</p>

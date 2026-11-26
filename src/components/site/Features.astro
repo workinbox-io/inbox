@@ -1,0 +1,37 @@
+---
+/** Items as a hairline grid (title and a line of text), or with `cards` as separate hairline cards like the home's.
+ * A small blue tag shows only when an item has one (or is `soon`). With `href` an item is a link. */
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+export type FeatureItem = { title: string; text: string; href?: string; tag?: string; soon?: boolean };
+interface Props {
+  items: FeatureItem[];
+  /** Columns from lg up. */
+  cols?: 2 | 3 | 4;
+  cards?: boolean;
+  class?: string;
+}
+const t = tFor(siteLocale(Astro.url));
+const { items, cols = 3, cards = false, class: className } = Astro.props;
+const colClass = { 2: "sm:grid-cols-2", 3: "sm:grid-cols-2 lg:grid-cols-3", 4: "sm:grid-cols-2 lg:grid-cols-4" }[cols];
+---
+
+<ul role="list" class:list={["grid", colClass, cards ? "gap-4" : "border-t border-l border-border", className]}>
+  {
+    items.map((f, i) => {
+      const Tag = f.href ? "a" : "div";
+      const tag = f.tag ?? (f.soon ? t("Soon") : undefined);
+      return (
+        <li class:list={[cols === 2 && i === items.length - 1 && items.length % 2 === 1 && "sm:col-span-2", cards ? "border border-border bg-background" : "border-b border-r border-border"]}>
+          <Tag href={f.href} class:list={["flex flex-col h-full p-6 group", f.href && "transition-colors hover:bg-muted"]}>
+            {tag && <Text tag="span" variant="textXS" class="mb-3 font-medium tracking-wide uppercase text-primary">{tag}</Text>}
+            <Text tag="h3" variant="textBase" class="font-medium text-balance text-foreground">{f.title}</Text>
+            <Text tag="p" variant="textSM" class="mt-1 text-pretty text-muted-foreground">{f.text}</Text>
+            {f.href && <ArrowLink tag="span" class="mt-4">{t("More")}</ArrowLink>}
+          </Tag>
+        </li>
+      );
+    })
+  }
+</ul>

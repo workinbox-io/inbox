@@ -5,16 +5,17 @@
  * page answers the next question: how to reply from the domain. Hosted (Connect Cloudflare, docs/ses.md) or
  * self-hosted on the same account (Email Routing catch-all → the Worker). Competitor facts from config/compare.ts.
  */
-import { ArrowRight, Check, Minus } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
-import PageHero from "@/components/site/PageHero.astro";
-import ClosingBand from "@/components/site/ClosingBand.astro";
-import BrowserFrame from "@/components/site/BrowserFrame.astro";
-import Shot from "@/components/site/Shot.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
+import Minus from "@/components/navy/fundations/icons/Minus.astro";
+import PriceLine from "@/components/site/PriceLine.astro";
 import ComparisonTable from "@/components/site/ComparisonTable.astro";
 import Faq from "@/components/site/Faq.astro";
-import Stage from "@/components/site/craft/Stage.astro";
-import InstallTimeline from "@/components/site/craft/InstallTimeline.astro";
 import { competitorBySlug } from "@/config/compare";
 import { FREE_PEOPLE, PLANS, amount } from "@/config/plans";
 
@@ -55,68 +56,62 @@ const jsonLd = [
 ---
 
 <MarketingLayout title="Cloudflare Email Routing: reply from your own domain" description={`Cloudflare Email Routing only forwards. Work Inbox gives your domain real mailboxes: reply from your own address, share support@ with the team. Free for up to ${FREE_PEOPLE} people, or self-host it on the same Cloudflare account.`} jsonLd={jsonLd} ink>
-  <PageHero>
-    <h1 class="mk-h1 max-w-4xl">Email Routing forwards. <em>Work Inbox answers.</em></h1>
-    <p class="mk-lead mt-6 max-w-2xl">
+  <Hero>
+    <Fragment slot="title">Email Routing forwards. <em>Work Inbox answers.</em></Fragment>
+    <Fragment slot="text">
       Cloudflare Email Routing sends your domain's mail on to Gmail, but you can't reply from your own address: it only
       forwards. Work Inbox gives the domain real mailboxes, with shared ones for the team. Free for up to {FREE_PEOPLE}
       people, or self-hosted on the same Cloudflare account.
-    </p>
-    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-      <a href="/signup" class="mk-btn">Start free <ArrowRight className="size-5" /></a>
-      <a href="/docs/self-host" class="mk-link">Self-host on Cloudflare</a>
+    </Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">Start free</Button>
+      <ArrowLink href="/docs/self-host" tone="default">Self-host on Cloudflare</ArrowLink>
+    </Fragment>
+    <PriceLine />
+  </Hero>
+
+  <Section label="Email Routing">
+    <Fragment slot="title">Forwarding, <em>or an inbox</em></Fragment>
+    <div slot="full" class="relative overflow-x-auto">
+      <table class="w-full text-sm text-left min-w-140">
+        <thead><tr><th scope="col" class="w-1/4 px-5 pb-6 font-medium align-bottom text-foreground"><span class="sr-only">Feature</span></th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">Email Routing alone</th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">With Work Inbox</th></tr></thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr class:list={["align-top", i % 2 === 0 && "bg-muted"]}>
+              <th scope="row" class="px-5 py-5 font-medium text-foreground">{r.label}</th>
+              <td class="py-5 pl-2 pr-6 text-foreground">{r.routing ? r.routing : <span class="flex items-center gap-2 text-muted-foreground"><Minus size="sm" class="text-faint-foreground" aria-hidden="true" /> No</span>}</td>
+              <td class="py-5 pl-2 pr-6 text-foreground"><span class="flex gap-2"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" />{r.ours}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  </PageHero>
-  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
+  </Section>
 
-    <div class="mt-14"><Stage><BrowserFrame url="workinbox.io/app/mail"><Shot name="mail-thread" alt="Work Inbox mail with an open message" eager /></BrowserFrame></Stage></div>
+  <Section label="Hosted">
+    <Fragment slot="title">Hosted, <em>in a few minutes</em></Fragment>
+    <Fragment slot="text">We run it. Work Inbox receives your domain's mail itself and sends it signed for your domain, so Email Routing steps aside for that domain.</Fragment>
+    <Features slot="full" cards cols={3} items={hosted.map((h, i) => ({ ...h, tag: String(i + 1) }))} />
+  </Section>
 
-    <section class="pt-20">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Forwarding, <em>or an inbox</em></h2>
-      <div class="mt-6 overflow-x-auto rounded-2xl border border-(--border) bg-(--card)">
-        <table class="w-full min-w-[560px] text-left text-sm">
-          <thead><tr class="border-b border-(--border)"><th class="p-4 font-medium"></th><th class="p-4 font-medium">Email Routing alone</th><th class="p-4 font-medium">With Work Inbox</th></tr></thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr class="border-b border-(--border) last:border-0">
-                <th scope="row" class="p-4 font-medium">{r.label}</th>
-                <td class="p-4">{r.routing ? r.routing : <span class="flex items-center gap-2 text-foreground/60"><Minus className="size-4" /> No</span>}</td>
-                <td class="p-4"><span class="flex gap-2"><Check className="mt-0.5 size-4 shrink-0" />{r.ours}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+  <Section label="Self-hosted" class="bg-muted">
+    <Fragment slot="title">Self-hosted, <em>next to Email Routing</em></Fragment>
+    <Fragment slot="text">
+      Deploy Work Inbox to the Cloudflare account your domain is already on. Email Routing keeps receiving and hands
+      every address to the Worker with a catch-all rule; Cloudflare Email Service sends. Open source, every feature,
+      no fee to us: you pay Cloudflare for Workers, D1, R2 and sending.
+    </Fragment>
+    <ArrowLink href="/docs/self-host">The self-hosting guide</ArrowLink>
+  </Section>
 
-    <section class="grid gap-10 pt-20 md:grid-cols-2">
-      <div>
-        <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Hosted, <em>in a few minutes</em></h2>
-        <p class="mt-3 text-foreground/70">We run it. Work Inbox receives your domain's mail itself and sends it signed for your domain, so Email Routing steps aside for that domain.</p>
-        <div class="mt-8"><InstallTimeline steps={hosted} /></div>
-      </div>
-      <div>
-        <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Self-hosted, <em>next to Email Routing</em></h2>
-        <p class="mt-3 text-foreground/70">
-          Deploy Work Inbox to the Cloudflare account your domain is already on. Email Routing keeps receiving and hands
-          every address to the Worker with a catch-all rule; Cloudflare Email Service sends. Open source, every feature,
-          no fee to us: you pay Cloudflare for Workers, D1, R2 and sending.
-        </p>
-        <p class="mt-6"><a href="/docs/self-host" class="mk-link">The self-hosting guide</a></p>
-      </div>
-    </section>
+  <Section label="Compare">
+    <Fragment slot="title">Other inboxes on Cloudflare</Fragment>
+    <Fragment slot="text">{agentic.intro}</Fragment>
+    <div slot="full">
+      <ComparisonTable competitors={[agentic, competitorBySlug("zoho-mail")!, competitorBySlug("google-workspace")!]} />
+      <ArrowLink href={`/vs/${agentic.slug}`} class="mt-6">Work Inbox vs {agentic.name}, with sources</ArrowLink>
+    </div>
+  </Section>
 
-    <section class="pt-20">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Other inboxes on Cloudflare</h2>
-      <p class="mt-2 text-foreground/70">{agentic.intro}</p>
-      <div class="mt-6"><ComparisonTable competitors={[agentic, competitorBySlug("zoho-mail")!, competitorBySlug("google-workspace")!]} /></div>
-      <p class="mt-4 text-sm text-foreground/60"><a href={`/vs/${agentic.slug}`} class="underline underline-offset-4">Work Inbox vs {agentic.name}</a>, with sources.</p>
-    </section>
-
-    <section class="pt-20">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">Questions</h2>
-      <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
-    </section>
-  </div>
-  <ClosingBand />
+  <Faq items={faq} />
 </MarketingLayout>

@@ -1,0 +1,63 @@
+---
+/** The home hero (Screenshot-led): headline and calls to action on the gradient, the real inbox in a browser window rising out of it, facts underneath. */
+import GradientShader from "@/components/navy/assets/GradientShader.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import { Cloud, Code, Download, Mail, Users } from "lucide-react";
+import BrowserWindow from "./BrowserWindow.astro";
+import DemoForm from "./DemoForm.astro";
+import Faux from "./Faux.astro";
+import { FREE_PEOPLE } from "@/config/plans";
+import { siteConfig } from "@/config/site";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+interface Props {
+  stars: number | null;
+}
+const { stars } = Astro.props;
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const facts = [
+  { icon: Users, text: t("Free for {n} people", { n: FREE_PEOPLE }) },
+  { icon: Code, text: t("Open source, AGPL-3.0") },
+  { icon: Mail, text: t("Works with Apple Mail and Outlook") },
+  { icon: Download, text: t("Export everything") },
+  { icon: Cloud, text: t("Runs on Cloudflare") },
+];
+---
+
+<section class="relative overflow-hidden">
+  <div aria-hidden="true" class="absolute inset-x-0 top-0 h-[72rem] sm:h-[52rem] arch-gradient"></div>
+  <GradientShader class="absolute inset-x-0 top-0 h-[72rem] sm:h-[52rem] w-full" />
+  <div data-nav-dark aria-hidden="true" class="absolute inset-x-0 top-0 h-120"></div>
+  <Wrapper variant="standard" class="relative pt-32 pb-12 sm:pt-40">
+    <div class="max-w-4xl mx-auto text-center">
+      <Text tag="h1" variant="displayXL" class="tracking-tight text-balance text-inverse-foreground">
+        {t("Your team's work,")}{" "}<em>{t("in one place.")}</em>
+      </Text>
+      <Text tag="p" variant="textLG" class="max-w-2xl mx-auto mt-6 text-inverse-foreground text-pretty">
+        {t("Mail on your own domain, chat, notes, calendar, files and contacts, all linked: mention a file in chat, attach it to mail, find it with ⌘K.")}
+      </Text>
+      <div class="flex flex-col items-center justify-center gap-3 mt-8 sm:flex-row">
+        <DemoForm size="lg" />
+        <Button isLink={true} href="/signup" size="lg" variant="accent">{t("Start free")}</Button>
+      </div>
+    </div>
+    <div class="mx-auto mt-12 max-w-6xl sm:mt-14">
+      <link rel="preload" as="image" href="/marketing/mail-thread.webp" media="(min-width: 640px)" fetchpriority="high" />
+      <BrowserWindow address="workinbox.io/app/mail">
+        <!-- From sm up the real screen, cropped to the open thread (a background, so phones never download it); phones get a faux list and message that stay readable. -->
+        <div role="img" aria-label={t("The Work Inbox mail app: folders, thread list and an open conversation")} class="hidden aspect-2880/1180 bg-cover bg-top bg-no-repeat sm:block" style="background-image:url(/marketing/mail-thread.webp)"></div>
+        <div class="sm:hidden"><Faux app="custom-domain-email" bare /></div>
+      </BrowserWindow>
+    </div>
+    <ul role="list" class="flex flex-wrap justify-center mt-8 gap-x-8 gap-y-3 text-sm text-muted-foreground">
+      {facts.map((f) => <li class="flex items-center gap-2"><f.icon className="size-4 text-primary" aria-hidden="true" />{f.text}</li>)}
+      {
+        stars !== null && (
+          <li><a href={siteConfig.repoUrl} class="border-b border-muted-foreground/50 hover:text-foreground">{t("★ {stars} on GitHub", { stars })}</a></li>
+        )
+      }
+    </ul>
+  </Wrapper>
+</section>

@@ -1,0 +1,9 @@
+---
+// The wordmark, set like Navy's. Size it with a text-* class, colour it with text-*.
+import { siteConfig } from "@/config/site";
+const { class: className, ...rest } = Astro.props;
+---
+
+<span class:list={["font-semibold uppercase tracking-tight leading-none whitespace-nowrap", className]} {...rest}>
+  {siteConfig.name}
+</span>

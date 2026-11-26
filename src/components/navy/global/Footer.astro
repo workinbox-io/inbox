@@ -1,0 +1,192 @@
+---
+// Navy's footer (Lexington Themes), "closing band": a big call to action on an indigo glow, the sitemap, and a bottom
+// bar with the language (opens upward), the live status line (/api/status) and GitHub. `slim` (docs) keeps only the
+// bottom bar and the legal links. Solid dark from top to bottom, so the header's bar never sits over see-through art.
+import Logo from "@/components/navy/assets/Logo.astro";
+import LanguageMenu from "@/components/navy/global/LanguageMenu.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import EnTag from "@/components/navy/global/EnTag.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import { siteConfig } from "@/config/site";
+import { APPS } from "@/config/apps";
+import type { LucideIcon } from "lucide-react";
+import { FREE_PEOPLE } from "@/config/plans";
+import { stripLocale } from "@/lib/i18n/locales";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
+import { pagePath } from "@/lib/page-path";
+
+interface Props {
+  slim?: boolean;
+}
+const { slim = false } = Astro.props;
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const here = stripLocale(pagePath(Astro.url.pathname)).path;
+
+const footerLinks: { heading: string; links: { href: string; label: string; icon?: LucideIcon }[] }[] = [
+  {
+    heading: "Product",
+    links: [
+      ...APPS.map((a) => ({ href: `/${a.slug}`, label: a.label, icon: a.icon })),
+      { href: "/shared-mailbox", label: "Shared mailboxes" },
+      { href: "/docs/mcp", label: "AI apps" },
+      { href: "/pricing", label: "Pricing" },
+    ],
+  },
+  {
+    heading: "Switch",
+    links: [
+      { href: "/google-workspace-alternative", label: "Google Workspace alternative" },
+      { href: "/cloudflare-email-routing", label: "Cloudflare Email Routing inbox" },
+      { href: "/self-hosted", label: "Self-hosted email" },
+      { href: "/vs", label: "All comparisons" },
+    ],
+  },
+  {
+    heading: "Docs",
+    links: [
+      { href: "/docs", label: "Introduction" },
+      { href: "/docs/quickstart", label: "Quickstart" },
+      { href: "/docs/self-host", label: "Self-hosting" },
+      { href: "/docs/api", label: "API" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { href: "/#faq", label: "FAQ" },
+      { href: `mailto:${siteConfig.supportEmail}`, label: "Support" },
+      { href: siteConfig.repoUrl, label: "Source code" },
+      { href: "/security", label: "Security" },
+      { href: "/status", label: "Status" },
+    ],
+  },
+  {
+    heading: "Legal",
+    links: [
+      { href: "/privacy", label: "Privacy" },
+      { href: "/terms", label: "Terms" },
+      { href: "/refunds", label: "Refunds" },
+    ],
+  },
+];
+const legalLinks = [
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: `mailto:${siteConfig.supportEmail}`, label: "Support" },
+];
+const linkClass = "inline-flex items-center min-h-10 py-2 text-sm text-white/90 transition-colors hover:text-white hover:underline underline-offset-4";
+const github = `<svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.3 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"></path></svg>`;
+---
+
+<footer class="relative bg-inverse text-white">
+  {
+    !slim && (
+      <>
+        <div class="relative overflow-hidden" style="background: radial-gradient(ellipse 80% 120% at 70% 0%, oklch(36% 0.17 268) 0%, transparent 65%), radial-gradient(ellipse 60% 80% at 0% 0%, oklch(30% 0.12 268 / 0.7) 0%, transparent 70%)">
+          <Wrapper variant="standard" class="relative py-20 text-center sm:py-28">
+            <p class="text-sm font-medium uppercase text-white/70">{t("Start now")}</p>
+            <Text tag="h2" variant="displayLG" class="max-w-3xl mx-auto mt-4 tracking-tight text-balance text-inverse-foreground">
+              {t("Give your team one place to work")}
+            </Text>
+            <Text tag="p" variant="textBase" class="max-w-xl mx-auto mt-5 text-white/85 text-pretty">
+              {`${t("Mail on your domain, chat, notes, calendar and files, set up this afternoon.")} ${t("Up to {n} people free, for good.", { n: FREE_PEOPLE })}`}
+            </Text>
+            <div class="flex flex-col justify-center gap-3 mt-8 sm:flex-row">
+              <Button isLink={true} href={`/demo?lang=${locale}`} size="lg" variant="muted">{t("Try the demo")}</Button>
+              <Button isLink={true} href="/signup" size="lg" variant="accent">{t("Start free")}</Button>
+            </div>
+            <p class="mt-5 text-sm text-white/80">
+              {t("Demo: no signup, a throwaway workspace.")}{" "}
+              <a href={lp(locale, "/docs/self-host")} class="inline-flex items-center underline text-white min-h-8 underline-offset-4">{t("Self-host for free")}</a>
+            </p>
+          </Wrapper>
+        </div>
+        <Wrapper variant="standard" class="relative pb-2">
+          <div class="grid gap-10 pt-14 border-t lg:grid-cols-12 border-white/10">
+            <div class="lg:col-span-3">
+              <a href={lp(locale, "/")} class="inline-flex">
+                <span class="sr-only">{t("Go to homepage")}</span>
+                <span class="inline-flex items-center gap-2.5">
+                  <img src="/logo.svg" alt="" width="28" height="28" class="size-7 rounded-md ring-1 ring-white/15" />
+                  <Logo class="text-xl text-inverse-foreground" />
+                </span>
+              </a>
+              <p class="mt-3 text-sm text-white/80 max-w-[26ch]">{t("Mail, chat, notes, calendar, drive and contacts for teams.")}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:col-span-9 lg:grid-cols-5">
+              {footerLinks.map((section) => (
+                <nav aria-label={t(section.heading)}>
+                  <h3 class="text-xs font-medium tracking-wide uppercase text-white/70">{t(section.heading)}</h3>
+                  <ul role="list" class="mt-2">
+                    {section.links.map((link) => (
+                      <li>
+                        <a href={lp(locale, link.href)} class={linkClass}>{link.icon && <link.icon size={16} strokeWidth={1.8} class="mr-2 shrink-0 text-white/60" aria-hidden="true" />}{t(link.label)}<EnTag href={link.href} /></a>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              ))}
+            </div>
+          </div>
+        </Wrapper>
+      </>
+    )
+  }
+  <Wrapper variant="standard" class:list={["relative pb-6", slim ? "pt-6" : "pt-10"]}>
+    {
+      slim && (
+        <nav aria-label={t("Legal")} class="flex flex-wrap pb-3 gap-x-4">
+          {legalLinks.map((link) => (
+            <a href={lp(locale, link.href)} class={linkClass}>{t(link.label)}<EnTag href={link.href} /></a>
+          ))}
+        </nav>
+      )
+    }
+    <div class:list={["flex flex-col-reverse gap-4 pt-5 border-t border-white/15 lg:flex-row lg:items-center lg:justify-between", slim && "border-t-0 pt-0"]}>
+      <p class="text-sm text-white/80">{t("© {year} Work Inbox, made by {brand}. Open source under AGPL-3.0.", { year: new Date().getFullYear(), brand: siteConfig.legal.brand })}</p>
+      <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-white">
+        <LanguageMenu id="lang-footer" locale={locale} here={here} up class="text-white hover:bg-white/15 aria-expanded:bg-white/15 h-10" />
+        <a
+          href={lp(locale, "/status")}
+          data-status-line
+          data-words={JSON.stringify({ ok: t("All systems operational"), degraded: t("Some systems degraded"), down: t("Service disruption") })}
+          class="inline-flex items-center gap-2 px-2.5 text-sm rounded-lg min-h-10 hover:bg-white/15"
+        >
+          <span data-status-dot aria-hidden="true" class="rounded-full size-2 bg-white/50"></span>
+          <span data-status-text>{t("Status")}</span><EnTag href="/status" />
+        </a>
+        <a href={siteConfig.repoUrl} target="_blank" rel="noopener" aria-label="GitHub" class="grid rounded-lg place-items-center size-10 hover:bg-white/15">
+          <Fragment set:html={github} />
+        </a>
+      </div>
+    </div>
+  </Wrapper>
+</footer>
+
+<style is:global>
+  footer :is(a, button):focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  footer .pn :is(a, button):focus-visible { outline-color: var(--color-primary); }
+  footer .chv { transition: transform 0.15s; }
+  footer [aria-expanded="true"] > .chv { transform: rotate(180deg); }
+</style>
+
+<script>
+  // The status line from the live status page data; stays "Status" (grey dot) while unknown.
+  import "./menus";
+  const line = document.querySelector<HTMLElement>("[data-status-line]");
+  if (line) {
+    const words: Record<string, string> = JSON.parse(line.dataset.words!);
+    const dots: Record<string, string> = { ok: "#4ade80", degraded: "#fbbf24", down: "#f87171" };
+    fetch("/api/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { status?: string } | null) => {
+        const word = data?.status ? words[data.status] : undefined;
+        if (!word) return;
+        line.querySelector("[data-status-text]")!.textContent = word;
+        line.querySelector<HTMLElement>("[data-status-dot]")!.style.background = dots[data.status!];
+      })
+      .catch(() => {});
+  }
+</script>

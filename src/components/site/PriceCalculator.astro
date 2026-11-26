@@ -1,0 +1,133 @@
+---
+/** The pricing calculator (people × plan × billing), moved here from the home page; used on /pricing. */
+import Section from "@/components/site/Section.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
+import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, TRIAL_DAYS, hasFeature, priceYearly } from "@/config/plans";
+import { lp, pluralForms, siteLocale, tFor } from "@/lib/i18n/site";
+import { formatMoney } from "@/lib/i18n/format";
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const money = (amount: number, currency: string) => formatMoney(locale, Math.round(amount * 100), currency);
+const plans = PLAN_LIST.map((p) => ({ id: p.id, name: p.name, monthly: p.priceMonthly / 100, yearly: priceYearly(p) / 100 }));
+// What the script says: English text is the key, like everything else.
+const calcWords = {
+  lang: locale,
+  month: t("/ month"),
+  year: t("/ year"),
+  free: pluralForms(locale, "{people} person, free for good · paid features need a plan", "{people} people, free for good · paid features need a plan"),
+  atLeast: t("{people} people: at least {min} billed × {each} = {total}"),
+  formula: t("({people} − {free} free) × {each} = {total}"),
+};
+---
+
+  <Section label={t("Pricing")} id="calculator">
+    <Fragment slot="title">{t("What your team pays")}</Fragment>
+    <div slot="full" class="grid gap-16 lg:grid-cols-12 lg:gap-x-8" data-calc data-free={FREE_PEOPLE} data-min={MIN_SEATS} data-plans={JSON.stringify(plans)} data-words={JSON.stringify(calcWords)}>
+      <div class="lg:col-span-6 lg:col-start-4">
+        <div class="flex items-baseline justify-between text-sm text-foreground">
+          <label for="calc-people">{t("People in your workspace")}</label>
+          <output for="calc-people" class="text-base tabular-nums" data-calc-people>10</output>
+        </div>
+        <input id="calc-people" type="range" min="1" max="100" value="10" class="w-full mt-3 accent-primary" data-calc-people-input />
+        <div class="flex justify-between mt-1 text-xs text-muted-foreground"><span>1</span><span>100</span></div>
+
+        <p class="mt-8 text-sm text-foreground" id="calc-plan-label">{t("Plan")}</p>
+        <div class="grid grid-cols-3 mt-3 border-t border-l border-border" role="group" aria-labelledby="calc-plan-label" data-calc-key="plan">
+          {
+            PLAN_LIST.map((p) => (
+              <button type="button" class="p-4 text-left transition-colors border-b border-r border-border hover:bg-muted aria-pressed:bg-inverse aria-pressed:text-inverse-foreground group" aria-pressed={String(p.id === "starter")} data-value={p.id}>
+                <span class="block text-sm font-medium">{p.name}</span>
+                <span class="block mt-1 text-2xl tabular-nums sm:text-3xl">{money(p.priceMonthly / 100, CURRENCY)}</span>
+                <span class="block mt-2 text-xs opacity-70">
+                  {t("{gb} GB drive", { gb: p.driveGbPerPerson })}
+                  <br />
+                  {hasFeature(p, "mcpAccess") ? t("+ API, AI apps, audit") : t("whole workspace")}
+                </span>
+              </button>
+            ))
+          }
+        </div>
+        <p class="mt-2 text-xs text-muted-foreground">{t("per person a month")}</p>
+
+        <div class="flex gap-2 mt-8" data-calc-key="billing">
+          <Button type="button" size="xs" variant="muted" class="aria-pressed:bg-none aria-pressed:bg-inverse aria-pressed:text-inverse-foreground" aria-pressed="true" data-value="month">{t("monthly")}</Button>
+          <Button type="button" size="xs" variant="muted" class="aria-pressed:bg-none aria-pressed:bg-inverse aria-pressed:text-inverse-foreground" aria-pressed="false" data-value="year">{t("yearly · 2 months free")}</Button>
+        </div>
+
+        <p class="flex items-baseline gap-2 mt-10" aria-live="polite">
+          <Text tag="span" variant="display3XL" class="tracking-tight tabular-nums text-foreground" data-calc-total>{money(5, CURRENCY)}</Text>
+          <span class="text-lg text-primary" data-calc-unit>{calcWords.month}</span>
+        </p>
+        <p class="mt-2 text-xs text-muted-foreground" data-calc-formula>{t("({people} − {free} free) × {each} = {total}", { people: 10, free: FREE_PEOPLE, each: money(1, CURRENCY), total: money(5, CURRENCY) })}</p>
+        <div class="flex flex-wrap items-center mt-8 gap-x-6 gap-y-3">
+          <Button isLink={true} href="/signup" size="base" variant="accent">{t("Start free")}</Button>
+          <span class="text-xs text-muted-foreground">{t("{days}-day trial, no card · prices exclude VAT", { days: TRIAL_DAYS })}</span>
+        </div>
+      </div>
+      <div class="lg:col-span-3">
+        <Text tag="h3" variant="textBase" class="font-medium text-foreground">{t("Every plan includes")}</Text>
+        <ul role="list" class="flex flex-col mt-4 gap-4">
+          {[t("Unlimited shared mailboxes, aliases and a catch-all per domain."), t("The whole workspace: team chat, live shared notes, a team address book, a shared drive and calendars."), t("Drafts on every device, signatures in your company's style."), t("Spam filter, sender rules and search across every mailbox."), t("Up to {n} people free, for good.", { n: FREE_PEOPLE })].map((line) => (
+            <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{line}</Text></li>
+          ))}
+        </ul>
+        <Text tag="h3" variant="textBase" class="mt-10 font-medium text-foreground">{t("Not yet")}</Text>
+        <ul role="list" class="flex flex-col mt-4 gap-4">
+          {[t("Native mobile apps: use your phone's mail app over IMAP, or install the web app."), t("CalDAV sync and booking pages for the calendar.")].map((line) => (
+            <li><Text tag="p" variant="textSM" class="text-muted-foreground text-pretty">{line}</Text></li>
+          ))}
+        </ul>
+        <div class="flex flex-col mt-8 gap-3">
+          <ArrowLink href={lp(locale, "/pricing")}>{t("Pricing details")}</ArrowLink>
+          <ArrowLink href="/docs/self-host">{t("Self-host for free")}</ArrowLink>
+        </div>
+      </div>
+    </div>
+  </Section>
+
+<script>
+// Pricing calculator: people × plan × billing, FREE_PEOPLE free, at least MIN_SEATS billed (seatsFor).
+const calc = document.querySelector<HTMLElement>("[data-calc]");
+if (calc) {
+  const plans: { id: string; name: string; monthly: number; yearly: number }[] = JSON.parse(calc.dataset.plans!);
+  const free = Number(calc.dataset.free);
+  const min = Number(calc.dataset.min);
+  const words: { lang: string; month: string; year: string; free: Record<string, string>; atLeast: string; formula: string } = JSON.parse(calc.dataset.words!);
+  const fill = (text: string, vars: Record<string, string | number>) => text.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+  const eur = (n: number) => new Intl.NumberFormat(words.lang, { style: "currency", currency: "EUR", maximumFractionDigits: Number.isInteger(n) ? 0 : 2 }).format(n);
+  const peopleInput = calc.querySelector<HTMLInputElement>("[data-calc-people-input]")!;
+  peopleInput.addEventListener("input", () => render());
+  const value = (key: string) => calc.querySelector<HTMLElement>(`[data-calc-key="${key}"] [aria-pressed="true"]`)!.dataset.value!;
+  const render = () => {
+    const people = Number(peopleInput.value);
+    calc.querySelector("[data-calc-people]")!.textContent = String(people);
+    const plan = plans.find((p) => p.id === value("plan"))!;
+    const yearly = value("billing") === "year";
+    const each = yearly ? plan.yearly : plan.monthly;
+    const paid = people <= free ? 0 : Math.max(min, people - free);
+    const total = paid * each;
+    calc.querySelector("[data-calc-total]")!.textContent = eur(total);
+    calc.querySelector("[data-calc-unit]")!.textContent = yearly ? words.year : words.month;
+    const vars = { people, free, min, each: eur(each), total: eur(total) };
+    calc.querySelector("[data-calc-formula]")!.textContent =
+      paid === 0
+        ? fill(words.free[new Intl.PluralRules(words.lang).select(people)] ?? words.free.other!, vars)
+        : people - free < min
+          ? fill(words.atLeast, vars)
+          : fill(words.formula, vars);
+  };
+  for (const group of calc.querySelectorAll<HTMLElement>("[data-calc-key]")) {
+    group.addEventListener("click", (e) => {
+      const button = (e.target as Element).closest<HTMLButtonElement>("button");
+      if (!button) return;
+      for (const b of group.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b === button));
+      render();
+    });
+  }
+  render();
+}
+</script>

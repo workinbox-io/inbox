@@ -1,6 +1,7 @@
 ---
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
-import PageHero from "@/components/site/PageHero.astro";
+import Hero from "@/components/site/Hero.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
 import { StatusBoard } from "@/components/status/status-board";
 import { getStatusOverview } from "@/lib/server/status";
 import { siteConfig } from "@/config/site";
@@ -14,16 +15,16 @@ Astro.response.headers.set("Cache-Control", "public, max-age=30");
   description="Live status and 90-day uptime of Work Inbox: the web app and API, files, sending mail and mail apps."
   ink
 >
-  <PageHero>
-    <h1 class="mk-h1 max-w-4xl">System <em>status.</em></h1>
-    <p class="mk-lead mt-6 max-w-2xl">
+  <Hero>
+    <Fragment slot="title">System <em>status.</em></Fragment>
+    <Fragment slot="text">
       We check every part of {siteConfig.name} once a minute. Questions? Write to{" "}
-      <a class="underline underline-offset-2" href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a>.
-    </p>
-  </PageHero>
-  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
-    <div class="mx-auto mt-12 w-full max-w-3xl">
+      <a class="inline-block py-1 border-b border-inverse-foreground/50" href={`mailto:${siteConfig.supportEmail}`}>{siteConfig.supportEmail}</a>.
+    </Fragment>
+  </Hero>
+  <Wrapper variant="standard" class="w-full pb-24">
+    <div class="w-full max-w-3xl mx-auto">
       <StatusBoard client:load overview={overview} />
     </div>
-  </div>
+  </Wrapper>
 </MarketingLayout>

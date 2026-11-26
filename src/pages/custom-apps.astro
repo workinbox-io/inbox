@@ -5,29 +5,29 @@
  * automations. Facts follow lib/collections/fields.ts and src/mcp/collections.ts.
  */
 import AppPage from "@/components/site/AppPage.astro";
-import { Bot, Columns3, FileSpreadsheet, Laptop, Package, Shapes, ShieldCheck, Table2, Zap } from "lucide-react";
 
 export const prerender = true;
 ---
 
 <AppPage
   slug="custom-apps"
-  title="Custom apps for your business: trackers, a CRM and boards in one workspace"
+  title="Custom lists, boards and a simple CRM for your team"
   description="Collections: lists your company designs itself, such as an equipment tracker, inventory, a simple CRM or a project board, next to your mail and chat. Part of the open-source Work Inbox workspace."
   h1={["The app you were missing,", "made in a minute."]}
-  lead="Equipment, stock, deals, projects: every company keeps a few lists of its own. Make each one a collection with the fields you need, then work on it as a table or a board, together, next to your mail and chat."
+  lead="Deals, tasks, equipment: make a list with your own fields and work on it as a list, board, table or timeline, next to your mail and chat."
+  benefits={["IDs like TAS-12, statuses, priorities, cycles and sub-items.", "Automations: mail people or post in chat when something changes.", "Import a CSV, link GitHub PRs, comment and @mention."]}
   url="workinbox.io/app/collections"
   alt="A Tasks collection as a board: cards in To do, In progress, Review and Done columns with assignees and due dates"
   features={[
-    { icon: Shapes, title: "Your own fields", text: "Text, number, date, choice, checkbox, person, link and e-mail. Rename a field and its values stay." },
-    { icon: Columns3, title: "Board or table", text: "Group by any choice field and drag cards between columns, or see every field in a table." },
-    { icon: Laptop, title: "Equipment tracker", text: "Who has which laptop, serial numbers, repairs and retired devices." },
-    { icon: Package, title: "Inventory", text: "SKU, quantity, location and the level to reorder at." },
-    { icon: Table2, title: "A simple CRM", text: "Companies, deal value, owner and a pipeline from lead to won." },
-    { icon: FileSpreadsheet, title: "From your spreadsheet", text: "Turn a CSV from Excel or Google Sheets into a collection: the fields are guessed from its columns. Import more and export any time." },
-    { icon: ShieldCheck, title: "Shared on your terms", text: "Each collection is for you only, chosen people (view or edit) or the whole team: a CRM just for sales, equipment just for IT." },
-    { icon: Zap, title: "Automations", text: "When Status changes to Low, e-mail purchasing; when a deal is Won, post in #sales. Built like a sentence." },
-    { icon: Bot, title: "Claude and ChatGPT", text: "Ask an AI app to log a laptop or move a deal; it works with your collections by name.", href: "/docs/mcp" },
+    { title: "Your own fields", text: "Text, number, date, choice, checkbox, person, link and e-mail. Rename a field and its values stay." },
+    { title: "Board or table", text: "Group by any choice field and drag cards between columns, or see every field in a table." },
+    { title: "Equipment tracker", text: "Who has which laptop, serial numbers, repairs and retired devices." },
+    { title: "Inventory", text: "SKU, quantity, location and the level to reorder at." },
+    { title: "A simple CRM", text: "Companies, deal value, owner and a pipeline from lead to won." },
+    { title: "From your spreadsheet", text: "Turn a CSV from Excel or Google Sheets into a collection: the fields are guessed from its columns. Import more and export any time." },
+    { title: "Shared on your terms", text: "Each collection is for you only, chosen people (view or edit) or the whole team: a CRM just for sales, equipment just for IT." },
+    { title: "Automations", text: "When Status changes to Low, e-mail purchasing; when a deal is Won, post in #sales. Built like a sentence." },
+    { title: "Claude and ChatGPT", text: "Ask an AI app to log a laptop or move a deal; it works with your collections by name.", href: "/docs/mcp" },
   ]}
   notYet="formulas, linked collections, and automations beyond e-mail and chat."
   compare={["lists", "suite", "ai", "selfHost"]}

@@ -1,0 +1,128 @@
+<!-- section: switch | Leaving Google without a big bang | The visitor believes switching is an afternoon and that they can stop at any point. -->
+<section id="switch-a" data-variant="A" data-name="Three-step timeline" data-idea="Horizontal timeline: today, same afternoon, when you are ready. Each step carries a small faux screen (IMAP connect, people, DNS records) so the process is visible, then what comes along.">
+  <div class="bg-background py-16 sm:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-12 gap-y-6 gap-x-8">
+        <p class="label col-span-12 lg:col-span-3">Switching</p>
+        <div class="col-span-12 lg:col-span-9">
+          <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight text-balance">Switch in an afternoon. <em>Move the domain last.</em></h2>
+          <p class="mt-4 max-w-2xl text-muted-foreground text-pretty">Connect the mailbox you have, bring the team, then point MX when you are ready. Until that last step nothing changes for anyone writing to you.</p>
+        </div>
+      </div>
+      <div class="mt-12 grid md:grid-cols-3 border border-border divide-y md:divide-y-0 md:divide-x divide-border bg-background">
+        <div class="p-6 flex flex-col">
+          <p class="text-xs uppercase tracking-wide text-primary font-medium">1 · Today</p>
+          <h3 class="mt-2 text-lg font-semibold">Connect the mailbox you have</h3>
+          <p class="mt-2 text-sm text-muted-foreground">Over IMAP and SMTP. Mail keeps arriving where it does now and syncs in; you read and reply from Work Inbox.</p>
+          <div class="mt-5 mt-auto pt-5">
+            <div class="border border-border bg-muted p-3 text-sm space-y-2">
+              <div class="flex justify-between gap-2"><span class="text-faint-foreground">Account</span><span>anna@acme.com</span></div>
+              <div class="flex justify-between gap-2"><span class="text-faint-foreground">Server</span><span>IMAP / SMTP</span></div>
+              <div class="flex items-center gap-2 text-xs pt-2 border-t border-border"><svg class="w-4 h-4 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg>Connected · MX unchanged</div>
+            </div>
+          </div>
+        </div>
+        <div class="p-6 flex flex-col">
+          <p class="text-xs uppercase tracking-wide text-primary font-medium">2 · Same afternoon</p>
+          <h3 class="mt-2 text-lg font-semibold">Bring the team</h3>
+          <p class="mt-2 text-sm text-muted-foreground">Everyone gets chat, notes, calendar, drive and contacts next to their mail. Free up to 5 people.</p>
+          <div class="mt-5 mt-auto pt-5">
+            <div class="border border-border bg-muted p-3 text-sm space-y-2">
+              <div class="flex justify-between"><span>anna@acme.com</span><span class="text-xs text-faint-foreground">owner</span></div>
+              <div class="flex justify-between"><span>ben@acme.com</span><span class="text-xs text-faint-foreground">member</span></div>
+              <div class="flex justify-between"><span>chris@acme.com</span><span class="text-xs text-faint-foreground">member</span></div>
+              <div class="text-xs pt-2 border-t border-border text-muted-foreground">3 people · free up to 5</div>
+            </div>
+          </div>
+        </div>
+        <div class="p-6 flex flex-col">
+          <p class="text-xs uppercase tracking-wide text-primary font-medium">3 · When you're ready</p>
+          <h3 class="mt-2 text-lg font-semibold">Move the domain</h3>
+          <p class="mt-2 text-sm text-muted-foreground">Copy old mail from the old server or upload a Takeout .mbox, then switch MX. Connect Cloudflare adds the records for you.</p>
+          <div class="mt-5 mt-auto pt-5">
+            <div class="border border-border bg-muted p-3 text-xs space-y-1.5">
+              <div class="flex items-center justify-between gap-2"><span>MX</span><span class="flex items-center gap-1 text-primary"><svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg>ok</span></div>
+              <div class="flex items-center justify-between gap-2"><span>DKIM</span><span class="flex items-center gap-1 text-primary"><svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg>ok</span></div>
+              <div class="flex items-center justify-between gap-2"><span>DMARC</span><span class="flex items-center gap-1 text-primary"><svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg>ok</span></div>
+              <div class="pt-2 border-t border-border text-muted-foreground">acme.com: checks out</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border text-sm">
+        <div class="bg-background p-4"><b class="font-medium">Contacts</b><p class="mt-1 text-muted-foreground">Google or Outlook CSV and vCard; known addresses merge.</p></div>
+        <div class="bg-background p-4"><b class="font-medium">Calendars</b><p class="mt-1 text-muted-foreground">Sync a Google Calendar in, import .ics files.</p></div>
+        <div class="bg-background p-4"><b class="font-medium">Files</b><p class="mt-1 text-muted-foreground">Drop whole folders into the shared drive.</p></div>
+        <div class="bg-background p-4"><b class="font-medium">Mail apps</b><p class="mt-1 text-muted-foreground">Apple Mail, Outlook and phones keep working over IMAP and SMTP.</p></div>
+      </div>
+      <div class="mt-8 flex flex-wrap items-center gap-4">
+        <a href="#" class="btn btn-accent">Read the quickstart</a>
+        <a href="#" class="text-sm text-primary underline underline-offset-4">Google Workspace alternative guide</a>
+        <span class="text-sm text-muted-foreground">No domain yet? Start on yourname.workinbox.io.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="switch-b" data-variant="B" data-name="Where it lands" data-idea="A tickable checklist: each Google item, where it lands in Work Inbox and how it gets there. Ends with an honest 'what you give up' line, which makes the rest believable.">
+  <div class="bg-muted py-16 sm:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-12 gap-y-8 gap-x-8">
+      <p class="label col-span-12 lg:col-span-3">Switching</p>
+      <div class="col-span-12 lg:col-span-9">
+        <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight text-balance">Everything you use in Google <em>has a place here.</em></h2>
+        <p class="mt-4 max-w-2xl text-muted-foreground text-pretty">Tick off what you want to bring. No big bang: move one thing at a time, and the domain last.</p>
+        <ul class="mt-10 border-t border-border" id="switch-b-list">
+          <li class="border-b border-border"><label class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_1.4fr] gap-x-4 gap-y-1 py-4 cursor-pointer items-start"><input type="checkbox" class="mt-1 w-4 h-4 accent-[oklch(52%_0.22_268)]"><span class="font-medium">Gmail</span><span class="col-start-2 sm:col-start-auto text-primary">Mail</span><span class="col-start-2 sm:col-start-auto text-sm text-muted-foreground">Connect over IMAP, copy old mail later or upload a Takeout .mbox. Duplicates are skipped.</span></label></li>
+          <li class="border-b border-border"><label class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_1.4fr] gap-x-4 gap-y-1 py-4 cursor-pointer items-start"><input type="checkbox" class="mt-1 w-4 h-4 accent-[oklch(52%_0.22_268)]"><span class="font-medium">Google Contacts</span><span class="col-start-2 sm:col-start-auto text-primary">Contacts</span><span class="col-start-2 sm:col-start-auto text-sm text-muted-foreground">Import the CSV or vCard. Addresses already in the book merge instead of doubling.</span></label></li>
+          <li class="border-b border-border"><label class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_1.4fr] gap-x-4 gap-y-1 py-4 cursor-pointer items-start"><input type="checkbox" class="mt-1 w-4 h-4 accent-[oklch(52%_0.22_268)]"><span class="font-medium">Google Calendar</span><span class="col-start-2 sm:col-start-auto text-primary">Calendar</span><span class="col-start-2 sm:col-start-auto text-sm text-muted-foreground">Sync it in while you move, or import .ics files.</span></label></li>
+          <li class="border-b border-border"><label class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_1.4fr] gap-x-4 gap-y-1 py-4 cursor-pointer items-start"><input type="checkbox" class="mt-1 w-4 h-4 accent-[oklch(52%_0.22_268)]"><span class="font-medium">Google Drive</span><span class="col-start-2 sm:col-start-auto text-primary">Drive</span><span class="col-start-2 sm:col-start-auto text-sm text-muted-foreground">Download and drop whole folders into the shared drive.</span></label></li>
+          <li class="border-b border-border"><label class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_1.4fr] gap-x-4 gap-y-1 py-4 cursor-pointer items-start"><input type="checkbox" class="mt-1 w-4 h-4 accent-[oklch(52%_0.22_268)]"><span class="font-medium">Gmail app on phones</span><span class="col-start-2 sm:col-start-auto text-primary">Apple Mail, Outlook, phone mail</span><span class="col-start-2 sm:col-start-auto text-sm text-muted-foreground">IMAP and SMTP, with a device profile for Apple devices.</span></label></li>
+          <li class="border-b border-border"><label class="grid grid-cols-[auto_1fr] sm:grid-cols-[auto_1fr_1fr_1.4fr] gap-x-4 gap-y-1 py-4 cursor-pointer items-start"><input type="checkbox" class="mt-1 w-4 h-4 accent-[oklch(52%_0.22_268)]"><span class="font-medium">Groups as support@</span><span class="col-start-2 sm:col-start-auto text-primary">Shared mailbox</span><span class="col-start-2 sm:col-start-auto text-sm text-muted-foreground">A real mailbox several people open, free on every plan.</span></label></li>
+        </ul>
+        <div class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <p class="text-sm" aria-live="polite"><b id="switch-b-n" class="text-primary">0</b> of 6 ticked</p>
+          <a href="#" class="btn btn-accent">Read the quickstart</a>
+          <a href="#" class="text-sm text-primary underline underline-offset-4">Google Workspace alternative guide</a>
+        </div>
+        <div class="mt-8 border border-border bg-background p-5 text-sm max-w-3xl">
+          <p class="font-medium">What you give up</p>
+          <p class="mt-1 text-muted-foreground">No Docs, Sheets or Meet equivalents beyond shared notes and Collections, no native phone apps (an installable web app instead), no CalDAV or CardDAV.</p>
+        </div>
+      </div>
+    </div>
+    <script>(function(){var s=document.getElementById('switch-b');var cb=s.querySelectorAll('input[type=checkbox]'),n=s.querySelector('#switch-b-n');
+    cb.forEach(function(c){c.addEventListener('change',function(){n.textContent=s.querySelectorAll('input:checked').length})});})();</script>
+  </div>
+</section>
+
+<section id="switch-c" data-variant="C" data-name="Migration board" data-idea="Animated board: the Google cards slide across into their Work Inbox apps when the section scrolls into view, with a replay button. Makes 'nothing is lost' visual in five seconds.">
+  <div class="bg-background py-16 sm:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 items-start">
+      <div class="lg:col-span-5">
+        <p class="label">Switching</p>
+        <h2 class="mt-4 text-3xl sm:text-5xl font-semibold tracking-tight text-balance">Your Google stuff moves over. <em>The domain goes last.</em></h2>
+        <p class="mt-4 text-muted-foreground text-pretty">Mail, contacts, calendar and files each have an import. Do them in any order, stop whenever you like, and switch MX only when everything looks right.</p>
+        <div class="mt-8 flex flex-wrap items-center gap-4">
+          <a href="#" class="btn btn-accent">Read the quickstart</a>
+          <button type="button" id="switch-c-replay" class="btn btn-muted">Replay</button>
+        </div>
+        <p class="mt-4 text-sm text-muted-foreground">No domain yet? Start on yourname.workinbox.io.</p>
+      </div>
+      <div class="lg:col-span-7">
+        <div class="grid grid-cols-2 gap-3 text-xs uppercase tracking-wide text-faint-foreground pb-2"><span>Google Workspace</span><span>Work Inbox</span></div>
+        <div class="space-y-3" id="switch-c-board">
+          <div class="sw-row relative h-16"><div class="absolute inset-y-0 right-0 w-[calc(50%-6px)] border border-dashed border-input"></div><div class="sw-chip absolute inset-y-0 left-0 w-[calc(50%-6px)] border border-border bg-muted flex items-center px-3 text-sm transition-transform duration-1000 ease-out"><span class="sw-from">Gmail<br><span class="text-xs text-muted-foreground">IMAP or .mbox</span></span><span class="sw-to hidden font-medium text-primary">Mail<br><span class="text-xs font-normal text-muted-foreground">threads, labels</span></span></div></div>
+          <div class="sw-row relative h-16"><div class="absolute inset-y-0 right-0 w-[calc(50%-6px)] border border-dashed border-input"></div><div class="sw-chip absolute inset-y-0 left-0 w-[calc(50%-6px)] border border-border bg-muted flex items-center px-3 text-sm transition-transform duration-1000 ease-out"><span class="sw-from">Contacts<br><span class="text-xs text-muted-foreground">CSV or vCard</span></span><span class="sw-to hidden font-medium text-primary">Contacts<br><span class="text-xs font-normal text-muted-foreground">merged, no doubles</span></span></div></div>
+          <div class="sw-row relative h-16"><div class="absolute inset-y-0 right-0 w-[calc(50%-6px)] border border-dashed border-input"></div><div class="sw-chip absolute inset-y-0 left-0 w-[calc(50%-6px)] border border-border bg-muted flex items-center px-3 text-sm transition-transform duration-1000 ease-out"><span class="sw-from">Calendar<br><span class="text-xs text-muted-foreground">sync or .ics</span></span><span class="sw-to hidden font-medium text-primary">Calendar<br><span class="text-xs font-normal text-muted-foreground">events kept</span></span></div></div>
+          <div class="sw-row relative h-16"><div class="absolute inset-y-0 right-0 w-[calc(50%-6px)] border border-dashed border-input"></div><div class="sw-chip absolute inset-y-0 left-0 w-[calc(50%-6px)] border border-border bg-muted flex items-center px-3 text-sm transition-transform duration-1000 ease-out"><span class="sw-from">Drive<br><span class="text-xs text-muted-foreground">drop folders</span></span><span class="sw-to hidden font-medium text-primary">Drive<br><span class="text-xs font-normal text-muted-foreground">shared, with links</span></span></div></div>
+          <div class="sw-row relative h-16"><div class="absolute inset-y-0 right-0 w-[calc(50%-6px)] border border-dashed border-input"></div><div class="sw-chip absolute inset-y-0 left-0 w-[calc(50%-6px)] border border-border bg-muted flex items-center px-3 text-sm transition-transform duration-1000 ease-out"><span class="sw-from">Domain MX<br><span class="text-xs text-muted-foreground">last step</span></span><span class="sw-to hidden font-medium text-primary">Domain<br><span class="text-xs font-normal text-muted-foreground">DKIM, DMARC checked</span></span></div></div>
+        </div>
+      </div>
+    </div>
+    <script>(function(){var s=document.getElementById('switch-c');var chips=s.querySelectorAll('.sw-chip'),timers=[],started=false;
+    function reset(){timers.forEach(clearTimeout);chips.forEach(function(c){c.style.transform='';c.className=c.className.replace(' bg-lilac','').replace(' border-primary','');c.querySelector('.sw-from').classList.remove('hidden');c.querySelector('.sw-to').classList.add('hidden')})}
+    function play(){reset();chips.forEach(function(c,i){timers.push(setTimeout(function(){c.style.transform='translateX(calc(100% + 12px))';timers.push(setTimeout(function(){c.classList.add('bg-lilac','border-primary');c.querySelector('.sw-from').classList.add('hidden');c.querySelector('.sw-to').classList.remove('hidden')},1000))},300+i*700))})}
+    s.querySelector('#switch-c-replay').addEventListener('click',play);
+    new IntersectionObserver(function(e){if(e[0].isIntersecting&&!started){started=true;play()}},{threshold:.4}).observe(s.querySelector('#switch-c-board'));})();</script>
+  </div>
+</section>

@@ -1,19 +1,21 @@
 ---
 /**
  * One app of the workspace as a landing page (pages/custom-domain-email, team-chat, shared-notes, team-calendar,
- * shared-drive, shared-contacts): hero, the real screen, what it does, optional comparison, how it works with the
- * other apps, questions. Same parts as pages/shared-mailbox.astro. Claim only what ships.
+ * shared-drive, shared-contacts, custom-apps) on Navy's layout: hero, the real screen, what it does, optional
+ * comparison, how it works with the other apps, questions. Same parts as pages/shared-mailbox.astro. Claim only what ships.
  */
-import { ArrowRight, Bot } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
-import PageHero from "./PageHero.astro";
-import ClosingBand from "./ClosingBand.astro";
-import BrowserFrame from "./BrowserFrame.astro";
+import Hero from "./Hero.astro";
+import Section from "./Section.astro";
+import Features, { type FeatureItem } from "./Features.astro";
 import Shot from "./Shot.astro";
 import Faq from "./Faq.astro";
-import Stage from "./craft/Stage.astro";
-import FeatureLedger, { type LedgerItem } from "./craft/FeatureLedger.astro";
 import ComparisonTable from "./ComparisonTable.astro";
+import PriceLine from "./PriceLine.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
 import { APPS } from "@/config/apps";
 import { COMPETITORS, type RowKey } from "@/config/compare";
 import { lp, siteLocale, tFor } from "@/lib/i18n/site";
@@ -22,21 +24,24 @@ interface Props {
   slug: string;
   title: string;
   description: string;
-  /** Plain part of the headline, then the soft-ink part. */
+  /** Plain part of the headline, then the emphasised part. */
   h1: [string, string];
   lead: string;
-  url: string;
+  /** Three one-line benefits under the lead. */
+  benefits?: string[];
+  /** The screen's address; kept for the callers, Navy shows the screen without a browser frame. */
+  url?: string;
   alt: string;
-  features: LedgerItem[];
+  features: FeatureItem[];
   /** How this app works with the others. */
-  together: LedgerItem[];
+  together: FeatureItem[];
   faq: { question: string; answer: string }[];
   compare?: RowKey[];
   /** Under the features: what it doesn't do yet. */
   notYet?: string;
 }
 const props = Astro.props;
-const { slug, url, compare } = props;
+const { slug, compare } = props;
 const locale = siteLocale(Astro.url);
 const t = tFor(locale);
 // The page's English copy is the dictionary key (lib/i18n/site.ts); the English page renders it as it is.
@@ -45,59 +50,64 @@ const description = t(props.description);
 const h1 = [t(props.h1[0]), t(props.h1[1])];
 const lead = t(props.lead);
 const alt = t(props.alt);
+const benefits = (props.benefits ?? []).map((b) => t(b));
 const notYet = props.notYet && t(props.notYet);
-const ledger = (items: LedgerItem[]) => items.map((i) => ({ ...i, title: t(i.title), text: t(i.text), href: i.href && lp(locale, i.href) }));
+const ledger = (items: FeatureItem[]) => items.map((i) => ({ ...i, title: t(i.title), text: t(i.text), href: i.href && lp(locale, i.href) }));
 const features = ledger(props.features);
 const together = ledger(props.together);
 const faq = props.faq.map((f) => ({ question: t(f.question), answer: t(f.answer) }));
 const app = APPS.find((a) => a.slug === slug)!;
+// Shots with blank space in them are cropped here, not re-shot.
+const cropOf: Record<string, string> = { "team-chat": "aspect-[2/1] object-cover object-bottom", "custom-apps": "aspect-[21/10] object-cover object-top" };
+// Columns that leave no orphan cell on the last row.
+const colsFor = (n: number) => (n % 3 === 0 ? 3 : n % 4 === 0 ? 4 : 2) as 2 | 3 | 4;
 const others = APPS.filter((a) => a.slug !== slug);
+const otherApps = ledger([...others.map((a) => ({ title: a.label, text: a.description, href: `/${a.slug}` })), { title: "AI apps", text: "Claude and ChatGPT read and act across the workspace.", href: "/docs/mcp" }]);
 const jsonLd = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) };
-const h2 = "text-[clamp(1.7rem,3vw,2.4rem)]";
 ---
 
 <MarketingLayout title={title} description={description} jsonLd={jsonLd} ink>
-  <PageHero>
-    <p class="mk-cap">Work Inbox · {t(app.label)}</p>
-    <h1 class="mk-h1 mt-4 max-w-4xl">{h1[0]} <em>{h1[1]}</em></h1>
-    <p class="mk-lead mt-6 max-w-2xl">{lead}</p>
-    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-      <a href="/signup" class="mk-btn">{t("Start free")} <ArrowRight className="size-5" /></a>
-      <a href="/docs/self-host" class="mk-link">{t("Self-host for free")}</a>
+  <Hero>
+    <Fragment slot="title">{h1[0]}{" "}<em>{h1[1]}</em></Fragment>
+    <Fragment slot="text">{lead}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">{t("Start free")}</Button>
+      <ArrowLink href="/docs/self-host" tone="default">{t("Self-host for free")}</ArrowLink>
+    </Fragment>
+    {benefits.length > 0 && <ul class="mt-6 max-w-xl space-y-2 text-inverse-foreground/90">{benefits.map((b) => <li class="flex gap-3 text-pretty"><span aria-hidden="true">·</span><span>{b}</span></li>)}</ul>}
+    <PriceLine workspace />
+  </Hero>
+
+  <Wrapper variant="standard" class="pt-10">
+    <Shot name={app.shot} alt={alt} class={cropOf[slug]} eager />
+  </Wrapper>
+
+  <Section>
+    <Fragment slot="title">{t("What it does")}</Fragment>
+    <div slot="full">
+      <Features items={features} cols={3} />
+      {notYet && <Text tag="p" variant="textSM" class="mt-6 text-muted-foreground">{t("Not yet:")}{" "}{notYet}</Text>}
     </div>
-  </PageHero>
-  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
-    <div class="mt-14"><Stage><BrowserFrame url={url}><Shot name={app.shot} alt={alt} eager /></BrowserFrame></Stage></div>
+  </Section>
 
-    <section class="pt-20">
-      <h2 class={h2}>{t("What it does")}</h2>
-      <FeatureLedger items={features} cols={3} class="mt-10" />
-      {notYet && <p class="mt-6 text-sm text-foreground/70">{t("Not yet:")} {notYet}</p>}
-    </section>
+  {
+    compare && (
+      <Section label={t("Compare")} class="bg-muted">
+        <Fragment slot="title">{t("Compared with the big suites")}</Fragment>
+        <Fragment slot="text">{t("From each vendor's own pages; the comparison pages link the sources.")}</Fragment>
+        <ComparisonTable slot="full" competitors={COMPETITORS.slice(0, 4)} rows={compare} />
+      </Section>
+    )
+  }
 
-    {
-      compare && (
-        <section class="pt-20">
-          <h2 class={h2}>{t("Compared with the big suites")}</h2>
-          <p class="mt-2 text-sm text-foreground/60">{t("From each vendor's own pages; the comparison pages link the sources.")}</p>
-          <div class="mt-6"><ComparisonTable competitors={COMPETITORS.slice(0, 4)} rows={compare} /></div>
-        </section>
-      )
-    }
+  <Section>
+    <Fragment slot="title">{t("Part of one workspace")}</Fragment>
+    <Fragment slot="text">{t("{app} shares the people, the search and the ⌘K of the rest of Work Inbox. One sign-in, one price per person.", { app: t(app.label) })}</Fragment>
+    <div slot="full">
+      <Features items={together} cols={colsFor(together.length)} cards />
+      <Features items={otherApps} cols={colsFor(otherApps.length)} class="mt-12" />
+    </div>
+  </Section>
 
-    <section class="pt-20">
-      <h2 class={h2}>{t("Part of one workspace")}</h2>
-      <p class="mt-2 max-w-2xl text-lg text-(--muted-foreground)">
-        {t("{app} shares the people, the search and the ⌘K of the rest of Work Inbox. One sign-in, one price per person.", { app: t(app.label) })}
-      </p>
-      <FeatureLedger items={together} cols={3} class="mt-10" />
-      <FeatureLedger items={ledger([...others.map((a) => ({ icon: a.icon, title: a.label, text: a.description, href: `/${a.slug}` })), { icon: Bot, title: "AI apps", text: "Claude and ChatGPT read and act across the workspace.", href: "/docs/mcp" }])} cols={3} class="mt-14" />
-    </section>
-
-    <section class="pt-20">
-      <h2 class={h2}>{t("Questions")}</h2>
-      <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
-    </section>
-  </div>
-  <ClosingBand />
+  <Faq items={faq} />
 </MarketingLayout>

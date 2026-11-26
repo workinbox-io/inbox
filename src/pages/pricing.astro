@@ -1,9 +1,10 @@
 ---
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
-import PageHero from "@/components/site/PageHero.astro";
-import ClosingBand from "@/components/site/ClosingBand.astro";
-import SectionHeading from "@/components/site/SectionHeading.astro";
+import Hero from "@/components/site/Hero.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
 import PricingCards from "@/components/site/PricingCards.astro";
+import PriceCalculator from "@/components/site/PriceCalculator.astro";
 import Faq from "@/components/site/Faq.astro";
 import { CURRENCY, FREE_PEOPLE, MIN_SEATS, PLAN_LIST, TRIAL_DAYS, TRIAL_PLAN, PLANS } from "@/config/plans";
 import { siteConfig } from "@/config/site";
@@ -45,19 +46,14 @@ const jsonLd = [
 ---
 
 <MarketingLayout title={t("Pricing")} description={t(`${siteConfig.name} pricing: free for up to ${FREE_PEOPLE} people, then from €${PLANS.starter.priceMonthly / 100} per person a month, shared mailboxes free, self-hosted free. ${TRIAL_DAYS}-day trial, no card needed.`)} jsonLd={jsonLd} ink>
-  <PageHero>
-    <h1 class="mk-h1 max-w-4xl">{t("Free for up to {n} people.", { n: FREE_PEOPLE })} <em>{t("Then {price} a person.", { price: money(PLANS.starter.priceMonthly) })}</em></h1>
-    <p class="mk-lead mt-6 max-w-2xl">
-      {t("Shared mailboxes and aliases are free on every plan. {days}-day free trial, no card needed. Pay yearly and get two months free. Prices exclude VAT.", { days: TRIAL_DAYS })}
-    </p>
-  </PageHero>
-  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
-    <div data-reveal="items" class="mt-12 sm:mt-16"><PricingCards yearly /></div>
-    <p class="mt-6 text-sm text-foreground/70">{t("Optional two-factor authentication is included on every plan.")} <a href="/security" class="mk-link">{t("See account security")}</a>.</p>
-    <section class="pt-24">
-      <SectionHeading muted="about plans.">{t("Questions")}</SectionHeading>
-      <div class="mt-10 w-full max-w-3xl"><Faq items={questions} /></div>
-    </section>
-  </div>
-  <ClosingBand />
+  <Hero>
+    <Fragment slot="title">{t("Free for up to {n} people.", { n: FREE_PEOPLE })}{" "}<em>{t("Then {price} a person.", { price: money(PLANS.starter.priceMonthly) })}</em></Fragment>
+    <Fragment slot="text">{t("Shared mailboxes and aliases are free on every plan. {days}-day free trial, no card needed. Pay yearly and get two months free. Prices exclude VAT.", { days: TRIAL_DAYS })}</Fragment>
+  </Hero>
+  <Wrapper variant="standard" class="pb-24">
+    <PricingCards yearly />
+    <p class="mt-12 text-sm text-muted-foreground">{t("Optional two-factor authentication is included on every plan.")}{" "}<ArrowLink href="/security">{t("See account security")}</ArrowLink></p>
+  </Wrapper>
+  <PriceCalculator />
+  <Faq items={questions} />
 </MarketingLayout>

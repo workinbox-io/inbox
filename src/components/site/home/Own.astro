@@ -1,0 +1,61 @@
+---
+/** Ownership (Trust strip): big facts on a gradient band, then how it stays safe, with links to self-hosting, security and status. */
+import { Activity, Banknote, Code, FileArchive, KeyRound, ScrollText, ShieldCheck, Users } from "lucide-react";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import { CURRENCY, FREE_PEOPLE, PLAN_LIST } from "@/config/plans";
+import { formatMoney } from "@/lib/i18n/format";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+// Only facts that ship: the license, self-hosting costs us nothing, and what leaves readable (.eml, vCard, CSV, .ics, ZIP, IMAP).
+const facts = [
+  { icon: Code, big: "AGPL-3.0", text: t("Public on GitHub. The hosted service runs the same code.") },
+  { icon: Banknote, big: formatMoney(locale, 0, CURRENCY), text: t("Self-hosted on your Cloudflare account, every feature, no fee to us.") },
+  { icon: Users, big: formatMoney(locale, Math.min(...PLAN_LIST.map((p) => p.priceMonthly)), CURRENCY), text: t("per person a month after the first {n}, every app included. Shared mailboxes free.", { n: FREE_PEOPLE }) },
+  { icon: FileArchive, big: ".eml vCard CSV .ics ZIP", text: t("Plus IMAP: your data leaves readable.") },
+];
+const safe = [
+  { icon: ShieldCheck, text: t("Everyone signs in as themselves, with two-factor") },
+  { icon: KeyRound, text: t("A separate password for each mail app") },
+  { icon: ScrollText, text: t("Audit log of who changed what (Pro and Business)") },
+  { icon: Activity, text: "" },
+];
+---
+
+<section id="own" class="relative overflow-hidden scroll-mt-20 bg-inverse">
+  <div aria-hidden="true" class="absolute inset-0 bg-[radial-gradient(ellipse_80%_90%_at_100%_100%,oklch(52%_0.22_268/0.55),transparent_70%),radial-gradient(ellipse_60%_70%_at_0%_0%,oklch(40%_0.16_268/0.5),transparent_70%)]"></div>
+  <div data-nav-dark aria-hidden="true" class="absolute inset-0"></div>
+  <Wrapper variant="standard" class="relative py-20 sm:py-24">
+    <Text tag="h2" variant="displayLG" class="max-w-3xl mx-auto tracking-tight text-center text-balance text-inverse-foreground">{t("Open code.")}{" "}<em>{t("Your account.")}</em>{" "}{t("Your data.")}</Text>
+    <ul role="list" class="grid grid-cols-1 mt-12 *:min-w-0 gap-px border text-inverse-foreground border-inverse-foreground/20 bg-inverse-foreground/20 md:grid-cols-2 lg:grid-cols-4">
+      {
+        facts.map((f) => (
+          <li class="p-6 bg-inverse/80 backdrop-blur">
+            <f.icon className="size-6 text-inverse-foreground/80" aria-hidden="true" />
+            {f.big.includes(" ") ? <p class="flex flex-wrap mt-4 text-xl font-semibold gap-x-3 gap-y-1 sm:text-2xl">{f.big.split(" ").map((x) => <span class="whitespace-nowrap">{x}</span>)}</p> : <p class="mt-4 text-2xl font-semibold text-balance sm:text-3xl">{f.big}</p>}
+            <p class="mt-2 text-sm text-inverse-foreground/85">{f.text}</p>
+          </li>
+        ))
+      }
+    </ul>
+    <div class="grid items-center grid-cols-1 p-6 mt-10 border *:min-w-0 gap-6 bg-background border-border sm:p-8 lg:grid-cols-12">
+      <ul role="list" class="grid text-sm gap-x-8 gap-y-4 sm:grid-cols-2 lg:col-span-8">
+        {
+          safe.map((s, i) => (
+            <li class="flex gap-3">
+              <s.icon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+              {i === safe.length - 1 ? <span><a href="/status" class="inline-block py-2 -my-2 underline underline-offset-2">{t("Live status page")}</a>{" "}{t("for D1, R2 and mail")}</span> : s.text}
+            </li>
+          ))
+        }
+      </ul>
+      <div class="flex flex-wrap gap-3 lg:col-span-4 lg:justify-end">
+        <Button isLink={true} href="/docs/self-host" size="base" variant="accent">{t("Self-host for free")}</Button>
+        <Button isLink={true} href={lp(locale, "/security")} size="base" variant="muted">{t("Security")}</Button>
+      </div>
+    </div>
+  </Wrapper>
+</section>

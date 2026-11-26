@@ -6,12 +6,16 @@
  * self-hosted with hosted. Facts follow docs/self-host.md and config/plans.ts; the servers' facts are from their own
  * pages (`SERVERS_CHECKED`), re-check before editing.
  */
-import { ArrowRight, Check } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
-import PageHero from "@/components/site/PageHero.astro";
-import ClosingBand from "@/components/site/ClosingBand.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import PriceLine from "@/components/site/PriceLine.astro";
 import Faq from "@/components/site/Faq.astro";
-import InstallTimeline from "@/components/site/craft/InstallTimeline.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
 import { FREE_PEOPLE, PLANS } from "@/config/plans";
 import { siteConfig } from "@/config/site";
 import { siteLocale, tFor } from "@/lib/i18n/site";
@@ -87,83 +91,73 @@ const jsonLd = [
 ---
 
 <MarketingLayout title={t("Self-hosted email without running a mail server")} description={t("Self-hosted email on your own Cloudflare account: no mail server, no port 25, no IP to warm up. Open source, with team chat, notes, calendars and a drive. Compared with mailcow, Mail-in-a-Box and mox, and with hosted Work Inbox.")} jsonLd={jsonLd} ink>
-  <PageHero>
-    <h1 class="mk-h1 max-w-4xl">{t("Self-hosted email,")} <em>{t("no mail server to run.")}</em></h1>
-    <p class="mk-lead mt-6 max-w-2xl">
-      {t("Work Inbox is open-source email for teams, with chat, notes, calendars and a drive, that runs on your own Cloudflare account. Your mail stays in your account; Cloudflare carries it, so there's no port 25, no IP reputation and no machine to patch. Or use it hosted at workinbox.io.")}
-    </p>
-    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-      <a href="/docs/self-host" class="mk-btn">{t("Self-hosting guide")} <ArrowRight className="size-5" /></a>
-      <a href="/signup" class="mk-link">{t("Start hosted, free")}</a>
+  <Hero>
+    <Fragment slot="title">{t("Self-hosted email,")}{" "}<em>{t("no mail server to run.")}</em></Fragment>
+    <Fragment slot="text">{t("Work Inbox is open-source email for teams, with chat, notes, calendars and a drive, that runs on your own Cloudflare account. Your mail stays in your account; Cloudflare carries it, so there's no port 25, no IP reputation and no machine to patch. Or use it hosted at workinbox.io.")}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/docs/self-host" size="base" variant="accent">{t("Self-hosting guide")}</Button>
+      <ArrowLink href="/signup" tone="default">{t("Start hosted, free")}</ArrowLink>
+    </Fragment>
+    <PriceLine />
+  </Hero>
+
+  <Section label={t("Self-hosted")}>
+    <Fragment slot="title">{t("Why self-hosting email is hard,")}{" "}<em>{t("and what's different here")}</em></Fragment>
+    <Features slot="full" cards cols={3} items={hard.map((h) => ({ title: t(h.title), text: t(h.text) }))} />
+  </Section>
+
+  <Section label={t("Compare")} class="bg-muted">
+    <Fragment slot="title">{t("Next to mail servers you run yourself")}</Fragment>
+    <Fragment slot="text">{t("From each project's own page (linked), checked {date}. They're full mail servers with IMAP and SMTP built in; Work Inbox is a workspace that leaves the mail transport to Cloudflare.", { date: t(SERVERS_CHECKED) })}</Fragment>
+    <div slot="full" class="relative overflow-x-auto">
+      <table class="w-full text-sm text-left min-w-160">
+        <thead><tr><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground"><span class="sr-only">{t("Plan")}</span></th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("What you run")}</th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Port 25 and sending")}</th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Beyond mail")}</th></tr></thead>
+        <tbody>
+          {servers.map((r, i) => (
+            <tr class:list={["align-top", i === 0 ? "bg-lilac" : i % 2 === 0 ? "bg-background" : ""]}>
+              <th scope="row" class="px-5 py-5 font-medium text-foreground">{r.href ? <a href={r.href} rel="nofollow noopener" class="inline-block py-1 border-b border-foreground">{r.name}</a> : r.name}</th>
+              <td class="py-5 pl-2 pr-6 text-foreground">{t(r.runs)}</td><td class="py-5 pl-2 pr-6 text-foreground">{t(r.port)}</td><td class="py-5 pl-2 pr-6 text-foreground">{r.beyond ? t(r.beyond) : <span class="text-muted-foreground">{t("Not listed on the page we checked")}</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  </PageHero>
-  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
+  </Section>
 
-    <section class="pt-20">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Why self-hosting email is hard,")} <em>{t("and what's different here")}</em></h2>
-      <div class="mt-8 grid gap-8 md:grid-cols-3">
-        {hard.map((h) => <div><h3 class="font-medium">{t(h.title)}</h3><p class="mt-2 text-foreground/70">{t(h.text)}</p></div>)}
-      </div>
-    </section>
-
-    <section class="pt-20">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Next to mail servers you run yourself")}</h2>
-      <div class="mt-6 overflow-x-auto rounded-2xl border border-(--border) bg-(--card)">
-        <table class="w-full min-w-[640px] text-left text-sm">
-          <thead><tr class="border-b border-(--border)"><th class="p-4 font-medium"></th><th class="p-4 font-medium">{t("What you run")}</th><th class="p-4 font-medium">{t("Port 25 and sending")}</th><th class="p-4 font-medium">{t("Beyond mail")}</th></tr></thead>
-          <tbody>
-            {servers.map((r, i) => (
-              <tr class:list={["border-b border-(--border) last:border-0", i === 0 && "bg-(--accent)"]}>
-                <th scope="row" class="p-4 font-medium">{r.href ? <a href={r.href} rel="nofollow noopener" class="underline underline-offset-4">{r.name}</a> : r.name}</th>
-                <td class="p-4">{t(r.runs)}</td><td class="p-4">{t(r.port)}</td><td class="p-4">{r.beyond ? t(r.beyond) : <span class="text-foreground/50">{t("Not listed on the page we checked")}</span>}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p class="mt-4 text-sm text-foreground/60">{t("From each project's own page (linked), checked {date}. They're full mail servers with IMAP and SMTP built in; Work Inbox is a workspace that leaves the mail transport to Cloudflare.", { date: t(SERVERS_CHECKED) })}</p>
-    </section>
-
-    <section class="pt-20">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Self-hosted or hosted")}</h2>
-      <div class="mt-6 overflow-x-auto rounded-2xl border border-(--border) bg-(--card)">
-        <table class="w-full min-w-[560px] text-left text-sm">
-          <thead><tr class="border-b border-(--border)"><th class="p-4 font-medium"></th><th class="p-4 font-medium">{t("Self-hosted")}</th><th class="p-4 font-medium">{t("Hosted")}</th></tr></thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr class="border-b border-(--border) last:border-0">
-                <th scope="row" class="p-4 font-medium">{t(r.label)}</th><td class="p-4">{t(r.self)}</td><td class="p-4">{t(r.hosted)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="grid gap-10 pt-20 md:grid-cols-2">
+  <Section label={t("Hosted")}>
+    <Fragment slot="title">{t("Self-hosted or hosted")}</Fragment>
+    <div slot="full" class="relative overflow-x-auto">
+      <table class="w-full text-sm text-left min-w-140">
+        <thead><tr><th scope="col" class="w-1/4 px-5 pb-6 font-medium align-bottom text-foreground"><span class="sr-only">{t("Feature")}</span></th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Self-hosted")}</th><th scope="col" class="px-5 pb-6 font-medium align-bottom text-foreground">{t("Hosted")}</th></tr></thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr class:list={["align-top", i % 2 === 0 && "bg-muted"]}>
+              <th scope="row" class="px-5 py-5 font-medium text-foreground">{t(r.label)}</th><td class="py-5 pl-2 pr-6 text-foreground">{t(r.self)}</td><td class="py-5 pl-2 pr-6 text-foreground">{t(r.hosted)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <div slot="full" class="grid gap-16 mt-20 md:grid-cols-2 md:gap-x-8">
       <div>
-        <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Self-host when")}</h2>
-        <ul class="mt-5 space-y-3">{pickSelf.map((k) => <li class="flex gap-2.5"><Check className="mt-1 size-4 shrink-0" />{t(k)}</li>)}</ul>
+        <Text tag="h2" variant="displaySM" class="text-balance text-foreground">{t("Self-host when")}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{pickSelf.map((k) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(k)}</Text></li>)}</ul>
       </div>
       <div>
-        <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Use hosted when")}</h2>
-        <ul class="mt-5 space-y-3">{pickHosted.map((k) => <li class="flex gap-2.5"><Check className="mt-1 size-4 shrink-0" />{t(k)}</li>)}</ul>
+        <Text tag="h2" variant="displaySM" class="text-balance text-foreground">{t("Use hosted when")}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{pickHosted.map((k) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(k)}</Text></li>)}</ul>
       </div>
-    </section>
+    </div>
+  </Section>
 
-    <section class="pt-20">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Self-hosting in four steps")}</h2>
-      <div class="mt-10"><InstallTimeline steps={steps.map((s) => ({ title: t(s.title), text: t(s.text) }))} /></div>
-      <p class="mt-6 text-sm text-foreground/60">
-        {t("Every step in detail:")} <a href="/docs/self-host" class="underline underline-offset-4">{t("the self-hosting guide")}</a>.
-        {t("Code:")} <a href={siteConfig.repoUrl} class="underline underline-offset-4">GitHub</a>.
-      </p>
-    </section>
+  <Section label={t("Setup")}>
+    <Fragment slot="title">{t("Self-hosting in four steps")}</Fragment>
+    <Fragment slot="text">
+      {t("Every step in detail:")}{" "}<a href="/docs/self-host" class="inline-block py-1 text-foreground border-b border-foreground">{t("the self-hosting guide")}</a>.
+      {t("Code:")}{" "}<a href={siteConfig.repoUrl} class="inline-block py-1 text-foreground border-b border-foreground">GitHub</a>.
+    </Fragment>
+    <Features slot="full" cards cols={4} items={steps.map((s, i) => ({ tag: String(i + 1), title: t(s.title), text: t(s.text) }))} />
+  </Section>
 
-    <section class="pt-20">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Questions")}</h2>
-      <div class="mt-6 max-w-3xl"><Faq items={questions} /></div>
-    </section>
-  </div>
-  <ClosingBand />
+  <Faq items={questions} />
 </MarketingLayout>

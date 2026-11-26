@@ -1,0 +1,48 @@
+---
+// Every in-page call to action: heading and text on the left, actions on the
+// right. Only the ground changes between them.
+import Text from "@/components/navy/fundations/elements/Text.astro";
+interface Props {
+  tone?: "inverse" | "primary" | "lilac" | "muted";
+  id?: string;
+  class?: string;
+}
+const { tone = "inverse", id, class: extraClass = "" } = Astro.props;
+const dark = tone === "inverse" || tone === "primary";
+const grounds = {
+  inverse: "bg-inverse",
+  primary: "bg-primary",
+  lilac: "bg-lilac",
+  muted: "bg-muted",
+};
+---
+
+<div
+  id={id}
+  class:list={[
+    "flex flex-col p-8 gap-8 md:flex-row md:items-end md:justify-between lg:p-10",
+    id && "scroll-mt-28",
+    grounds[tone],
+    extraClass,
+  ]}
+>
+  <div>
+    <Text
+      tag="h2"
+      variant="displayMD"
+      class:list={["text-balance", dark ? "text-inverse-foreground" : "text-foreground"]}
+    >
+      <slot name="title" />
+    </Text>
+    <Text
+      tag="p"
+      variant="textBase"
+      class:list={["max-w-lg mt-4 text-pretty", dark ? "text-inverse-foreground/70" : "text-muted-foreground"]}
+    >
+      <slot name="text" />
+    </Text>
+  </div>
+  <div class="shrink-0">
+    <slot />
+  </div>
+</div>

@@ -1,9 +1,9 @@
 ---
 /** All comparisons on one page: the table across every competitor, then a link to each detail page. */
-import { ArrowRight } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
-import PageHero from "@/components/site/PageHero.astro";
-import ClosingBand from "@/components/site/ClosingBand.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
 import ComparisonTable from "@/components/site/ComparisonTable.astro";
 import { COMPETITORS } from "@/config/compare";
 import { siteConfig } from "@/config/site";
@@ -23,25 +23,15 @@ const jsonLd = {
 ---
 
 <MarketingLayout title={t("Compare Work Inbox with Google Workspace, Microsoft 365 and others")} description={t("Work Inbox next to Google Workspace, Microsoft 365, Zoho Mail, Proton, Fastmail and Nextcloud: prices, shared mailboxes, self-hosting and what each does better.")} jsonLd={jsonLd} ink>
-  <PageHero>
-    <h1 class="mk-h1 max-w-4xl">{t("How Work Inbox compares,")} <em>{t("with sources.")}</em></h1>
-    <p class="mk-lead mt-6 max-w-2xl">
-      {t("Every fact about another product comes from its own pricing and help pages, linked on each comparison. Where they do something better, the page says so.")}
-    </p>
-  </PageHero>
-  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
-    <section class="pt-14">
+  <Hero>
+    <Fragment slot="title">{t("How Work Inbox compares,")}{" "}<em>{t("with sources.")}</em></Fragment>
+    <Fragment slot="text">{t("Every fact about another product comes from its own pricing and help pages, linked on each comparison. Where they do something better, the page says so.")}</Fragment>
+  </Hero>
+  <Section label={t("Compare")}>
+    <Fragment slot="title">{t("Side by side")}</Fragment>
+    <div slot="full">
       <ComparisonTable competitors={COMPETITORS.filter((c) => ["google-workspace", "microsoft-365", "zoho-mail"].includes(c.slug))} />
-    </section>
-    <section class="mx-auto grid w-full max-w-4xl gap-3 pt-12 sm:grid-cols-2 lg:grid-cols-3">
-      {COMPETITORS.map((c) => (
-        <a href={lp(locale, `/vs/${c.slug}`)} class="flex items-center gap-3 rounded-xl border border-(--border) p-5 transition-colors hover:bg-(--accent)">
-          <img src={c.logo} alt="" width="20" height="20" loading="lazy" class="size-5 shrink-0 rounded-md bg-white object-contain p-0.5 shadow-[0_0_0_1px_var(--border)]" />
-          <span class="flex-1 font-medium">{t("vs")} {c.name}</span>
-          <ArrowRight className="size-4 text-foreground/50" />
-        </a>
-      ))}
-    </section>
-  </div>
-  <ClosingBand />
+      <Features cols={3} class="mt-16" items={COMPETITORS.map((c) => ({ tag: t("Compare"), title: `${t("vs")} ${c.name}`, text: t(c.tagline), href: lp(locale, `/vs/${c.slug}`) }))} />
+    </div>
+  </Section>
 </MarketingLayout>

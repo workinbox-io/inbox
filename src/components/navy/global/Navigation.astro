@@ -1,0 +1,329 @@
+---
+// Navy's navigation (Lexington Themes), two levels: a utility strip (price promise, docs, security, GitHub, language,
+// Sign in) over the main bar (products, demo, Start free). Both sit on one surface: see-through over a gradient hero
+// at the top of the page, solid with a hairline once scrolled. Words from lib/i18n/site.ts, links from
+// siteConfig.navItems, the session swap (Sign in → Dashboard) and menus' behaviour in ./menus.ts.
+import Logo from "@/components/navy/assets/Logo.astro";
+import LanguageMenu from "@/components/navy/global/LanguageMenu.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import EnTag from "@/components/navy/global/EnTag.astro";
+import ArrowRight from "@/components/navy/fundations/icons/ArrowRight.astro";
+import { siteConfig } from "@/config/site";
+import { CURRENCY, FREE_PEOPLE, PLAN_LIST } from "@/config/plans";
+import { formatMoney } from "@/lib/i18n/format";
+import { LOCALES } from "@/config/languages";
+import { LOCALE_COOKIE, localeName, localizedPath, pageLocales, stripLocale } from "@/lib/i18n/locales";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
+import { pagePath } from "@/lib/page-path";
+
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const here = stripLocale(pagePath(Astro.url.pathname)).path;
+const available = pageLocales(here);
+const nav = siteConfig.navItems;
+const lowest = formatMoney(locale, Math.min(...PLAN_LIST.map((p) => p.priceMonthly)), CURRENCY);
+// tone sets the first paint; "dark" for pages that open on a gradient hero
+const { tone = "light" } = Astro.props;
+const current = (href: string) => stripLocale(href.split(/[?#]/)[0] || "/").path === here && !href.includes("#");
+const chev = `<svg class="chv size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>`;
+// colours per tone: ink on the solid bar, white over the hero
+const hv = "rounded-lg transition-colors hover:bg-foreground/10 nav-dark:hover:bg-white/15 aria-expanded:bg-foreground/10 nav-dark:aria-expanded:bg-white/15";
+const ink = "text-foreground nav-dark:text-white";
+const barLink = `inline-flex items-center gap-1 h-9 px-3 text-sm font-medium ${ink} ${hv}`;
+const stripLink = `inline-flex items-center gap-1.5 h-8 px-2.5 text-[13px] ${hv} text-foreground/80 nav-dark:text-white`;
+const github = `<svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.3 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"></path></svg>`;
+---
+
+<a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-60 focus:bg-background focus:text-foreground focus:px-3 focus:py-2 focus:shadow-lg">{t("Skip to content")}</a>
+
+<div
+  id="nav-wrapper"
+  data-nav={tone}
+  class="group fixed inset-x-0 top-0 w-full z-51 flex flex-col-reverse border-b border-transparent transition-colors duration-200 bg-background nav-dark:bg-transparent data-scrolled:border-border data-scrolled:bg-background/90 data-scrolled:backdrop-blur-md"
+>
+  <Wrapper variant="standard" class="w-full px-4! sm:px-6! lg:px-8!">
+    <div class="items-center hidden gap-1 lg:flex h-16">
+      <a href={lp(locale, "/")} class={`inline-flex items-center h-10 px-1 -mx-1 ${hv}`}>
+        <span class="sr-only">{t("Go to homepage")}</span>
+        <Logo class={`text-xl ${ink}`} />
+      </a>
+      <nav aria-label={t("Main")} class="flex items-center gap-0.5 ml-6">
+        {
+          nav.map((n, i) =>
+            "items" in n ? (
+              <div data-menu-wrap class="relative">
+                <button type="button" data-menu data-hover aria-expanded="false" aria-controls={`nav-menu-${i}`} class={barLink}>
+                  {t(n.label)}<Fragment set:html={chev} />
+                </button>
+                <div id={`nav-menu-${i}`} hidden class="pn absolute left-0 z-50 pt-1 text-foreground top-full">
+                  {(() => {
+                    const compact = n.items.some((it) => !it.description);
+                    const cols2 = compact || n.items.length > 5;
+                    return (
+                      <div class:list={["border bg-background border-border shadow-lg", cols2 ? (compact ? "w-[460px]" : "w-[600px]") : "w-[340px]"]}>
+                        <ul role="list" class:list={["p-2 grid", cols2 && "grid-cols-2"]}>
+                          {n.items.map((it) => (
+                            <li class:list={[compact && it.description && "col-span-2"]}>
+                              <a href={lp(locale, it.href)} aria-current={current(it.href) ? "page" : undefined} class="flex items-start gap-3 p-2.5 rounded-md hover:bg-muted focus-visible:bg-muted aria-[current=page]:bg-muted">
+                                {it.icon ? (
+                                  <span class="mt-0.5 grid place-items-center size-9 bg-mist text-primary shrink-0"><it.icon size={18} strokeWidth={1.8} aria-hidden="true" /></span>
+                                ) : it.logo ? (
+                                  <img src={it.logo} alt="" width="32" height="32" loading="lazy" class:list={["object-contain shrink-0", it.description ? "size-8" : "size-6"]} />
+                                ) : null}
+                                <span class:list={["min-w-0", !it.description && "self-center"]}>
+                                  <span class="block text-sm font-semibold">{t(it.label)}<EnTag href={it.href} /></span>
+                                  {it.description && <span class="block text-[13px] leading-snug text-muted-foreground">{t(it.description)}</span>}
+                                </span>
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                        {n.footer && (
+                          <a href={lp(locale, n.footer.href)} class="flex items-center gap-1.5 px-5 border-t min-h-11 text-sm font-medium border-border text-primary hover:bg-muted">
+                            {t(n.footer.label)}<EnTag href={n.footer.href} /> <ArrowRight class="size-3.5" />
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            ) : (
+              <a href={lp(locale, n.href)} aria-current={current(n.href) ? "page" : undefined} class={`${barLink} aria-[current=page]:font-semibold`}>{t(n.label)}<EnTag href={n.href} /></a>
+            ),
+          )
+        }
+      </nav>
+      <div class="flex-1"></div>
+      <Button isLink={true} href={`/demo?lang=${locale}`} size="sm" variant="muted">{t("Try the demo")}</Button>
+      <Button isLink={true} href="/signup" data-auth-cta size="sm" variant="accent" class="ml-1"><span data-auth-label data-dashboard={t("Dashboard")}>{t("Start free")}</span></Button>
+    </div>
+    <div class="flex items-center justify-between lg:hidden h-14">
+      <a href={lp(locale, "/")} class="inline-flex items-center h-10">
+        <span class="sr-only">{t("Go to homepage")}</span>
+        <Logo class={`text-xl ${ink}`} />
+      </a>
+      <div class="flex items-center gap-1">
+        <Button isLink={true} href="/signup" data-auth-cta size="sm" variant="accent"><span data-auth-label data-dashboard={t("Dashboard")}>{t("Start free")}</span></Button>
+        <button id="menu-toggle" type="button" aria-label={t("Menu")} aria-expanded="false" aria-controls="mobile-menu" class={`grid place-items-center -mr-2 size-11 ${ink} ${hv}`}>
+          <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+        </button>
+      </div>
+    </div>
+  </Wrapper>
+
+  <!-- Strip comes second in the DOM (tab order: main nav first) and first on screen (flex-col-reverse). -->
+  <!-- Strip: on phones only the price promise. It folds away once the page scrolls, leaving one row; clipped only
+       while folded so the language menu can open below it at the top. -->
+  <div id="nav-strip" class="grid transition-[grid-template-rows] duration-200 grid-rows-[1fr] group-data-scrolled:grid-rows-[0fr]">
+    <div class="min-h-0 group-data-scrolled:overflow-hidden group-data-scrolled:invisible">
+      <Wrapper variant="standard" class="flex items-center justify-between min-h-10 px-4! sm:px-6! lg:px-8!">
+        <p class="flex-1 py-1.5 text-center lg:flex-none lg:text-left text-[13px] text-foreground/80 nav-dark:text-white/90">
+          <span class="sm:hidden">{t("Free for your first {n} people.", { n: FREE_PEOPLE })}</span>
+          <span class="hidden sm:inline">{t("Free for your first {n} people, then {price} per person a month.", { n: FREE_PEOPLE, price: lowest })} {t("14-day trial, no card.")}</span>
+          {" "}<a href={lp(locale, "/docs/self-host")} class="inline-flex items-center ml-1 font-medium underline underline-offset-2 min-h-6 text-foreground nav-dark:text-white">{t("Self-host for free")}</a>
+        </p>
+        <nav aria-label={t("Utility")} class="items-center hidden gap-1 lg:flex">
+          <a href={lp(locale, "/docs")} class={stripLink}>{t("Docs")}</a>
+          <a href={lp(locale, "/security")} class={stripLink}>{t("Security")}<EnTag href="/security" /></a>
+          <a href={siteConfig.repoUrl} target="_blank" rel="noopener" class={stripLink}><Fragment set:html={github} />GitHub</a>
+          <span aria-hidden="true" class="w-px h-4 mx-1 bg-foreground/20 nav-dark:bg-white/25"></span>
+          <LanguageMenu id="lang-nav" locale={locale} here={here} class={`${hv} text-foreground/80 nav-dark:text-white`} />
+          <Button isLink={true} href="/login" data-auth-signin size="xs" variant="muted" class="ml-1">{t("Sign in")}</Button>
+        </nav>
+      </Wrapper>
+    </div>
+  </div>
+
+</div>
+
+<div
+  id="mobile-menu"
+  role="dialog"
+  aria-modal="true"
+  aria-label={t("Menu")}
+  class="fixed inset-0 flex flex-col opacity-0 pointer-events-none z-52 h-svh bg-background text-foreground transition-opacity duration-200 ease-out lg:hidden data-open:opacity-100 data-open:pointer-events-auto"
+>
+  <div class="flex items-center justify-between h-14 px-4 border-b sm:px-6 shrink-0 border-border">
+    <a href={lp(locale, "/")} class="inline-flex items-center h-10">
+      <span class="sr-only">{t("Go to homepage")}</span>
+      <Logo class="text-xl text-foreground" />
+    </a>
+    <button id="menu-close" type="button" aria-label={t("Close menu")} class="grid -mr-2 place-items-center size-11 text-foreground">
+      <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>
+    </button>
+  </div>
+  <nav aria-label={t("Menu")} class="flex-1 px-4 overflow-y-auto sm:px-6 overscroll-contain">
+    {
+      nav.map((n, i) =>
+        "items" in n ? (
+          <div class="border-b border-border">
+            <button type="button" data-acc aria-expanded="false" aria-controls={`m-acc-${i}`} class="flex items-center justify-between w-full text-lg font-medium h-14">
+              {t(n.label)}<Fragment set:html={chev.replace("size-3.5", "size-5 text-muted-foreground")} />
+            </button>
+            <div id={`m-acc-${i}`} hidden class="pb-2">
+              {n.items.map((it) => (
+                <a href={lp(locale, it.href)} aria-current={current(it.href) ? "page" : undefined} class="flex items-start gap-3 py-2 min-h-12 aria-[current=page]:font-semibold">
+                  {it.icon ? (
+                    <span class="mt-0.5 text-primary"><it.icon size={20} strokeWidth={1.8} aria-hidden="true" /></span>
+                  ) : it.logo ? (
+                    <img src={it.logo} alt="" width="24" height="24" loading="lazy" class="mt-0.5 size-6 object-contain" />
+                  ) : null}
+                  <span class:list={[!it.description && "self-center"]}>
+                    <span class="block text-[15px] font-medium">{t(it.label)}<EnTag href={it.href} /></span>
+                    {it.description && <span class="block text-sm text-muted-foreground">{t(it.description)}</span>}
+                  </span>
+                </a>
+              ))}
+              {n.footer && (
+                <a href={lp(locale, n.footer.href)} class="flex items-center gap-1.5 text-sm font-medium min-h-12 text-primary">{t(n.footer.label)}<EnTag href={n.footer.href} /> <ArrowRight class="size-3.5" /></a>
+              )}
+            </div>
+          </div>
+        ) : (
+          <a href={lp(locale, n.href)} aria-current={current(n.href) ? "page" : undefined} class="flex items-center text-lg font-medium border-b h-14 border-border aria-[current=page]:text-primary">{t(n.label)}<EnTag href={n.href} /></a>
+        ),
+      )
+    }
+    <div class="border-b border-border">
+      <button type="button" data-acc aria-expanded="false" aria-controls="m-acc-lang" class="flex items-center justify-between w-full text-lg font-medium h-14">
+        <span class="inline-flex items-center gap-2.5"><svg class="size-5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"></path></svg>{t("Language")}: {localeName(locale)}</span>
+        <Fragment set:html={chev.replace("size-3.5", "size-5 text-muted-foreground")} />
+      </button>
+      <div id="m-acc-lang" hidden class="pb-2">
+        {
+          LOCALES.map((l) =>
+            l === locale || available.includes(l) ? (
+              <a href={localizedPath(l, here)} lang={l} hreflang={l} data-locale={l} aria-current={l === locale ? "true" : undefined} class="flex items-center justify-between min-h-12 text-[15px] font-medium">
+                {localeName(l)}
+                {l === locale && <svg class="size-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>}
+              </a>
+            ) : (
+              <p lang={l} class="flex items-center justify-between min-h-12 text-[15px] text-muted-foreground">{localeName(l)}<span class="text-sm">{t("not translated yet")}</span></p>
+            ),
+          )
+        }
+      </div>
+    </div>
+    <ul role="list" class="flex flex-wrap py-4 gap-x-6">
+      <li><a href={siteConfig.repoUrl} target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 min-h-11 text-sm text-muted-foreground"><Fragment set:html={github} />GitHub</a></li>
+      <li><a href={lp(locale, "/docs")} class="inline-flex items-center text-sm min-h-11 text-muted-foreground">{t("Docs")}</a></li>
+      <li><a href={`/demo?lang=${locale}`} class="inline-flex items-center text-sm min-h-11 text-muted-foreground">{t("Try the demo")}</a></li>
+    </ul>
+  </nav>
+  <div class="flex gap-2 px-4 pt-3 border-t sm:px-6 shrink-0 border-border bg-background pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <Button isLink={true} href="/login" data-auth-signin size="lg" variant="muted" class="flex-1">{t("Sign in")}</Button>
+    <Button isLink={true} href="/signup" data-auth-cta size="lg" variant="accent" class="flex-1"><span data-auth-label data-dashboard={t("Dashboard")}>{t("Start free")}</span></Button>
+  </div>
+</div>
+
+<style is:global>
+  #nav-wrapper :is(a, button):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+  #nav-wrapper[data-nav="dark"] :is(a, button):focus-visible { outline-color: #fff; }
+  #nav-wrapper .pn :is(a, button):focus-visible, #mobile-menu :is(a, button):focus-visible { outline-color: var(--color-primary); }
+  #nav-wrapper .chv, #mobile-menu .chv { transition: transform 0.15s; }
+  #nav-wrapper [aria-expanded="true"] > .chv, #mobile-menu [aria-expanded="true"] > .chv { transform: rotate(180deg); }
+  @media (prefers-reduced-motion: reduce) { #nav-wrapper *, #mobile-menu { transition: none !important; } }
+</style>
+
+<script define:vars={{ cookie: LOCALE_COOKIE }}>
+  // Remember a language pick for the pages without a language prefix (sign-in, the dashboard).
+  // (delegated: the footer's links come later in the page than this script)
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest?.("a[data-locale]");
+    if (a) document.cookie = `${cookie}=${a.dataset.locale}; path=/; max-age=31536000; samesite=lax`;
+  });
+</script>
+
+<script>
+  import { closeMenus } from "./menus";
+
+  const navWrapper = document.getElementById("nav-wrapper")!;
+  const mobileMenu = document.getElementById("mobile-menu")!;
+  const menuToggle = document.getElementById("menu-toggle")!;
+  const menuClose = document.getElementById("menu-close")!;
+  mobileMenu.inert = true;
+
+  function toggleMenu(open: boolean) {
+    mobileMenu.toggleAttribute("data-open", open);
+    mobileMenu.inert = !open;
+    menuToggle.setAttribute("aria-expanded", String(open));
+    document.documentElement.style.overflow = open ? "hidden" : "";
+    if (open) menuClose.focus();
+    else menuToggle.focus({ preventScroll: true });
+  }
+  menuToggle.addEventListener("click", () => toggleMenu(true));
+  menuClose.addEventListener("click", () => toggleMenu(false));
+  mobileMenu.querySelectorAll("a").forEach((link) => link.addEventListener("click", () => toggleMenu(false)));
+  document.addEventListener("keydown", (event) => {
+    if (!mobileMenu.hasAttribute("data-open")) return;
+    if (event.key === "Escape") toggleMenu(false);
+    if (event.key === "Tab") {
+      // keep focus inside the open menu
+      const focusable = Array.from(mobileMenu.querySelectorAll<HTMLElement>("a[href], button")).filter((el) => el.offsetParent !== null);
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) (event.preventDefault(), last.focus());
+      else if (!event.shiftKey && document.activeElement === last) (event.preventDefault(), first.focus());
+    }
+  });
+  // Accordion rows: one open at a time
+  const accordions = Array.from(mobileMenu.querySelectorAll<HTMLButtonElement>("[data-acc]"));
+  for (const button of accordions) {
+    button.addEventListener("click", () => {
+      const open = button.getAttribute("aria-expanded") !== "true";
+      for (const other of accordions) {
+        const on = other === button && open;
+        other.setAttribute("aria-expanded", String(on));
+        document.getElementById(other.getAttribute("aria-controls")!)!.hidden = !on;
+      }
+    });
+  }
+  // Crossing the desktop breakpoint closes whatever is open
+  matchMedia("(min-width: 1024px)").addEventListener("change", () => {
+    if (mobileMenu.hasAttribute("data-open")) toggleMenu(false);
+    closeMenus();
+  });
+
+  // The marketing pages are prerendered, so swap the auth links once we know there's a session.
+  fetch("/api/auth/get-session", { credentials: "same-origin" })
+    .then((res) => (res.ok ? res.json() : null))
+    .then((data) => {
+      if (!data?.user) return;
+      document.querySelectorAll("[data-auth-signin]").forEach((el) => el.remove());
+      for (const cta of document.querySelectorAll<HTMLAnchorElement>("[data-auth-cta]")) {
+        cta.href = "/app";
+        const label = cta.querySelector<HTMLElement>("[data-auth-label]")!;
+        label.textContent = label.dataset.dashboard ?? "Dashboard";
+      }
+    })
+    .catch(() => {});
+
+  // Over a marked element (the gradient hero) at the very top the bar is see-through with white text; one scroll
+  // step later it is always the solid surface with a hairline, over every section.
+  const darkElements = document.querySelectorAll<HTMLElement>("[data-nav-dark]");
+  const clearElements = document.querySelectorAll<HTMLElement>("[data-nav-clear]");
+  let ticking = false;
+  function updateTone() {
+    const scrolled = window.scrollY > 8;
+    navWrapper.toggleAttribute("data-scrolled", scrolled);
+    const middle = navWrapper.offsetHeight / 2;
+    const under = (elements: NodeListOf<HTMLElement>) =>
+      Array.from(elements).some((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.top <= middle && rect.bottom >= middle;
+      });
+    navWrapper.dataset.nav = !scrolled && under(darkElements) ? "dark" : !scrolled && under(clearElements) ? "clear" : "light";
+    ticking = false;
+  }
+  function requestTick() {
+    if (!ticking) {
+      requestAnimationFrame(updateTone);
+      ticking = true;
+    }
+  }
+  window.addEventListener("scroll", requestTick, { passive: true });
+  window.addEventListener("resize", requestTick);
+  updateTone();
+</script>
