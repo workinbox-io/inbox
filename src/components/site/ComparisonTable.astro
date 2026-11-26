@@ -1,48 +1,45 @@
 ---
-/** WorkInbox next to one or more products, row by row (config/compare.ts). Status icons say how each covers a row. */
-import { Check, CircleDashed, Clock, Info, Minus } from "lucide-react";
+/** Work Inbox next to one or more products, row by row (config/compare.ts), as a Navy table: striped rows, a check or a
+ * dash with the vendor's own words. */
+import Check from "@/components/navy/fundations/icons/Check.astro";
+import Minus from "@/components/navy/fundations/icons/Minus.astro";
 import { OURS, ROW_LABELS, type Cell, type Competitor, type RowKey } from "@/config/compare";
 import { siteConfig } from "@/config/site";
 import { siteLocale, tFor } from "@/lib/i18n/site";
-
 interface Props {
   competitors: Competitor[];
   rows?: RowKey[];
 }
 const { competitors, rows = Object.keys(ROW_LABELS) as RowKey[] } = Astro.props;
 const t = tFor(siteLocale(Astro.url));
-const icons = { yes: Check, partial: CircleDashed, no: Minus, soon: Clock, info: Info };
 const labels = { yes: t("Included"), partial: t("Partly"), no: t("Not available"), soon: t("Coming"), info: "" };
 ---
 
-<div class="overflow-x-auto rounded-2xl border border-(--border) bg-(--card)">
-  <table class="w-full min-w-[640px] border-collapse text-left text-sm">
+<div class="relative overflow-x-auto">
+  <table class="w-full text-sm text-left min-w-160">
     <thead>
-      <tr class="border-b border-(--border)">
-        <th class="w-[22%] p-4 font-medium text-foreground/60"><span class="sr-only">{t("Feature")}</span></th>
-        <th class="p-4 font-semibold"><span class="flex items-center gap-2"><img src="/favicon.svg" alt="" width="20" height="20" class="size-5 rounded-md" />{siteConfig.name}</span></th>
-        {competitors.map((c) => <th class="p-4 font-semibold"><span class="flex items-center gap-2"><img src={c.logo} alt="" width="20" height="20" loading="lazy" class="size-5 rounded-md bg-white object-contain p-0.5" />{c.name}</span></th>)}
+      <tr>
+        <th scope="col" class="w-1/4 px-5 pb-6 font-normal align-bottom"><span class="sr-only">{t("Feature")}</span></th>
+        <th scope="col" class="pb-6 pl-2 pr-6 font-medium align-bottom text-foreground">{siteConfig.name}</th>
+        {competitors.map((c) => <th scope="col" class="pb-6 pl-2 pr-6 font-medium align-bottom text-foreground">{c.name}</th>)}
       </tr>
     </thead>
     <tbody>
       {
-        rows.map((key) => (
-          <tr class="border-b border-(--border) align-top last:border-0">
-            <th scope="row" class="p-4 font-medium">{t(ROW_LABELS[key])}</th>
-            {[OURS[key], ...competitors.map((c) => c.rows[key])].map((cell: Cell, i) => {
-              const Icon = icons[cell.status];
-              return (
-                <td class:list={["p-4 leading-6", i === 0 && "bg-(--accent)"]}>
-                  <span class="flex gap-2">
-                    <Icon className={`mt-1 size-4 shrink-0 ${cell.status === "no" ? "text-foreground/40" : ""}`} aria-hidden="true" />
-                    <span>
-                      {labels[cell.status] ? <span class="sr-only">{labels[cell.status]}: </span> : null}
-                      {t(cell.text)}
-                    </span>
+        rows.map((key, index) => (
+          <tr class:list={["align-top", index % 2 === 0 && "bg-muted"]}>
+            <th scope="row" class="px-5 py-5 font-medium text-foreground">{t(ROW_LABELS[key])}</th>
+            {[OURS[key], ...competitors.map((c) => c.rows[key])].map((cell: Cell) => (
+              <td class="py-5 pl-2 pr-6">
+                <span class="flex gap-2">
+                  {cell.status === "yes" ? <Check size="sm" class="shrink-0 text-primary" aria-hidden="true" /> : cell.status === "no" ? <Minus size="sm" class="shrink-0 text-faint-foreground" aria-hidden="true" /> : <span class="size-4 shrink-0" />}
+                  <span class:list={[cell.status === "no" ? "text-muted-foreground" : "text-foreground"]}>
+                    {labels[cell.status] ? <span class:list={[cell.status === "yes" || cell.status === "no" ? "sr-only" : "block text-xs uppercase text-muted-foreground"]}>{labels[cell.status]}{cell.status === "yes" || cell.status === "no" ? ": " : ""}</span> : null}
+                    {t(cell.text)}
                   </span>
-                </td>
-              );
-            })}
+                </span>
+              </td>
+            ))}
           </tr>
         ))
       }

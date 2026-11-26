@@ -46,15 +46,15 @@ optional mail bridge in `infra/mail`). Not yet: CalDAV, voice and video calls, a
 
 | | |
 |---|---|
-| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/mail-thread-dark.webp" /><img alt="Mail" src="public/marketing/mail-thread.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/chat-dark.webp" /><img alt="Chat" src="public/marketing/chat.webp" /></picture> |
+| <img alt="Mail" src="public/marketing/mail-thread.webp" /> | <img alt="Chat" src="public/marketing/chat.webp" /> |
 | **Mail**: threads, the sender's card, every mailbox in one list | **Chat**: channels, threads and reactions |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/notes-dark.webp" /><img alt="Notes" src="public/marketing/notes.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/calendar-dark.webp" /><img alt="Calendar" src="public/marketing/calendar.webp" /></picture> |
+| <img alt="Notes" src="public/marketing/notes.webp" /> | <img alt="Calendar" src="public/marketing/calendar.webp" /> |
 | **Notes**: live co-editing | **Calendar**: the team's week |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/drive-dark.webp" /><img alt="Drive" src="public/marketing/drive.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/contacts-dark.webp" /><img alt="Contacts" src="public/marketing/contacts.webp" /></picture> |
+| <img alt="Drive" src="public/marketing/drive.webp" /> | <img alt="Contacts" src="public/marketing/contacts.webp" /> |
 | **Drive**: files, sharing, public links | **Contacts**: the team's address book |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/shared-mailbox-dark.webp" /><img alt="Shared mailbox" src="public/marketing/shared-mailbox.webp" /></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/mail-settings-dark.webp" /><img alt="Domains" src="public/marketing/mail-settings.webp" /></picture> |
+| <img alt="Shared mailbox" src="public/marketing/shared-mailbox.webp" /> | <img alt="Domains" src="public/marketing/mail-settings.webp" /> |
 | **Shared mailboxes**: support@ answered by the team | **Domains**: DNS records and checks, mailboxes, aliases |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="public/marketing/collections-dark.webp" /><img alt="Collections" src="public/marketing/collections.webp" /></picture> | |
+| <img alt="Collections" src="public/marketing/collections.webp" /> | |
 | **Collections**: your own lists as a board | |
 
 ## Self-hosting

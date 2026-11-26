@@ -1,0 +1,178 @@
+---
+/** A small faux screen per app for the suite (HTML, no screenshots): a few rows of believable content, crisp at any size. */
+import { FileText, Folder, Image, Mail, Paperclip, Search, Sheet } from "lucide-react";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+
+interface Props {
+  app: string;
+  /** Inside another frame: no border or shadow. */
+  bare?: boolean;
+}
+const { app, bare = false } = Astro.props;
+const t = tFor(siteLocale(Astro.url));
+const dot = ["bg-[#6d5bd0]", "bg-[#d9822b]", "bg-[#2f9e8f]", "bg-[#c2410c]", "bg-primary"];
+const mails = [
+  { who: "Marta Kaczmarek", subject: t("Contract for the spring campaign"), time: "08:00", unread: true },
+  { who: "Oliver Smith", subject: t("Can't log in after the password reset"), time: "07:45", unread: true },
+  { who: "Lena Weber", subject: t("Invoice 2026-114 has the wrong VAT"), time: "07:17" },
+  { who: "Tomasz Wiśniewski", subject: t("Notes from the client call"), time: "06:54" },
+  { who: "Sofía García", subject: t("Question about shared mailboxes"), time: t("Mon") },
+];
+const chat: { who: string; time: string; text: string; mention?: boolean; chip?: string }[] = [
+  { who: "Marek", time: "09:12", text: t("Kickoff is on the 18th. Marta sent the signed contract."), chip: "file" },
+  { who: "Diana", time: "09:14", text: t("Great, I'll book the design review.") },
+  { who: "Ben", time: "09:20", text: t("{name} can you take the Brightloop thread?", { name: "@Anna" }), mention: true },
+  { who: "Anna", time: "09:21", text: t("On it. Drafting the reply now."), chip: "mail" },
+];
+const week = [t("Mon"), t("Tue"), t("Wed"), t("Thu"), t("Fri")];
+// day, top (hours after 8), height, colour, title
+const events = [
+  [0, 1, 1, "bg-primary", t("Standup")],
+  [1, 2, 2, "bg-[#2f9e8f]", t("Kickoff: Brightloop"), true],
+  [2, 0.5, 1, "bg-[#d9822b]", t("Design review")],
+  [3, 3, 1.5, "bg-primary", t("1:1 Marek")],
+  [4, 1, 2, "bg-[#6d5bd0]", t("Planning")],
+] as readonly (readonly [number, number, number, string, string, boolean?])[];
+const chip = "inline-flex items-center gap-1 px-1.5 py-0.5 font-medium align-middle bg-primary/10 text-primary";
+const contract = t("Signed contract.pdf");
+const files = [
+  { name: t("Brightloop"), kind: "folder" },
+  { name: contract, kind: "pdf" },
+  { name: t("Campaign budget.csv"), kind: "sheet" },
+  { name: t("Moodboard.png"), kind: "image" },
+  { name: t("Invoices"), kind: "folder" },
+  { name: t("Brief.pdf"), kind: "pdf" },
+  { name: t("Leads.csv"), kind: "sheet" },
+  { name: t("Logo.png"), kind: "image" },
+];
+const board = [
+  { title: t("To do"), cards: [["DEL-7", t("Quote for Brightloop"), "Anna"], ["DEL-9", t("Renew the domain"), "Ben"]] },
+  { title: t("In progress"), cards: [["DEL-4", t("Onboarding emails"), "Marek"], ["DEL-5", t("Fix the VAT on invoices"), "Lena"]] },
+  { title: t("Done"), cards: [["DEL-2", t("Move mail from Gmail"), "Anna"]] },
+];
+---
+
+<div aria-hidden="true" class:list={["h-88 overflow-hidden text-xs select-none bg-background text-foreground", app === "custom-domain-email" && "max-sm:h-auto", !bare && "border border-border shadow-[0_24px_60px_-30px_rgba(20,25,80,0.35)]"]}>
+  {app === "custom-domain-email" && (
+    <div class="grid h-full grid-cols-1 sm:grid-cols-[2fr_3fr]">
+      <div class="sm:border-r sm:border-border">
+      <p class="items-center hidden gap-2 px-3 py-2 border-b sm:flex border-border text-muted-foreground"><Search className="size-3.5" />{t("Search everything")}<kbd class="px-1.5 ml-auto border border-border font-sans">⌘K</kbd></p>
+      <ul class="divide-y divide-border">
+        {mails.map((m, i) => (
+          <li class:list={["flex gap-2.5 px-3 py-2.5", i === 0 && "bg-primary/10 border-l-2 border-primary", i > 2 && "hidden sm:flex"]}>
+            <i class={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-semibold text-white ${dot[i % dot.length]}`}>{m.who[0]}</i>
+            <span class="min-w-0 flex-1">
+              <span class="flex gap-2"><b class:list={["truncate", !m.unread && "font-medium"]}>{m.who}</b><span class="ml-auto text-muted-foreground">{m.time}</span></span>
+              <span class="block truncate text-muted-foreground">{m.subject}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      </div>
+      <div class="p-4 border-t sm:p-5 sm:border-t-0 border-border">
+        <p class="text-base font-semibold">{mails[0]!.subject}</p>
+        <p class="mt-3 flex items-center gap-2"><i class="grid size-7 place-items-center rounded-full bg-[#6d5bd0] text-[10px] font-semibold text-white">M</i><span><b>Marta Kaczmarek</b> <span class="text-muted-foreground">&lt;marta@brightloop.io&gt;</span></span></p>
+        <p class="mt-4 text-sm">{t("Hi Anna,")}</p>
+        <p class="mt-2 text-sm text-muted-foreground">{t("Attached is the signed contract for the spring campaign. Could you confirm the kickoff date? We'd like to start on the 18th.")}</p>
+        <p class="mt-4 inline-flex items-center gap-2 border border-border px-3 py-2"><Paperclip className="size-3.5 text-primary" />{contract} <span class="text-muted-foreground">857 B</span></p>
+        <p class="mt-4 flex gap-2"><span class="border border-border px-3 py-1.5 font-medium">{t("Reply")}</span><span class="border border-border px-3 py-1.5 font-medium">{t("Forward")}</span><span class="border border-border px-3 py-1.5 font-medium text-primary">{t("Save to Drive")}</span></p>
+      </div>
+    </div>
+  )}
+  {app === "team-chat" && (
+    <div class="grid h-full sm:grid-cols-[11rem_1fr]">
+      <ul class="hidden p-3 space-y-1 border-r sm:block border-border bg-muted">
+        <li class="px-2 py-1 font-semibold bg-primary/10 text-primary"># general</li>
+        <li class="px-2 py-1 text-muted-foreground"># brightloop</li>
+        <li class="px-2 py-1 text-muted-foreground"># design</li>
+        <li class="px-2 py-1 mt-3 text-muted-foreground">Marek</li>
+        <li class="px-2 py-1 text-muted-foreground">Diana</li>
+      </ul>
+      <ul class="p-4 space-y-4">
+        {chat.map((m, i) => (
+          <li class="flex gap-3">
+            <i class={`grid size-7 shrink-0 place-items-center rounded-full text-[10px] font-semibold text-white ${dot[i % dot.length]}`}>{m.who[0]}</i>
+            <p class="min-w-0 text-sm"><b>{m.who}</b> <span class="text-muted-foreground">{m.time}</span><br />{m.mention ? <span>{m.text.split("@Anna")[0]}<span class="px-1 font-medium bg-primary/10 text-primary">@Anna</span>{m.text.split("@Anna")[1]}</span> : m.text}{m.chip === "file" && <><br /><span class={chip}><FileText className="size-3" />{contract}</span></>}{m.chip === "mail" && <><br /><span class={chip}><Mail className="size-3" />{mails[0]!.subject}</span></>}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+  {app === "shared-notes" && (
+    <div class="max-w-2xl p-6 mx-auto sm:p-8">
+      <div class="flex items-center gap-2">
+        <p class="text-lg font-semibold">{t("Brightloop kickoff")}</p>
+        <span class="flex ml-auto -space-x-1.5">{["A", "M", "D"].map((n, i) => <i class={`grid size-6 place-items-center rounded-full border-2 border-background text-[10px] font-semibold text-white ${dot[i + 1]}`}>{n}</i>)}</span>
+      </div>
+      <p class="mt-4 text-sm text-muted-foreground">{t("Goal: start the spring campaign on the 18th.")}</p>
+      <ul class="mt-4 space-y-2 text-sm">
+        <li class="flex items-center gap-2"><i class="grid size-4 place-items-center border bg-primary text-[10px] text-white border-primary">✓</i><s class="text-muted-foreground">{t("Signed contract in Drive")}</s> <span class={chip}><FileText className="size-3" />{contract}</span></li>
+        <li class="flex items-center gap-2"><i class="block size-4 border border-border"></i>{t("Confirm the kickoff date")}</li>
+        <li class="flex items-center gap-2"><i class="block size-4 border border-border"></i>{t("Brief the design team")} <span class="px-1 font-medium bg-primary/10 text-primary">@Diana</span></li>
+      </ul>
+      <p class="mt-5 text-sm text-muted-foreground">{t("Open questions")}<span class="inline-block w-px h-4 ml-1 align-middle bg-[#2f9e8f]"></span><span class="px-1 ml-1 text-[10px] text-white bg-[#2f9e8f]">Marek</span></p>
+    </div>
+  )}
+  {app === "team-calendar" && (
+    <div class="grid h-full grid-cols-[2.25rem_repeat(3,minmax(0,1fr))] grid-rows-[auto_1fr] sm:grid-cols-[2.5rem_repeat(5,minmax(0,1fr))]">
+      <i></i>
+      {week.map((d, i) => <p class:list={["px-2 py-2 font-medium border-b border-border truncate", i === 2 && "text-primary", i > 2 && "max-sm:hidden"]}>{d} {10 + i}</p>)}
+      <div class="grid grid-rows-8 text-muted-foreground">{[8, 9, 10, 11, 12, 13, 14, 15].map((h) => <span class="px-1 border-t border-border">{h}:00</span>)}</div>
+      {week.map((_, d) => (
+        <div class:list={["relative border-l border-border bg-[linear-gradient(to_bottom,transparent_calc(12.5%-1px),var(--border)_calc(12.5%-1px),var(--border)_12.5%)] bg-[length:100%_12.5%]", d > 2 && "max-sm:hidden"]}>
+          {events.filter((e) => e[0] === d).map((e) => <p class={`absolute inset-x-1 overflow-hidden px-1.5 py-1 font-medium leading-tight text-white ${e[3]}`} style={`top:${(e[1] / 8) * 100}%;height:${(e[2] / 8) * 100}%`}>{e[4]}{e[5] && <span class="block mt-1 font-normal opacity-90">{t("Meeting note")}</span>}</p>)}
+        </div>
+      ))}
+    </div>
+  )}
+  {app === "shared-drive" && (
+    <div class="p-4">
+      <p class="text-muted-foreground">{t("Shared with the team")} / <b class="text-foreground">Brightloop</b></p>
+      <ul class="grid grid-cols-2 gap-3 mt-4 sm:grid-cols-4">
+        {files.map((f) => (
+          <li class="border border-border">
+            <p class="grid h-20 place-items-center bg-muted text-primary">
+              {f.kind === "folder" ? <Folder className="size-8" /> : f.kind === "pdf" ? <FileText className="size-8 text-[#c2410c]" /> : f.kind === "sheet" ? <Sheet className="size-8 text-[#2f9e8f]" /> : <Image className="size-8 text-[#6d5bd0]" />}
+            </p>
+            <p class="px-2 py-2 truncate">{f.name}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+  {app === "shared-contacts" && (
+    <div class="grid h-full sm:grid-cols-[2fr_3fr]">
+      <ul class="hidden divide-y sm:block divide-border border-r border-border">
+        {["Marta Kaczmarek", "Oliver Smith", "Lena Weber", "Sofía García", "Felix Wagner"].map((n, i) => (
+          <li class:list={["flex items-center gap-2.5 px-3 py-2.5", i === 0 && "bg-primary/10"]}><i class={`grid size-6 place-items-center rounded-full text-[10px] font-semibold text-white ${dot[i % dot.length]}`}>{n[0]}</i>{n}</li>
+        ))}
+      </ul>
+      <div>
+        <div class="h-20 bg-[linear-gradient(120deg,var(--inverse),var(--primary))]"></div>
+        <div class="px-5 pb-5 -mt-7">
+          <i class="grid border-4 rounded-full size-14 place-items-center border-background bg-[#6d5bd0] text-lg font-semibold text-white">M</i>
+          <p class="mt-2 text-base font-semibold">Marta Kaczmarek</p>
+          <p class="text-muted-foreground">{t("Marketing lead")} · Brightloop</p>
+          <dl class="mt-4 space-y-2 text-sm"><dd>marta@brightloop.io</dd><dd>+48 601 234 567</dd><dd class="text-muted-foreground">{t("1 thread with Anna")}</dd></dl>
+        </div>
+      </div>
+    </div>
+  )}
+  {app === "custom-apps" && (
+    <div class="grid h-full gap-3 p-4 sm:grid-cols-3">
+      {board.map((c, i) => (
+        <div class:list={["bg-muted p-2", i > 0 && "hidden sm:block"]}>
+          <p class="px-1 pb-2 font-semibold">{c.title} <span class="font-normal text-muted-foreground">{c.cards.length}</span></p>
+          <ul class="space-y-2">
+            {c.cards.map(([id, title, who], j) => (
+              <li class="p-2.5 border bg-background border-border">
+                <p class="text-muted-foreground">{id}</p><p class="mt-0.5 font-medium">{title}</p>
+                <p class="flex items-center gap-1.5 mt-2 text-muted-foreground"><i class={`grid size-4 place-items-center rounded-full text-[8px] font-semibold text-white ${dot[(i + j) % dot.length]}`}>{who[0]}</i>{who}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )}
+</div>

@@ -1,0 +1,97 @@
+---
+/** The home FAQ (Before / after): doubts before switching on the left, questions once on it on the right, <details> that open and close smoothly. */
+import { ChevronDown } from "lucide-react";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+import DemoForm from "./DemoForm.astro";
+import { siteConfig } from "@/config/site";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+type Item = { question: string; answer: string };
+interface Props {
+  before: Item[];
+  after: Item[];
+}
+const t = tFor(siteLocale(Astro.url));
+const { before, after } = Astro.props;
+const groups = [
+  { title: t("Before you start"), text: t("Will it work for us, and what is not included?"), items: before },
+  { title: t("Day to day"), text: t("Cost, devices and where things live."), items: after },
+];
+---
+
+<section id="faq" class="bg-muted scroll-mt-20">
+  <Wrapper variant="standard" class="py-20 sm:py-24">
+    <Text tag="p" variant="textSM" class="font-medium tracking-wide uppercase text-primary">{t("FAQ")}</Text>
+    <Text tag="h2" variant="displayMD" class="max-w-3xl mt-3 tracking-tight text-balance text-foreground"><em>{t("Questions,")}</em>{" "}{t("answered")}</Text>
+    <div data-faq class="grid grid-cols-1 mt-12 *:min-w-0 gap-x-12 gap-y-12 lg:grid-cols-2">
+      {
+        groups.map((g) => (
+          <div>
+            <h3 class="text-xl font-semibold text-foreground">{g.title}</h3>
+            <p class="mt-1 mb-4 text-sm text-muted-foreground">{g.text}</p>
+            <div class="border-t divide-y border-border divide-border">
+              {
+                g.items.map((q) => (
+                  <details class="group">
+                    <summary class="flex items-center justify-between w-full gap-4 py-5 text-lg font-medium list-none cursor-pointer select-none text-foreground hover:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+                      <span class="text-balance">{q.question}</span>
+                      <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform duration-300 motion-reduce:transition-none group-[[open]:not([data-closing])]:rotate-180" aria-hidden="true" />
+                    </summary>
+                    <div data-faq-body class="overflow-hidden">
+                      <p class="pb-5 pr-8 leading-relaxed text-muted-foreground text-pretty">{q.answer}</p>
+                    </div>
+                  </details>
+                ))
+              }
+            </div>
+          </div>
+        ))
+      }
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-4 p-6 mt-10 border bg-background border-border">
+      <p class="max-w-xl"><b>{t("Not in the list?")}</b>{" "}{t("A person reads {email}, or open a populated workspace and check for yourself.", { email: siteConfig.supportEmail })}</p>
+      <div class="flex flex-wrap gap-3">
+        <DemoForm variant="accent" />
+        <Button isLink={true} href={`mailto:${siteConfig.supportEmail}`} size="base" variant="muted">{t("Ask us")}</Button>
+      </div>
+    </div>
+  </Wrapper>
+</section>
+
+<script>
+  // Smooth open and close; with reduced motion the browser's own toggle is left alone.
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+  for (const details of document.querySelectorAll<HTMLDetailsElement>("[data-faq] details")) {
+    const summary = details.querySelector("summary")!;
+    const body = details.querySelector<HTMLElement>("[data-faq-body]")!;
+    let anim: Animation | undefined;
+    const run = (to: number, done: () => void) => {
+      anim?.cancel();
+      anim = body.animate({ height: [`${body.offsetHeight}px`, `${to}px`] }, { duration: 260, easing: "ease-out", fill: "forwards" });
+      anim.onfinish = () => {
+        done();
+        anim?.cancel();
+        anim = undefined;
+      };
+    };
+    summary.addEventListener("click", (e) => {
+      if (reduce.matches) return;
+      e.preventDefault();
+      if (!details.open || details.hasAttribute("data-closing")) {
+        details.removeAttribute("data-closing");
+        details.open = true;
+        const full = body.scrollHeight;
+        anim?.cancel();
+        anim = body.animate({ height: ["0px", `${full}px`] }, { duration: 260, easing: "ease-out" });
+        anim.onfinish = () => (anim = undefined);
+      } else {
+        details.setAttribute("data-closing", "");
+        run(0, () => {
+          details.open = false;
+          details.removeAttribute("data-closing");
+        });
+      }
+    });
+  }
+</script>

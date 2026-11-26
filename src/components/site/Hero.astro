@@ -1,0 +1,40 @@
+---
+/** The gradient hero that opens a marketing page (Navy's recipe; use with MarketingLayout `ink`). Slots: `title` (the
+ * h1, key words in <em>), `text`, `actions`, and the default slot (a line between the text and the actions). */
+import GradientShader from "@/components/navy/assets/GradientShader.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
+interface Props {
+  /** A small uppercase line above the title. */
+  label?: string;
+  /** The home page: the hero fills the screen. */
+  full?: boolean;
+}
+const { label, full = false } = Astro.props;
+---
+
+<section class="relative overflow-hidden">
+  {/* Dark and blue all the way down, so text always sits on a dark ground; the last 6rem fade into the page. */}
+  <div aria-hidden="true" class="absolute inset-0" style={full ? undefined : "background: radial-gradient(ellipse 150% 100% at 65% 0%, var(--inverse) 0%, var(--inverse) 45%, oklch(30% 0.14 268) 62%, var(--primary) 82%, oklch(70% 0.12 272) 100%), radial-gradient(ellipse 90% 50% at 0% 55%, oklch(60% 0.18 268 / 0.5) 0%, transparent 70%), var(--background)"} class:list={[full && "arch-gradient"]}></div>
+  <GradientShader class="absolute inset-0 size-full" />
+  {!full && <div aria-hidden="true" class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 0%, color-mix(in oklab, var(--inverse) 78%, transparent) 28%, color-mix(in oklab, var(--inverse) 78%, transparent) 78%, transparent 100%)"></div>}
+  {!full && <div aria-hidden="true" class="absolute inset-x-0 bottom-0 h-16 bg-linear-to-b from-transparent to-background"></div>}
+  <div data-nav-dark aria-hidden="true" class="absolute inset-x-0 top-0 h-120"></div>
+  <Wrapper variant="standard" class:list={["relative flex flex-col justify-center pt-32", full ? "min-h-svh pb-24" : "pb-20"]}>
+    <div>
+      <div class="max-w-3xl">
+        {label && <Text tag="p" variant="textSM" class="font-medium uppercase text-inverse-foreground/90">{label}</Text>}
+        <Text tag="h1" variant="displayLG" class:list={["max-w-3xl tracking-tight text-balance text-inverse-foreground", label && "mt-6"]}>
+          <slot name="title" />
+        </Text>
+        {Astro.slots.has("text") && (
+          <Text tag="p" variant="textBase" class="max-w-xl mt-6 text-inverse-foreground text-pretty">
+            <slot name="text" />
+          </Text>
+        )}
+        <slot />
+        {Astro.slots.has("actions") && <div class="flex flex-wrap items-center mt-8 gap-6 [&_a[class*='group/link']]:text-inverse-foreground"><slot name="actions" /></div>}
+      </div>
+    </div>
+  </Wrapper>
+</section>

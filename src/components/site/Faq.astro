@@ -1,45 +1,35 @@
 ---
-/** Questions as native <details> rows between hairlines, a mono + / − in front. */
+/** Questions in the home's look: a blue label, the title, <details> rows between hairlines. */
+import Plus from "@/components/navy/fundations/icons/Plus.astro";
+import Section from "./Section.astro";
+import { siteConfig } from "@/config/site";
+import { siteLocale, tFor } from "@/lib/i18n/site";
 interface Props {
   items: { question: string; answer: string }[];
+  id?: string;
 }
-const { items } = Astro.props;
+const t = tFor(siteLocale(Astro.url));
+const { items, id = "faq" } = Astro.props;
 ---
 
-<div class="border-t border-(--border)">
-  {
-    items.map((item, i) => (
-      <details name="faq" open={i === 0} class="group border-b border-(--border)">
-        <summary class="flex cursor-pointer list-none items-start gap-4 py-5 text-lg outline-none focus-visible:underline [&::-webkit-details-marker]:hidden">
-          <span class="mk-mono w-4 shrink-0 text-(--muted-foreground) group-open:hidden" aria-hidden="true">+</span>
-          <span class="mk-mono hidden w-4 shrink-0 text-(--muted-foreground) group-open:inline" aria-hidden="true">−</span>
-          <span class="flex-1 font-medium text-balance">{item.question}</span>
-        </summary>
-        <div class="faq-answer"><p class="pb-6 pl-8 leading-7 text-pretty text-(--muted-foreground)">{item.answer}</p></div>
-      </details>
-    ))
-  }
-</div>
-
-<style>
-  details::details-content {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 250ms ease, content-visibility 250ms allow-discrete;
-  }
-
-  details[open]::details-content {
-    grid-template-rows: 1fr;
-  }
-
-  .faq-answer {
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    details::details-content {
-      transition: none;
-    }
-  }
-</style>
+<Section label={t("FAQ")} id={id} class="bg-muted">
+  <Fragment slot="title"><em>{t("Questions")}</em></Fragment>
+  <div class="max-w-3xl">
+    <div class="border-t divide-y border-border divide-border">
+      {
+        items.map((faq) => (
+          <details name="faq" class="group">
+            <summary class="flex items-center justify-between w-full gap-4 py-5 text-lg font-medium list-none cursor-pointer select-none text-foreground hover:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
+              <span class="text-balance">{faq.question}</span>
+              <Plus size="sm" class="transition-transform duration-300 shrink-0 text-faint-foreground group-open:rotate-45" />
+            </summary>
+            <p class="pb-5 pr-8 leading-relaxed text-muted-foreground text-pretty">{faq.answer}</p>
+          </details>
+        ))
+      }
+    </div>
+    <p class="mt-8 text-muted-foreground">
+      {t("Something else? Write to")}{" "}<a href={`mailto:${siteConfig.supportEmail}`} class="inline-block py-1.5 text-foreground border-b border-foreground hover:text-muted-foreground">{siteConfig.supportEmail}</a>.
+    </p>
+  </div>
+</Section>

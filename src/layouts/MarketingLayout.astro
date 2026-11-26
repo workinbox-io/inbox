@@ -1,62 +1,57 @@
 ---
-import "@/styles/marketing.css";
+import "@/styles/navy.css";
 import BaseLayout from "./BaseLayout.astro";
-import SiteHeader from "@/components/site/SiteHeader.astro";
-import SiteFooter from "@/components/site/SiteFooter.astro";
+import Navigation from "@/components/navy/global/Navigation.astro";
+import Footer from "@/components/navy/global/Footer.astro";
 import { DEFAULT_LOCALE, localizedPath, stripLocale } from "@/lib/i18n/locales";
-import { pageLocales } from "@/lib/i18n/site";
+import { pageLocales, tFor } from "@/lib/i18n/site";
 import { pagePath } from "@/lib/page-path";
 import { siteConfig } from "@/config/site";
+import { APPS } from "@/config/apps";
 
 interface Props {
   title: string;
   description?: string;
   /** Structured data for search engines, rendered as JSON-LD. */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
-  /** Docs pages hide the footer to keep the reading column clean. */
-  footer?: boolean;
-  /** "paper" is the marketing look (.mk, styles/marketing.css); "plain" keeps the app style for docs, legal and error pages. */
-  look?: "paper" | "plain";
-  /** The page opens with an ink band (.mk-band) under a see-through header. */
+  /** Docs pages take the slim footer (language, status, legal) to keep the reading column clean. */
+  footer?: boolean | "slim";
+  /** The page opens on a gradient hero (components/site/Hero): the navigation starts see-through with white links. */
   ink?: boolean;
 }
-const { title, description, jsonLd, footer = true, look = "paper", ink = false } = Astro.props;
+const { title, description, jsonLd, footer = true, ink = false } = Astro.props;
 const { locale, path } = stripLocale(pagePath(Astro.url.pathname));
 // hreflang only on pages that exist in several languages (lib/i18n/site.ts).
 const versions = pageLocales(path);
 const alternates = versions.length > 1 ? versions.map((l) => ({ l, href: new URL(localizedPath(l, path), siteConfig.url).href })) : [];
+// App pages get a BreadcrumbList here, so AppPage needn't build it; pages that bring their own (/vs/*) keep theirs.
+const app = APPS.find((a) => `/${a.slug}` === path);
+const given = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
+const crumbs =
+  app && !given.some((j) => j["@type"] === "BreadcrumbList")
+    ? [{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
+        { "@type": "ListItem", position: 1, name: siteConfig.name, item: new URL(localizedPath(locale, "/"), siteConfig.url).href },
+        { "@type": "ListItem", position: 2, name: tFor(locale)(app.label), item: new URL(localizedPath(locale, path), siteConfig.url).href },
+      ] }]
+    : [];
+const allLd = [...given, ...crumbs];
+const ogLocale = (l: string) => (l === "pl" ? "pl_PL" : "en_US");
 ---
 
-<BaseLayout title={title} description={description} jsonLd={jsonLd} lang={locale} words={false}>
+<BaseLayout title={title} description={description} jsonLd={allLd.length ? allLd : undefined} lang={locale} words={false}>
   <Fragment slot="head">
+    <meta property="og:locale" content={ogLocale(locale)} />
+    {alternates.filter((a) => a.l !== locale).map((a) => <meta property="og:locale:alternate" content={ogLocale(a.l)} />)}
     {alternates.map((a) => <link rel="alternate" hreflang={a.l} href={a.href} />)}
     {alternates.length > 0 && <link rel="alternate" hreflang="x-default" href={alternates.find((a) => a.l === DEFAULT_LOCALE)!.href} />}
+    <!-- Switzer, Navy's one typeface: https://www.fontshare.com/fonts/switzer -->
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,601&display=swap" />
   </Fragment>
-  <div class:list={["relative z-10 flex min-h-svh flex-col [--header-height:calc(var(--spacing)*14)] sm:[--header-height:calc(var(--spacing)*16)]", look === "paper" && "mk"]}>
-    <SiteHeader ink={ink} />
-    <main class="flex min-h-0 flex-1 flex-col"><slot /></main>
-    {footer ? <SiteFooter /> : null}
+  <!-- The navigation is fixed (strip 40 px + bar 56/64 px): pages without a gradient hero start under it (--header-height). -->
+  <div class="navy relative flex min-h-svh flex-col [--header-height:calc(var(--spacing)*24)] lg:[--header-height:calc(var(--spacing)*26)]">
+    <Navigation tone={ink ? "dark" : "light"} />
+    <main id="main" tabindex="-1" class:list={["relative z-10 outline-none flex min-h-0 flex-1 flex-col", !ink && "pt-(--header-height)"]}><slot /></main>
+    {footer ? <Footer slim={footer === "slim"} /> : null}
   </div>
 </BaseLayout>
-
-<script>
-  // Scroll reveal: .reveal elements fade and rise the first time they enter the viewport.
-  const observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.add("is-inview");
-        observer.unobserve(entry.target);
-      }
-    },
-    { rootMargin: "0px 0px -5% 0px", threshold: 0.01 },
-  );
-  for (const el of document.querySelectorAll(".reveal")) observer.observe(el);
-
-  // GSAP motion (data-split, data-reveal, data-magnetic) only on the paper pages, after load, and not with reduced motion.
-  if (document.querySelector(".mk") && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    const start = () => void import("@/scripts/marketing-motion");
-    if (document.readyState === "complete") start();
-    else window.addEventListener("load", start, { once: true });
-  }
-</script>

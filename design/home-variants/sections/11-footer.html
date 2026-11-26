@@ -1,0 +1,305 @@
+<!-- section: footer | Footer | A final call to action, then every important link is findable, with language and status close at hand. -->
+<section data-variant="A" data-name="Closing band" data-idea="A big closing call to action on a deep indigo glow, then the full sitemap and a bottom bar with language (opens upward), live status and GitHub.">
+<style>
+.nv{--ink:oklch(20% .04 275);--mut:oklch(40% .03 275);--ringc:oklch(52% .22 268)}
+.nv[data-tone=dark]{--ink:#fff;--mut:rgb(255 255 255/.88);--ringc:#fff}
+.nv .t{color:var(--ink)} .nv .tm{color:var(--mut)}
+.nv .hv{border-radius:8px;transition:background .15s}
+.nv .hv:hover,.nv .hv[aria-expanded=true]{background:color-mix(in oklab,var(--ink) 10%,transparent)}
+.nv a:focus-visible,.nv button:focus-visible,.nv input:focus-visible,.nv summary:focus-visible{outline:2px solid var(--ringc);outline-offset:2px}
+.nv .pn{--ringc:oklch(52% .22 268);color:oklch(20% .04 275)}
+.nv .chv{transition:transform .15s}.nv [aria-expanded=true]>.chv{transform:rotate(180deg)}
+.nv [aria-checked=false] .ck{visibility:hidden}
+.nv [aria-current=page]{font-weight:600}
+.nv [data-q]:focus-visible{outline:none}
+.nv .mob{--ringc:oklch(52% .22 268)}
+@media (prefers-reduced-motion:reduce){.nv *{transition:none!important}}
+</style>
+<footer class="nv relative bg-inverse text-white" data-tone="dark" id="foot-a">
+<div class="relative" style="background:radial-gradient(ellipse 80% 120% at 70% 0%, oklch(36% .17 268) 0%, transparent 65%),radial-gradient(ellipse 60% 80% at 0% 0%, oklch(30% .12 268 / .7) 0%, transparent 70%)"><div class="grain absolute inset-0"></div>
+<div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 text-center">
+<p class="label !text-white/70">Start</p>
+<h2 class="mt-4 text-4xl sm:text-6xl font-semibold tracking-tight leading-[1.05] max-w-3xl mx-auto">Try it with your own team <em>in 30 seconds.</em></h2>
+<p class="mt-5 text-lg text-white/85 max-w-xl mx-auto">Free for your first 5 people, then EUR 1 per person a month. No card needed. Or run it yourself on Cloudflare.</p>
+<div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center"><a href="/demo" class="btn btn-lg bg-white text-inverse hover:bg-lilac">Try the demo<svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a href="/signup" class="btn btn-lg btn-accent">Start free</a></div>
+<p class="mt-5 text-sm text-white/80">Demo: no signup, a throwaway workspace. <a href="/docs/self-host" class="underline underline-offset-4 text-white inline-flex items-center min-h-8">Self-host for free</a></p>
+</div></div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-6 border-t border-white/10">
+<div class="grid lg:grid-cols-12 gap-10"><div class="lg:col-span-3"><p class="label !text-white/70">Sitemap</p><div class="mt-4"><span class="text-xl font-semibold uppercase tracking-tight leading-none">Work Inbox</span><p class="mt-3 text-sm text-white/80 max-w-[26ch]">Mail, chat, notes, calendar, drive and contacts for teams.</p></div></div>
+<div class="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-8"><nav aria-label="Product"><h3 class="text-xs uppercase tracking-wide text-white/70">Product</h3><ul class="mt-2"><li><a href="/custom-domain-email" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Mail</a></li><li><a href="/team-chat" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Chat</a></li><li><a href="/shared-notes" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Notes</a></li><li><a href="/team-calendar" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Calendar</a></li><li><a href="/shared-drive" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Drive</a></li><li><a href="/shared-contacts" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Contacts</a></li><li><a href="/custom-apps" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Collections</a></li><li><a href="/shared-mailbox" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Shared mailboxes</a></li><li><a href="/docs/mcp" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">AI apps</a></li><li><a href="/pricing" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Pricing</a></li></ul></nav><nav aria-label="Use it for"><h3 class="text-xs uppercase tracking-wide text-white/70">Use it for</h3><ul class="mt-2"><li><a href="/google-workspace-alternative" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Google Workspace alternative</a></li><li><a href="/cloudflare-email-routing" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Cloudflare Email Routing inbox</a></li><li><a href="/self-hosted" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Self-hosted email</a></li><li><a href="/vs" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">All comparisons</a></li></ul></nav><nav aria-label="Docs"><h3 class="text-xs uppercase tracking-wide text-white/70">Docs</h3><ul class="mt-2"><li><a href="/docs" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Introduction</a></li><li><a href="/docs/quickstart" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Quickstart</a></li><li><a href="/docs/self-host" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Self-hosting</a></li><li><a href="/docs/mcp" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">AI apps</a></li><li><a href="/docs/api" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">API reference</a></li></ul></nav><nav aria-label="Company"><h3 class="text-xs uppercase tracking-wide text-white/70">Company</h3><ul class="mt-2"><li><a href="/#faq" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">FAQ</a></li><li><a href="mailto:support@workinbox.io" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Support</a></li><li><a href="https://github.com/workinbox-io/inbox" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Source code</a></li><li><a href="/security" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Security</a></li><li><a href="/status" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Status</a></li></ul></nav><nav aria-label="Legal"><h3 class="text-xs uppercase tracking-wide text-white/70">Legal</h3><ul class="mt-2"><li><a href="/privacy" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Privacy</a></li><li><a href="/terms" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Terms</a></li><li><a href="/refunds" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Refunds</a></li></ul></nav></div></div>
+<div class="mt-12 pt-5 border-t border-white/15 flex flex-col-reverse lg:flex-row lg:items-center lg:justify-between gap-4"><p class="text-sm text-white/80">© 2026 Swift Apps. Work Inbox is open source under AGPL-3.0, made on Cloudflare.</p>
+<div class="flex flex-wrap items-center gap-x-2 gap-y-1"><div class="mw relative">
+<button type="button" data-menu class="hv t inline-flex items-center gap-1.5 h-10 px-2.5 text-sm font-medium " aria-haspopup="menu" aria-expanded="false" aria-controls="fa-lang" aria-label="Language: English"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg><span class="lc">EN</span><svg class="chv size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<div id="fa-lang" hidden class="pn absolute left-0 lg:left-auto lg:right-0 z-50 bottom-full pb-2"><div role="menu" aria-label="Language" class="min-w-44 bg-background border border-border shadow-xl p-1">
+<a role="menuitemradio" aria-checked="true" href="/" lang="en" hreflang="en" data-lang="EN" class="li flex items-center justify-between gap-6 min-h-10 px-3 text-sm hover:bg-muted"><span>English</span><span class="ck text-primary"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></a>
+<a role="menuitemradio" aria-checked="false" href="/pl" lang="pl" hreflang="pl" data-lang="PL" class="li flex items-center justify-between gap-6 min-h-10 px-3 text-sm hover:bg-muted"><span>Polski</span><span class="ck text-primary"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></a>
+</div></div></div><a href="/status" class="inline-flex items-center gap-2 min-h-10 px-1 text-sm text-white/90 hover:text-white hover:underline underline-offset-4"><span class="relative flex size-2.5"><span class="absolute inset-0 rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping"></span><span class="relative size-2.5 rounded-full bg-emerald-400"></span></span>All systems operational</a><a href="https://github.com/workinbox-io/inbox" target="_blank" rel="noopener" aria-label="Work Inbox on GitHub" class="hv t inline-flex items-center gap-2 min-h-10 justify-center size-10 text-sm font-medium"><svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.3 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg></a></div></div></div>
+</footer>
+<script>
+(function(){
+var sec=document.currentScript.closest('section');
+sec.addEventListener('click',function(e){var a=e.target.closest('a[href^="/"],a[href="#"]');if(a&&!a.hasAttribute('data-lang'))e.preventDefault();});
+sec.querySelectorAll('.nv').forEach(function(nv){
+  var menus=[].slice.call(nv.querySelectorAll('[data-menu]')),ot,ct;
+  var pane=function(b){return document.getElementById(b.getAttribute('aria-controls'))};
+  var isOpen=function(b){return b.getAttribute('aria-expanded')==='true'};
+  function close(b,f){b.setAttribute('aria-expanded','false');pane(b).hidden=true;if(f)b.focus()}
+  function closeAll(x){menus.forEach(function(b){if(b!==x&&isOpen(b))close(b)})}
+  function open(b){closeAll(b);b.setAttribute('aria-expanded','true');pane(b).hidden=false}
+  function links(b){return [].slice.call(pane(b).querySelectorAll('a[href]:not([aria-disabled=true])')).filter(function(a){return a.offsetParent})}
+  menus.forEach(function(b){
+    var w=b.closest('.mw');
+    b.addEventListener('click',function(){clearTimeout(ot);isOpen(b)?close(b):open(b)});
+    b.addEventListener('keydown',function(e){
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();open(b);var l=links(b);(e.key==='ArrowDown'?l[0]:l[l.length-1]).focus()}
+      if(e.key==='Escape'&&isOpen(b)){e.stopPropagation();close(b,true)}
+    });
+    pane(b).addEventListener('keydown',function(e){
+      var l=links(b),i=l.indexOf(document.activeElement);
+      if(e.key==='Escape'){e.stopPropagation();close(b,true)}
+      else if(e.key==='ArrowDown'||(e.key==='ArrowRight'&&pane(b).querySelector('[data-grid]'))){e.preventDefault();l[(i+1)%l.length].focus()}
+      else if(e.key==='ArrowUp'||(e.key==='ArrowLeft'&&pane(b).querySelector('[data-grid]'))){e.preventDefault();l[(i-1+l.length)%l.length].focus()}
+      else if(e.key==='Home'){e.preventDefault();l[0].focus()}
+      else if(e.key==='End'){e.preventDefault();l[l.length-1].focus()}
+    });
+    if(b.hasAttribute('data-hover')){
+      w.addEventListener('pointerenter',function(e){if(e.pointerType!=='mouse')return;clearTimeout(ct);clearTimeout(ot);
+        var any=menus.some(function(m){return m!==b&&isOpen(m)});ot=setTimeout(function(){open(b)},any?0:130)});
+      w.addEventListener('pointerleave',function(e){if(e.pointerType!=='mouse')return;clearTimeout(ot);ct=setTimeout(function(){if(isOpen(b))close(b)},220)});
+    }
+    w.addEventListener('focusout',function(e){if(e.relatedTarget&&!w.contains(e.relatedTarget)&&isOpen(b))close(b)});
+  });
+  document.addEventListener('click',function(e){if(!e.target.closest('.mw'))closeAll()});
+  nv.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll()});
+  // language
+  nv.querySelectorAll('[data-lang]').forEach(function(a){a.addEventListener('click',function(e){
+    e.preventDefault();var c=a.getAttribute('data-lang');
+    nv.querySelectorAll('[data-lang]').forEach(function(x){x.setAttribute('aria-checked',x.getAttribute('data-lang')===c)});
+    nv.querySelectorAll('.lc').forEach(function(s){s.textContent=c});
+    nv.querySelectorAll('[aria-label^="Language:"]').forEach(function(s){s.setAttribute('aria-label','Language: '+(c==='EN'?'English':'Polski'))});
+    var b=a.closest('.mw');b=b&&b.querySelector('[data-menu]');if(b&&isOpen(b))close(b,true)})});
+  // screenshots follow the hovered app
+  nv.querySelectorAll('[data-shot]').forEach(function(a){var f=function(){var i=nv.querySelector('[data-shot-img]');if(i){i.src='../../public/marketing/'+a.dataset.shot+'.webp';i.alt='The '+a.dataset.label+' app'}};a.addEventListener('pointerenter',f);a.addEventListener('focus',f)});
+  // mobile menu
+  var bg=nv.querySelector('[data-burger]'),mob=nv.querySelector('[data-mob]');
+  if(bg&&mob){
+    var cl=mob.querySelector('[data-mclose]');
+    var toggle=function(o){mob.hidden=!o;mob.inert=!o;bg.setAttribute('aria-expanded',o);if(o){cl.focus()}else{bg.focus()}};
+    bg.addEventListener('click',function(){toggle(mob.hidden)});cl.addEventListener('click',function(){toggle(false)});
+    mob.addEventListener('keydown',function(e){
+      if(e.key==='Escape'){e.stopPropagation();toggle(false)}
+      if(e.key==='Tab'){var f=[].slice.call(mob.querySelectorAll('a[href],button')).filter(function(x){return x.offsetParent});
+        if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f[f.length-1].focus()}
+        else if(!e.shiftKey&&document.activeElement===f[f.length-1]){e.preventDefault();f[0].focus()}}});
+    mob.querySelectorAll('a[href]:not([data-lang])').forEach(function(a){a.addEventListener('click',function(){toggle(false)})});
+    mob.querySelectorAll('[data-acc]').forEach(function(b){b.addEventListener('click',function(){
+      var o=b.getAttribute('aria-expanded')!=='true';
+      mob.querySelectorAll('[data-acc]').forEach(function(x){x.setAttribute('aria-expanded','false');document.getElementById(x.getAttribute('aria-controls')).hidden=true});
+      b.setAttribute('aria-expanded',o);document.getElementById(b.getAttribute('aria-controls')).hidden=!o})});
+  }
+});
+})();
+</script>
+</section>
+<section data-variant="B" data-name="Sitemap-first" data-idea="Light ground and the sitemap as the main event; the call to action is one calm row on top, so the footer reads as a map and not as a second hero.">
+<style>
+.nv{--ink:oklch(20% .04 275);--mut:oklch(40% .03 275);--ringc:oklch(52% .22 268)}
+.nv[data-tone=dark]{--ink:#fff;--mut:rgb(255 255 255/.88);--ringc:#fff}
+.nv .t{color:var(--ink)} .nv .tm{color:var(--mut)}
+.nv .hv{border-radius:8px;transition:background .15s}
+.nv .hv:hover,.nv .hv[aria-expanded=true]{background:color-mix(in oklab,var(--ink) 10%,transparent)}
+.nv a:focus-visible,.nv button:focus-visible,.nv input:focus-visible,.nv summary:focus-visible{outline:2px solid var(--ringc);outline-offset:2px}
+.nv .pn{--ringc:oklch(52% .22 268);color:oklch(20% .04 275)}
+.nv .chv{transition:transform .15s}.nv [aria-expanded=true]>.chv{transform:rotate(180deg)}
+.nv [aria-checked=false] .ck{visibility:hidden}
+.nv [aria-current=page]{font-weight:600}
+.nv [data-q]:focus-visible{outline:none}
+.nv .mob{--ringc:oklch(52% .22 268)}
+@media (prefers-reduced-motion:reduce){.nv *{transition:none!important}}
+</style>
+<footer class="nv relative bg-muted border-t border-border" data-tone="light" id="foot-b">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-10 border-b border-border"><div><h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">Ready to leave the Google bill? <em>Try it in 30 seconds.</em></h2><p class="mt-2 text-muted-foreground">Free for 5 people, no card. Or <a href="/docs/self-host" class="underline underline-offset-4 text-foreground inline-flex items-center min-h-8">self-host for free</a>.</p></div>
+<div class="flex flex-col sm:flex-row gap-3 shrink-0"><a href="/demo" class="btn btn-lg btn-default">Try the demo</a><a href="/signup" class="btn btn-lg btn-accent">Start free</a></div></div>
+<div class="pt-10 grid lg:grid-cols-12 gap-10"><div class="lg:col-span-3"><p class="label">Sitemap</p><div class="mt-4 text-foreground"><span class="text-xl font-semibold uppercase tracking-tight leading-none">Work Inbox</span><p class="mt-3 text-sm text-muted-foreground max-w-[26ch]">Open-source mail, chat, notes, calendar, drive and contacts.</p><div class="mt-4 -ml-3"><a href="https://github.com/workinbox-io/inbox" target="_blank" rel="noopener"  class="hv t inline-flex items-center gap-2 min-h-10 px-3 text-sm font-medium"><svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.3 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>Star on GitHub</a></div></div></div>
+<div class="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-8"><nav aria-label="Product"><h3 class="text-xs uppercase tracking-wide text-muted-foreground">Product</h3><ul class="mt-2"><li><a href="/custom-domain-email" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Mail</a></li><li><a href="/team-chat" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Chat</a></li><li><a href="/shared-notes" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Notes</a></li><li><a href="/team-calendar" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Calendar</a></li><li><a href="/shared-drive" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Drive</a></li><li><a href="/shared-contacts" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Contacts</a></li><li><a href="/custom-apps" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Collections</a></li><li><a href="/shared-mailbox" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Shared mailboxes</a></li><li><a href="/docs/mcp" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">AI apps</a></li><li><a href="/pricing" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Pricing</a></li></ul></nav><nav aria-label="Use it for"><h3 class="text-xs uppercase tracking-wide text-muted-foreground">Use it for</h3><ul class="mt-2"><li><a href="/google-workspace-alternative" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Google Workspace alternative</a></li><li><a href="/cloudflare-email-routing" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Cloudflare Email Routing inbox</a></li><li><a href="/self-hosted" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Self-hosted email</a></li><li><a href="/vs" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">All comparisons</a></li></ul></nav><nav aria-label="Docs"><h3 class="text-xs uppercase tracking-wide text-muted-foreground">Docs</h3><ul class="mt-2"><li><a href="/docs" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Introduction</a></li><li><a href="/docs/quickstart" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Quickstart</a></li><li><a href="/docs/self-host" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Self-hosting</a></li><li><a href="/docs/mcp" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">AI apps</a></li><li><a href="/docs/api" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">API reference</a></li></ul></nav><nav aria-label="Company"><h3 class="text-xs uppercase tracking-wide text-muted-foreground">Company</h3><ul class="mt-2"><li><a href="/#faq" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">FAQ</a></li><li><a href="mailto:support@workinbox.io" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Support</a></li><li><a href="https://github.com/workinbox-io/inbox" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Source code</a></li><li><a href="/security" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Security</a></li><li><a href="/status" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Status</a></li></ul></nav><nav aria-label="Legal"><h3 class="text-xs uppercase tracking-wide text-muted-foreground">Legal</h3><ul class="mt-2"><li><a href="/privacy" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Privacy</a></li><li><a href="/terms" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Terms</a></li><li><a href="/refunds" class="inline-flex items-center min-h-10 py-2 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4">Refunds</a></li></ul></nav></div></div>
+<div class="mt-12 pt-5 border-t border-border flex flex-col-reverse lg:flex-row lg:items-center lg:justify-between gap-4"><p class="text-sm text-muted-foreground">© 2026 Swift Apps. Work Inbox is open source under AGPL-3.0, made on Cloudflare.</p><div class="flex flex-wrap items-center gap-x-3 gap-y-1"><div class="mw relative">
+<button type="button" data-menu class="hv t inline-flex items-center gap-1.5 h-10 px-2.5 text-sm font-medium border border-input bg-background" aria-haspopup="menu" aria-expanded="false" aria-controls="fb-lang" aria-label="Language: English"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg><span class="lc">EN</span><svg class="chv size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<div id="fb-lang" hidden class="pn absolute left-0 lg:left-auto lg:right-0 z-50 bottom-full pb-2"><div role="menu" aria-label="Language" class="min-w-44 bg-background border border-border shadow-xl p-1">
+<a role="menuitemradio" aria-checked="true" href="/" lang="en" hreflang="en" data-lang="EN" class="li flex items-center justify-between gap-6 min-h-10 px-3 text-sm hover:bg-muted"><span>English</span><span class="ck text-primary"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></a>
+<a role="menuitemradio" aria-checked="false" href="/pl" lang="pl" hreflang="pl" data-lang="PL" class="li flex items-center justify-between gap-6 min-h-10 px-3 text-sm hover:bg-muted"><span>Polski</span><span class="ck text-primary"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></a>
+</div></div></div><a href="/status" class="inline-flex items-center gap-2 min-h-10 px-1 text-sm text-foreground/85 hover:text-foreground hover:underline underline-offset-4"><span class="relative flex size-2.5"><span class="absolute inset-0 rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping"></span><span class="relative size-2.5 rounded-full bg-emerald-600"></span></span>All systems operational</a></div></div>
+</div></footer>
+<script>
+(function(){
+var sec=document.currentScript.closest('section');
+sec.addEventListener('click',function(e){var a=e.target.closest('a[href^="/"],a[href="#"]');if(a&&!a.hasAttribute('data-lang'))e.preventDefault();});
+sec.querySelectorAll('.nv').forEach(function(nv){
+  var menus=[].slice.call(nv.querySelectorAll('[data-menu]')),ot,ct;
+  var pane=function(b){return document.getElementById(b.getAttribute('aria-controls'))};
+  var isOpen=function(b){return b.getAttribute('aria-expanded')==='true'};
+  function close(b,f){b.setAttribute('aria-expanded','false');pane(b).hidden=true;if(f)b.focus()}
+  function closeAll(x){menus.forEach(function(b){if(b!==x&&isOpen(b))close(b)})}
+  function open(b){closeAll(b);b.setAttribute('aria-expanded','true');pane(b).hidden=false}
+  function links(b){return [].slice.call(pane(b).querySelectorAll('a[href]:not([aria-disabled=true])')).filter(function(a){return a.offsetParent})}
+  menus.forEach(function(b){
+    var w=b.closest('.mw');
+    b.addEventListener('click',function(){clearTimeout(ot);isOpen(b)?close(b):open(b)});
+    b.addEventListener('keydown',function(e){
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();open(b);var l=links(b);(e.key==='ArrowDown'?l[0]:l[l.length-1]).focus()}
+      if(e.key==='Escape'&&isOpen(b)){e.stopPropagation();close(b,true)}
+    });
+    pane(b).addEventListener('keydown',function(e){
+      var l=links(b),i=l.indexOf(document.activeElement);
+      if(e.key==='Escape'){e.stopPropagation();close(b,true)}
+      else if(e.key==='ArrowDown'||(e.key==='ArrowRight'&&pane(b).querySelector('[data-grid]'))){e.preventDefault();l[(i+1)%l.length].focus()}
+      else if(e.key==='ArrowUp'||(e.key==='ArrowLeft'&&pane(b).querySelector('[data-grid]'))){e.preventDefault();l[(i-1+l.length)%l.length].focus()}
+      else if(e.key==='Home'){e.preventDefault();l[0].focus()}
+      else if(e.key==='End'){e.preventDefault();l[l.length-1].focus()}
+    });
+    if(b.hasAttribute('data-hover')){
+      w.addEventListener('pointerenter',function(e){if(e.pointerType!=='mouse')return;clearTimeout(ct);clearTimeout(ot);
+        var any=menus.some(function(m){return m!==b&&isOpen(m)});ot=setTimeout(function(){open(b)},any?0:130)});
+      w.addEventListener('pointerleave',function(e){if(e.pointerType!=='mouse')return;clearTimeout(ot);ct=setTimeout(function(){if(isOpen(b))close(b)},220)});
+    }
+    w.addEventListener('focusout',function(e){if(e.relatedTarget&&!w.contains(e.relatedTarget)&&isOpen(b))close(b)});
+  });
+  document.addEventListener('click',function(e){if(!e.target.closest('.mw'))closeAll()});
+  nv.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll()});
+  // language
+  nv.querySelectorAll('[data-lang]').forEach(function(a){a.addEventListener('click',function(e){
+    e.preventDefault();var c=a.getAttribute('data-lang');
+    nv.querySelectorAll('[data-lang]').forEach(function(x){x.setAttribute('aria-checked',x.getAttribute('data-lang')===c)});
+    nv.querySelectorAll('.lc').forEach(function(s){s.textContent=c});
+    nv.querySelectorAll('[aria-label^="Language:"]').forEach(function(s){s.setAttribute('aria-label','Language: '+(c==='EN'?'English':'Polski'))});
+    var b=a.closest('.mw');b=b&&b.querySelector('[data-menu]');if(b&&isOpen(b))close(b,true)})});
+  // screenshots follow the hovered app
+  nv.querySelectorAll('[data-shot]').forEach(function(a){var f=function(){var i=nv.querySelector('[data-shot-img]');if(i){i.src='../../public/marketing/'+a.dataset.shot+'.webp';i.alt='The '+a.dataset.label+' app'}};a.addEventListener('pointerenter',f);a.addEventListener('focus',f)});
+  // mobile menu
+  var bg=nv.querySelector('[data-burger]'),mob=nv.querySelector('[data-mob]');
+  if(bg&&mob){
+    var cl=mob.querySelector('[data-mclose]');
+    var toggle=function(o){mob.hidden=!o;mob.inert=!o;bg.setAttribute('aria-expanded',o);if(o){cl.focus()}else{bg.focus()}};
+    bg.addEventListener('click',function(){toggle(mob.hidden)});cl.addEventListener('click',function(){toggle(false)});
+    mob.addEventListener('keydown',function(e){
+      if(e.key==='Escape'){e.stopPropagation();toggle(false)}
+      if(e.key==='Tab'){var f=[].slice.call(mob.querySelectorAll('a[href],button')).filter(function(x){return x.offsetParent});
+        if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f[f.length-1].focus()}
+        else if(!e.shiftKey&&document.activeElement===f[f.length-1]){e.preventDefault();f[0].focus()}}});
+    mob.querySelectorAll('a[href]:not([data-lang])').forEach(function(a){a.addEventListener('click',function(){toggle(false)})});
+    mob.querySelectorAll('[data-acc]').forEach(function(b){b.addEventListener('click',function(){
+      var o=b.getAttribute('aria-expanded')!=='true';
+      mob.querySelectorAll('[data-acc]').forEach(function(x){x.setAttribute('aria-expanded','false');document.getElementById(x.getAttribute('aria-controls')).hidden=true});
+      b.setAttribute('aria-expanded',o);document.getElementById(b.getAttribute('aria-controls')).hidden=!o})});
+  }
+});
+})();
+</script>
+</section>
+<section data-variant="C" data-name="Domain form + status" data-idea="The closing ask is a form: type your domain and see your addresses (anna@yourdomain) before starting the demo; status, GitHub and language sit in three prominent tiles.">
+<style>
+.nv{--ink:oklch(20% .04 275);--mut:oklch(40% .03 275);--ringc:oklch(52% .22 268)}
+.nv[data-tone=dark]{--ink:#fff;--mut:rgb(255 255 255/.88);--ringc:#fff}
+.nv .t{color:var(--ink)} .nv .tm{color:var(--mut)}
+.nv .hv{border-radius:8px;transition:background .15s}
+.nv .hv:hover,.nv .hv[aria-expanded=true]{background:color-mix(in oklab,var(--ink) 10%,transparent)}
+.nv a:focus-visible,.nv button:focus-visible,.nv input:focus-visible,.nv summary:focus-visible{outline:2px solid var(--ringc);outline-offset:2px}
+.nv .pn{--ringc:oklch(52% .22 268);color:oklch(20% .04 275)}
+.nv .chv{transition:transform .15s}.nv [aria-expanded=true]>.chv{transform:rotate(180deg)}
+.nv [aria-checked=false] .ck{visibility:hidden}
+.nv [aria-current=page]{font-weight:600}
+.nv [data-q]:focus-visible{outline:none}
+.nv .mob{--ringc:oklch(52% .22 268)}
+@media (prefers-reduced-motion:reduce){.nv *{transition:none!important}}
+</style>
+<footer class="nv relative bg-inverse text-white" data-tone="dark" id="foot-c">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-6">
+<div class="grid lg:grid-cols-12 gap-10 items-center pb-14 border-b border-white/15">
+<div class="lg:col-span-6"><h2 class="text-3xl sm:text-5xl font-semibold tracking-tight leading-[1.05]">Type your domain. <em>See your workspace.</em></h2><p class="mt-4 text-white/85 max-w-lg">We build a throwaway demo with mailboxes named after your domain in about 30 seconds. No signup, no card.</p></div>
+<form class="lg:col-span-6" onsubmit="return false"><label for="fc-domain" class="text-sm text-white/85">Your company's domain</label>
+<div class="mt-2 flex flex-col sm:flex-row gap-3"><input id="fc-domain" type="text" inputmode="url" autocomplete="off" placeholder="acme.com" class="flex-1 h-12 px-4 rounded-lg bg-white text-foreground placeholder:text-muted-foreground text-base"><button type="submit" class="btn btn-lg bg-white text-inverse hover:bg-lilac">Try the demo<svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+<p class="mt-3 text-sm text-white/85" aria-live="polite">Your addresses: <span data-ex class="font-medium text-white">anna@acme.com, support@acme.com, team@acme.com</span></p>
+<p class="mt-2 text-sm text-white/80">Or <a href="/signup" class="underline underline-offset-4 text-white inline-flex items-center min-h-8">start free</a> with your real domain, or <a href="/docs/self-host" class="underline underline-offset-4 text-white inline-flex items-center min-h-8">self-host</a>.</p></form></div>
+<div class="py-8 grid sm:grid-cols-3 gap-4 border-b border-white/15"><div class="border border-white/20 p-4"><p class="text-xs uppercase tracking-wide text-white/70">Status</p><div class="mt-1"><a href="/status" class="inline-flex items-center gap-2 min-h-10 px-1 text-sm text-white/90 hover:text-white hover:underline underline-offset-4"><span class="relative flex size-2.5"><span class="absolute inset-0 rounded-full bg-emerald-400 opacity-60 motion-safe:animate-ping"></span><span class="relative size-2.5 rounded-full bg-emerald-400"></span></span>All systems operational</a></div></div>
+<div class="flex items-center justify-between gap-3 border border-white/20 p-4"><div><p class="text-xs uppercase tracking-wide text-white/70">Open source</p><a href="https://github.com/workinbox-io/inbox" target="_blank" rel="noopener" class="mt-1 inline-flex items-center gap-2 min-h-10 text-sm text-white hover:underline underline-offset-4"><svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.4 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.3 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>workinbox-io/inbox</a></div><span class="text-xs border border-white/30 px-2 py-1 text-white/90">AGPL-3.0</span></div>
+<div class="border border-white/20 p-4"><p class="text-xs uppercase tracking-wide text-white/70">Language</p><div class="mt-1 -ml-2.5"><div class="mw relative">
+<button type="button" data-menu class="hv t inline-flex items-center gap-1.5 h-10 px-2.5 text-sm font-medium " aria-haspopup="menu" aria-expanded="false" aria-controls="fc-lang" aria-label="Language: English"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg><span class="lc">EN</span><svg class="chv size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<div id="fc-lang" hidden class="pn absolute left-0 lg:left-auto lg:right-0 z-50 bottom-full pb-2"><div role="menu" aria-label="Language" class="min-w-44 bg-background border border-border shadow-xl p-1">
+<a role="menuitemradio" aria-checked="true" href="/" lang="en" hreflang="en" data-lang="EN" class="li flex items-center justify-between gap-6 min-h-10 px-3 text-sm hover:bg-muted"><span>English</span><span class="ck text-primary"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></a>
+<a role="menuitemradio" aria-checked="false" href="/pl" lang="pl" hreflang="pl" data-lang="PL" class="li flex items-center justify-between gap-6 min-h-10 px-3 text-sm hover:bg-muted"><span>Polski</span><span class="ck text-primary"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></a>
+</div></div></div></div></div></div>
+<div class="pt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-8"><nav aria-label="Product"><h3 class="text-xs uppercase tracking-wide text-white/70">Product</h3><ul class="mt-2"><li><a href="/custom-domain-email" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Mail</a></li><li><a href="/team-chat" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Chat</a></li><li><a href="/shared-notes" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Notes</a></li><li><a href="/team-calendar" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Calendar</a></li><li><a href="/shared-drive" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Drive</a></li><li><a href="/shared-contacts" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Contacts</a></li><li><a href="/custom-apps" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Collections</a></li><li><a href="/shared-mailbox" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Shared mailboxes</a></li><li><a href="/docs/mcp" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">AI apps</a></li><li><a href="/pricing" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Pricing</a></li></ul></nav><nav aria-label="Use it for"><h3 class="text-xs uppercase tracking-wide text-white/70">Use it for</h3><ul class="mt-2"><li><a href="/google-workspace-alternative" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Google Workspace alternative</a></li><li><a href="/cloudflare-email-routing" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Cloudflare Email Routing inbox</a></li><li><a href="/self-hosted" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Self-hosted email</a></li><li><a href="/vs" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">All comparisons</a></li></ul></nav><nav aria-label="Docs"><h3 class="text-xs uppercase tracking-wide text-white/70">Docs</h3><ul class="mt-2"><li><a href="/docs" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Introduction</a></li><li><a href="/docs/quickstart" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Quickstart</a></li><li><a href="/docs/self-host" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Self-hosting</a></li><li><a href="/docs/mcp" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">AI apps</a></li><li><a href="/docs/api" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">API reference</a></li></ul></nav><nav aria-label="Company"><h3 class="text-xs uppercase tracking-wide text-white/70">Company</h3><ul class="mt-2"><li><a href="/#faq" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">FAQ</a></li><li><a href="mailto:support@workinbox.io" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Support</a></li><li><a href="https://github.com/workinbox-io/inbox" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Source code</a></li><li><a href="/security" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Security</a></li><li><a href="/status" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Status</a></li></ul></nav><nav aria-label="Legal"><h3 class="text-xs uppercase tracking-wide text-white/70">Legal</h3><ul class="mt-2"><li><a href="/privacy" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Privacy</a></li><li><a href="/terms" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Terms</a></li><li><a href="/refunds" class="inline-flex items-center min-h-10 py-2 text-sm text-white/90 hover:text-white hover:underline underline-offset-4">Refunds</a></li></ul></nav></div>
+<div class="mt-10 pt-5 border-t border-white/15 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3"><span class="text-xl font-semibold uppercase tracking-tight leading-none">Work Inbox</span><p class="text-sm text-white/80">© 2026 Swift Apps. Work Inbox is open source under AGPL-3.0, made on Cloudflare.</p></div>
+</div>
+<script>
+(function(){var s=document.currentScript.closest('section'),i=s.querySelector('#fc-domain'),o=s.querySelector('[data-ex]');
+i.addEventListener('input',function(){var d=i.value.trim().toLowerCase().replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0]||'acme.com';
+o.textContent=['anna','support','team'].map(function(n){return n+'@'+d}).join(', ')})})();
+</script>
+</footer>
+<script>
+(function(){
+var sec=document.currentScript.closest('section');
+sec.addEventListener('click',function(e){var a=e.target.closest('a[href^="/"],a[href="#"]');if(a&&!a.hasAttribute('data-lang'))e.preventDefault();});
+sec.querySelectorAll('.nv').forEach(function(nv){
+  var menus=[].slice.call(nv.querySelectorAll('[data-menu]')),ot,ct;
+  var pane=function(b){return document.getElementById(b.getAttribute('aria-controls'))};
+  var isOpen=function(b){return b.getAttribute('aria-expanded')==='true'};
+  function close(b,f){b.setAttribute('aria-expanded','false');pane(b).hidden=true;if(f)b.focus()}
+  function closeAll(x){menus.forEach(function(b){if(b!==x&&isOpen(b))close(b)})}
+  function open(b){closeAll(b);b.setAttribute('aria-expanded','true');pane(b).hidden=false}
+  function links(b){return [].slice.call(pane(b).querySelectorAll('a[href]:not([aria-disabled=true])')).filter(function(a){return a.offsetParent})}
+  menus.forEach(function(b){
+    var w=b.closest('.mw');
+    b.addEventListener('click',function(){clearTimeout(ot);isOpen(b)?close(b):open(b)});
+    b.addEventListener('keydown',function(e){
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();open(b);var l=links(b);(e.key==='ArrowDown'?l[0]:l[l.length-1]).focus()}
+      if(e.key==='Escape'&&isOpen(b)){e.stopPropagation();close(b,true)}
+    });
+    pane(b).addEventListener('keydown',function(e){
+      var l=links(b),i=l.indexOf(document.activeElement);
+      if(e.key==='Escape'){e.stopPropagation();close(b,true)}
+      else if(e.key==='ArrowDown'||(e.key==='ArrowRight'&&pane(b).querySelector('[data-grid]'))){e.preventDefault();l[(i+1)%l.length].focus()}
+      else if(e.key==='ArrowUp'||(e.key==='ArrowLeft'&&pane(b).querySelector('[data-grid]'))){e.preventDefault();l[(i-1+l.length)%l.length].focus()}
+      else if(e.key==='Home'){e.preventDefault();l[0].focus()}
+      else if(e.key==='End'){e.preventDefault();l[l.length-1].focus()}
+    });
+    if(b.hasAttribute('data-hover')){
+      w.addEventListener('pointerenter',function(e){if(e.pointerType!=='mouse')return;clearTimeout(ct);clearTimeout(ot);
+        var any=menus.some(function(m){return m!==b&&isOpen(m)});ot=setTimeout(function(){open(b)},any?0:130)});
+      w.addEventListener('pointerleave',function(e){if(e.pointerType!=='mouse')return;clearTimeout(ot);ct=setTimeout(function(){if(isOpen(b))close(b)},220)});
+    }
+    w.addEventListener('focusout',function(e){if(e.relatedTarget&&!w.contains(e.relatedTarget)&&isOpen(b))close(b)});
+  });
+  document.addEventListener('click',function(e){if(!e.target.closest('.mw'))closeAll()});
+  nv.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll()});
+  // language
+  nv.querySelectorAll('[data-lang]').forEach(function(a){a.addEventListener('click',function(e){
+    e.preventDefault();var c=a.getAttribute('data-lang');
+    nv.querySelectorAll('[data-lang]').forEach(function(x){x.setAttribute('aria-checked',x.getAttribute('data-lang')===c)});
+    nv.querySelectorAll('.lc').forEach(function(s){s.textContent=c});
+    nv.querySelectorAll('[aria-label^="Language:"]').forEach(function(s){s.setAttribute('aria-label','Language: '+(c==='EN'?'English':'Polski'))});
+    var b=a.closest('.mw');b=b&&b.querySelector('[data-menu]');if(b&&isOpen(b))close(b,true)})});
+  // screenshots follow the hovered app
+  nv.querySelectorAll('[data-shot]').forEach(function(a){var f=function(){var i=nv.querySelector('[data-shot-img]');if(i){i.src='../../public/marketing/'+a.dataset.shot+'.webp';i.alt='The '+a.dataset.label+' app'}};a.addEventListener('pointerenter',f);a.addEventListener('focus',f)});
+  // mobile menu
+  var bg=nv.querySelector('[data-burger]'),mob=nv.querySelector('[data-mob]');
+  if(bg&&mob){
+    var cl=mob.querySelector('[data-mclose]');
+    var toggle=function(o){mob.hidden=!o;mob.inert=!o;bg.setAttribute('aria-expanded',o);if(o){cl.focus()}else{bg.focus()}};
+    bg.addEventListener('click',function(){toggle(mob.hidden)});cl.addEventListener('click',function(){toggle(false)});
+    mob.addEventListener('keydown',function(e){
+      if(e.key==='Escape'){e.stopPropagation();toggle(false)}
+      if(e.key==='Tab'){var f=[].slice.call(mob.querySelectorAll('a[href],button')).filter(function(x){return x.offsetParent});
+        if(e.shiftKey&&document.activeElement===f[0]){e.preventDefault();f[f.length-1].focus()}
+        else if(!e.shiftKey&&document.activeElement===f[f.length-1]){e.preventDefault();f[0].focus()}}});
+    mob.querySelectorAll('a[href]:not([data-lang])').forEach(function(a){a.addEventListener('click',function(){toggle(false)})});
+    mob.querySelectorAll('[data-acc]').forEach(function(b){b.addEventListener('click',function(){
+      var o=b.getAttribute('aria-expanded')!=='true';
+      mob.querySelectorAll('[data-acc]').forEach(function(x){x.setAttribute('aria-expanded','false');document.getElementById(x.getAttribute('aria-controls')).hidden=true});
+      b.setAttribute('aria-expanded',o);document.getElementById(b.getAttribute('aria-controls')).hidden=!o})});
+  }
+});
+})();
+</script>
+</section>

@@ -1,8 +1,6 @@
 ---
-/**
- * A screen of the app in both themes: public/marketing/<name>.webp in light, <name>-dark.webp in dark (both made by
- * `pnpm shots`). Only the visible one loads (the other is display:none, and lazy).
- */
+/** A screen of the app (public/marketing/<name>.webp, made by `pnpm shots`), square and framed by a hairline like Navy's
+ * images. The site is light only, so only the light screen loads. */
 interface Props {
   name: string;
   alt: string;
@@ -10,8 +8,6 @@ interface Props {
   class?: string;
 }
 const { name, alt, eager = false, class: className } = Astro.props;
-const loading = eager ? "eager" : "lazy";
 ---
 
-<img src={`/marketing/${name}.webp`} alt={alt} width="2880" height="1800" loading={loading} decoding="async" class:list={["block dark:hidden", className]} />
-<img src={`/marketing/${name}-dark.webp`} alt={alt} width="2880" height="1800" loading={loading} decoding="async" class:list={["hidden dark:block", className]} />
+<img src={`/marketing/${name}.webp`} alt={alt} width="2880" height="1800" loading={eager ? "eager" : "lazy"} decoding="async" class:list={["block w-full border border-border bg-muted", className]} />

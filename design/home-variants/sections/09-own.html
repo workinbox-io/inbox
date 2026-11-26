@@ -1,0 +1,86 @@
+<!-- section: own | Open source and yours | "I can trust a small vendor because I can read the code, self-host it for free and leave with my data." -->
+<section id="own-a" data-variant="A" data-name="Code-led" data-idea="Repo card, a real-looking self-host outline and the license up front. Speaks to developers and self-hosters, and shows 'no mail server to run' as steps, not a claim.">
+  <div class="bg-inverse text-inverse-foreground py-16 sm:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10">
+      <div class="lg:col-span-5">
+        <p class="label text-white/50">Open source</p>
+        <h2 class="mt-4 text-4xl sm:text-5xl font-semibold tracking-tight">Read the code. <em>Run it.</em> Take your data and leave.</h2>
+        <p class="mt-5 text-lg text-white/70">The hosted service runs the same AGPL-3.0 code you can put on your own Cloudflare account, with every feature and no fee to us.</p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/docs/self-host" class="btn btn-accent btn-lg">Self-host for free</a>
+          <a href="https://github.com/workinbox-io/inbox" class="btn btn-muted btn-lg">View on GitHub</a>
+        </div>
+      </div>
+      <div class="lg:col-span-7 space-y-4">
+        <a href="https://github.com/workinbox-io/inbox" class="block bg-white/5 border border-white/15 p-5 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-ring">
+          <div class="flex items-center justify-between gap-4"><p class="font-semibold">workinbox-io/inbox</p><span class="text-xs border border-white/25 px-2 py-0.5">AGPL-3.0</span></div>
+          <p class="mt-2 text-sm text-white/70">Open-source mail, contacts, calendar and drive for teams, a Google Workspace alternative. Astro, Cloudflare Workers, D1 and R2.</p>
+          <p class="mt-3 text-xs text-white/50">Public on GitHub · the hosted service runs this code</p>
+        </a>
+        <div class="bg-white/5 border border-white/15">
+          <div class="px-5 h-10 flex items-center border-b border-white/15 text-xs text-white/60">Your Cloudflare account, no server to run</div>
+          <ol class="p-5 space-y-3 text-sm">
+            <li class="flex gap-4"><span class="text-white/40 tabular-nums">1</span><span>Fork or clone the repo and add your Cloudflare account to the deploy workflow.</span></li>
+            <li class="flex gap-4"><span class="text-white/40 tabular-nums">2</span><span>Deploy: it builds, applies the D1 migrations and publishes the Worker.</span></li>
+            <li class="flex gap-4"><span class="text-white/40 tabular-nums">3</span><span>Set <code class="bg-white/10 px-1.5 py-0.5 rounded">DEPLOY_MODE=self</code>, add your domain and mailboxes. Every feature is on.</span></li>
+          </ol>
+          <p class="px-5 pb-5 text-xs text-white/50">Steps summarised; the guide has the exact commands.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="own-b" data-variant="B" data-name="You can leave" data-idea="A grid where every proof is a way out, each with its exact export format. Turns trust in a small vendor into 'leaving costs nothing', which is the honest objection-killer.">
+  <div class="bg-background py-16 sm:py-24 border-t border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 gap-6">
+        <p class="label lg:col-span-3">Open source</p>
+        <div class="lg:col-span-9">
+          <h2 class="text-4xl sm:text-5xl font-semibold tracking-tight max-w-3xl">A small vendor you can trust, <em>because leaving is cheap.</em></h2>
+          <p class="mt-5 text-lg text-muted-foreground max-w-2xl">Everything you put in comes out in a format other software reads. Nothing is locked behind our servers.</p>
+        </div>
+      </div>
+      <dl class="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 border-t border-l border-border [&>div]:border-r [&>div]:border-b [&>div]:border-border [&>div]:p-6">
+        <div><dt class="text-xs uppercase tracking-wide text-faint-foreground">Mail</dt><dd class="mt-2 font-semibold">IMAP and the original .eml</dd><dd class="mt-1 text-sm text-muted-foreground">Every message keeps its raw file. Any mail app reads the account over IMAP and SMTP.</dd></div>
+        <div><dt class="text-xs uppercase tracking-wide text-faint-foreground">Contacts</dt><dd class="mt-2 font-semibold">vCard or CSV</dd><dd class="mt-1 text-sm text-muted-foreground">The whole address book in one export.</dd></div>
+        <div><dt class="text-xs uppercase tracking-wide text-faint-foreground">Calendar</dt><dd class="mt-2 font-semibold">.ics</dd><dd class="mt-1 text-sm text-muted-foreground">A feed or a file, readable by any calendar.</dd></div>
+        <div><dt class="text-xs uppercase tracking-wide text-faint-foreground">Files</dt><dd class="mt-2 font-semibold">ZIP</dd><dd class="mt-1 text-sm text-muted-foreground">Download folders as a ZIP, streamed, no limit on how often.</dd></div>
+        <div><dt class="text-xs uppercase tracking-wide text-faint-foreground">The software</dt><dd class="mt-2 font-semibold">AGPL-3.0 on GitHub</dd><dd class="mt-1 text-sm text-muted-foreground">Read it, audit it, fork it. Same code as the hosted service.</dd></div>
+        <div><dt class="text-xs uppercase tracking-wide text-faint-foreground">Where it runs</dt><dd class="mt-2 font-semibold">Cloudflare D1 and R2</dd><dd class="mt-1 text-sm text-muted-foreground">Ours, or your own account with every feature free.</dd></div>
+      </dl>
+      <div class="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
+        <a href="/docs/self-host" class="btn btn-accent btn-lg">Self-host for free</a>
+        <a href="https://github.com/workinbox-io/inbox" class="btn btn-muted btn-lg">View on GitHub</a>
+        <p class="text-sm text-muted-foreground">Sign-in is individual with two-factor, and Pro adds an audit log. <a class="underline text-foreground" href="/security">Security</a> · <a class="underline text-foreground" href="/status">Status</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="own-c" data-variant="C" data-name="Trust strip" data-idea="A band of big facts (license, price when self-hosted, export formats) with a compact 'how it stays safe' list and links to status and security. Quick to scan for people who just want proof.">
+  <div class="relative overflow-hidden band-gradient py-16 sm:py-24">
+    <div class="grain absolute inset-0"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-4xl sm:text-5xl font-semibold tracking-tight text-center max-w-3xl mx-auto text-white">Open code. <em>Your account.</em> Your exit.</h2>
+      <div class="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-white/20 border border-white/20 text-white">
+        <div class="bg-inverse/70 backdrop-blur p-6"><p class="text-4xl font-semibold">AGPL-3.0</p><p class="mt-2 text-sm text-white/75">Public on GitHub. The hosted service runs the same code.</p></div>
+        <div class="bg-inverse/70 backdrop-blur p-6"><p class="text-4xl font-semibold">0 EUR</p><p class="mt-2 text-sm text-white/75">Self-hosted on your Cloudflare account, every feature, no fee to us.</p></div>
+        <div class="bg-inverse/70 backdrop-blur p-6"><p class="text-4xl font-semibold">5 formats</p><p class="mt-2 text-sm text-white/75">.eml, vCard, CSV, .ics and ZIP, plus IMAP: your data leaves readable.</p></div>
+        <div class="bg-inverse/70 backdrop-blur p-6"><p class="text-4xl font-semibold">0 servers</p><p class="mt-2 text-sm text-white/75">No mail server to run: Workers, D1 and R2 do it.</p></div>
+      </div>
+      <div class="mt-10 bg-background border border-border p-6 sm:p-8 grid lg:grid-cols-12 gap-6 items-center">
+        <ul class="lg:col-span-8 grid sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+          <li class="flex gap-3"><svg class="size-5 shrink-0 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg>Everyone signs in as themselves, with two-factor</li>
+          <li class="flex gap-3"><svg class="size-5 shrink-0 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg>A separate password for each mail app</li>
+          <li class="flex gap-3"><svg class="size-5 shrink-0 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg>Audit log of who changed what (Pro and Business)</li>
+          <li class="flex gap-3"><svg class="size-5 shrink-0 text-primary" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 10 4 4 8-8"/></svg><span>Live <a href="/status" class="underline">status page</a> for D1, R2 and mail</span></li>
+        </ul>
+        <div class="lg:col-span-4 flex flex-wrap gap-3 lg:justify-end">
+          <a href="/docs/self-host" class="btn btn-accent">Self-host for free</a>
+          <a href="/security" class="btn btn-muted">Security</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

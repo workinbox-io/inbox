@@ -1,0 +1,61 @@
+---
+// The language dropdown (globe + current code + chevron) of the header strip and the footer: one row per language,
+// the current one checked, the others links to the same page. A language the page isn't translated into stays in the
+// list, disabled with "not translated yet", so the control never disappears. Behaviour: ./menus.ts.
+import { LOCALES } from "@/config/languages";
+import { localeName, localizedPath, pageLocales, type SiteLocale } from "@/lib/i18n/locales";
+import { tFor } from "@/lib/i18n/site";
+
+interface Props {
+  id: string;
+  locale: SiteLocale;
+  /** The page's English path, e.g. "/pricing". */
+  here: string;
+  /** Open upward (the footer). */
+  up?: boolean;
+  /** Classes for the button (colours per place). */
+  class?: string;
+}
+const { id, locale, here, up = false, class: buttonClass = "" } = Astro.props;
+const t = tFor(locale);
+const available = pageLocales(here);
+---
+
+<div data-menu-wrap class="relative">
+  <button
+    type="button"
+    data-menu
+    aria-haspopup="menu"
+    aria-expanded="false"
+    aria-controls={id}
+    aria-label={t("Language: {name}", { name: localeName(locale) })}
+    class:list={["inline-flex items-center gap-1.5 h-9 px-2.5 text-[13px] font-medium rounded-lg transition-colors", buttonClass]}
+  >
+    <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"></path></svg>
+    <span>{locale.toUpperCase()}</span>
+    <svg class="chv size-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+  </button>
+  <div id={id} hidden class:list={["pn absolute right-0 z-50 text-foreground", up ? "bottom-full pb-2" : "top-full pt-2"]}>
+    <div role="menu" aria-label={t("Language")} class="p-1 border min-w-48 bg-background border-border shadow-lg">
+      {
+        LOCALES.map((l) =>
+          l === locale ? (
+            <a role="menuitemradio" aria-checked="true" href={localizedPath(l, here)} lang={l} hreflang={l} data-locale={l} class="flex items-center justify-between gap-6 px-3 text-sm min-h-10 hover:bg-muted">
+              <span>{localeName(l)}</span>
+              <svg class="size-4 shrink-0 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>
+            </a>
+          ) : available.includes(l) ? (
+            <a role="menuitemradio" aria-checked="false" href={localizedPath(l, here)} lang={l} hreflang={l} data-locale={l} class="flex items-center justify-between gap-6 px-3 text-sm min-h-10 hover:bg-muted">
+              <span>{localeName(l)}</span>
+            </a>
+          ) : (
+            <span role="menuitemradio" aria-checked="false" aria-disabled="true" lang={l} class="flex items-center justify-between gap-6 px-3 text-sm min-h-10 text-muted-foreground">
+              <span>{localeName(l)}</span>
+              <span class="text-xs">{t("not translated yet")}</span>
+            </span>
+          ),
+        )
+      }
+    </div>
+  </div>
+</div>

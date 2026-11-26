@@ -394,20 +394,26 @@ Plan and phases: see the project plan; phase 1 (domains, mailboxes, mail) is in 
 
 ## Marketing site and SEO/GEO (product)
 
-- Look after boat.dev in our ink (`styles/marketing.css`, scoped to `.mk` by `MarketingLayout look="paper"`; docs,
-  legal and error pages use `look="plain"`): white page, full-bleed ink bands (`.mk-band`: hero via `PageHero` +
-  `MarketingLayout ink` for the see-through header, `ClosingBand`, footer with a tmux-style status bar), a grey band
-  (`.mk-band-grey`), square corners (a global rule in `.mk`, `rounded-full` and `.mk-light` exempt), 1px frames, no
-  shadows. Funnel Display headlines (`mk-h1/h2/h3`, `<em>` = soft ink, not italic), Inter text, IBM Plex Mono captions,
-  tabs and tables (`mk-cap`, `mk-seg`, `mk-cmd` via `CommandBox`). Pictures: our own pixel scenes on canvas
-  (`components/site/pixel`: `scenes.ts`, `PixelScene`, `PixelIcon`; never copy boat.dev's art) and real app screens
-  (`components/site/Shot.astro`: `<name>.webp` / `<name>-dark.webp`). `data-reveal` from `scripts/marketing-motion.ts`.
-  No eyebrow pills above headlines. Competitor
-  icons in `public/logos/<slug>.png` (`logo` in `config/compare.ts`), used in /vs, tables and the Compare menu.
+- Look = Lexington Themes' Navy (paid licence; source in `components/navy`, kept close to the original: `fundations/`
+  Text, Button, ArrowLink, Wrapper, LabeledGrid, CtaPanel, `grid.ts`, `assets/GradientShader`, `global/Navigation` and
+  `Footer` wired to `siteConfig.navItems`, i18n, sessions and `/api/status`; two-level header: utility strip + bar,
+  disclosure menus in `global/menus.ts`, `LanguageMenu` dropdown in header and footer). Tokens on `.navy` (`styles/navy.css`,
+  MarketingLayout's wrapper, so /app keeps its own), extra names registered in `global.css`; light only, Switzer from
+  Fontshare. Rules from Navy's design skill: lavender-white ground, indigo ink, one ultramarine accent, the shader only on
+  heroes/band/footer, 12-column grid, plain section labels (never `///`), square except buttons and inputs, hairlines, `<em>`
+  key words in headings (italic semibold), small lucide icons and brand logos (`public/logos/brands/`, what an app
+  replaces) where they explain, no monospace. Real screenshots only where they persuade (home: hero browser window and
+  the app switcher); elsewhere faux UI in HTML. Home sections in `components/site/home/` (mock-ups they were picked
+  from: `design/home-variants/`). Site blocks in `components/site`: `Hero`
+  (gradient hero; page passes `MarketingLayout ink`), `Section` (label/title/text/full), `Features` (hairline grid or
+  `cards` row on inverse/primary/lilac/muted), `Faq`, `ComparisonTable`, `PricingCards`, `Shot` (real screen,
+  `<name>.webp`), `AppPage`, `ErrorPage`. The footer carries the closing call to action. Docs and legal pages share the
+  shell. Pixel scenes (`components/site/pixel`) stay only for Contacts' banner. Competitor
+  icons in `public/logos/<slug>.png` (`logo` in `config/compare.ts`).
   The brand is written "Work Inbox" (`siteConfig.name`); the domain stays workinbox.io.
 - Screens on the site are the real app: `pnpm shots [--seed] [name]` (`scripts/marketing-shots.ts`, needs `pnpm dev`)
   rebuilds the public demo's org on acme.example (`POST /demo?domain=`, dev only), shoots as Anna (the apps) and Marek
-  (owner, admin console), and saves `public/marketing/*.webp` and `*-dark.webp`.
+  (owner, admin console), and saves `public/marketing/*.webp` (light only).
 - Positioning: an equal suite of six apps (mail, chat, notes, calendar, drive, contacts), listed once in `config/apps.ts`
   (Product menu, footer, home cards and tour, llms.txt). Each has a page on `components/site/AppPage.astro`:
   `/custom-domain-email`, `/team-chat`, `/shared-notes`, `/team-calendar`, `/shared-drive`, `/shared-contacts`.
@@ -521,9 +527,6 @@ Trigger the cron locally: `curl "localhost:4321/cdn-cgi/handler/scheduled?cron=1
   `components/uploads/attachments.tsx`. E-mail helpers (threading, quoted text, body text): `lib/mail/*`.
 - UI: pickers use `components/ui/segmented-control.tsx` (`PeriodTabs` wraps it); toasts are Ding
   (`toast` from `@yusufceng1z/ding-react`, one pill that morphs in place; `<Toaster />` in `components/ui/toaster.tsx`); small caps labels use the `eyebrow` utility.
-  Animated marketing diagrams: `components/storyboard` (`defineScene()` + `<Scene />`, see its README).
-  Faux product UI on marketing pages (homepage hero demo, features bento): `components/marketing/*` on the
-  Stageshow kit in `components/stageshow` (see its README); stage colours read the site's variables (`look.css`).
 
 ## Template vs product files
 

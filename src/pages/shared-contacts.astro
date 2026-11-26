@@ -1,29 +1,29 @@
 ---
 /** Shared contacts ("shared contacts", 1,300 US searches, KD 10), OpenSEO 2026-11-15. */
 import AppPage from "@/components/site/AppPage.astro";
-import { BookUser, Bot, FileDown, History, MailPlus, Sparkles, Tags, UserPlus, Users } from "lucide-react";
 
 export const prerender = true;
 ---
 
 <AppPage
   slug="shared-contacts"
-  title="Shared contacts: one address book for your team"
+  title="Shared contacts: one address book filled from your mail"
   description="A team address book filled from the mail you send, with groups, Google, Outlook and vCard import, and suggestions in the composer. Part of the open-source Work Inbox workspace."
-  h1={["One address book", "for the whole team."]}
-  lead="Everyone you write to lands in the team's contacts, with their company and the latest conversations. Import from Google or Outlook, group them, and write to a group in one go."
+  h1={["One address book,", "filled by your mail."]}
+  lead="Everyone you write to lands in the team's contacts with their company and latest conversations."
+  benefits={["Saved automatically from sent mail, no duplicates.", "Groups, and suggestions in the composer.", "Company banner and logo on each contact; import and export vCard and CSV."]}
   url="workinbox.io/app/contacts"
   alt="The team address book: a group of partners and a contact with their details and the latest conversation"
   features={[
-    { icon: Sparkles, title: "Fills itself", text: "People you write to are saved automatically; no-reply addresses and your own domains stay out." },
-    { icon: Users, title: "Shared by everyone", text: "One book for the team: everyone reads it and keeps it up to date." },
-    { icon: Tags, title: "Groups", text: "Clients, partners, suppliers: write to everyone in a group from one button." },
-    { icon: History, title: "Latest conversations", text: "Each contact shows the recent threads with them from your mailboxes." },
-    { icon: FileDown, title: "Import and export", text: "Google and Outlook CSV or vCard in, CSV or vCard out." },
-    { icon: BookUser, title: "Directory", text: "Your people and shared mailboxes, always current, next to your contacts." },
-    { icon: MailPlus, title: "Suggestions as you type", text: "To and Cc suggest contacts and groups in the composer." },
-    { icon: UserPlus, title: "Save from a message", text: "Save a sender from the panel next to their e-mail." },
-    { icon: Bot, title: "Claude and ChatGPT", text: "Look people up from your AI app.", href: "/docs/mcp" },
+    { title: "Fills itself", text: "People you write to are saved automatically; no-reply addresses and your own domains stay out." },
+    { title: "Shared by everyone", text: "One book for the team: everyone reads it and keeps it up to date." },
+    { title: "Groups", text: "Clients, partners, suppliers: write to everyone in a group from one button." },
+    { title: "Latest conversations", text: "Each contact shows the recent threads with them from your mailboxes." },
+    { title: "Import and export", text: "Google and Outlook CSV or vCard in, CSV or vCard out." },
+    { title: "Directory", text: "Your people and shared mailboxes, always current, next to your contacts." },
+    { title: "Suggestions as you type", text: "To and Cc suggest contacts and groups in the composer." },
+    { title: "Save from a message", text: "Save a sender from the panel next to their e-mail." },
+    { title: "Claude and ChatGPT", text: "Look people up from your AI app.", href: "/docs/mcp" },
   ]}
   together={[
     { title: "Mail", text: "The sender panel shows the contact; addresses are suggested in every composer." },

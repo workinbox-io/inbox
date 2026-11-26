@@ -1,59 +1,58 @@
 ---
-import { ArrowRight, KeyRound, ShieldCheck, Smartphone, Users, Laptop, Plug } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
-import PageHero from "@/components/site/PageHero.astro";
-import ClosingBand from "@/components/site/ClosingBand.astro";
-import FeatureLedger from "@/components/site/craft/FeatureLedger.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Wrapper from "@/components/navy/fundations/containers/Wrapper.astro";
 import Faq from "@/components/site/Faq.astro";
 
 export const prerender = true;
 
 const features = [
-  { icon: ShieldCheck, title: "An extra code at sign-in", text: "Turn on two-factor authentication for password sign-in. Use an authenticator app such as Google Authenticator, Microsoft Authenticator or 1Password." },
-  { icon: KeyRound, title: "Backup codes for lost devices", text: "Save single-use backup codes outside your mailbox. Use one with your password if you lose your phone. Regenerating codes invalidates the previous set." },
-  { icon: Smartphone, title: "Change phones without a gap", text: "Your current authenticator works until you verify the new one. Changing it signs out other sessions and clears remembered devices; unused backup codes still work." },
-  { icon: Users, title: "Shared inbox, individual access", text: "Everyone opens shared mailboxes with their own account. Choose which members can access each mailbox; owners and admins can access every shared mailbox." },
-  { icon: Laptop, title: "Review active sessions", text: "Account settings lists your signed-in browsers and devices. Sign out individual sessions or the other sessions when you change your password." },
-  { icon: Plug, title: "Manage connected access", text: "Review API keys and connected AI apps separately. Two-factor authentication protects password sign-in; it does not add a code to each API request or revoke existing integrations." },
+  { title: "An extra code at sign-in", text: "Turn on two-factor authentication for password sign-in. Use an authenticator app such as Google Authenticator, Microsoft Authenticator or 1Password." },
+  { title: "Backup codes for lost devices", text: "Save single-use backup codes outside your mailbox. Use one with your password if you lose your phone. Regenerating codes invalidates the previous set." },
+  { title: "Change phones without a gap", text: "Your current authenticator works until you verify the new one. Changing it signs out other sessions and clears remembered devices; unused backup codes still work." },
+  { title: "Shared inbox, individual access", text: "Everyone opens shared mailboxes with their own account. Choose which members can access each mailbox; owners and admins can access every shared mailbox." },
+  { title: "Review active sessions", text: "Account settings lists your signed-in browsers and devices. Sign out individual sessions or the other sessions when you change your password." },
+  { title: "Manage connected access", text: "Review API keys and connected AI apps separately. Two-factor authentication protects password sign-in; it does not add a code to each API request or revoke existing integrations." },
 ];
 const faq = [
   { question: "Is two-factor authentication included in the free plan?", answer: "Yes. Optional authenticator-based 2FA is available for individual accounts on every plan, including free and self-hosted installations." },
   { question: "Can I protect a shared mailbox with 2FA?", answer: "Each person can enable 2FA on their own account for password sign-in. Shared mailboxes such as support@ use individual accounts and access permissions, so nobody needs to share a password or authenticator setup." },
-  { question: "Does Work Inbox ask for a code when I sign in with Google?", answer: "No. Google sign-in uses Google's security settings. Enable two-step verification in your Google account separately. Work Inbox does not enforce Google's two-step verification policy." },
+  { question: "Do I need a code when I sign in with a Google account?", answer: "No. Google sign-in uses Google's security settings. Enable two-step verification in your Google account separately. Work Inbox does not enforce Google's two-step verification policy." },
   { question: "What happens if I lose my authenticator?", answer: "Use an unused backup code after your password, then change your authenticator in Account settings. Resetting your password does not disable 2FA. Without an authenticator and backup codes, access recovery is not guaranteed." },
   { question: "Can an administrator require 2FA for the team?", answer: "Not yet. Each person currently chooses whether to enable 2FA. Organization-wide enforcement is not available." },
   { question: "Does 2FA make my account phishing-proof?", answer: "No. Authenticator codes add protection to password sign-in, but can still be stolen through phishing. Never share your password, authenticator key or backup codes, and check the site's address before signing in." },
 ];
 ---
 
-<MarketingLayout title="Email Security & Two-Factor Authentication" description="Protect your Work Inbox account with authenticator-based two-factor authentication. Learn how individual logins and mailbox permissions control team access." ink>
-  <PageHero>
-    <h1 class="mk-h1 max-w-4xl">Protect access to <em>your team's email.</em></h1>
-    <p class="mk-lead mt-6 max-w-2xl">Your team's inbox. Each person's own login. An extra layer of protection with optional two-factor authentication for password sign-in, included on every plan.</p>
-    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-      <a href="/signup" class="mk-btn">Start free <ArrowRight className="size-5" /></a>
-      <a href="/docs/two-factor-authentication" class="mk-link">Learn how to enable 2FA</a>
-    </div>
-  </PageHero>
-  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
-    <section class="pt-16 sm:pt-20" aria-labelledby="access-heading">
-      <h2 id="access-heading" class="text-[clamp(1.7rem,3vw,2.4rem)]">Control how people access your inbox</h2>
-      <FeatureLedger items={features} cols={3} class="mt-10" />
-    </section>
-    <section class="pt-20" aria-labelledby="setup-heading">
-      <h2 id="setup-heading" class="text-[clamp(1.7rem,3vw,2.4rem)]">Set up an authenticator in Account settings</h2>
-      <ol class="mt-6 grid list-decimal gap-4 pl-5 text-foreground/70 sm:grid-cols-3 sm:gap-10">
-        <li>Confirm your password and scan the QR code with your authenticator app.</li>
-        <li>Enter a six-digit code to activate protection. Scanning alone does not turn it on.</li>
-        <li>Save your backup codes somewhere outside your Work Inbox account.</li>
-      </ol>
-      <p class="mt-6 text-sm text-foreground/70">Already have an account? <a class="mk-link" href="/app/settings/account#two-factor-authentication">Open your security settings</a>.</p>
-    </section>
-    <section class="pt-20" aria-labelledby="questions-heading">
-      <h2 id="questions-heading" class="text-[clamp(1.7rem,3vw,2.4rem)]">Questions about email security and 2FA</h2>
-      <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
-      <p class="mt-8 text-sm text-foreground/70">Read the <a class="mk-link" href="/docs/two-factor-authentication">setup and recovery guide</a>, or learn how <a class="mk-link" href="/shared-mailbox">shared mailbox access</a> works.</p>
-    </section>
-  </div>
-  <ClosingBand />
+<MarketingLayout title="Security: how Work Inbox protects your team's mail" description="Protect your Work Inbox account with authenticator-based two-factor authentication. Learn how individual logins and mailbox permissions control team access." ink>
+  <Hero>
+    <Fragment slot="title">How we protect <em>your team's mail</em></Fragment>
+    <Fragment slot="text">Every person signs in with their own login, optional two-factor authentication guards password sign-in on every plan, and the code is open for you to read or run yourself.</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">Start free</Button>
+      <ArrowLink href="/docs/two-factor-authentication" tone="default">Learn how to enable 2FA</ArrowLink>
+    </Fragment>
+  </Hero>
+  <Section label="Access">
+    <Fragment slot="title">Control how people access your inbox</Fragment>
+    <Features slot="full" cols={3} items={features} />
+  </Section>
+  <Section label="Setup">
+    <Fragment slot="title">Set up an authenticator in Account settings</Fragment>
+    <ArrowLink href="/app/settings/account#two-factor-authentication">Open your security settings</ArrowLink>
+    <Features slot="full" cards cols={3} items={[
+      { tag: "1", title: "Scan the QR code", text: "Confirm your password and scan the QR code with your authenticator app." },
+      { tag: "2", title: "Enter a code", text: "Enter a six-digit code to activate protection. Scanning alone does not turn it on." },
+      { tag: "3", title: "Save backup codes", text: "Save your backup codes somewhere outside your Work Inbox account." },
+    ]} />
+  </Section>
+  <Faq items={faq} />
+  <Wrapper variant="standard" class="pb-20">
+    <Text tag="p" variant="textSM" class="text-muted-foreground">Read the <a class="inline-block py-1 text-foreground border-b border-foreground" href="/docs/two-factor-authentication">setup and recovery guide</a>, or learn how <a class="inline-block py-1 text-foreground border-b border-foreground" href="/shared-mailbox">shared mailbox access</a> works.</Text>
+  </Wrapper>
 </MarketingLayout>

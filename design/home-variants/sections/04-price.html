@@ -1,0 +1,156 @@
+<!-- section: price | Price | I would save real money, and I understand how it is calculated. -->
+<section data-variant="A" data-name="Bar race" data-idea="Per-vendor price bars that move with a people slider: the chart is the content, and Work Inbox's bar barely exists.">
+<div id="price-a" class="bg-background py-16 sm:py-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-6">
+      <p class="label lg:col-span-3">Price</p>
+      <div class="lg:col-span-9 max-w-3xl">
+        <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight leading-tight"><em>Ten people, EUR 5 a month.</em> The same team on Google pays $70.</h2>
+        <p class="mt-4 text-lg text-muted-foreground">One price per person covers every app. First 5 people free, shared mailboxes and aliases free, 14-day trial, no card.</p>
+      </div>
+    </div>
+    <div class="mt-10 grid lg:grid-cols-12 gap-8">
+      <div class="lg:col-span-8 border border-border bg-muted p-5 sm:p-8">
+        <div class="flex items-center justify-between gap-4">
+          <label for="price-a-n" class="text-sm font-medium">People on your team</label>
+          <output id="price-a-out" class="text-3xl font-semibold tabular-nums">10</output>
+        </div>
+        <input id="price-a-n" type="range" min="1" max="100" value="10" class="mt-3 w-full accent-[oklch(52%_0.22_268)]" />
+        <div class="mt-8 space-y-4" id="price-a-bars"></div>
+        <p class="mt-6 text-xs text-muted-foreground">Work Inbox Starter in EUR; other vendors' entry plans in USD per person with annual billing, as listed by each vendor, checked 2026-11-09 (Zoho 2026-11-10). Not converted. Zoho Mail is mail only.</p>
+      </div>
+      <div class="lg:col-span-4 flex flex-col gap-4">
+        <div class="bg-inverse text-inverse-foreground p-6">
+          <p class="text-sm text-white/70">Work Inbox for <span id="price-a-people">10</span> people</p>
+          <p class="mt-1 text-5xl font-semibold tracking-tight">&euro;<span id="price-a-ours">5</span><span class="text-lg font-normal text-white/70"> / month</span></p>
+          <p class="mt-3 text-sm text-white/75" id="price-a-note"></p>
+        </div>
+        <ul class="grid grid-cols-3 gap-px bg-border border border-border text-center text-sm">
+          <li class="bg-background p-3"><b class="block text-lg">&euro;1</b>Starter<span class="block text-xs text-muted-foreground">10 GB drive</span></li>
+          <li class="bg-background p-3"><b class="block text-lg">&euro;2.50</b>Pro<span class="block text-xs text-muted-foreground">30 GB, API, AI</span></li>
+          <li class="bg-background p-3"><b class="block text-lg">&euro;5</b>Business<span class="block text-xs text-muted-foreground">100 GB</span></li>
+        </ul>
+        <p class="text-sm text-muted-foreground">Per person, per month, on top of the first 5 free. Pro adds the REST API, changes from Claude and ChatGPT, and the audit log.</p>
+        <div class="flex flex-wrap gap-3"><a href="#" class="btn btn-accent">Start free</a><a href="#" class="btn btn-muted">Full pricing</a></div>
+        <a href="#" class="text-sm underline underline-offset-4">Compare with Google Workspace</a>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function () {
+    var root = document.getElementById("price-a"), r = root.querySelector("#price-a-n");
+    var vendors = [["Google Workspace", "Business Starter", 7], ["Microsoft 365", "Business Basic", 7], ["Proton Mail", "Mail Essentials", 6.99], ["Zoho Mail", "Mail Lite, mail only", 1]];
+    var FREE = 5, MIN = 5;
+    function ours(n) { return n <= FREE ? 0 : Math.max(MIN, n - FREE); }
+    function fmt(x) { return (Math.round(x * 100) % 100 ? x.toFixed(2) : String(Math.round(x))); }
+    function draw() {
+      var n = +r.value, o = ours(n), rows = vendors.map(function (v) { return [v[0], v[1], v[2] * n, "$"]; });
+      var max = Math.max.apply(null, rows.map(function (x) { return x[2]; }).concat(o, 1));
+      rows.unshift(["Work Inbox", "Starter", o, "€"]);
+      root.querySelector("#price-a-bars").innerHTML = rows.map(function (x, i) {
+        var w = Math.max(x[2] / max * 100, x[2] ? 1.5 : 0.6);
+        return '<div><div class="flex items-baseline justify-between gap-3 text-sm"><span><b class="font-semibold">' + x[0] + '</b> <span class="text-muted-foreground">' + x[1] + '</span></span><b class="tabular-nums font-semibold">' + x[3] + fmt(x[2]) + '</b></div><div class="mt-1 h-5 bg-border/60"><div class="h-full transition-all duration-300 ' + (i ? "bg-faint-foreground" : "bg-primary") + '" style="width:' + w + '%"></div></div></div>';
+      }).join("");
+      root.querySelector("#price-a-out").textContent = n; root.querySelector("#price-a-people").textContent = n; root.querySelector("#price-a-ours").textContent = o;
+      root.querySelector("#price-a-note").textContent = n <= FREE ? "Up to " + FREE + " people is free. Paid features like the API and AI changes need a plan." : "First " + FREE + " people free, then " + o + " seat" + (o > 1 ? "s" : "") + " at EUR 1 (at least " + MIN + " seats on a paid plan).";
+    }
+    r.addEventListener("input", draw); draw();
+  })();
+  </script>
+</div>
+</section>
+
+<section data-variant="B" data-name="Itemised receipt" data-idea="Your team's monthly bill as a receipt, line by line, next to the same team's Google and Microsoft bills: the calculation is fully visible, so it is believable.">
+<div id="price-b" class="bg-mist py-16 sm:py-24">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-6">
+      <p class="label lg:col-span-3">Price</p>
+      <div class="lg:col-span-9 max-w-3xl">
+        <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight leading-tight"><em>Ten people, EUR 5 a month.</em> The same team on Google pays $70.</h2>
+        <p class="mt-4 text-lg text-muted-foreground">See exactly how the bill is made. Move the slider to your team size.</p>
+      </div>
+    </div>
+    <div class="mt-10 grid lg:grid-cols-12 gap-8 items-start">
+      <div class="lg:col-span-5">
+        <label for="price-b-n" class="text-sm font-medium">Your team</label>
+        <div class="mt-1 flex items-baseline gap-2"><output id="price-b-out" class="text-6xl font-semibold tabular-nums">10</output><span class="text-muted-foreground">people</span></div>
+        <input id="price-b-n" type="range" min="1" max="100" value="10" class="mt-4 w-full accent-[oklch(52%_0.22_268)]" />
+        <div class="mt-8 flex flex-wrap gap-3"><a href="#" class="btn btn-lg btn-accent">Start free</a><a href="#" class="btn btn-lg btn-muted">Full pricing</a></div>
+        <p class="mt-4 text-sm text-muted-foreground">Starter plan. Pro is EUR 2.50 and Business EUR 5 per person (30 and 100 GB of drive, Pro adds the API, AI changes and audit log). 14-day trial, no card.</p>
+      </div>
+      <div class="lg:col-span-4 bg-white border border-border p-6 shadow-[0_20px_50px_-30px_rgba(20,25,80,0.4)]">
+        <p class="text-xs uppercase tracking-wide text-faint-foreground">Work Inbox, monthly bill</p>
+        <dl class="mt-4 text-sm divide-y divide-dashed divide-input" id="price-b-lines"></dl>
+        <div class="mt-4 pt-4 border-t-2 border-foreground flex items-baseline justify-between"><span class="font-semibold">Total per month</span><b class="text-4xl font-semibold tabular-nums">&euro;<span id="price-b-total">5</span></b></div>
+        <p class="mt-4 text-xs text-muted-foreground">All apps included: mail, chat, notes, calendar, drive, contacts, collections.</p>
+      </div>
+      <div class="lg:col-span-3 flex flex-col gap-4">
+        <div class="border border-border bg-white p-5"><p class="text-xs uppercase tracking-wide text-faint-foreground">Google Workspace</p><p class="mt-1 text-3xl font-semibold tabular-nums">$<span id="price-b-g"></span></p><p class="text-xs text-muted-foreground">Business Starter, $7 per person</p></div>
+        <div class="border border-border bg-white p-5"><p class="text-xs uppercase tracking-wide text-faint-foreground">Microsoft 365</p><p class="mt-1 text-3xl font-semibold tabular-nums">$<span id="price-b-m"></span></p><p class="text-xs text-muted-foreground">Business Basic, $7 per person</p></div>
+        <p class="text-xs text-muted-foreground">Annual billing, as listed by each vendor, checked 2026-11-09. Their prices are in USD, ours in EUR, not converted.</p>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function () {
+    var root = document.getElementById("price-b"), r = root.querySelector("#price-b-n");
+    function draw() {
+      var n = +r.value, free = Math.min(n, 5), seats = n <= 5 ? 0 : Math.max(5, n - 5), gb = n * 10;
+      root.querySelector("#price-b-out").textContent = n;
+      var rows = [["People", n], ["First 5 people", "free"], ["Paid seats" + (seats && n - 5 < 5 ? " (minimum 5)" : ""), seats], ["Seats at EUR 1", "€" + seats], ["Shared mailboxes and aliases", "€0"], ["Drive, " + gb + " GB pooled", "included"]];
+      root.querySelector("#price-b-lines").innerHTML = rows.map(function (x) { return '<div class="flex justify-between gap-3 py-2"><dt class="text-muted-foreground">' + x[0] + '</dt><dd class="font-medium tabular-nums">' + x[1] + '</dd></div>'; }).join("");
+      root.querySelector("#price-b-total").textContent = seats;
+      root.querySelector("#price-b-g").textContent = (7 * n); root.querySelector("#price-b-m").textContent = (7 * n);
+    }
+    r.addEventListener("input", draw); draw();
+  })();
+  </script>
+</div>
+</section>
+
+<section data-variant="C" data-name="Yearly saving" data-idea="Pick team size, plan and what you pay today: the answer is one big yearly saving number, with the sources in fine print. Speaks to the budget owner.">
+<div id="price-c" class="relative overflow-hidden bg-inverse text-inverse-foreground py-16 sm:py-24">
+  <div class="absolute inset-0" style="background:radial-gradient(ellipse 70% 80% at 90% 100%, oklch(52% 0.22 268 / 0.55), transparent 70%)"></div>
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-6">
+      <p class="label lg:col-span-3 !text-white/60">Price</p>
+      <div class="lg:col-span-9 max-w-3xl">
+        <h2 class="text-3xl sm:text-5xl font-semibold tracking-tight leading-tight"><em>Ten people, EUR 5 a month.</em> The same team on Google pays $70.</h2>
+        <p class="mt-4 text-lg text-white/80">Work out your own year. One price per person covers every app, shared mailboxes and aliases are free.</p>
+      </div>
+    </div>
+    <div class="mt-10 grid lg:grid-cols-12 gap-6 items-stretch">
+      <div class="lg:col-span-5 bg-white/10 border border-white/20 p-5 sm:p-6 space-y-5">
+        <div><div class="flex justify-between text-sm"><label for="price-c-n" class="font-medium">People</label><output id="price-c-out" class="text-2xl font-semibold tabular-nums">10</output></div><input id="price-c-n" type="range" min="1" max="100" value="10" class="mt-2 w-full accent-white" /></div>
+        <div><label for="price-c-v" class="text-sm font-medium">What you pay today</label>
+          <select id="price-c-v" class="mt-1 w-full h-11 px-3 rounded-lg bg-white text-foreground text-sm"><option value="7">Google Workspace, Business Starter ($7)</option><option value="7">Microsoft 365, Business Basic ($7)</option><option value="6.99">Proton Mail, Mail Essentials ($6.99)</option></select></div>
+        <div><label for="price-c-p" class="text-sm font-medium">Work Inbox plan</label>
+          <select id="price-c-p" class="mt-1 w-full h-11 px-3 rounded-lg bg-white text-foreground text-sm"><option value="1">Starter, EUR 1 (10 GB drive)</option><option value="2.5">Pro, EUR 2.50 (30 GB, API, AI changes)</option><option value="5">Business, EUR 5 (100 GB)</option></select></div>
+      </div>
+      <div class="lg:col-span-7 bg-white text-foreground p-6 sm:p-8 flex flex-col justify-center">
+        <p class="text-sm text-muted-foreground">You would save about, every year</p>
+        <p class="mt-1 text-6xl sm:text-8xl font-semibold tracking-tight tabular-nums leading-none text-primary" id="price-c-save">$0</p>
+        <div class="mt-6 grid grid-cols-2 gap-4 text-sm"><div class="border border-border p-4"><p class="text-muted-foreground">Today</p><p class="text-2xl font-semibold tabular-nums" id="price-c-now">$0</p><p class="text-xs text-muted-foreground">per year</p></div><div class="border border-border p-4"><p class="text-muted-foreground">Work Inbox</p><p class="text-2xl font-semibold tabular-nums" id="price-c-us">&euro;0</p><p class="text-xs text-muted-foreground" id="price-c-usn">per year</p></div></div>
+        <div class="mt-6 flex flex-wrap gap-3"><a href="#" class="btn btn-lg btn-accent">Start free</a><a href="#" class="btn btn-lg btn-muted">Full pricing</a></div>
+      </div>
+    </div>
+    <p class="mt-6 text-xs text-white/60 max-w-3xl">Work Inbox: yearly billing is 10 months of the monthly price per paid seat (first 5 people free, at least 5 seats on a paid plan). Others: list price per person with annual billing, as listed by each vendor, checked 2026-11-09. Their prices are USD, ours EUR; the saving is the plain difference, not converted. Seats and plan features are described on the full pricing page.</p>
+  </div>
+  <script>
+  (function () {
+    var root = document.getElementById("price-c"), n = root.querySelector("#price-c-n"), v = root.querySelector("#price-c-v"), p = root.querySelector("#price-c-p");
+    function f(x) { return Math.round(x).toLocaleString("en-US"); }
+    function draw() {
+      var people = +n.value, seats = people <= 5 ? 0 : Math.max(5, people - 5);
+      var now = +v.value * people * 12, us = seats * +p.value * 10;
+      root.querySelector("#price-c-out").textContent = people;
+      root.querySelector("#price-c-now").textContent = "$" + f(now);
+      root.querySelector("#price-c-us").textContent = "€" + f(us);
+      root.querySelector("#price-c-usn").textContent = "per year, " + seats + " paid seat" + (seats === 1 ? "" : "s") + (people <= 5 ? " (free tier)" : "");
+      root.querySelector("#price-c-save").textContent = "$" + f(Math.max(0, now - us));
+    }
+    [n, v, p].forEach(function (e) { e.addEventListener("input", draw); }); draw();
+  })();
+  </script>
+</div>
+</section>

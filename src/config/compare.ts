@@ -79,9 +79,9 @@ export const COMPETITORS: Competitor[] = [
     slug: "google-workspace",
     name: "Google Workspace",
     logo: "/logos/google-workspace.png",
-    tagline: "Team email without Google: an open-source Google Workspace alternative",
+    tagline: "Team email on your own domain, for less",
     intro:
-      "Google Workspace is the default for team email with Docs and Meet around it. Work Inbox does less (mail and shared notes today) for a lower price per person, with free shared mailboxes and the option to run it on your own Cloudflare account.",
+      "Google Workspace is the default for team email with Docs and Meet around it. Work Inbox has no Docs, Sheets or Meet (mail, chat, notes, calendar, drive and contacts instead) for a lower price per person, with free shared mailboxes and the option to run it on your own Cloudflare account.",
     checked: CHECKED,
     entry: { plan: "Business Starter", usd: 7 },
     theirPricing: [

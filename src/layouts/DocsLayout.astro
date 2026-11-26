@@ -62,7 +62,7 @@ const navBtn =
   "bg-secondary text-secondary-foreground hover:bg-secondary/80 inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium transition-colors";
 ---
 
-<MarketingLayout title={`${doc.data.title} · ${t("Docs")}`} description={doc.data.description} jsonLd={jsonLd} footer={false} look="plain">
+<MarketingLayout title={`${doc.data.title} · ${t("Docs")}`} description={doc.data.description} jsonLd={jsonLd} footer="slim">
   <div class="mx-auto flex w-full max-w-[1400px] flex-1 items-start px-2 lg:px-4">
     <DocsSidebar docs={docs} current={doc.id} />
 

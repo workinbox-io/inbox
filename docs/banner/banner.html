@@ -44,9 +44,7 @@
   <div class="shot s2"><img data-name="drive" alt="" /></div>
   <div class="shot s3"><img data-name="mail-thread" alt="" /></div>
   <script>
-    const theme = new URLSearchParams(location.search).get("theme") ?? "light";
-    document.body.dataset.theme = theme;
-    for (const img of document.querySelectorAll("[data-name]")) img.src = `../../public/marketing/${img.dataset.name}${theme === "dark" ? "-dark" : ""}.webp`;
+    for (const img of document.querySelectorAll("[data-name]")) img.src = `../../public/marketing/${img.dataset.name}.webp`;
   </script>
 </body>
 </html>

@@ -1,9 +1,12 @@
 ---
 /** Work Inbox vs one competitor, from config/compare.ts. */
-import { ArrowRight, Check } from "lucide-react";
 import MarketingLayout from "@/layouts/MarketingLayout.astro";
-import PageHero from "@/components/site/PageHero.astro";
-import ClosingBand from "@/components/site/ClosingBand.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Text from "@/components/navy/fundations/elements/Text.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import ArrowLink from "@/components/navy/fundations/elements/ArrowLink.astro";
+import Check from "@/components/navy/fundations/icons/Check.astro";
 import ComparisonTable from "@/components/site/ComparisonTable.astro";
 import Faq from "@/components/site/Faq.astro";
 import { COMPETITORS, type Competitor } from "@/config/compare";
@@ -39,60 +42,49 @@ const jsonLd = [
 ];
 ---
 
-<MarketingLayout title={`${siteConfig.name} ${t("vs")} ${c.name}`} description={`${t(c.intro).split(". ")[0]}. ${t("Prices, shared mailboxes, self-hosting and what each does better, checked {date}.", { date: checked })}`} jsonLd={jsonLd} ink>
-  <PageHero>
-    <nav class="mk-cap flex items-center gap-2"><a href={lp(locale, "/vs")} class="hover:text-(--foreground)">{t("Compare")}</a> / <img src={c.logo} alt="" width="16" height="16" class="size-4 bg-white object-contain" /> {c.name}</nav>
-    <h1 class="mk-h1 mt-6 max-w-4xl">{t(c.tagline)}</h1>
-    <p class="mk-lead mt-6 max-w-2xl">{t(c.intro)}</p>
-    <div class="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-      <a href="/signup" class="mk-btn">{t("Start free")} <ArrowRight className="size-5" /></a>
-      <span class="mk-cap">{t("{days} days, no card. Or self-host for free.", { days: TRIAL_DAYS })}</span>
+<MarketingLayout title={`${siteConfig.name} ${t("vs")} ${c.name}`} description={`${siteConfig.name} ${t("vs")} ${c.name}: ${t("Prices, shared mailboxes, self-hosting and what each does better, checked {date}.", { date: checked })}`} jsonLd={jsonLd} ink>
+  <Hero label={`${t("Compare")} / ${c.name}`}>
+    <Fragment slot="title">{t(c.tagline)}</Fragment>
+    <Fragment slot="text">{t(c.intro)}</Fragment>
+    <Fragment slot="actions">
+      <Button isLink={true} href="/signup" size="base" variant="accent">{t("Start free")}</Button>
+      <span class="text-sm text-foreground/80">{t("{days} days, no card. Or self-host for free.", { days: TRIAL_DAYS })}</span>
+    </Fragment>
+  </Hero>
+
+  <Section label={t("Compare")}>
+    <Fragment slot="title">{t("Side by side")}</Fragment>
+    <Fragment slot="text">{t("{name}'s facts from its own pages, checked {date}. Prices as {name} shows them, before tax.", { name: c.name, date: checked })}</Fragment>
+    <div slot="full"><ComparisonTable competitors={[c]} /></div>
+  </Section>
+
+  <Section label={t("Pricing")} class="bg-muted">
+    <Fragment slot="title">{t("{name}'s plans", { name: c.name })}</Fragment>
+    <ul role="list" class="border-t border-border">
+      {c.theirPricing.map((p) => <li class="py-5 border-b border-border"><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(p)}</Text></li>)}
+    </ul>
+  </Section>
+
+  <Section label={siteConfig.name}>
+    <div class="grid gap-16 md:grid-cols-2 md:gap-x-8">
+      <div>
+        <Text tag="h2" variant="displaySM" class="text-balance text-foreground">{t("Why teams pick {name}", { name: siteConfig.name })}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{c.whyUs.map((p) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-primary" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(p)}</Text></li>)}</ul>
+      </div>
+      <div>
+        <Text tag="h2" variant="displaySM" class="text-balance text-foreground">{t("Pick {name} if", { name: c.name })}</Text>
+        <ul role="list" class="flex flex-col mt-8 gap-4">{c.pickThemIf.map((p) => <li class="flex items-start gap-3"><Check size="sm" class="mt-0.5 shrink-0 text-faint-foreground" aria-hidden="true" /><Text tag="p" variant="textSM" class="text-foreground text-pretty">{t(p)}</Text></li>)}</ul>
+      </div>
     </div>
-  </PageHero>
-  <div class="mk-wrap flex flex-1 flex-col pb-20 sm:pb-28">
+  </Section>
 
-    <section class="pt-16">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Side by side")}</h2>
-      <p class="mt-2 text-sm text-foreground/60">{t("{name}'s facts from its own pages, checked {date}. Prices as {name} shows them, before tax.", { name: c.name, date: checked })}</p>
-      <div class="mt-6"><ComparisonTable competitors={[c]} /></div>
-    </section>
+  {faq.length ? <Faq items={faq} /> : null}
 
-    <section class="pt-16">
-      <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("{name}'s plans", { name: c.name })}</h2>
-      <ul class="mt-5 space-y-2 text-foreground/75">{c.theirPricing.map((p) => <li class="flex gap-2.5"><span class="mt-2.5 size-1.5 shrink-0 rounded-full bg-foreground/40" />{t(p)}</li>)}</ul>
-    </section>
-
-    <section class="grid gap-10 pt-16 md:grid-cols-2">
-      <div>
-        <h2 class="text-[clamp(1.6rem,2.6vw,2.1rem)]">{t("Why teams pick {name}", { name: siteConfig.name })}</h2>
-        <ul class="mt-5 space-y-3">{c.whyUs.map((p) => <li class="flex gap-2.5"><Check className="mt-1 size-4 shrink-0" />{t(p)}</li>)}</ul>
-      </div>
-      <div>
-        <h2 class="text-[clamp(1.6rem,2.6vw,2.1rem)]">{t("Pick {name} if", { name: c.name })}</h2>
-        <ul class="mt-5 space-y-3">{c.pickThemIf.map((p) => <li class="flex gap-2.5"><Check className="mt-1 size-4 shrink-0 text-foreground/50" />{t(p)}</li>)}</ul>
-      </div>
-    </section>
-
-    {
-      faq.length ? (
-        <section class="pt-16">
-          <h2 class="text-[clamp(1.7rem,3vw,2.4rem)]">{t("Questions")}</h2>
-          <div class="mt-6 max-w-3xl"><Faq items={faq} /></div>
-        </section>
-      ) : null
-    }
-
-    <section class="pt-16">
-      <h2 class="text-xl">{t("Sources")}</h2>
-      <ul class="mt-3 space-y-1 text-sm break-all text-foreground/60">{c.sources.map((s) => <li><a href={s} rel="nofollow noopener" target="_blank" class="underline underline-offset-4 hover:text-foreground">{s}</a></li>)}</ul>
-    </section>
-
-    <section class="pt-16">
-      <h2 class="text-xl">{t("Other comparisons")}</h2>
-      <div class="mt-4 flex flex-wrap gap-2">
-        {others.map((o) => <a href={lp(locale, `/vs/${o.slug}`)} class="inline-flex items-center gap-2 border border-(--border) py-1.5 pr-4 pl-2 text-sm hover:bg-(--accent)"><img src={o.logo} alt="" width="20" height="20" loading="lazy" class="size-5 bg-white object-contain p-0.5" />{t("vs")} {o.name}</a>)}
-      </div>
-    </section>
-  </div>
-  <ClosingBand />
+  <Section label={t("Sources")}>
+    <ul role="list" class="border-t border-border">{c.sources.map((s) => <li class="py-3 text-sm break-all border-b border-border"><a href={s} rel="nofollow noopener" target="_blank" class="inline-block py-1 text-muted-foreground hover:text-foreground">{s}</a></li>)}</ul>
+    <Text tag="h2" variant="textBase" class="mt-16 font-medium text-foreground">{t("Other comparisons")}</Text>
+    <div class="flex flex-wrap mt-4 gap-x-6 gap-y-3">
+      {others.map((o) => <ArrowLink href={lp(locale, `/vs/${o.slug}`)}>{t("vs")}{" "}{o.name}</ArrowLink>)}
+    </div>
+  </Section>
 </MarketingLayout>

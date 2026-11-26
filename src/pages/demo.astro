@@ -8,9 +8,11 @@
 import { env } from "cloudflare:workers";
 import { makeSignature } from "better-auth/crypto";
 import { t } from "@/lib/i18n/panel";
-import AuthLayout from "@/layouts/AuthLayout.astro";
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import MarketingLayout from "@/layouts/MarketingLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import Section from "@/components/site/Section.astro";
+import Features from "@/components/site/Features.astro";
+import Button from "@/components/navy/fundations/elements/Button.astro";
 import { clientIp } from "@/lib/server/api";
 import { getAuth } from "@/lib/server/auth";
 import { DEMO_LOCALES, createDemoOrg, demoOrgsSince, type DemoLocale } from "@/lib/server/demo/seed";
@@ -39,23 +41,39 @@ if (Astro.request.method === "POST") {
     return Astro.redirect("/app/mail", 303);
   }
 }
+const story = [
+  [t("Mail"), t("Threads with the signed Brightloop contract, a question to support@, and a colleague's draft you can take over.")],
+  [t("Chat"), t("Channels and DMs with @mentions of files, notes and events, so the bell has something in it.")],
+  [t("Notes"), t("Shared notes, including the client call, written with the meeting's attendees.")],
+  [t("Calendar"), t("The week's meetings, with the kickoff and a meeting note linked to it.")],
+  [t("Drive"), t("The campaign brief and the signed contract, attachable to mail.")],
+  [t("Contacts and collections"), t("An address book, and Tasks, Deals and Equipment rental lists you can edit.")],
+];
+const facts = [t("No signup, no card."), t("Mail is never sent out of the demo."), t("The workspace is deleted after 24 hours.")];
 ---
 
-<AuthLayout title={t("Try the demo")}>
-  <Card className="w-full max-w-sm">
-    <CardHeader>
-      <CardTitle className="text-xl">{t("Try Work Inbox")}</CardTitle>
-      <CardDescription>
-        {error || t("You'll get your own copy of a small team's workspace for a day: mail, chat, notes, calendar, files, contacts and collections. Nothing leaves it: mail isn't sent out.")}
-      </CardDescription>
-    </CardHeader>
-    <CardFooter>
-      <form method="post" class="w-full" data-demo-steps={JSON.stringify([t("Setting up your workspace…"), t("Filling the inbox…"), t("Adding chat and notes…"), t("Planning the calendar…"), t("Putting files in Drive…"), t("Almost ready…")])}>
-        <Button type="submit" className="w-full" aria-live="polite">{t("Open the demo")}</Button>
+<MarketingLayout title={t("Try the demo")} ink>
+  <Hero>
+    <Fragment slot="title">{t("Try Work Inbox")}</Fragment>
+    <Fragment slot="text"><span role={error ? "alert" : undefined}>{error || t("You'll get your own copy of a small team's workspace for a day: mail, chat, notes, calendar, files, contacts and collections. Nothing leaves it: mail isn't sent out.")}</span></Fragment>
+    <Fragment slot="actions">
+      <form method="post" data-demo-steps={JSON.stringify([t("Setting up your workspace…"), t("Filling the inbox…"), t("Adding chat and notes…"), t("Planning the calendar…"), t("Putting files in Drive…"), t("Almost ready…")])}>
+        <Button type="submit" size="lg" variant="muted" aria-live="polite">{t("Open the demo")}</Button>
       </form>
-    </CardFooter>
-  </Card>
-</AuthLayout>
+    </Fragment>
+  </Hero>
+  <Section label={t("What you get")}>
+    <Fragment slot="title">{t("A week at Acme Studio, already under way")}</Fragment>
+    <Fragment slot="text">{t("You are Anna, an account manager. The studio just signed Brightloop for its spring campaign, and every app holds a piece of that story.")}</Fragment>
+    <Features slot="full" cols={3} items={story.map(([title, text]) => ({ title, text }))} />
+  </Section>
+  <Section label={t("Good to know")} class="bg-muted">
+    <Fragment slot="title">{t("Nothing to sign up for, nothing left behind")}</Fragment>
+    <ul role="list" class="grid gap-4 text-muted-foreground sm:grid-cols-3">
+      {facts.map((f) => <li class="text-pretty">{f}</li>)}
+    </ul>
+  </Section>
+</MarketingLayout>
 
 <script>
   import "@/scripts/demo-progress";

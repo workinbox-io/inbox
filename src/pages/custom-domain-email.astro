@@ -1,7 +1,6 @@
 ---
 /** Mail on your own domain ("custom domain email", 3,600 US searches, KD 28; "business email" 18,100), OpenSEO 2026-11-15. */
 import AppPage from "@/components/site/AppPage.astro";
-import { AtSign, FileDown, Inbox, MonitorSmartphone, PenLine, Search, ShieldCheck, Users, Clock, Bot } from "lucide-react";
 import { FREE_PEOPLE, PLANS } from "@/config/plans";
 
 export const prerender = true;
@@ -9,23 +8,24 @@ export const prerender = true;
 
 <AppPage
   slug="custom-domain-email"
-  title="Custom domain email for your team, open source"
-  description="Email on your own domain for the whole team: personal and shared mailboxes, aliases, catch-all, filters and signatures. Free for up to 5 people, or self-hosted on Cloudflare."
+  title="Team email on your own domain, with shared mailboxes"
+  description="Personal and shared mailboxes, aliases, drafts your team sees, signatures and out-of-office. Works in Apple Mail and Outlook. Open source, free for 5 people."
   h1={["Email on your own domain,", "for the whole team."]}
-  lead={`A personal mailbox for each person, shared ones like support@, and aliases that land where you say. Free for up to ${FREE_PEOPLE} people, then from €${PLANS.starter.priceMonthly / 100} per person a month.`}
+  lead="Personal mailboxes, shared ones like support@, aliases that land where you say. Drafts the team can see, signatures that look right, and it works in Apple Mail and Outlook too."
+  benefits={["A shared inbox where \"Draft by Anna\" stops double replies, and Ben can take over.", "Signatures, out-of-office and templates per mailbox.", "Mail apps over IMAP/SMTP, drafts sync both ways."]}
   url="workinbox.io/app/mail"
   alt="Work Inbox mail: folders, the inbox of anna@ and support@, an open message and the sender panel"
   features={[
-    { icon: Inbox, title: "A mailbox per person", text: "Each person gets their own address on the domain, or start on a free yourname.workinbox.io address." },
-    { icon: Users, title: "Shared mailboxes, free", text: "support@ or sales@ answered by several people from the shared address.", href: "/shared-mailbox" },
-    { icon: AtSign, title: "Aliases and catch-all", text: "Unlimited aliases, a catch-all per domain and plus addressing." },
-    { icon: Search, title: "Search and shortcuts", text: "from:, to:, has:attachment, is:unread and keyboard shortcuts for everything." },
-    { icon: ShieldCheck, title: "Spam score and rules", text: "Every message scored; always allow or block a sender or a domain. Filters, labels and forwarding." },
-    { icon: PenLine, title: "Signatures and templates", text: "Signatures from a company template, reply templates and out of office per mailbox." },
-    { icon: Clock, title: "Snooze, schedule, undo", text: "Snooze a thread, schedule a send, undo it; drafts follow you across devices." },
-    { icon: FileDown, title: "Bring your old mail", text: "Import .mbox (Google Takeout) or .eml files; every message keeps its original .eml." },
-    { icon: MonitorSmartphone, title: "Any mail app", text: "IMAP and SMTP for Apple Mail, Outlook, Thunderbird and your phone, a password per device.", href: "/docs/mail-clients" },
-    { icon: Bot, title: "Claude and ChatGPT", text: "Search and read mail from your AI app; replies come back as drafts you send yourself.", href: "/docs/mcp" },
+    { title: "A mailbox per person", text: "Each person gets their own address on the domain, or start on a free yourname.workinbox.io address." },
+    { title: "Shared mailboxes, free", text: "support@ or sales@ answered by several people from the shared address.", href: "/shared-mailbox" },
+    { title: "Aliases and catch-all", text: "Unlimited aliases, a catch-all per domain and plus addressing." },
+    { title: "Search and shortcuts", text: "from:, to:, has:attachment, is:unread and keyboard shortcuts for everything." },
+    { title: "Spam score and rules", text: "Every message scored; always allow or block a sender or a domain. Filters, labels and forwarding." },
+    { title: "Signatures and templates", text: "Signatures from a company template, reply templates and out of office per mailbox." },
+    { title: "Snooze, schedule, undo", text: "Snooze a thread, schedule a send, undo it; drafts follow you across devices." },
+    { title: "Bring your old mail", text: "Import .mbox (Google Takeout) or .eml files; every message keeps its original .eml." },
+    { title: "Any mail app", text: "IMAP and SMTP for Apple Mail, Outlook, Thunderbird and your phone, a password per device.", href: "/docs/mail-clients" },
+    { title: "Claude and ChatGPT", text: "Search and read mail from your AI app; replies come back as drafts you send yourself.", href: "/docs/mcp" },
   ]}
   notYet="native mobile apps: use your phone's mail app over IMAP, or install the web app."
   compare={["shared", "aliases", "imap", "price"]}

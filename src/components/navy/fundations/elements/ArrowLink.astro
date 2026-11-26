@@ -1,0 +1,48 @@
+---
+// How to use:
+//
+// A text link with a chevron that nudges right on hover.
+//
+// <ArrowLink href="/customers/home">Read customer stories</ArrowLink>
+// <ArrowLink href="/pricing" size="base" tone="muted">See pricing</ArrowLink>
+//
+// Inside a card that is already a link, render it as a span and give the
+// card the `group` class so the chevron still moves:
+// <a href="/customers/3" class="group">...<ArrowLink tag="span">Read the story</ArrowLink></a>
+//
+// size: "xs" | "sm" (default) | "base"
+// tone: "default" | "muted" | "inverse" (on dark grounds)
+import ChevronRight from "@/components/navy/fundations/icons/ChevronRight.astro";
+const { tag = "a", size = "sm", tone = "default", class: className, ...rest } = Astro.props;
+const Tag = tag;
+const sizes = {
+  xs: { text: "text-xs", icon: "size-3" },
+  sm: { text: "text-sm", icon: "size-3.5" },
+  base: { text: "text-base", icon: "size-4" },
+};
+const tones = {
+  default: "text-foreground hover:text-muted-foreground",
+  muted: "text-muted-foreground hover:text-foreground",
+  inverse: "text-inverse-foreground hover:text-inverse-foreground/70",
+};
+const s = sizes[size as keyof typeof sizes] ?? sizes.sm;
+---
+
+<Tag
+  class:list={[
+    "inline-flex items-center gap-1 min-h-6 font-medium transition-colors group/link",
+    s.text,
+    tones[tone as keyof typeof tones] ?? tones.default,
+    className,
+  ]}
+  {...rest}
+>
+  <slot />
+  <ChevronRight
+    aria-hidden="true"
+    class:list={[
+      "transition-transform duration-300 group-hover:translate-x-0.5 group-hover/link:translate-x-0.5",
+      s.icon,
+    ]}
+  />
+</Tag>

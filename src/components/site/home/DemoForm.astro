@@ -1,0 +1,19 @@
+---
+/** "Try the demo": a POST to /demo that builds a throwaway workspace; src/scripts/demo-progress walks the button through the steps. */
+import Button from "@/components/navy/fundations/elements/Button.astro";
+import { siteLocale, tFor } from "@/lib/i18n/site";
+interface Props {
+  size?: "sm" | "base" | "lg";
+  variant?: "default" | "accent" | "muted";
+  label?: string;
+  class?: string;
+}
+const locale = siteLocale(Astro.url);
+const t = tFor(locale);
+const { size = "base", variant = "muted", label, class: className } = Astro.props;
+const steps = [t("Setting up your workspace…"), t("Filling the inbox…"), t("Adding chat and notes…"), t("Planning the calendar…"), t("Putting files in Drive…"), t("Almost ready…")];
+---
+
+<form method="post" action={`/demo?lang=${locale}`} data-demo-steps={JSON.stringify(steps)} class={className}>
+  <Button type="submit" size={size} variant={variant} aria-live="polite">{label ?? t("Try the demo")}</Button>
+</form>
