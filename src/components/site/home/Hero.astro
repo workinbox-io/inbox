@@ -8,26 +8,49 @@ import { CalendarDays, Cloud, Code, Contact, Download, HardDrive, Mail, Messages
 import BrowserWindow from "./BrowserWindow.astro";
 import DemoForm from "./DemoForm.astro";
 import Faux from "./Faux.astro";
-import HeroMoments from "./HeroMoments.astro";
+import HeroDemo, { type HeroDemoCopy } from "./hero-demo/HeroDemo";
+import * as en from "@/lib/server/demo/content";
+import * as pl from "@/lib/server/demo/content-pl";
 import { FREE_PEOPLE } from "@/config/plans";
 import { siteConfig } from "@/config/site";
-import { siteLocale, tFor } from "@/lib/i18n/site";
+import { lp, siteLocale, tFor } from "@/lib/i18n/site";
 interface Props {
   stars: number | null;
 }
 const { stars } = Astro.props;
 const locale = siteLocale(Astro.url);
 const t = tFor(locale);
-const heroShot = `/marketing/mail-thread-hero${locale === "pl" ? "-pl" : ""}.webp`;
 /** The apps in the line under the title, each word with its icon. */
 const apps = [
-  { icon: Mail, text: t("Mail on your own domain") },
-  { icon: MessagesSquare, text: t("chat") },
-  { icon: NotebookPen, text: t("notes") },
-  { icon: CalendarDays, text: t("calendar") },
-  { icon: HardDrive, text: t("files") },
-  { icon: Contact, text: t("contacts") },
+  { icon: Mail, href: lp(locale, "/custom-domain-email"), text: t("Mail on your own domain") },
+  { icon: MessagesSquare, href: lp(locale, "/team-chat"), text: t("chat") },
+  { icon: NotebookPen, href: lp(locale, "/shared-notes"), text: t("notes") },
+  { icon: CalendarDays, href: lp(locale, "/team-calendar"), text: t("calendar") },
+  { icon: HardDrive, href: lp(locale, "/shared-drive"), text: t("files") },
+  { icon: Contact, href: lp(locale, "/shared-contacts"), text: t("contacts") },
 ];
+const story = locale === "pl" ? pl : en;
+const contract = story.MAIL[0]!;
+const kickoff = story.EVENTS[2]!;
+const marta = story.CONTACTS[0]!;
+const snippet = (text: string) => text.replace(/\s+/g, " ");
+const demo: HeroDemoCopy = {
+  compose: t("New e-mail"), allMailboxes: t("All mailboxes"), mailboxes: t("Mailboxes"), search: t("Search mail"), unread: t("{n} unread", { n: 2 }),
+  folders: { inbox: t("Inbox"), starred: t("Starred"), snoozed: t("Snoozed"), drafts: t("Drafts"), sent: t("Sent"), outbox: t("Outbox"), archived: t("Archived"), spam: t("Spam"), trash: t("Trash") },
+  mailbox: "anna@acme.example",
+  from: contract.fromName, fromEmail: contract.from, subject: contract.subject, label: contract.label!, body: contract.text.split("\n\n").slice(0, 2), attach: contract.attach!, time: "9:00",
+  oneMessage: t("1 message"), oneFile: t("1 file"), toLine: t("to {address}", { address: "anna@acme.example" }),
+  rows: story.MAIL.slice(1, 7).map((m, i) => ({ from: m.fromName, subject: m.subject, snippet: snippet(m.text), time: ["8:45", "8:12", "7:54", "7:30", "7:02", "6:48"][i]! })),
+  panel: { role: `${marta[2]} · ${marta[1]}`, phone: marta[4], threads: t("1 thread"), firstMail: t("First mail {time}", { time: "9:00" }), newMail: t("New e-mail"), openContact: t("Open contact"), other: t("Other threads"), onlyOne: t("This is the only one.") },
+  reply: t("Reply"), forward: t("Forward"), send: t("Send"), to: t("To"),
+  typed: t("Thanks, Marta! The 18th works for us. Here's the brief: "), query: "bri", after: t(". See you at the kickoff!"),
+  mentions: [
+    { kind: "file", title: story.BRIEF_FILE, hint: t("Drive") },
+    { kind: "note", title: story.NOTES[0]!.title, hint: t("Notes") },
+    { kind: "event", title: kickoff.title, hint: t("Calendar") },
+  ],
+  me: story.PEOPLE.anna.name, now: t("now"), toast: t("Message sent"), undo: t("Undo"),
+};
 const facts = [
   { icon: Users, text: t("Free for {n} people", { n: FREE_PEOPLE }) },
   { icon: Code, text: t("Open source, AGPL-3.0") },
@@ -48,7 +71,7 @@ const facts = [
       </Text>
       <Text tag="p" variant="textLG" class="max-w-2xl mx-auto mt-6 text-inverse-foreground text-pretty">
         {apps.map((a, i) => (
-          <>{i > 0 && (i === apps.length - 1 ? ` ${t("and")} ` : ", ")}<span class="whitespace-nowrap"><a.icon className="inline size-[1.1em] -mt-0.5 mr-1 align-middle opacity-80" aria-hidden="true" />{a.text}</span></>
+          <>{i > 0 && (i === apps.length - 1 ? ` ${t("and")} ` : ", ")}<a href={a.href} class="whitespace-nowrap border-b border-inverse-foreground/40 pb-0.5 hover:border-inverse-foreground"><a.icon className="inline size-[0.85em] -mt-0.5 mr-1 align-middle opacity-70" aria-hidden="true" />{a.text}</a></>
         ))}
         {t(", all linked: mention a file in chat, attach it to mail, find it from anywhere.")}
       </Text>
@@ -57,14 +80,12 @@ const facts = [
         <Button isLink={true} href="/signup" size="lg" variant="accent">{t("Start free")}</Button>
       </div>
     </div>
-    <div class="relative mx-auto mt-12 max-w-6xl sm:mt-14">
-      <link rel="preload" as="image" href={heroShot} media="(min-width: 640px)" fetchpriority="high" />
-      <BrowserWindow address="workinbox.io/app/mail">
-        <!-- From sm up the real screen, cropped to the open thread (a background, so phones never download it); phones get a faux list and message that stay readable. -->
-        <div role="img" aria-label={t("The Work Inbox mail app: folders, thread list and an open conversation")} class="hidden aspect-2300/942 bg-cover bg-top bg-no-repeat sm:block" style={`background-image:url(${heroShot})`}></div>
-        <div class="sm:hidden"><Faux app="custom-domain-email" bare /></div>
-      </BrowserWindow>
-      <HeroMoments />
+    <div class="mx-auto mt-12 max-w-6xl sm:mt-14">
+      <!-- From sm up Anna answers the contract in the mail app (an animated stage, poster under reduced motion); phones get a faux list and message that stay readable. -->
+      <div class="hidden -mx-6 sm:block" role="img" aria-label={t("The Work Inbox mail app: replying to a message, mentioning a file from Drive with @ and sending it")}>
+        <HeroDemo client:visible copy={demo} />
+      </div>
+      <BrowserWindow address="workinbox.io/app/mail" class="sm:hidden"><Faux app="custom-domain-email" bare /></BrowserWindow>
     </div>
     <ul role="list" class="flex flex-wrap justify-center mt-8 gap-x-8 gap-y-3 text-sm text-muted-foreground">
       {facts.map((f) => <li class="flex items-center gap-2"><f.icon className="size-4 text-primary" aria-hidden="true" />{f.text}</li>)}
